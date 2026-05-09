@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CUE — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--Y:#FFC300;--Y2:#FFD740;--BG:#080808;--CARD:#111;--BORDER:rgba(255,195,0,.13);--TEXT:#ddd;--MUTED:#bbb;--D:'Barlow Condensed',sans-serif;--B:'Barlow',sans-serif;--SUCCESS:#00c864;--ERROR:#ff4444;--PENDING:#ffaa00;--INFO:#48a0ff}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+body{background:var(--BG);color:var(--TEXT);font-family:var(--B);min-height:100vh}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#222;border-radius:2px}
+
+/* ─── LAYOUT ─── */
+.dashboard{display:flex;min-height:100vh}
+
+/* ─── SIDEBAR ─── */
+.sidebar{width:260px;background:#0a0a0a;border-right:1px solid var(--BORDER);display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:100}
+.sidebar-header{padding:20px 24px;border-bottom:1px solid var(--BORDER)}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-box{width:38px;height:38px;background:var(--Y);display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:22px;font-weight:900;color:#000}
+.logo-text{font-family:var(--D);font-size:20px;font-weight:900;color:#fff;letter-spacing:1px}
+
+.sidebar-nav{flex:1;padding:20px 12px;overflow-y:auto}
+.nav-section{margin-bottom:24px}
+.nav-section-title{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#555;padding:0 12px;margin-bottom:8px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px;cursor:pointer;transition:all .2s;color:var(--MUTED);text-decoration:none;position:relative}
+.nav-item:hover{background:rgba(255,255,255,.03);color:#fff}
+.nav-item.active{background:rgba(255,195,0,.08);color:var(--Y)}
+.nav-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--Y)}
+.nav-item .icon{font-size:18px;width:24px;text-align:center}
+.nav-item .label{font-size:13px;font-weight:500}
+.nav-item .badge{margin-left:auto;background:var(--ERROR);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
+
+.sidebar-footer{padding:16px;border-top:1px solid var(--BORDER)}
+.user-card{display:flex;align-items:center;gap:12px;padding:12px;background:var(--CARD);border:1px solid var(--BORDER)}
+.user-avatar{width:40px;height:40px;background:var(--Y);display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:18px;font-weight:900;color:#000}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:13px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-role{font-size:10px;color:var(--Y);text-transform:uppercase;letter-spacing:1px}
+.logout-btn{background:none;border:none;color:var(--MUTED);cursor:pointer;font-size:16px;padding:8px;transition:color .2s}
+.logout-btn:hover{color:var(--ERROR)}
+
+/* ─── MAIN CONTENT ─── */
+.main-content{flex:1;margin-left:260px;padding:32px 40px;min-height:100vh}
+
+/* ─── HEADER ─── */
+.page-header{margin-bottom:32px}
+.page-title{font-family:var(--D);font-size:36px;font-weight:900;text-transform:uppercase;color:#fff;letter-spacing:1px}
+.page-title span{color:var(--Y)}
+.page-subtitle{font-size:14px;color:var(--MUTED);margin-top:6px}
+
+/* ─── STATS GRID ─── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
+.stat-card{background:var(--CARD);border:1px solid var(--BORDER);padding:24px;transition:all .2s}
+.stat-card:hover{border-color:rgba(255,195,0,.3)}
+.stat-card.highlight{border-color:var(--Y);background:linear-gradient(135deg,rgba(255,195,0,.08) 0%,transparent 100%)}
+.stat-card.pending{border-color:var(--PENDING);background:linear-gradient(135deg,rgba(255,170,0,.08) 0%,transparent 100%)}
+.stat-card.success{border-color:var(--SUCCESS);background:linear-gradient(135deg,rgba(0,200,100,.08) 0%,transparent 100%)}
+.stat-icon{font-size:24px;margin-bottom:12px}
+.stat-value{font-family:var(--D);font-size:42px;font-weight:900;line-height:1}
+.stat-card.highlight .stat-value{color:var(--Y)}
+.stat-card.pending .stat-value{color:var(--PENDING)}
+.stat-card.success .stat-value{color:var(--SUCCESS)}
+.stat-label{font-size:11px;color:var(--MUTED);text-transform:uppercase;letter-spacing:2px;margin-top:6px}
+.stat-detail{font-size:11px;color:var(--MUTED);margin-top:8px}
+
+/* ─── SPINNER ─── */
+.spin{width:16px;height:16px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite;display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulsing{0%,100%{opacity:.4}50%{opacity:1}}
+.pulsing{animation:pulsing 1.5s ease-in-out infinite}
+
+/* ─── SECTIONS ─── */
+.section{margin-bottom:32px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-title{font-family:var(--D);font-size:22px;font-weight:900;text-transform:uppercase;color:#fff;letter-spacing:.5px}
+.section-action{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--Y);text-decoration:none;cursor:pointer}
+.section-action:hover{text-decoration:underline}
+
+/* ─── REFERRAL CODE BOX ─── */
+.referral-box{background:var(--CARD);border:1px solid var(--BORDER);padding:28px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.referral-box .label{font-size:13px;color:var(--MUTED)}
+.referral-code{font-family:var(--D);font-size:28px;font-weight:900;color:var(--Y);letter-spacing:4px;padding:12px 24px;background:rgba(255,195,0,.08);border:2px dashed rgba(255,195,0,.3)}
+.referral-actions{display:flex;gap:10px;margin-left:auto}
+.btn-copy,.btn-share{padding:10px 20px;font-family:var(--D);font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.btn-copy{background:rgba(255,195,0,.1);border:1px solid rgba(255,195,0,.3);color:var(--Y)}
+.btn-copy:hover{background:var(--Y);color:#000}
+.btn-share{background:transparent;border:1px solid var(--BORDER);color:var(--MUTED)}
+.btn-share:hover{border-color:var(--Y);color:var(--Y)}
+
+/* ─── MESSAGES ─── */
+.messages-container{display:grid;grid-template-columns:1fr 1.5fr;gap:20px;min-height:400px}
+.messages-list{background:var(--CARD);border:1px solid var(--BORDER);overflow:hidden}
+.message-item{padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:all .15s;display:flex;gap:14px}
+.message-item:last-child{border-bottom:none}
+.message-item:hover{background:rgba(255,255,255,.02)}
+.message-item.active{background:rgba(255,195,0,.05);border-left:3px solid var(--Y)}
+.message-item.unread{background:rgba(255,195,0,.03)}
+.message-item.unread .message-title{color:#fff;font-weight:700}
+.message-icon{width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.message-icon.reward{background:rgba(0,200,100,.15)}
+.message-icon.system{background:rgba(255,195,0,.15)}
+.message-icon.alert{background:rgba(255,68,68,.15)}
+.message-icon.info{background:rgba(72,160,255,.15)}
+.message-content{flex:1;min-width:0}
+.message-header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.message-title{font-size:13px;color:var(--MUTED);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.message-dot{width:8px;height:8px;background:var(--Y);border-radius:50%;flex-shrink:0}
+.message-preview{font-size:11px;color:#666;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.message-time{font-size:10px;color:#555;margin-top:6px}
+
+.message-detail{background:var(--CARD);border:1px solid var(--BORDER);padding:28px;display:flex;flex-direction:column}
+.message-detail-header{display:flex;align-items:flex-start;gap:16px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--BORDER)}
+.message-detail-icon{width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.message-detail-info h3{font-family:var(--D);font-size:20px;font-weight:900;text-transform:uppercase;color:#fff;margin-bottom:4px}
+.message-detail-info p{font-size:11px;color:var(--MUTED)}
+.message-amount{background:rgba(0,200,100,.1);border:1px solid rgba(0,200,100,.25);padding:20px;text-align:center;margin-bottom:20px}
+.message-amount-value{font-family:var(--D);font-size:36px;font-weight:900;color:var(--SUCCESS)}
+.message-amount-label{font-size:10px;color:var(--MUTED);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.message-body{font-size:14px;color:var(--MUTED);line-height:1.8;flex:1}
+.message-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#555;text-align:center}
+.message-empty-icon{font-size:48px;margin-bottom:16px;opacity:.3}
+.message-empty-text{font-size:14px}
+
+/* ─── ACTIVITY ─── */
+.activity-list{background:var(--CARD);border:1px solid var(--BORDER)}
+.activity-item{display:flex;align-items:center;gap:16px;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.04)}
+.activity-item:last-child{border-bottom:none}
+.activity-icon{width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.activity-icon.pending{background:rgba(255,170,0,.15)}
+.activity-icon.success{background:rgba(0,200,100,.15)}
+.activity-icon.bonus{background:rgba(255,195,0,.15)}
+.activity-info{flex:1}
+.activity-title{font-size:13px;color:#fff}
+.activity-time{font-size:11px;color:#555;margin-top:2px}
+.activity-amount{text-align:right}
+.activity-value{font-family:var(--D);font-size:18px;font-weight:900}
+.activity-value.pending{color:var(--PENDING)}
+.activity-value.success{color:var(--SUCCESS)}
+.activity-status{font-size:9px;font-weight:700;padding:3px 8px;text-transform:uppercase;letter-spacing:1px;margin-top:4px;display:inline-block}
+.activity-status.pending{background:rgba(255,170,0,.15);color:var(--PENDING);border:1px solid rgba(255,170,0,.3)}
+.activity-status.success{background:rgba(0,200,100,.15);color:var(--SUCCESS);border:1px solid rgba(0,200,100,.3)}
+
+/* ─── TABS ─── */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--BORDER);margin-bottom:24px}
+.tab{padding:14px 24px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--MUTED);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.tab:hover{color:#fff}
+.tab.active{color:var(--Y);border-bottom-color:var(--Y)}
+
+/* ─── PAGE VIEWS ─── */
+.page-view{display:none}
+.page-view.active{display:block}
+
+/* ─── WITHDRAW SECTION ─── */
+.withdraw-card{background:var(--CARD);border:1px solid var(--BORDER);padding:32px;max-width:500px}
+.withdraw-balance{text-align:center;padding:24px;background:rgba(0,200,100,.08);border:1px solid rgba(0,200,100,.2);margin-bottom:24px}
+.withdraw-balance-label{font-size:11px;color:var(--MUTED);text-transform:uppercase;letter-spacing:1px}
+.withdraw-balance-value{font-family:var(--D);font-size:48px;font-weight:900;color:var(--SUCCESS);margin-top:8px}
+.withdraw-form .form-group{margin-bottom:16px}
+.form-label{display:block;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);margin-bottom:6px}
+.form-input{width:100%;background:#0a0a0a;border:1px solid var(--BORDER);padding:13px 16px;color:var(--TEXT);font-family:var(--B);font-size:14px;outline:none;transition:all .2s}
+.form-input:focus{border-color:var(--Y)}
+.form-select{width:100%;background:#0a0a0a;border:1px solid var(--BORDER);padding:13px 16px;color:var(--TEXT);font-family:var(--B);font-size:14px;outline:none;appearance:none;cursor:pointer}
+.btn-withdraw{width:100%;padding:16px;background:var(--SUCCESS);border:none;color:#fff;font-family:var(--D);font-size:18px;font-weight:900;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;margin-top:16px}
+.btn-withdraw:hover{background:#00a854}
+.btn-withdraw:disabled{opacity:.5;cursor:not-allowed}
+.withdraw-note{font-size:11px;color:var(--MUTED);margin-top:16px;line-height:1.6}
+
+/* ─── SETTINGS ─── */
+.settings-section{background:var(--CARD);border:1px solid var(--BORDER);padding:28px;margin-bottom:20px}
+.settings-section h3{font-family:var(--D);font-size:18px;font-weight:900;text-transform:uppercase;color:#fff;margin-bottom:20px}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.settings-row:last-child{border-bottom:none}
+.settings-row-info .title{font-size:13px;color:#fff}
+.settings-row-info .desc{font-size:11px;color:var(--MUTED);margin-top:2px}
+.toggle{width:44px;height:24px;background:#333;border-radius:12px;position:relative;cursor:pointer;transition:background .2s}
+.toggle.on{background:var(--SUCCESS)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .2s}
+.toggle.on::after{transform:translateX(20px)}
+.btn-danger{padding:10px 20px;background:transparent;border:1px solid var(--ERROR);color:var(--ERROR);font-family:var(--D);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.btn-danger:hover{background:var(--ERROR);color:#fff}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:1100px){
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .messages-container{grid-template-columns:1fr}
+  .message-detail{display:none}
+}
+@media(max-width:800px){
+  .sidebar{transform:translateX(-100%);transition:transform .3s}
+  .sidebar.open{transform:translateX(0)}
+  .main-content{margin-left:0;padding:20px}
+  .mobile-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:#0a0a0a;border-bottom:1px solid var(--BORDER);position:sticky;top:0;z-index:50}
+  .mobile-menu-btn{background:none;border:none;color:#fff;font-size:24px;cursor:pointer}
+  .referral-box{flex-direction:column;text-align:center}
+  .referral-actions{margin-left:0}
+}
+@media(min-width:801px){
+  .mobile-header{display:none}
+  .mobile-overlay{display:none !important}
+}
+
+.mobile-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99;display:none}
+.mobile-overlay.open{display:block}
+</style>
+</head>
+<body>
+
+<!-- MOBILE HEADER -->
+<div class="mobile-header">
+  <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+  <a href="index.html" class="logo">
+    <div class="logo-box">C</div>
+    <span class="logo-text">CUE</span>
+  </a>
+  <div style="width:40px"></div>
+</div>
+<div class="mobile-overlay" id="mobileOverlay" onclick="toggleSidebar()"></div>
+
+<div class="dashboard">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="index.html" class="logo">
+        <div class="logo-box">C</div>
+        <span class="logo-text">CUE</span>
+      </a>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Menu</div>
+        <a class="nav-item active" onclick="showPage('overview')">
+          <span class="icon">📊</span>
+          <span class="label">Vue d'ensemble</span>
+        </a>
+        <a class="nav-item" onclick="showPage('matching')">
+          <span class="icon">🎯</span>
+          <span class="label">AI Matching</span>
+        </a>
+        <a class="nav-item" onclick="showPage('contracts')">
+          <span class="icon">📋</span>
+          <span class="label">Contracts</span>
+        </a>
+        <a class="nav-item" onclick="showPage('messages')">
+          <span class="icon">📬</span>
+          <span class="label">Messages</span>
+          <span class="badge" id="unreadBadge">2</span>
+        </a>
+        <a class="nav-item" onclick="showPage('referrals')">
+          <span class="icon">👥</span>
+          <span class="label">Parrainages</span>
+        </a>
+        <a class="nav-item" onclick="showPage('withdraw')">
+          <span class="icon">💳</span>
+          <span class="label">Retirer</span>
+        </a>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-section-title">Compte</div>
+        <a class="nav-item" onclick="showPage('settings')">
+          <span class="icon">⚙️</span>
+          <span class="label">Paramètres</span>
+        </a>
+        <a class="nav-item" href="index.html">
+          <span class="icon">🏠</span>
+          <span class="label">Retour au site</span>
+        </a>
+      </div>
+    </nav>
+    
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="userAvatar">JD</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">Jean Dupont</div>
+          <div class="user-role" id="userRole">DJ</div>
+        </div>
+        <button class="logout-btn" onclick="logout()" title="Déconnexion">🚪</button>
+      </div>
+    </div>
+  </aside>
+  
+  <!-- MAIN -->
+  <main class="main-content">
+    
+    <!-- OVERVIEW PAGE -->
+    <div class="page-view active" id="page-overview">
+      <div class="page-header">
+        <h1 class="page-title">Bonjour, <span id="greetingName">Jean</span> 👋</h1>
+        <p class="page-subtitle">Voici un aperçu de ton activité</p>
+      </div>
+      
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card success">
+          <div class="stat-icon">💰</div>
+          <div class="stat-value" id="availableBalance">0.00€</div>
+          <div class="stat-label">Solde disponible</div>
+          <div class="stat-detail" id="validatedCount">0 parrainage(s) validé(s)</div>
+        </div>
+        <div class="stat-card pending">
+          <div class="stat-icon">⏳</div>
+          <div class="stat-value" id="pendingBalance">15.50€</div>
+          <div class="stat-label">En attente</div>
+          <div class="stat-detail" id="pendingCount">2 parrainage(s) en cours</div>
+        </div>
+        <div class="stat-card highlight">
+          <div class="stat-icon">🎯</div>
+          <div class="stat-value" id="totalEarned">15.50€</div>
+          <div class="stat-label">Total gagné</div>
+          <div class="stat-detail" id="totalReferrals">2 parrainage(s) au total</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value" id="referralCount">2</div>
+          <div class="stat-label">Parrainages</div>
+          <div class="stat-detail">Ce mois-ci</div>
+        </div>
+      </div>
+      
+      <!-- Referral Code -->
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title">Ton code de parrainage</h2>
+        </div>
+        <div class="referral-box">
+          <div class="label">Partage ce code et gagne jusqu'à 50€ par parrainage !</div>
+          <div class="referral-code" id="myReferralCode">REFJE1234</div>
+          <div class="referral-actions">
+            <button class="btn-copy" onclick="copyCode()">📋 Copier</button>
+            <button class="btn-share" onclick="shareCode()">📤 Partager</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Recent Activity -->
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title">Activité récente</h2>
+          <a class="section-action" onclick="showPage('referrals')">Voir tout →</a>
+        </div>
+        <div class="activity-list" id="activityList">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+    </div>
+    
+    <!-- AI MATCHING PAGE -->
+    <div class="page-view" id="page-matching">
+      <div class="page-header">
+        <h1 class="page-title">🎯 AI <span>Matching</span></h1>
+        <p class="page-subtitle">Décris ton événement et laisse notre IA sélectionner les meilleurs profils</p>
+      </div>
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px">
+        <div style="background:var(--CARD);border:1px solid var(--BORDER);padding:32px">
+          <label style="display:block;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);margin-bottom:6px">Event Type</label>
+          <select id="evType" style="width:100%;background:#000;border:1px solid var(--BORDER);padding:11px 14px;color:var(--TEXT);font-family:var(--B);font-size:13px;margin-bottom:14px;outline:none">
+            <option>Club Night</option><option>Wedding</option><option>Festival</option>
+            <option>Private Event</option><option>Corporate Event</option><option>Birthday Party</option>
+          </select>
+          
+          <label style="display:block;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);margin-bottom:6px">Vibe / Atmosphere</label>
+          <input id="evVibe" placeholder="House & Techno, underground vibes..." style="width:100%;background:#000;border:1px solid var(--BORDER);padding:11px 14px;color:var(--TEXT);font-family:var(--B);font-size:13px;margin-bottom:14px;outline:none"/>
+          
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <label style="display:block;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);margin-bottom:6px">Budget (€)</label>
+              <select id="evBudget" style="width:100%;background:#000;border:1px solid var(--BORDER);padding:11px 14px;color:var(--TEXT);font-family:var(--B);font-size:13px;margin-bottom:14px;outline:none">
+                <option>Less than 300€</option><option>300€ - 600€</option><option>600€ - 1000€</option><option>1000€+</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);margin-bottom:6px">City</label>
+              <input id="evCity" placeholder="Paris, London..." style="width:100%;background:#000;border:1px solid var(--BORDER);padding:11px 14px;color:var(--TEXT);font-family:var(--B);font-size:13px;outline:none"/>
+            </div>
+          </div>
+          
+          <label style="display:block;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);margin-bottom:6px;margin-top:14px">Additional Details</label>
+          <input id="evDetails" placeholder="300 people, festive atmosphere, ending at 5am..." style="width:100%;background:#000;border:1px solid var(--BORDER);padding:11px 14px;color:var(--TEXT);font-family:var(--B);font-size:13px;margin-bottom:14px;outline:none"/>
+          
+          <button id="matchBtn" onclick="runMatching()" style="width:100%;padding:14px;background:var(--Y);border:none;color:#000;font-family:var(--D);font-size:18px;font-weight:900;letter-spacing:3px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
+            <span id="matchSpin" class="spin"></span>
+            <span id="matchLabel">⚡ FIND DJs →</span>
+          </button>
+        </div>
+        
+        <div id="matchResults" style="background:var(--CARD);border:1px solid var(--BORDER);padding:32px;min-height:400px">
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px">
+            <div style="font-size:40px;opacity:.15">🎧</div>
+            <div style="font-family:var(--D);font-size:20px;font-weight:900;text-transform:uppercase;color:#fff;opacity:.15">Your DJs will appear here</div>
+            <div style="font-size:12px;color:#aaa;text-align:center;max-width:220px;line-height:1.7">Fill in the form and launch matching to see AI recommendations.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- CONTRACTS PAGE -->
+    <div class="page-view" id="page-contracts">
+      <div class="page-header">
+        <h1 class="page-title">📋 AI <span>Contracts</span></h1>
+        <p class="page-subtitle">Génère un contrat professionnel complet en 30 secondes</p>
+      </div>
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px">
+        <div style="background:var(--CARD);border:1px solid var(--BORDER);padding:32px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <label style="display:block;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);margin-bottom:6px">DJ Name *</label>
+              <input id="cDJ" placeholder="DJ Maxime" style="width:100%;background:#000;border:1px solid var(--BORDER);padding:11px 14px;color:var(--TEXT);font-family:var(--B);font-size:13px;margin-bottom:14px;outline:none"/>
+            </div>
+            <div>
+              <label style="display:block;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);margin-bottom:6px">Venue / Organiser *</label>
+              <input id="cVenue" placeholder="Club Le Rex" style="width:100%;background:#000;border:1px solid var(--BORDER);padding:11px 14px;color:var(--TEXT);font-family:var(--B);font-size:13px;margin-bottom:14px;outline:none"/>
+            </div>
+          </div>
+          
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <label style="display:block;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);margin-bottom:6px">Date</label>
+              <input type="date" id="cDate" style="width:100%;background:#000;border:1px solid var(--BORDER);padding:11px 14px;color:var(--TEXT);font-family:var(--B);font-size:13px;margin-bottom:14px;outline:none"/>
+            </div>
+            <div>
+              <label style="display:block;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);margin-bottom:6px">Fee (€)</label>
+              <input type="number" id="cFee" placeholder="800" style="width:100%;background:#000;border:1px solid var(--BORDER);padding:11px 14px;color:var(--TEXT);font-family:var(--B);font-size:13px;margin-bottom:14px;outline:none"/>
+            </div>
+          </div>
+          
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <label style="display:block;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);margin-bottom:6px">Start</label>
+              <input type="time" id="cStart" value="23:00" style="width:100%;background:#000;border:1px solid var(--BORDER);padding:11px 14px;color:var(--TEXT);font-family:var(--B);font-size:13px;margin-bottom:14px;outline:none"/>
+            </div>
+            <div>
+              <label style="display:block;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);margin-bottom:6px">End</label>
+              <input type="time" id="cEnd" value="05:00" style="width:100%;background:#000;border:1px solid var(--BORDER);padding:11px 14px;color:var(--TEXT);font-family:var(--B);font-size:13px;margin-bottom:14px;outline:none"/>
+            </div>
+          </div>
+          
+          <label style="display:block;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);margin-bottom:6px">Technical Rider</label>
+          <input id="cRider" placeholder="2x CDJ-2000 NXS2, Pioneer DJM-900..." style="width:100%;background:#000;border:1px solid var(--BORDER);padding:11px 14px;color:var(--TEXT);font-family:var(--B);font-size:13px;margin-bottom:14px;outline:none"/>
+          
+          <label style="display:block;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);margin-bottom:6px">Special Clauses</label>
+          <input id="cClauses" placeholder="Dressing room required, access 1h before..." style="width:100%;background:#000;border:1px solid var(--BORDER);padding:11px 14px;color:var(--TEXT);font-family:var(--B);font-size:13px;margin-bottom:14px;outline:none"/>
+          
+          <button id="contractBtn" onclick="runContract()" style="width:100%;padding:14px;background:var(--Y);border:none;color:#000;font-family:var(--D);font-size:18px;font-weight:900;letter-spacing:3px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
+            <span id="contractSpin" class="spin"></span>
+            <span id="contractLabel">📋 GENERATE CONTRACT →</span>
+          </button>
+        </div>
+        
+        <div>
+          <div id="contractOutput" style="background:#050505;border:1px solid var(--BORDER);min-height:400px;font-size:13px;color:#ccc;line-height:1.8;position:relative;overflow:hidden">
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:400px;gap:14px">
+              <div style="font-size:40px;opacity:.15">📋</div>
+              <div style="font-family:var(--D);font-size:20px;font-weight:900;text-transform:uppercase;color:#fff;opacity:.15">Your contract here</div>
+              <div style="font-size:12px;color:#aaa;text-align:center;max-width:220px;line-height:1.7">Fill in the information and generate your complete professional contract.</div>
+            </div>
+          </div>
+          <div id="contractToolbar" style="display:none;gap:10px;margin-top:14px">
+            <button onclick="copyContract()" id="copyBtn" style="padding:8px 18px;font-family:var(--D);font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;background:rgba(255,195,0,.1);color:var(--Y);border:1px solid rgba(255,195,0,.25)">📋 Copy</button>
+            <button onclick="window.print()" style="padding:8px 18px;font-family:var(--D);font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;background:transparent;color:var(--MUTED);border:1px solid var(--BORDER)">🖨 Print</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- MESSAGES PAGE -->
+    <div class="page-view" id="page-messages">
+      <div class="page-header">
+        <h1 class="page-title">Messages</h1>
+        <p class="page-subtitle" id="messagesSubtitle">2 message(s) non lu(s)</p>
+      </div>
+      
+      <div class="messages-container">
+        <div class="messages-list" id="messagesList">
+          <!-- Filled by JS -->
+        </div>
+        <div class="message-detail" id="messageDetail">
+          <div class="message-empty">
+            <div class="message-empty-icon">📭</div>
+            <div class="message-empty-text">Sélectionne un message</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- REFERRALS PAGE -->
+    <div class="page-view" id="page-referrals">
+      <div class="page-header">
+        <h1 class="page-title">Mes Parrainages</h1>
+        <p class="page-subtitle">Historique de tes parrainages</p>
+      </div>
+      
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat-card pending">
+          <div class="stat-value">2</div>
+          <div class="stat-label">En attente</div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-value">0</div>
+          <div class="stat-label">Validés</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">2</div>
+          <div class="stat-label">Total</div>
+        </div>
+      </div>
+      
+      <div class="section" style="margin-top:32px">
+        <div class="section-header">
+          <h2 class="section-title">Historique</h2>
+        </div>
+        <div class="activity-list" id="referralsHistory">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+    </div>
+    
+    <!-- WITHDRAW PAGE -->
+    <div class="page-view" id="page-withdraw">
+      <div class="page-header">
+        <h1 class="page-title">Retirer mes gains</h1>
+        <p class="page-subtitle">Transfère ton solde disponible</p>
+      </div>
+      
+      <div class="withdraw-card">
+        <div class="withdraw-balance">
+          <div class="withdraw-balance-label">Solde disponible</div>
+          <div class="withdraw-balance-value" id="withdrawAvailable">0.00€</div>
+        </div>
+        
+        <form class="withdraw-form" onsubmit="requestWithdraw(event)">
+          <div class="form-group">
+            <label class="form-label">Montant à retirer</label>
+            <input type="number" class="form-input" id="withdrawAmount" placeholder="0.00" min="10" step="0.01">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Méthode de paiement</label>
+            <select class="form-select" id="withdrawMethod">
+              <option value="iban">Virement bancaire (IBAN)</option>
+              <option value="paypal">PayPal</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">IBAN / Email PayPal</label>
+            <input type="text" class="form-input" id="withdrawAccount" placeholder="FR76 XXXX XXXX XXXX">
+          </div>
+          <button type="submit" class="btn-withdraw" id="withdrawBtn" disabled>
+            Demander le retrait
+          </button>
+        </form>
+        
+        <div class="withdraw-note">
+          💡 Minimum de retrait : 10€. Les virements sont traités sous 2-5 jours ouvrés. 
+          Le solde en attente sera disponible après validation de tes parrainages.
+        </div>
+      </div>
+    </div>
+    
+    <!-- SETTINGS PAGE -->
+    <div class="page-view" id="page-settings">
+      <div class="page-header">
+        <h1 class="page-title">Paramètres</h1>
+        <p class="page-subtitle">Gère ton compte</p>
+      </div>
+      
+      <div class="settings-section">
+        <h3>Notifications</h3>
+        <div class="settings-row">
+          <div class="settings-row-info">
+            <div class="title">Notifications email</div>
+            <div class="desc">Recevoir des emails pour les nouveaux parrainages</div>
+          </div>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-row-info">
+            <div class="title">Notifications SMS</div>
+            <div class="desc">Recevoir des SMS pour les paiements</div>
+          </div>
+          <div class="toggle" onclick="this.classList.toggle('on')"></div>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h3>Sécurité</h3>
+        <div class="settings-row">
+          <div class="settings-row-info">
+            <div class="title">Changer le mot de passe</div>
+            <div class="desc">Modifie ton mot de passe actuel</div>
+          </div>
+          <button class="btn-share" onclick="alert('Fonctionnalité bientôt disponible')">Modifier</button>
+        </div>
+        <div class="settings-row">
+          <div class="settings-row-info">
+            <div class="title">Authentification 2FA</div>
+            <div class="desc">Ajoute une couche de sécurité supplémentaire</div>
+          </div>
+          <div class="toggle" onclick="this.classList.toggle('on')"></div>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h3>Zone dangereuse</h3>
+        <div class="settings-row">
+          <div class="settings-row-info">
+            <div class="title">Supprimer mon compte</div>
+            <div class="desc">Cette action est irréversible</div>
+          </div>
+          <button class="btn-danger" onclick="confirmDelete()">Supprimer</button>
+        </div>
+      </div>
+    </div>
+    
+  </main>
+</div>
+
+<script>
+// Check auth
+document.addEventListener('DOMContentLoaded', () => {
+  if (localStorage.getItem('cue_logged_in') !== 'true') {
+    window.location.href = 'login.html';
+    return;
+  }
+  loadUserData();
+  loadMessages();
+  loadActivity();
+});
+
+// User data
+let userData = {};
+let balance = {
+  available: 0,
+  pending: 15.50,
+  total: 15.50,
+  referrals: { pending: 2, validated: 0, total: 2 }
+};
+
+// Messages
+let messages = [
+  { id: 1, type: 'system', title: 'Bienvenue sur CUE !', content: 'Ton compte a été créé avec succès. Commence à parrainer tes amis pour gagner de l\'argent ! Partage ton code de parrainage unique et reçois jusqu\'à 50€ pour chaque ami qui s\'inscrit et valide son compte.', date: new Date().toISOString(), read: false },
+  { id: 2, type: 'reward', title: 'Bonus de bienvenue', content: 'Félicitations ! Tu as reçu 5€ de bonus de bienvenue. Ce montant sera disponible après ton premier parrainage validé. N\'attends plus, partage ton code !', date: new Date().toISOString(), read: false, amount: 5 }
+];
+
+// Activity
+let activity = [
+  { id: 1, name: 'Marie L.', action: 'a utilisé ton code', status: 'pending', amount: 7.50, time: 'Il y a 2h' },
+  { id: 2, name: 'Thomas D.', action: 'a utilisé ton code', status: 'pending', amount: 8.00, time: 'Hier' },
+  { id: 3, name: 'Bonus de bienvenue', action: '', status: 'pending', amount: 5.00, time: 'À l\'inscription', icon: '🎁' }
+];
+
+function loadUserData() {
+  const stored = localStorage.getItem('cue_user');
+  if (stored) {
+    userData = JSON.parse(stored);
+  } else {
+    userData = {
+      firstName: 'Utilisateur',
+      lastName: '',
+      email: 'user@example.com',
+      userType: 'dj',
+      referralCodeOwn: 'REFUS' + Date.now().toString().slice(-4)
+    };
+  }
+  
+  // Update UI
+  const initials = (userData.firstName?.[0] || 'U') + (userData.lastName?.[0] || '');
+  document.getElementById('userAvatar').textContent = initials.toUpperCase();
+  document.getElementById('userName').textContent = `${userData.firstName} ${userData.lastName || ''}`.trim();
+  document.getElementById('userRole').textContent = userData.userType === 'venue' ? 'Venue' : 'DJ';
+  document.getElementById('greetingName').textContent = userData.firstName;
+  document.getElementById('myReferralCode').textContent = userData.referralCodeOwn || 'REFXXXXXX';
+  
+  // Update balances
+  document.getElementById('availableBalance').textContent = balance.available.toFixed(2) + '€';
+  document.getElementById('pendingBalance').textContent = balance.pending.toFixed(2) + '€';
+  document.getElementById('totalEarned').textContent = balance.total.toFixed(2) + '€';
+  document.getElementById('validatedCount').textContent = `${balance.referrals.validated} parrainage(s) validé(s)`;
+  document.getElementById('pendingCount').textContent = `${balance.referrals.pending} parrainage(s) en cours`;
+  document.getElementById('totalReferrals').textContent = `${balance.referrals.total} parrainage(s) au total`;
+  document.getElementById('referralCount').textContent = balance.referrals.total;
+  document.getElementById('withdrawAvailable').textContent = balance.available.toFixed(2) + '€';
+  document.getElementById('withdrawBtn').disabled = balance.available < 10;
+}
+
+function loadMessages() {
+  const list = document.getElementById('messagesList');
+  const unread = messages.filter(m => !m.read).length;
+  
+  document.getElementById('unreadBadge').textContent = unread;
+  document.getElementById('unreadBadge').style.display = unread > 0 ? 'block' : 'none';
+  document.getElementById('messagesSubtitle').textContent = unread > 0 ? `${unread} message(s) non lu(s)` : 'Tous tes messages sont lus';
+  
+  list.innerHTML = messages.map(m => `
+    <div class="message-item ${m.read ? '' : 'unread'}" onclick="showMessage(${m.id})">
+      <div class="message-icon ${m.type === 'reward' ? 'reward' : m.type === 'alert' ? 'alert' : 'system'}">
+        ${m.type === 'reward' ? '💰' : m.type === 'alert' ? '🚨' : '📢'}
+      </div>
+      <div class="message-content">
+        <div class="message-header">
+          <div class="message-title">${m.title}</div>
+          ${m.read ? '' : '<div class="message-dot"></div>'}
+        </div>
+        <div class="message-preview">${m.content.substring(0, 50)}...</div>
+        <div class="message-time">${formatDate(m.date)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showMessage(id) {
+  const msg = messages.find(m => m.id === id);
+  if (!msg) return;
+  
+  // Mark as read
+  msg.read = true;
+  loadMessages();
+  
+  // Update active state
+  document.querySelectorAll('.message-item').forEach(el => el.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  
+  // Show detail
+  const detail = document.getElementById('messageDetail');
+  detail.innerHTML = `
+    <div class="message-detail-header">
+      <div class="message-detail-icon ${msg.type === 'reward' ? 'reward' : msg.type === 'alert' ? 'alert' : 'system'}">
+        ${msg.type === 'reward' ? '💰' : msg.type === 'alert' ? '🚨' : '📢'}
+      </div>
+      <div class="message-detail-info">
+        <h3>${msg.title}</h3>
+        <p>${formatDate(msg.date, true)}</p>
+      </div>
+    </div>
+    ${msg.amount ? `
+      <div class="message-amount">
+        <div class="message-amount-value">+${msg.amount.toFixed(2)}€</div>
+        <div class="message-amount-label">Montant</div>
+      </div>
+    ` : ''}
+    <div class="message-body">${msg.content}</div>
+  `;
+}
+
+function loadActivity() {
+  const list = document.getElementById('activityList');
+  const historyList = document.getElementById('referralsHistory');
+  
+  const html = activity.map(a => `
+    <div class="activity-item">
+      <div class="activity-icon ${a.status}">
+        ${a.icon || '👤'}
+      </div>
+      <div class="activity-info">
+        <div class="activity-title">${a.name} ${a.action}</div>
+        <div class="activity-time">${a.time}</div>
+      </div>
+      <div class="activity-amount">
+        <div class="activity-value ${a.status}">+${a.amount.toFixed(2)}€</div>
+        <div class="activity-status ${a.status}">${a.status === 'pending' ? 'En attente' : 'Validé'}</div>
+      </div>
+    </div>
+  `).join('');
+  
+  list.innerHTML = html;
+  historyList.innerHTML = html;
+}
+
+function formatDate(dateStr, full = false) {
+  const date = new Date(dateStr);
+  if (full) {
+    return date.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  }
+  return date.toLocaleDateString('fr-FR');
+}
+
+// Navigation
+function showPage(page) {
+  document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  
+  document.getElementById('page-' + page).classList.add('active');
+  event?.currentTarget?.classList.add('active');
+  
+  // Close mobile sidebar
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('mobileOverlay').classList.remove('open');
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('mobileOverlay').classList.toggle('open');
+}
+
+// Actions
+function copyCode() {
+  const code = userData.referralCodeOwn || 'REFXXXXXX';
+  navigator.clipboard?.writeText(code);
+  const btn = event.currentTarget;
+  btn.textContent = '✓ Copié !';
+  btn.style.background = 'var(--SUCCESS)';
+  btn.style.color = '#fff';
+  btn.style.borderColor = 'var(--SUCCESS)';
+  setTimeout(() => {
+    btn.textContent = '📋 Copier';
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.style.borderColor = '';
+  }, 2000);
+}
+
+function shareCode() {
+  const code = userData.referralCodeOwn || 'REFXXXXXX';
+  const text = `Rejoins CUE avec mon code ${code} et gagne un bonus ! 🎧 https://cuedj.eu/inscription.html?ref=${code}`;
+  
+  if (navigator.share) {
+    navigator.share({ title: 'Rejoins CUE', text: text });
+  } else {
+    navigator.clipboard?.writeText(text);
+    alert('Lien copié !');
+  }
+}
+
+function requestWithdraw(e) {
+  e.preventDefault();
+  alert('Demande de retrait envoyée ! Tu recevras un email de confirmation.');
+}
+
+function confirmDelete() {
+  if (confirm('Es-tu sûr de vouloir supprimer ton compte ? Cette action est irréversible.')) {
+    localStorage.removeItem('cue_user');
+    localStorage.removeItem('cue_logged_in');
+    window.location.href = 'index.html';
+  }
+}
+
+function logout() {
+  localStorage.removeItem('cue_logged_in');
+  window.location.href = 'index.html';
+}
+
+// ═══════════════════════════════════════════════════════
+// AI MATCHING & CONTRACTS FUNCTIONS
+// ═══════════════════════════════════════════════════════
+
+const API_BASE = '/.netlify/functions';
+
+async function runMatching() {
+  const btn = document.getElementById('matchBtn');
+  const spin = document.getElementById('matchSpin');
+  const lab = document.getElementById('matchLabel');
+  const out = document.getElementById('matchResults');
+  
+  btn.disabled = true;
+  spin.style.display = 'inline-block';
+  lab.textContent = 'Searching...';
+  out.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px"><div style="font-size:40px" class="pulsing">🎧</div><div style="font-family:var(--D);font-size:20px;font-weight:900;text-transform:uppercase;color:var(--Y)">Analysing...</div></div>';
+  
+  const payload = {
+    type: document.getElementById('evType').value,
+    vibe: document.getElementById('evVibe').value || 'Non précisé',
+    budget: document.getElementById('evBudget').value,
+    city: document.getElementById('evCity').value || 'Non précisée',
+    details: document.getElementById('evDetails').value || 'Aucun'
+  };
+  
+  try {
+    const res = await fetch(`${API_BASE}/match`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Erreur serveur');
+    
+    const djs = data.djs;
+    out.innerHTML = '<div style="display:flex;flex-direction:column;gap:16px">' + djs.map(d => `
+      <div style="background:#0a0a0a;border:1px solid var(--BORDER);padding:22px;display:flex;gap:18px;align-items:flex-start">
+        <div style="width:52px;height:52px;background:var(--Y);display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:24px;font-weight:900;color:#000;flex-shrink:0">${d.name.split(' ').map(w => w[0]).join('').slice(0, 2)}</div>
+        <div style="flex:1">
+          <div style="font-family:var(--D);font-size:18px;font-weight:900;text-transform:uppercase;color:#fff;letter-spacing:.5px">${d.name}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+            ${d.tags.map(t => `<span style="font-size:9px;font-weight:700;padding:2px 8px;border:1px solid var(--Y);color:var(--Y);text-transform:uppercase;letter-spacing:1px">${t}</span>`).join('')}
+            <span style="font-size:9px;font-weight:700;padding:2px 8px;border:1px solid var(--BORDER);color:var(--MUTED);text-transform:uppercase;letter-spacing:1px">${d.price}</span>
+          </div>
+          <div style="font-size:12px;color:var(--MUTED);margin-top:8px;line-height:1.65">${d.bio}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-family:var(--D);font-size:22px;font-weight:900;color:var(--Y);line-height:1">${d.match}%</div>
+          <div style="font-size:9px;color:var(--MUTED);letter-spacing:1px;text-transform:uppercase">Match</div>
+          <button style="margin-top:10px;padding:6px 14px;font-size:11px;background:var(--Y);border:none;color:#000;font-family:var(--D);font-weight:900;letter-spacing:2px;text-transform:uppercase;cursor:pointer">BOOK</button>
+        </div>
+      </div>
+    `).join('') + '</div>';
+  } catch (e) {
+    out.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%"><div style="color:#ff4444;font-family:var(--D);font-size:18px">❌ ${e.message}</div></div>`;
+  }
+  
+  btn.disabled = false;
+  spin.style.display = 'none';
+  lab.textContent = '⚡ FIND DJs →';
+}
+
+let contractText = '';
+
+async function runContract() {
+  const dj = document.getElementById('cDJ').value.trim();
+  const venue = document.getElementById('cVenue').value.trim();
+  
+  if (!dj || !venue) {
+    alert('Le nom du DJ et du Venue sont requis.');
+    return;
+  }
+  
+  const btn = document.getElementById('contractBtn');
+  const spin = document.getElementById('contractSpin');
+  const lab = document.getElementById('contractLabel');
+  const out = document.getElementById('contractOutput');
+  const toolbar = document.getElementById('contractToolbar');
+  
+  btn.disabled = true;
+  spin.style.display = 'inline-block';
+  lab.textContent = 'Generating...';
+  toolbar.style.display = 'none';
+  out.innerHTML = '<div style="text-align:center;padding:40px;color:var(--Y)">⚡ Génération du contrat en cours...</div>';
+  
+  const payload = {
+    dj,
+    venue,
+    date: document.getElementById('cDate').value,
+    start: document.getElementById('cStart').value,
+    end: document.getElementById('cEnd').value,
+    fee: parseFloat(document.getElementById('cFee').value) || 0,
+    rider: document.getElementById('cRider').value,
+    clauses: document.getElementById('cClauses').value
+  };
+  
+  try {
+    const res = await fetch(`${API_BASE}/contract`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Erreur serveur');
+    
+    contractText = data.contract_text;
+    const text = contractText;
+    const dateVal = document.getElementById('cDate').value;
+    const feeVal = document.getElementById('cFee').value;
+    const startVal = document.getElementById('cStart').value;
+    const endVal = document.getElementById('cEnd').value;
+    const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+    
+    let html = '<div style="background:var(--Y);padding:18px 28px;display:flex;align-items:center;justify-content:space-between"><div><div style="font-family:var(--D);font-size:22px;font-weight:900;color:#000;letter-spacing:2px">CUE</div><div style="font-size:9px;color:rgba(0,0,0,.5);letter-spacing:1px;text-transform:uppercase;margin-top:2px">DJ Performance Contract</div></div><div style="text-align:right"><div style="font-size:10px;color:#000;font-weight:700">' + dj + ' x ' + venue + '</div><div style="font-size:9px;color:rgba(0,0,0,.5);margin-top:2px">' + (dateVal || 'Date TBC') + ' - ' + startVal + ' to ' + endVal + (feeVal ? ' - ' + feeVal + '€' : '') + '</div></div></div><div style="padding:28px">';
+    
+    var re = /###SECTION_(\d+):\s*([^#]+)###([\s\S]*?)(?=###SECTION_|\s*$)/g;
+    var m, found = false;
+    while ((m = re.exec(text)) !== null) {
+      found = true;
+      html += '<div style="margin-bottom:20px"><div style="font-family:var(--D);font-size:11px;font-weight:900;text-transform:uppercase;color:var(--Y);letter-spacing:3px;display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid rgba(255,195,0,.15)"><span style="background:var(--Y);color:#000;font-size:9px;font-weight:900;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0">' + m[1].trim() + '</span>' + m[2].trim() + '</div><p style="color:#ccc;line-height:1.9;margin-bottom:4px">' + m[3].trim().replace(/\n/g, '<br>') + '</p></div>';
+    }
+    if (!found) html += '<p style="color:#ccc">' + text.replace(/\n/g, '<br>') + '</p>';
+    html += '</div><div style="background:#0a0a0a;border-top:1px solid var(--BORDER);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;margin-top:8px"><span style="font-size:9px;color:#444;letter-spacing:1px;text-transform:uppercase">Generated by CUE AI - ' + today + '</span><span style="font-size:9px;color:var(--Y);letter-spacing:1px;text-transform:uppercase">OFFICIAL DOCUMENT</span></div>';
+    
+    out.innerHTML = html;
+    toolbar.style.display = 'flex';
+  } catch (e) {
+    out.innerHTML = `<div style="padding:20px;color:#ff4444">❌ ${e.message}</div>`;
+  }
+  
+  btn.disabled = false;
+  spin.style.display = 'none';
+  lab.textContent = '📋 GENERATE CONTRACT →';
+}
+
+function copyContract() {
+  navigator.clipboard?.writeText(contractText);
+  const btn = document.getElementById('copyBtn');
+  btn.textContent = '✓ Copied!';
+  btn.style.color = '#00c864';
+  setTimeout(() => {
+    btn.textContent = '📋 Copy';
+    btn.style.color = '';
+  }, 2000);
+}
+</script>
+
+</body>
+</html>

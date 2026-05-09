@@ -1,0 +1,3 @@
+        raise HTTPException(status_code=400, detail="Nom DJ et Venue 
+requis.")
+k

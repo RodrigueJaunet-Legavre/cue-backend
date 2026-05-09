@@ -1,0 +1,19 @@
+{
+  "items": [
+    {
+      "id": "QNA-001",
+      "q": "Comment créer un compte sur Cue ?",
+      "a": "Pour créer un compte sur Cue, clique sur le bouton 'S'inscrire' sur la page d'accueil, entre ton email et ton mot de passe, puis valide avec le lien envoyé dans ton email. Ton compte sera actif immédiatement après la vérification."
+    },
+    {
+      "id": "QNA-002",
+      "q": "Question générique 2 ?",
+      "a": "Ceci est une réponse longue pour la question 2, expliquant en détail la solution."
+    },
+    {
+      "id": "QNA-003",
+      "q": "Question générique 3 ?",
+      "a": "Ceci est une réponse longue pour la question 3, expliquant en détail la solution."
+    }
+  ]
+}

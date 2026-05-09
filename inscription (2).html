@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CUE — Inscription</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{--Y:#FFC300;--Y2:#FFD740;--BG:#080808;--CARD:#111;--BORDER:rgba(255,195,0,.13);--TEXT:#ddd;--MUTED:#bbb;--D:'Barlow Condensed',sans-serif;--B:'Barlow',sans-serif;--SUCCESS:#00c864;--ERROR:#ff4444;--PENDING:#ffaa00}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+body{background:var(--BG);color:var(--TEXT);font-family:var(--B);min-height:100vh;display:flex;flex-direction:column}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#222;border-radius:2px}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:14px 52px;background:rgba(8,8,8,.97);backdrop-filter:blur(18px);border-bottom:1px solid var(--BORDER)}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-box{width:38px;height:38px;background:var(--Y);display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:22px;font-weight:900;color:#000}
+.logo-text{font-family:var(--D);font-size:20px;font-weight:900;color:#fff;letter-spacing:1px}
+.nav-link{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--MUTED);text-decoration:none;transition:color .2s}
+.nav-link:hover{color:var(--Y)}
+
+main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px 20px 40px}
+.register-container{width:100%;max-width:480px}
+.register-box{background:var(--CARD);border:1px solid var(--BORDER);padding:44px 40px;position:relative}
+.register-box h1{font-family:var(--D);font-size:42px;font-weight:900;text-transform:uppercase;color:#fff;text-align:center;margin-bottom:6px;letter-spacing:1px}
+.register-box h1 span{color:var(--Y)}
+.register-subtitle{font-size:13px;color:var(--MUTED);text-align:center;margin-bottom:24px}
+
+.steps{display:flex;justify-content:center;gap:8px;margin-bottom:32px}
+.step{width:60px;height:4px;background:rgba(255,255,255,.1);transition:all .3s}
+.step.active{background:var(--Y)}
+.step.done{background:var(--SUCCESS)}
+
+.form-group{margin-bottom:16px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-label{display:block;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);margin-bottom:6px}
+.form-input{width:100%;background:#0a0a0a;border:1px solid var(--BORDER);padding:13px 16px;color:var(--TEXT);font-family:var(--B);font-size:14px;outline:none;transition:all .2s}
+.form-input:focus{border-color:var(--Y);background:rgba(255,195,0,.02)}
+.form-input::placeholder{color:#555}
+.form-input.error{border-color:var(--ERROR)}
+.form-error{font-size:11px;color:var(--ERROR);margin-top:5px;display:none}
+.form-error.show{display:block}
+.form-hint{font-size:11px;color:var(--MUTED);margin-top:5px}
+
+.type-selector{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+.type-option{padding:20px;border:1px solid var(--BORDER);background:#0a0a0a;cursor:pointer;transition:all .2s;text-align:center}
+.type-option:hover,.type-option.selected{border-color:var(--Y);background:rgba(255,195,0,.05)}
+.type-option .icon{font-size:32px;margin-bottom:8px}
+.type-option .label{font-family:var(--D);font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:#fff}
+.type-option .desc{font-size:10px;color:var(--MUTED);margin-top:4px}
+
+.btn-primary{width:100%;padding:16px;background:var(--Y);border:none;color:#000;font-family:var(--D);font-size:18px;font-weight:900;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px}
+.btn-primary:hover{background:var(--Y2)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+
+.spinner{width:18px;height:18px;border:2px solid rgba(0,0,0,.2);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.spinner.on{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.code-input-wrap{display:flex;gap:10px;justify-content:center;margin:24px 0}
+.code-digit{width:52px;height:64px;background:#0a0a0a;border:2px solid var(--BORDER);font-family:var(--D);font-size:32px;font-weight:900;color:#fff;text-align:center;outline:none;transition:all .2s}
+.code-digit:focus{border-color:var(--Y);background:rgba(255,195,0,.03)}
+.code-digit.filled{border-color:var(--SUCCESS);color:var(--SUCCESS)}
+
+.verify-icon{font-size:56px;text-align:center;margin-bottom:16px}
+.verify-title{font-family:var(--D);font-size:28px;font-weight:900;text-transform:uppercase;color:#fff;text-align:center;margin-bottom:8px}
+.verify-desc{font-size:13px;color:var(--MUTED);text-align:center;margin-bottom:8px;line-height:1.6}
+.verify-email{font-size:14px;color:var(--Y);font-weight:600;text-align:center;margin-bottom:24px}
+.resend-link{font-size:12px;color:var(--MUTED);text-align:center;margin-top:20px}
+.resend-link button{background:none;border:none;color:var(--Y);cursor:pointer;font-family:var(--B);font-size:12px;text-decoration:underline}
+.resend-link button:disabled{color:var(--MUTED);cursor:not-allowed;text-decoration:none}
+
+.success-box{text-align:center;padding:20px 0}
+.success-icon{font-size:72px;margin-bottom:20px}
+.success-title{font-family:var(--D);font-size:36px;font-weight:900;text-transform:uppercase;color:var(--SUCCESS);margin-bottom:12px}
+.success-desc{font-size:14px;color:var(--MUTED);margin-bottom:32px;line-height:1.7}
+
+.demo-box{background:rgba(255,195,0,.08);border:1px dashed rgba(255,195,0,.3);padding:16px;margin-bottom:24px;text-align:center}
+.demo-label{font-size:10px;color:var(--MUTED);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.demo-code{font-family:var(--D);font-size:32px;font-weight:900;color:var(--Y);letter-spacing:8px}
+
+.divider{display:flex;align-items:center;gap:16px;margin:24px 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--BORDER)}
+.divider span{font-size:11px;color:var(--MUTED);text-transform:uppercase;letter-spacing:1px}
+
+.checkbox-wrap{display:flex;align-items:flex-start;gap:10px;margin:20px 0}
+.checkbox-wrap input{width:18px;height:18px;accent-color:var(--Y);margin-top:2px;cursor:pointer}
+.checkbox-wrap label{font-size:12px;color:var(--MUTED);line-height:1.5;cursor:pointer}
+.checkbox-wrap label a{color:var(--Y);text-decoration:none}
+
+.auth-link{font-size:13px;color:var(--MUTED);text-align:center;margin-top:24px}
+.auth-link a{color:var(--Y);text-decoration:none;font-weight:600}
+
+.referral-input-wrap{position:relative}
+.referral-badge{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;display:none}
+.referral-badge.valid{display:block;background:rgba(0,200,100,.15);color:var(--SUCCESS);border:1px solid rgba(0,200,100,.3)}
+.referral-badge.invalid{display:block;background:rgba(255,68,68,.15);color:var(--ERROR);border:1px solid rgba(255,68,68,.3)}
+
+.phone-input-wrap{display:flex;gap:8px}
+.phone-prefix{width:80px;background:#0a0a0a;border:1px solid var(--BORDER);padding:13px 12px;color:var(--Y);font-family:var(--B);font-size:14px;font-weight:600;text-align:center}
+.phone-input-wrap .form-input{flex:1}
+
+.social-btn{width:100%;padding:14px;background:#0a0a0a;border:1px solid var(--BORDER);color:var(--TEXT);font-family:var(--B);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px}
+.social-btn:hover{border-color:var(--Y);background:rgba(255,195,0,.03)}
+
+@media(max-width:600px){
+  nav{padding:14px 20px}
+  main{padding:80px 16px 32px}
+  .register-box{padding:32px 24px}
+  .register-box h1{font-size:32px}
+  .form-row{grid-template-columns:1fr}
+  .code-digit{width:44px;height:56px;font-size:26px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo"><div class="logo-box">C</div><span class="logo-text">CUE</span></a>
+  <a href="login.html" class="nav-link">Déjà inscrit ? Connexion</a>
+</nav>
+
+<main>
+  <div class="register-container">
+    
+    <div id="step1" class="register-box">
+      <div class="steps"><div class="step active"></div><div class="step"></div><div class="step"></div></div>
+      <h1>Rejoins <span>CUE</span></h1>
+      <p class="register-subtitle">Crée ton compte en 2 minutes</p>
+      
+      <div id="googleSignUpBtn" style="display:flex;justify-content:center;margin-bottom:16px"></div>
+      <div class="divider"><span>ou par email</span></div>
+      
+      <div class="type-selector">
+        <div class="type-option selected" onclick="selectType('dj')"><div class="icon">🎧</div><div class="label">DJ</div><div class="desc">Je cherche des bookings</div></div>
+        <div class="type-option" onclick="selectType('venue')"><div class="icon">🏢</div><div class="label">Venue</div><div class="desc">Je cherche des DJs</div></div>
+      </div>
+      <input type="hidden" id="userType" value="dj">
+      
+      <form id="registerForm" onsubmit="submitStep1(event)">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Prénom</label><input type="text" class="form-input" id="firstName" placeholder="Jean" required><div class="form-error" id="firstNameError">Prénom requis</div></div>
+          <div class="form-group"><label class="form-label">Nom</label><input type="text" class="form-input" id="lastName" placeholder="Dupont" required><div class="form-error" id="lastNameError">Nom requis</div></div>
+        </div>
+        <div class="form-group"><label class="form-label">Adresse email</label><input type="email" class="form-input" id="email" placeholder="jean@example.com" required><div class="form-error" id="emailError">Email invalide</div></div>
+        <div class="form-group"><label class="form-label">Numéro de téléphone</label><div class="phone-input-wrap"><div class="phone-prefix">+33</div><input type="tel" class="form-input" id="phone" placeholder="6 12 34 56 78" required></div><div class="form-error" id="phoneError">Numéro invalide</div></div>
+        <div class="form-group"><label class="form-label">Mot de passe</label><input type="password" class="form-input" id="password" placeholder="Minimum 8 caractères" required><div class="form-error" id="passwordError">Minimum 8 caractères</div></div>
+        <div class="form-group"><label class="form-label">Confirmer le mot de passe</label><input type="password" class="form-input" id="confirmPassword" placeholder="Confirmer" required><div class="form-error" id="confirmError">Les mots de passe ne correspondent pas</div></div>
+        <div class="form-group"><label class="form-label">Code de parrainage <span style="color:var(--MUTED);font-weight:400">(optionnel)</span></label><div class="referral-input-wrap"><input type="text" class="form-input" id="referralCode" placeholder="Ex: REFAB1234" oninput="checkReferral()"><span class="referral-badge" id="referralBadge"></span></div><div class="form-hint">Tu as un code ? Ton parrain et toi gagnez un bonus ! 🎁</div></div>
+        <div class="checkbox-wrap"><input type="checkbox" id="terms" required><label for="terms">J'accepte les <a href="#">CGU</a> et la <a href="#">Politique de Confidentialité</a></label></div>
+        <button type="submit" class="btn-primary" id="submitBtn"><span id="submitLabel">Continuer</span><div class="spinner" id="submitSpinner"></div></button>
+      </form>
+      <p class="auth-link">Déjà inscrit ? <a href="login.html">Se connecter</a></p>
+    </div>
+    
+    <div id="step2" class="register-box" style="display:none">
+      <div class="steps"><div class="step done"></div><div class="step active"></div><div class="step"></div></div>
+      <div class="verify-icon">📧</div><div class="verify-title">Vérifie ton email</div>
+      <div class="verify-desc">Nous avons envoyé un code à</div><div class="verify-email" id="displayEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ed87888c83ad88958c809d8188c38e8280">[email&#160;protected]</a></div>
+      <div class="demo-box"><div class="demo-label">🧪 Code de démo</div><div class="demo-code" id="emailCodeDisplay">------</div></div>
+      <div class="code-input-wrap" id="emailCodeWrap"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'email')" onkeydown="handleCodeKeydown(event,this)"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'email')" onkeydown="handleCodeKeydown(event,this)"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'email')" onkeydown="handleCodeKeydown(event,this)"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'email')" onkeydown="handleCodeKeydown(event,this)"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'email')" onkeydown="handleCodeKeydown(event,this)"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'email')" onkeydown="handleCodeKeydown(event,this)"></div>
+      <div class="form-error" id="emailCodeError" style="text-align:center">Code incorrect</div>
+      <button class="btn-primary" id="verifyEmailBtn" onclick="verifyEmailCode()"><span id="verifyEmailLabel">Vérifier</span><div class="spinner" id="verifyEmailSpinner"></div></button>
+      <div class="resend-link">Pas reçu ? <button id="resendEmailBtn" onclick="resendCode('email')">Renvoyer le code</button></div>
+    </div>
+    
+    <div id="step3" class="register-box" style="display:none">
+      <div class="steps"><div class="step done"></div><div class="step done"></div><div class="step active"></div></div>
+      <div class="verify-icon">📱</div><div class="verify-title">Vérifie ton téléphone</div>
+      <div class="verify-desc">Un SMS a été envoyé au</div><div class="verify-email" id="displayPhone">+33 6 12 34 56 78</div>
+      <div class="demo-box"><div class="demo-label">🧪 Code SMS de démo</div><div class="demo-code" id="phoneCodeDisplay">------</div></div>
+      <div class="code-input-wrap" id="phoneCodeWrap"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'phone')" onkeydown="handleCodeKeydown(event,this)"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'phone')" onkeydown="handleCodeKeydown(event,this)"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'phone')" onkeydown="handleCodeKeydown(event,this)"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'phone')" onkeydown="handleCodeKeydown(event,this)"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'phone')" onkeydown="handleCodeKeydown(event,this)"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'phone')" onkeydown="handleCodeKeydown(event,this)"></div>
+      <div class="form-error" id="phoneCodeError" style="text-align:center">Code incorrect</div>
+      <button class="btn-primary" id="verifyPhoneBtn" onclick="verifyPhoneCode()"><span id="verifyPhoneLabel">Valider et créer mon compte</span><div class="spinner" id="verifyPhoneSpinner"></div></button>
+      <div class="resend-link">Pas reçu ? <button id="resendPhoneBtn" onclick="resendCode('phone')">Renvoyer le SMS</button></div>
+    </div>
+    
+    <div id="stepSuccess" class="register-box" style="display:none">
+      <div class="success-box"><div class="success-icon">🎉</div><div class="success-title">Bienvenue sur CUE !</div><div class="success-desc">Ton compte a été créé avec succès.</div><button class="btn-primary" onclick="window.location.href='dashboard.html'">Accéder au Dashboard →</button></div>
+    </div>
+    
+  </div>
+</main>
+
+<script>
+const GOOGLE_CLIENT_ID = '1096446567466-b1ia5c4far7j137k0564go80t1r3lf23.apps.googleusercontent.com';
+let formData = {}, emailCode = '', phoneCode = '';
+
+function generateCode() { return Math.floor(100000 + Math.random() * 900000).toString(); }
+
+window.onload = function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const typeParam = urlParams.get('type');
+  if (typeParam === 'venue' || typeParam === 'dj') selectType(typeParam);
+  
+  // Attendre que Google soit chargé
+  setTimeout(function() {
+    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+      google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleSignUp });
+      google.accounts.id.renderButton(document.getElementById('googleSignUpBtn'), { theme: 'filled_black', size: 'large', width: 300, text: 'signup_with', shape: 'rectangular' });
+    } else {
+      document.getElementById('googleSignUpBtn').innerHTML = '<button class="social-btn" style="width:100%" onclick="alert(\'Chargement Google en cours, réessaie dans quelques secondes\')"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>S\'inscrire avec Google</button>';
+    }
+  }, 500);
+};
+
+function handleGoogleSignUp(response) {
+  const payload = JSON.parse(atob(response.credential.split('.')[1]));
+  const user = { id: payload.sub, firstName: payload.given_name || payload.name.split(' ')[0], lastName: payload.family_name || '', email: payload.email, phone: '', userType: document.getElementById('userType').value, referralCodeOwn: 'REF' + payload.sub.slice(-6), verified: true, picture: payload.picture, googleId: payload.sub, createdAt: new Date().toISOString() };
+  localStorage.setItem('cue_user', JSON.stringify(user));
+  localStorage.setItem('cue_logged_in', 'true');
+  document.getElementById('step1').style.display = 'none';
+  document.getElementById('stepSuccess').style.display = 'block';
+}
+
+function selectType(type) {
+  document.querySelectorAll('.type-option').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('.type-option')[type === 'dj' ? 0 : 1].classList.add('selected');
+  document.getElementById('userType').value = type;
+}
+
+function checkReferral() {
+  const code = document.getElementById('referralCode').value.trim().toUpperCase();
+  const badge = document.getElementById('referralBadge');
+  if (!code) { badge.className = 'referral-badge'; return; }
+  badge.className = code.startsWith('REF') && code.length >= 8 ? 'referral-badge valid' : code.length >= 4 ? 'referral-badge invalid' : 'referral-badge';
+  badge.textContent = code.startsWith('REF') && code.length >= 8 ? '✓ Valide' : '✗ Invalide';
+}
+
+async function submitStep1(e) {
+  e.preventDefault();
+  document.querySelectorAll('.form-error').forEach(el => el.classList.remove('show'));
+  
+  const data = { firstName: document.getElementById('firstName').value.trim(), lastName: document.getElementById('lastName').value.trim(), email: document.getElementById('email').value.trim(), phone: document.getElementById('phone').value.trim(), password: document.getElementById('password').value, confirmPassword: document.getElementById('confirmPassword').value, userType: document.getElementById('userType').value, referralCode: document.getElementById('referralCode').value.trim() };
+  
+  let err = false;
+  if (!data.firstName) { document.getElementById('firstNameError').classList.add('show'); err = true; }
+  if (!data.lastName) { document.getElementById('lastNameError').classList.add('show'); err = true; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) { document.getElementById('emailError').classList.add('show'); err = true; }
+  if (!/^[0-9]{9,10}$/.test(data.phone.replace(/\s/g, ''))) { document.getElementById('phoneError').classList.add('show'); err = true; }
+  if (data.password.length < 8) { document.getElementById('passwordError').classList.add('show'); err = true; }
+  if (data.password !== data.confirmPassword) { document.getElementById('confirmError').classList.add('show'); err = true; }
+  if (err) return;
+  
+  formData = data;
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('submitSpinner').classList.add('on');
+  await new Promise(r => setTimeout(r, 1500));
+  
+  emailCode = generateCode();
+  document.getElementById('emailCodeDisplay').textContent = emailCode;
+  document.getElementById('displayEmail').textContent = data.email;
+  document.getElementById('step1').style.display = 'none';
+  document.getElementById('step2').style.display = 'block';
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('submitSpinner').classList.remove('on');
+}
+
+function handleCodeInput(input, type) {
+  input.value = input.value.replace(/\D/g, '');
+  if (input.value) { input.classList.add('filled'); if (input.nextElementSibling?.classList.contains('code-digit')) input.nextElementSibling.focus(); }
+  else input.classList.remove('filled');
+  const code = Array.from(document.getElementById(type + 'CodeWrap').querySelectorAll('.code-digit')).map(i => i.value).join('');
+  if (code.length === 6) type === 'email' ? verifyEmailCode() : verifyPhoneCode();
+}
+
+function handleCodeKeydown(e, input) { if (e.key === 'Backspace' && !input.value && input.previousElementSibling?.classList.contains('code-digit')) input.previousElementSibling.focus(); }
+
+async function verifyEmailCode() {
+  const code = Array.from(document.getElementById('emailCodeWrap').querySelectorAll('.code-digit')).map(i => i.value).join('');
+  if (code !== emailCode) { document.getElementById('emailCodeError').classList.add('show'); return; }
+  document.getElementById('verifyEmailBtn').disabled = true;
+  document.getElementById('verifyEmailSpinner').classList.add('on');
+  await new Promise(r => setTimeout(r, 1000));
+  phoneCode = generateCode();
+  document.getElementById('phoneCodeDisplay').textContent = phoneCode;
+  document.getElementById('displayPhone').textContent = '+33 ' + formData.phone;
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step3').style.display = 'block';
+}
+
+async function verifyPhoneCode() {
+  const code = Array.from(document.getElementById('phoneCodeWrap').querySelectorAll('.code-digit')).map(i => i.value).join('');
+  if (code !== phoneCode) { document.getElementById('phoneCodeError').classList.add('show'); return; }
+  document.getElementById('verifyPhoneBtn').disabled = true;
+  document.getElementById('verifyPhoneSpinner').classList.add('on');
+  await new Promise(r => setTimeout(r, 1500));
+  const user = { id: Date.now(), ...formData, referralCodeOwn: 'REF' + formData.firstName.substring(0,2).toUpperCase() + Date.now().toString().slice(-4), verified: true, createdAt: new Date().toISOString() };
+  localStorage.setItem('cue_user', JSON.stringify(user));
+  localStorage.setItem('cue_logged_in', 'true');
+  document.getElementById('step3').style.display = 'none';
+  document.getElementById('stepSuccess').style.display = 'block';
+}
+
+async function resendCode(type) {
+  const btn = document.getElementById('resend' + (type === 'email' ? 'Email' : 'Phone') + 'Btn');
+  btn.disabled = true; btn.textContent = 'Envoi...';
+  await new Promise(r => setTimeout(r, 1500));
+  if (type === 'email') { emailCode = generateCode(); document.getElementById('emailCodeDisplay').textContent = emailCode; }
+  else { phoneCode = generateC

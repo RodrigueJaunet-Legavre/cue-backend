@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/> 
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CUE — Find. Book. Pay. Review.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--Y:#FFC300;--Y2:#FFD740;--BG:#080808;--CARD:#111;--BORDER:rgba(255,195,0,.13);--TEXT:#ddd;--MUTED:#bbb;--D:'Barlow Condensed',sans-serif;--B:'Barlow',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+body{background:var(--BG);color:var(--TEXT);font-family:var(--B);overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#222;border-radius:2px}
+
+/* ─── NAV ─── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:14px 52px;border-bottom:1px solid transparent;transition:all .3s}
+nav.s{border-color:var(--BORDER);background:rgba(8,8,8,.97);backdrop-filter:blur(18px)}
+.logo-svg{width:38px;height:38px;flex-shrink:0}
+.nav-links{display:flex;gap:32px;list-style:none}
+.nav-links a{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:#fff}
+.nav-cta{display:flex;gap:10px;align-items:center}
+.bg{padding:8px 20px;border:1px solid var(--BORDER);background:transparent;color:var(--MUTED);font-family:var(--B);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.bg:hover{border-color:var(--Y);color:var(--Y)}
+.bp{padding:8px 20px;border:none;background:var(--Y);color:#000;font-family:var(--D);font-size:14px;font-weight:900;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.bp:hover{background:var(--Y2)}
+
+/* ─── HERO ─── */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 24px 60px;position:relative;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(255,195,0,.04) 0%,transparent 70%);pointer-events:none}
+.hero-logo{position:absolute;top:50%;left:50%;transform:translate(-50%,-54%);width:min(520px,70vw);height:min(520px,70vw);opacity:.07;pointer-events:none}
+.hey{font-size:11px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--Y);margin-bottom:24px;opacity:0;animation:fadeUp .8s .3s ease forwards}
+h1{font-family:var(--D);font-size:clamp(64px,12vw,140px);font-weight:900;text-transform:uppercase;color:#fff;line-height:.92;letter-spacing:-2px;opacity:0;animation:fadeUp .8s .5s ease forwards}
+h1 .y{color:var(--Y)}
+.hsub{font-size:clamp(14px,2vw,17px);color:var(--MUTED);max-width:520px;line-height:1.7;margin:24px auto 0;font-weight:300;opacity:0;animation:fadeUp .8s .7s ease forwards}
+.hbar{display:flex;gap:14px;justify-content:center;margin-top:36px;flex-wrap:wrap;opacity:0;animation:fadeUp .8s .9s ease forwards}
+.bh{padding:14px 32px;font-family:var(--D);font-size:18px;font-weight:900;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.bh.y{background:var(--Y);border:none;color:#000}.bh.y:hover{background:var(--Y2)}
+.bh.o{background:transparent;border:1px solid rgba(255,255,255,.15);color:#fff}.bh.o:hover{border-color:var(--Y);color:var(--Y)}
+.hstats{display:flex;gap:52px;justify-content:center;margin-top:60px;opacity:0;animation:fadeUp .8s 1.1s ease forwards}
+.hstat-val{font-family:var(--D);font-size:42px;font-weight:900;color:var(--Y);line-height:1}
+.hstat-label{font-size:10px;color:var(--MUTED);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+.ticker{position:absolute;bottom:0;left:0;right:0;border-top:1px solid var(--BORDER);background:rgba(8,8,8,.8);padding:12px 0;overflow:hidden}
+.ticker-inner{display:flex;gap:0;white-space:nowrap;animation:tick 18s linear infinite}
+.ticker-item{font-family:var(--D);font-size:13px;font-weight:900;letter-spacing:4px;text-transform:uppercase;color:var(--MUTED);padding:0 28px}
+.ticker-item span{color:var(--Y);margin-right:28px}
+
+/* ─── SECTIONS ─── */
+section{padding:100px 52px}
+.stag{font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--Y);margin-bottom:14px}
+.stitle{font-family:var(--D);font-size:clamp(36px,6vw,72px);font-weight:900;text-transform:uppercase;color:#fff;line-height:.95;letter-spacing:-1px;margin-bottom:20px}
+.ssub{font-size:15px;color:var(--MUTED);max-width:520px;line-height:1.7;font-weight:300}
+
+/* ─── FEATURES GRID ─── */
+.fg3{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:52px}
+.fcard{background:var(--CARD);padding:36px 32px;border:1px solid var(--BORDER);transition:all .25s;position:relative;overflow:hidden}
+.fcard:hover{border-color:var(--Y);background:#161616}
+.fcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--Y);transform:scaleX(0);transform-origin:left;transition:transform .3s}
+.fcard:hover::before{transform:scaleX(1)}
+.fcard-icon{font-size:28px;margin-bottom:16px}
+.fcard-title{font-family:var(--D);font-size:20px;font-weight:900;text-transform:uppercase;color:#fff;margin-bottom:8px;letter-spacing:.5px}
+.fcard-desc{font-size:13px;color:var(--MUTED);line-height:1.7}
+
+/* ─── TWO COL ─── */
+.twoc{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;margin-top:60px}
+
+/* ─── AI MATCHING ─── */
+.ai-form{background:var(--CARD);border:1px solid var(--BORDER);padding:36px}
+.aif-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);margin-bottom:6px;display:block}
+.aif-input,.aif-select{width:100%;background:#000;border:1px solid var(--BORDER);padding:11px 14px;color:var(--TEXT);font-family:var(--B);font-size:13px;margin-bottom:14px;outline:none;transition:border-color .2s}
+.aif-input:focus,.aif-select:focus{border-color:var(--Y)}
+.aif-select{appearance:none;cursor:pointer}
+.aif-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.brun{width:100%;padding:14px;background:var(--Y);border:none;color:#000;font-family:var(--D);font-size:18px;font-weight:900;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px}
+.brun:hover{background:var(--Y2)}.brun:disabled{opacity:.5;cursor:not-allowed}
+.spin{width:16px;height:16px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.spin.on{display:block}
+
+/* DJ CARDS */
+.dj-results{display:flex;flex-direction:column;gap:16px;margin-top:0}
+.dj-card{background:var(--CARD);border:1px solid var(--BORDER);padding:22px;display:flex;gap:18px;align-items:flex-start;transition:all .2s}
+.dj-card:hover{border-color:var(--Y)}
+.dj-avatar{width:52px;height:52px;background:var(--Y);display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:24px;font-weight:900;color:#000;flex-shrink:0}
+.dj-name{font-family:var(--D);font-size:18px;font-weight:900;text-transform:uppercase;color:#fff;letter-spacing:.5px}
+.dj-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.dj-tag{font-size:9px;font-weight:700;padding:2px 8px;border:1px solid var(--BORDER);color:var(--MUTED);text-transform:uppercase;letter-spacing:1px}
+.dj-tag.y{border-color:var(--Y);color:var(--Y)}
+.dj-desc{font-size:12px;color:var(--MUTED);margin-top:8px;line-height:1.65}
+.dj-match{font-family:var(--D);font-size:22px;font-weight:900;color:var(--Y);line-height:1}
+.dj-match-label{font-size:9px;color:var(--MUTED);letter-spacing:1px;text-transform:uppercase}
+.result-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:240px;gap:14px}
+.result-placeholder-icon{font-size:40px;opacity:.15}
+.result-placeholder-text{font-family:var(--D);font-size:20px;font-weight:900;text-transform:uppercase;color:#fff;opacity:.15}
+
+/* ─── CONTRACT ─── */
+.cgen-form{background:var(--CARD);border:1px solid var(--BORDER);padding:36px}
+.cgen-out{background:#050505;border:1px solid var(--BORDER);padding:0;min-height:380px;font-size:13px;color:#ccc;line-height:1.8;position:relative;overflow:hidden}
+.contract-header-bar{background:var(--Y);padding:18px 28px;display:flex;align-items:center;justify-content:space-between}
+.contract-header-bar .contract-logo{font-family:var(--D);font-size:22px;font-weight:900;color:#000;letter-spacing:2px}
+.contract-header-bar .contract-date{font-size:10px;color:rgba(0,0,0,.6);font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.contract-inner{padding:28px}
+.cgen-out .section-title{font-family:var(--D);font-size:11px;font-weight:900;text-transform:uppercase;color:var(--Y);letter-spacing:3px;display:flex;align-items:center;gap:10px;margin:28px 0 10px;padding-bottom:8px;border-bottom:1px solid rgba(255,195,0,.15)}
+.cgen-out .section-title .sec-num{background:var(--Y);color:#000;font-size:9px;font-weight:900;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cgen-out p{color:#ccc;line-height:1.9;margin-bottom:4px}
+.cgen-out .section-block:first-child .section-title{margin-top:0}
+.contract-footer-bar{background:#0a0a0a;border-top:1px solid var(--BORDER);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.contract-footer-bar span{font-size:9px;color:#444;letter-spacing:1px;text-transform:uppercase}
+.cgen-toolbar{display:flex;gap:10px;margin-top:14px}
+.ctool-btn{padding:8px 18px;font-family:var(--D);font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.ctool-btn.copy{background:rgba(255,195,0,.1);color:var(--Y);border:1px solid rgba(255,195,0,.25)}
+.ctool-btn.copy:hover{background:var(--Y);color:#000}
+.ctool-btn.print{background:transparent;color:var(--MUTED);border:1px solid var(--BORDER)}
+.ctool-btn.print:hover{border-color:#888;color:#fff}
+.pulsing{animation:pulse 1.5s ease-in-out infinite}
+
+/* ─── PRICING ─── */
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:52px;max-width:800px;margin-left:auto;margin-right:auto}
+.pcard{background:var(--CARD);border:1px solid var(--BORDER);padding:36px 28px;position:relative;transition:all .25s}
+.pcard.featured{border-color:var(--Y);background:#131300}
+.pcard-badge{position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--Y);color:#000;font-size:9px;font-weight:900;padding:3px 14px;letter-spacing:2px;text-transform:uppercase}
+.pcard-name{font-family:var(--D);font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:3px;color:var(--MUTED);margin-bottom:12px}
+.pcard-price{font-family:var(--D);font-size:52px;font-weight:900;color:#fff;line-height:1}
+.pcard-price sup{font-size:24px;vertical-align:top;margin-top:10px;color:var(--MUTED)}
+.pcard-price span{font-size:14px;color:var(--MUTED);font-weight:400;font-family:var(--B)}
+.pcard-comm{font-size:13px;color:var(--Y);font-weight:700;margin:10px 0 20px}
+.pcard-features{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:28px}
+.pcard-features li{font-size:12px;color:var(--MUTED);display:flex;align-items:center;gap:8px}
+.pcard-features li::before{content:'✓';color:var(--Y);font-weight:900;font-size:11px}
+.pcard-btn{width:100%;padding:12px;font-family:var(--D);font-size:16px;font-weight:900;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.pcard.featured .pcard-btn{background:var(--Y);border:none;color:#000}
+.pcard.featured .pcard-btn:hover{background:var(--Y2)}
+.pcard:not(.featured) .pcard-btn{background:transparent;border:1px solid var(--BORDER);color:var(--MUTED)}
+.pcard:not(.featured) .pcard-btn:hover{border-color:var(--Y);color:var(--Y)}
+
+/* ─── FOOTER ─── */
+footer{border-top:1px solid var(--BORDER);padding:60px 52px 30px;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:40px}
+.fbrand p{font-size:12px;color:#ccc;line-height:1.7;max-width:220px;margin-top:12px}
+.fcol h5{font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--MUTED);margin-bottom:12px}
+.fcol ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+.fcol ul a{font-size:12px;color:#ccc;text-decoration:none;transition:color .2s}
+.fcol ul a:hover{color:var(--Y)}
+.fbot{border-top:1px solid var(--BORDER);padding:18px 52px;display:flex;justify-content:space-between;align-items:center}
+.fbot span{font-size:10px;color:#ccc}
+
+/* ─── AUTH OVERLAY ─── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(10px);padding:20px}
+.overlay.hidden{display:none}
+.amodal{background:var(--CARD);border:1px solid var(--BORDER);padding:44px 40px;width:420px;max-width:95vw;position:relative}
+.amodal h2{font-family:var(--D);font-size:36px;font-weight:900;text-transform:uppercase;color:#fff;text-align:center;margin-bottom:5px}
+.amodal p{font-size:12px;color:var(--MUTED);text-align:center;margin-bottom:28px}
+.ainput{width:100%;background:#0a0a0a;border:1px solid var(--BORDER);padding:11px 14px;color:var(--TEXT);font-family:var(--B);font-size:13px;margin-bottom:10px;outline:none;transition:border-color .2s}
+.ainput:focus{border-color:var(--Y)}
+.aerr{font-size:11px;color:#ff4444;margin-bottom:10px;display:none;text-align:center}
+.aerr.on{display:block}
+.aclose{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--MUTED);cursor:pointer;font-size:18px}
+.aclose:hover{color:#fff}
+.asel{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+.aopt{padding:18px;border:1px solid var(--BORDER);background:#0a0a0a;cursor:pointer;transition:all .2s;text-align:center}
+.aopt:hover,.aopt.sel{border-color:var(--Y);background:rgba(255,195,0,.05)}
+.aopt .aicon{font-size:28px;margin-bottom:6px}
+.aopt .alabel{font-family:var(--D);font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#fff}
+.aopt .adesc{font-size:10px;color:var(--MUTED);margin-top:2px}
+
+/* ─── DASHBOARD ─── */
+.dashboard{display:none;min-height:100vh;background:var(--BG);padding:80px 52px 60px}
+.dashboard.active{display:block}
+.dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:44px;padding-bottom:24px;border-bottom:1px solid var(--BORDER)}
+.dash-title{font-family:var(--D);font-size:clamp(32px,5vw,64px);font-weight:900;text-transform:uppercase;color:#fff}
+.dash-title span{color:var(--Y)}
+.dash-user{display:flex;align-items:center;gap:12px}
+.dash-avatar{width:40px;height:40px;background:var(--Y);display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:20px;font-weight:900;color:#000}
+.dash-name{font-size:13px;font-weight:600;color:#fff}
+.dash-role{font-size:10px;color:var(--Y);text-transform:uppercase;letter-spacing:2px}
+.logout-btn{padding:7px 16px;border:1px solid var(--BORDER);background:transparent;color:var(--MUTED);font-family:var(--B);font-size:11px;font-weight:600;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all .2s}
+.logout-btn:hover{border-color:#ff4444;color:#ff4444}
+.dash-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:36px}
+.dstat{background:var(--CARD);border:1px solid var(--BORDER);padding:22px 20px}
+.dstat-val{font-family:var(--D);font-size:38px;font-weight:900;color:var(--Y);line-height:1}
+.dstat-label{font-size:10px;color:var(--MUTED);text-transform:uppercase;letter-spacing:2px;margin-top:4px}
+.dash-section{margin-top:36px}
+.dsec-title{font-family:var(--D);font-size:22px;font-weight:900;text-transform:uppercase;color:#fff;margin-bottom:16px;letter-spacing:.5px}
+.dash-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.dcard{background:var(--CARD);border:1px solid var(--BORDER);padding:22px;position:relative;cursor:pointer;transition:all .25s}
+.dcard:hover{border-color:var(--Y);background:#161616}
+.dcard-icon{font-size:22px;margin-bottom:10px}
+.dcard-title{font-family:var(--D);font-size:17px;font-weight:900;text-transform:uppercase;color:#fff;margin-bottom:5px;letter-spacing:.5px}
+.dcard-desc{font-size:11px;color:var(--MUTED);line-height:1.65}
+.dcard-badge{position:absolute;top:12px;right:12px;background:var(--Y);color:#000;font-size:8px;font-weight:700;padding:2px 7px;text-transform:uppercase;letter-spacing:1px}
+
+/* ─── CHATBOT FLOAT ─── */
+.chat-fab{position:fixed;bottom:28px;right:28px;z-index:400;width:54px;height:54px;background:var(--Y);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 8px 32px rgba(255,195,0,.3);transition:all .2s}
+.chat-fab:hover{background:var(--Y2);transform:scale(1.07)}
+.cwin{position:fixed;bottom:96px;right:28px;z-index:400;width:360px;background:var(--CARD);border:1px solid var(--BORDER);display:flex;flex-direction:column;height:480px;box-shadow:0 24px 80px rgba(0,0,0,.7);transform:scale(.92) translateY(20px);opacity:0;pointer-events:none;transition:all .25s;transform-origin:bottom right}
+.cwin.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
+.chin{background:#0a0a0a;padding:12px 14px;border-bottom:1px solid var(--BORDER);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.chin-info h4{font-family:var(--D);font-size:13px;font-weight:900;text-transform:uppercase;color:#fff;letter-spacing:.5px}
+.chin-info p{font-size:9px;color:var(--Y);letter-spacing:1.5px;text-transform:uppercase}
+.cclose{margin-left:auto;background:none;border:none;color:var(--MUTED);cursor:pointer;font-size:16px}
+.cclose:hover{color:#fff}
+.cmsgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px}
+.cmsg{max-width:82%;padding:8px 11px;font-size:12px;line-height:1.6;white-space:pre-line}
+.cmsg.user{background:var(--Y);color:#000;font-weight:600;align-self:flex-end}
+.cmsg.bot{background:#1a1a1a;color:var(--TEXT);border:1px solid rgba(255,255,255,.05);align-self:flex-start}
+.cmsg.typing{background:#1a1a1a;border:1px solid rgba(255,255,255,.05);align-self:flex-start;display:flex;gap:4px;align-items:center;padding:10px 12px}
+.dot{width:5px;height:5px;border-radius:50%;background:#444;animation:bounce 1.2s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+.cinrow{padding:9px;border-top:1px solid var(--BORDER);display:flex;gap:6px;background:#0a0a0a;flex-shrink:0}
+.cinput{flex:1;background:#000;border:1px solid var(--BORDER);padding:8px 10px;color:var(--TEXT);font-family:var(--B);font-size:12px;outline:none}
+.cinput:focus{border-color:var(--Y)}
+.csend{width:33px;height:33px;background:var(--Y);border:none;cursor:pointer;font-size:13px;transition:all .2s;flex-shrink:0;color:#000;font-weight:700;display:flex;align-items:center;justify-content:center}
+.csend:hover{background:var(--Y2)}.csend:disabled{opacity:.4;cursor:not-allowed}
+
+/* ─── MODO ─── */
+.modo-login-wrap{position:fixed;inset:0;background:var(--BG);z-index:800;display:flex;align-items:center;justify-content:center;padding:20px}
+.modo-login-wrap.hidden{display:none}
+.modo-login-box{background:var(--CARD);border:1px solid rgba(255,195,0,.3);padding:44px 36px;width:100%;max-width:400px}
+.modo-login-box h2{font-family:var(--D);font-size:32px;font-weight:900;text-transform:uppercase;color:#fff;text-align:center;margin-bottom:4px;letter-spacing:.5px}
+.modo-login-box p{font-size:11px;color:var(--MUTED);text-align:center;margin-bottom:28px;letter-spacing:1px;text-transform:uppercase}
+.modo-label{display:block;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);margin-bottom:5px}
+.modo-dash{position:fixed;inset:0;background:var(--BG);z-index:800;display:none;flex-direction:column}
+.modo-dash.open{display:flex}
+.modo-nav{background:#0a0a0a;border-bottom:1px solid var(--BORDER);padding:0 28px;height:60px;display:flex;align-items:center;gap:0;flex-shrink:0;overflow-x:auto}
+.modo-nav-brand{display:flex;align-items:center;gap:10px;margin-right:32px;flex-shrink:0}
+.modo-nav-brand span{font-family:var(--D);font-size:15px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:#fff}
+.modo-nav-brand em{font-style:normal;font-size:9px;background:var(--Y);color:#000;padding:2px 7px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-left:4px}
+.mtab{padding:0 14px;height:60px;display:flex;align-items:center;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;flex-shrink:0;white-space:nowrap;background:none;border-left:none;border-right:none;border-top:none;font-family:var(--B)}
+.mtab:hover{color:#888}.mtab.active{color:var(--Y);border-bottom-color:var(--Y)}
+.modo-logout{margin-left:auto;padding:7px 14px;border:1px solid rgba(255,255,255,.08);background:transparent;color:var(--MUTED);font-family:var(--B);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .2s;flex-shrink:0}
+.modo-logout:hover{border-color:#ff4444;color:#ff4444}
+.modo-body{flex:1;overflow-y:auto;padding:32px}
+.msec{display:none}.msec.active{display:block}
+.mstat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+.mstat{background:var(--CARD);border:1px solid var(--BORDER);padding:20px}
+.mstat-val{font-family:var(--D);font-size:40px;font-weight:900;color:var(--Y);line-height:1}
+.mstat-label{font-size:10px;color:var(--MUTED);text-transform:uppercase;letter-spacing:2px;margin-top:4px}
+.msec-title{font-family:var(--D);font-size:20px;font-weight:900;text-transform:uppercase;color:#fff;margin-bottom:6px;letter-spacing:.5px}
+.msec-sub{font-size:12px;color:var(--MUTED);margin-bottom:18px}
+.mtable{background:var(--CARD);border:1px solid var(--BORDER);overflow:hidden;margin-bottom:20px}
+.mth{display:grid;padding:10px 16px;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,.04)}
+.mth span{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED)}
+.mtr{display:grid;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.03);transition:background .15s}
+.mtr:last-child{border-bottom:none}.mtr:hover{background:rgba(255,195,0,.025)}
+.mtr span{font-size:12px;color:#888;display:flex;align-items:center}
+.mtr .nm{color:var(--TEXT);font-weight:600}
+.mbadge{display:inline-block;padding:2px 8px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.mbadge.dj{background:rgba(255,195,0,.15);color:var(--Y);border:1px solid rgba(255,195,0,.3)}
+.mbadge.venue{background:rgba(0,150,255,.1);color:#48a0ff;border:1px solid rgba(0,150,255,.2)}
+.mbadge.active{background:rgba(0,200,100,.1);color:#00c864;border:1px solid rgba(0,200,100,.2)}
+.mbadge.pending{background:rgba(255,195,0,.1);color:var(--Y);border:1px solid rgba(255,195,0,.2)}
+.mact{padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-family:var(--B);transition:all .15s}
+.mact.warn{background:rgba(255,195,0,.15);color:var(--Y);border:1px solid rgba(255,195,0,.3)}
+.mact.warn:hover{background:var(--Y);color:#000}
+.mact.ban{background:rgba(255,68,68,.1);color:#ff4444;border:1px solid rgba(255,68,68,.2)}
+.mact.ban:hover{background:#ff4444;color:#fff}
+.faq-item{background:var(--CARD);border:1px solid rgba(255,195,0,.08);margin-bottom:8px;overflow:hidden}
+.faq-q{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .15s}
+.faq-q:hover{background:rgba(255,195,0,.025)}
+.faq-q-num{font-size:10px;color:#333;font-family:var(--D);font-weight:700;margin-right:10px}
+.faq-q-text{font-size:13px;color:var(--TEXT);font-weight:600}
+.faq-body{display:none;padding:0 16px 14px;border-top:1px solid rgba(255,255,255,.04)}
+.faq-body.open{display:block}
+.faq-answer{width:100%;background:#000;border:1px solid rgba(255,195,0,.15);padding:10px 12px;color:#aaa;font-family:var(--B);font-size:12px;line-height:1.7;resize:vertical;outline:none;margin-top:10px;min-height:60px;transition:border-color .2s}
+.faq-answer:focus{border-color:var(--Y)}
+.faq-save{margin-top:7px;padding:5px 14px;background:var(--Y);border:none;color:#000;font-family:var(--D);font-size:12px;font-weight:900;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+.faq-save:hover{background:var(--Y2)}
+.save-ok{font-size:10px;color:#00c864;margin-left:8px;display:none}
+.scard{background:var(--CARD);border:1px solid var(--BORDER);padding:22px;margin-bottom:12px}
+.scard h4{font-family:var(--D);font-size:15px;font-weight:900;text-transform:uppercase;color:#fff;margin-bottom:14px;letter-spacing:.5px}
+.srow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.srow:last-child{border-bottom:none}
+.srow-label{font-size:13px;color:#888}
+.toggle{width:38px;height:21px;background:#222;border:none;cursor:pointer;position:relative;border-radius:11px;transition:background .2s}
+.toggle.on{background:var(--Y)}
+.toggle::after{content:'';position:absolute;top:2.5px;left:2.5px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s}
+.toggle.on::after{transform:translateX(17px)}
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:900px){
+  nav{padding:12px 18px}.nav-links{display:none}
+  section{padding:60px 18px}.hero{padding:0 18px 60px}
+  h1{font-size:clamp(48px,13vw,90px);letter-spacing:-1px}
+  .twoc{grid-template-columns:1fr;gap:28px}
+  .fg3{grid-template-columns:1fr}
+  .pgrid{grid-template-columns:1fr;max-width:100%;gap:12px}
+  footer{grid-template-columns:1fr 1fr;padding:32px 18px}.fbot{padding:14px 18px;flex-direction:column;gap:8px;text-align:center}
+  .hstats{gap:18px;flex-wrap:wrap;justify-content:center}
+  .hstat-val{font-size:32px}
+  .cwin{right:8px;left:8px;width:auto;bottom:80px}
+  .chat-fab{bottom:16px;right:16px;width:48px;height:48px}
+  .dash-grid{grid-template-columns:repeat(2,1fr)}.dash-cards{grid-template-columns:1fr 1fr}
+  .dashboard{padding:80px 14px 50px}
+  .amodal{padding:28px 16px;width:95vw}
+  .mstat-row{grid-template-columns:repeat(2,1fr)}
+  .modo-body{padding:16px 12px}
+  .hbar{flex-direction:column;align-items:center;gap:10px}
+  .bh{width:100%;max-width:280px;text-align:center;padding:14px 20px}
+  .ai-form{padding:20px 16px}
+  .cgen-form{padding:20px 16px}
+  .aif-row{grid-template-columns:1fr}
+  .pcard{padding:24px 18px}
+  .fcard{padding:24px 20px}
+}
+
+@media(max-width:480px){
+  h1{font-size:clamp(38px,11vw,60px)}
+  .hey{font-size:10px;letter-spacing:3px}
+  .hsub{font-size:14px}
+  .hstats{gap:12px}
+  .hstat-val{font-size:26px}
+  .stitle{font-size:clamp(30px,9vw,48px)}
+  .bh{font-size:15px;padding:12px 18px}
+  .dash-cards{grid-template-columns:1fr}
+  .dash-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .dstat-val{font-size:28px}
+  footer{grid-template-columns:1fr;gap:24px}
+  .fcol{display:none}
+  .amodal{padding:24px 14px}
+  .pcard-price{font-size:40px}
+  .modo-nav{padding:0 12px}
+  .mtab{padding:0 8px;font-size:9px}
+  .cwin{right:4px;left:4px}
+  .pgrid{max-width:100%}
+  .hbar .bh{font-size:14px}
+}
+
+@media print{
+  .chat-fab,.cwin,.overlay,.modo-login-wrap,.modo-dash{display:none!important}
+  nav{display:none!important}
+  body{background:#fff!important;color:#000!important}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ AUTH OVERLAY ══ -->
+<div class="overlay hidden" id="authOverlay">
+  <div class="amodal">
+    <button class="aclose" onclick="closeAuth()">✕</button>
+    <div style="display:flex;justify-content:center;margin-bottom:18px"><svg width="48" height="48" viewBox="0 0 100 100"><rect width="100" height="100" rx="16" fill="#FFC300"/><circle cx="50" cy="50" r="34" fill="none" stroke="#111" stroke-width="6"/><text x="50" y="59" text-anchor="middle" font-family="Arial Rounded MT Bold,Arial" font-size="24" font-weight="900" fill="#111">cue</text></svg></div>
+    <h2>Welcome</h2>
+    <p id="authSubtitle">Sign in to your CUE account</p>
+    <div id="stepRole">
+      <div class="asel">
+        <div class="aopt" id="optDJ" onclick="selectRole('dj')"><div class="aicon">🎧</div><div class="alabel">I am a DJ</div><div class="adesc">Find gigs & manage my bookings</div></div>
+        <div class="aopt" id="optVenue" onclick="selectRole('venue')"><div class="aicon">🏢</div><div class="alabel">I am a Venue</div><div class="adesc">Find DJs for my events</div></div>
+      </div>
+    </div>
+    <div id="stepLogin" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;cursor:pointer" onclick="backToRole()">
+        <span style="color:var(--Y);font-size:18px">←</span>
+        <span style="font-size:11px;color:var(--MUTED);text-transform:uppercase;letter-spacing:1px">Retour</span>
+      </div>
+      <div id="roleTag" style="font-family:var(--D);font-size:13px;color:var(--Y);letter-spacing:3px;text-transform:uppercase;margin-bottom:18px;text-align:center"></div>
+      <input class="ainput" type="email" id="loginEmail" placeholder="Email address" autocomplete="email"/>
+      <input class="ainput" type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <div class="aerr" id="loginErr">Incorrect email or password.</div>
+      <button class="brun" style="margin-top:4px" onclick="doLogin()">
+        <div class="spin" id="loginSpin"></div>
+        <span id="loginLabel">SIGN IN →</span>
+      </button>
+      <p style="font-size:10px;color:var(--MUTED);text-align:center;margin-top:14px">No account? <a href="/cdn-cgi/l/email-protection#e2819787cc8688cc839292a2858f838b8ecc818d8f" style="color:var(--Y)">Contact us</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODERATOR LOGIN ══ -->
+<div class="modo-login-wrap hidden" id="modoLoginWrap">
+  <div class="modo-login-box">
+    <div style="display:flex;justify-content:center;margin-bottom:20px"><svg width="48" height="48" viewBox="0 0 100 100"><rect width="100" height="100" rx="16" fill="#FFC300"/><circle cx="50" cy="50" r="34" fill="none" stroke="#111" stroke-width="6"/><text x="50" y="59" text-anchor="middle" font-family="Arial Rounded MT Bold,Arial" font-size="24" font-weight="900" fill="#111">cue</text></svg></div>
+    <h2>Moderator Space</h2>
+    <p>Restricted access · CUE Platform</p>
+    <label class="modo-label">Email</label>
+    <input class="ainput" id="modoEmail" type="email" placeholder="email@exemple.com" style="margin-bottom:14px"/>
+    <label class="modo-label">Password</label>
+    <input class="ainput" id="modoPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')modoLogin()" style="margin-bottom:14px"/>
+    <div class="aerr" id="modoErr" style="display:none">Incorrect email or password.</div>
+    <button class="brun" style="margin-top:4px" onclick="modoLogin()">ACCÉDER →</button>
+    <p style="font-size:10px;color:#999;text-align:center;margin-top:16px;cursor:pointer" onclick="hideModoLogin()">← Back au site</p>
+  </div>
+</div>
+
+<!-- ══ MODERATOR DASHBOARD ══ -->
+<div class="modo-dash" id="modoDash">
+  <nav class="modo-nav">
+    <div class="modo-nav-brand">
+      <svg width="26" height="26" viewBox="0 0 100 100"><rect width="100" height="100" rx="16" fill="#FFC300"/><circle cx="50" cy="50" r="34" fill="none" stroke="#111" stroke-width="6"/><text x="50" y="59" text-anchor="middle" font-family="Arial Rounded MT Bold,Arial" font-size="24" font-weight="900" fill="#111">cue</text></svg>
+      <span>CUE</span><em>Modo</em>
+    </div>
+    <button class="mtab active" onclick="switchMTab(this,'m-overview')">Overview</button>
+    <button class="mtab" onclick="switchMTab(this,'m-users')">Users</button>
+    <button class="mtab" onclick="switchMTab(this,'m-logs')">Conversations</button>
+    <button class="mtab" onclick="switchMTab(this,'m-faq')">FAQ</button>
+    <button class="mtab" onclick="switchMTab(this,'m-settings')">Settings</button>
+    <button class="modo-logout" onclick="modoLogout()">Logout</button>
+  </nav>
+  <div class="modo-body">
+    <div class="msec active" id="m-overview">
+      <div style="margin-bottom:24px"><div class="msec-title">Overview</div><div class="msec-sub">Dashboard · CUE Platform</div></div>
+      <div class="mstat-row">
+        <div class="mstat"><div class="mstat-val">12</div><div class="mstat-label">Users</div></div>
+        <div class="mstat"><div class="mstat-val">7</div><div class="mstat-label">Conversations</div></div>
+        <div class="mstat"><div class="mstat-val">3</div><div class="mstat-label">Contrats générés</div></div>
+        <div class="mstat"><div class="mstat-val" style="color:#00c864">✓</div><div class="mstat-label">Platform status</div></div>
+      </div>
+      <div style="background:var(--CARD);border:1px solid var(--BORDER);padding:20px">
+        <div class="msec-title" style="font-size:15px;margin-bottom:14px">Infos modérateur</div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+          <div style="width:44px;height:44px;background:var(--Y);display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:22px;font-weight:900;color:#000">S</div>
+          <div><div style="font-size:14px;font-weight:700;color:#fff">Stanislas Kleb</div><div style="font-size:10px;color:var(--Y);letter-spacing:1.5px;text-transform:uppercase">Administrator</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--MUTED);line-height:2.2">
+          <div>📧 <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="7a090e1b141309161b095411161f183a150f0e1615151154191517">[email&#160;protected]</a></div><div>📱 +33 7 67 01 15 32</div><div>🔑 Full access</div>
+        </div>
+      </div>
+    </div>
+    <div class="msec" id="m-users">
+      <div class="msec-title">Users</div><div class="msec-sub">DJ and Venue account management</div>
+      <div class="mtable">
+        <div class="mth" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr"><span>Utilisateur</span><span>Type</span><span>Statut</span><span>Inscrit</span><span>Actions</span></div>
+        <div class="mtr" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr"><span class="nm">Lorenzo B.<div style="font-size:10px;color:#aaa;font-weight:400"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="89e5e6fbece7f3e6c9eafceca7eae6e4">[email&#160;protected]</a></div></span><span><span class="mbadge dj">DJ</span></span><span><span class="mbadge active">Actif</span></span><span>01/03/25</span><span style="gap:6px"><button class="mact warn">Avert.</button><button class="mact ban">Ban</button></span></div>
+        <div class="mtr" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr"><span class="nm">Club Le Rex<div style="font-size:10px;color:#aaa;font-weight:400"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="5c2e39241c30392e3924723a2e">[email&#160;protected]</a></div></span><span><span class="mbadge venue">Venue</span></span><span><span class="mbadge active">Actif</span></span><span>15/02/25</span><span style="gap:6px"><button class="mact warn">Avert.</button><button class="mact ban">Ban</button></span></div>
+        <div class="mtr" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr"><span class="nm">DJ Maxime<div style="font-size:10px;color:#aaa;font-weight:400"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="4b262a3322262e0b2f2165282426">[email&#160;protected]</a></div></span><span><span class="mbadge dj">DJ</span></span><span><span class="mbadge pending">Pending</span></span><span>08/03/25</span><span style="gap:6px"><button class="mact warn">Avert.</button><button class="mact ban">Ban</button></span></div>
+      </div>
+    </div>
+    <div class="msec" id="m-logs">
+      <div class="msec-title">Conversations</div><div class="msec-sub">Chatbot exchange history</div>
+      <div style="text-align:center;padding:20px;font-size:12px;color:#999">Conversations will be recorded here in production</div>
+    </div>
+    <div class="msec" id="m-faq">
+      <div class="msec-title">FAQ Editor</div><div class="msec-sub">Edit responses — applied immediately to the chatbot</div>
+      <div id="faqEditorContainer"></div>
+    </div>
+    <div class="msec" id="m-settings">
+      <div class="msec-title">Settings</div><div class="msec-sub">Configuration de la plateforme</div>
+      <div class="scard"><h4>Chatbot & AI</h4>
+        <div class="srow"><div class="srow-label">Chatbot active</div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="srow"><div class="srow-label">Contract generator active</div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="srow"><div class="srow-label">Quick suggestions</div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+      </div>
+      <div class="scard"><h4>Security</h4>
+        <div class="srow"><div class="srow-label">Moderator account</div><span style="font-size:12px;color:var(--Y)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="fd8e899c93948e919c8ed39691989fbd92888991929296d39e9290">[email&#160;protected]</a></span></div>
+        <div class="srow"><div class="srow-label">Change password</div><button class="mact warn" onclick="alert('Available in production')">Edit</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MAIN SITE ══ -->
+<div id="mainSite">
+
+<nav id="nav">
+  <a href="#" onclick="goHome()" style="display:flex;align-items:center">
+    <svg class="logo-svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="16" fill="#FFC300"/><circle cx="50" cy="50" r="34" fill="none" stroke="#111" stroke-width="6"/><text x="50" y="59" text-anchor="middle" font-family="Arial Rounded MT Bold,Arial" font-size="24" font-weight="900" fill="#111">cue</text></svg>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#matching">AI Matching</a></li>
+    <li><a href="#contracts">Contracts</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+  </ul>
+  <div class="nav-cta" id="navCta">
+    <button class="bg" onclick="window.location.href='login.html'">Connexion</button>
+    <button class="bp" onclick="window.location.href='inscription.html'">S'inscrire</button>
+  </div>
+</nav>
+
+<section class="hero" id="heroSection">
+  <div class="hero-bg"></div>
+  <svg class="hero-logo" viewBox="0 0 100 100"><rect width="100" height="100" rx="16" fill="#FFC300"/><circle cx="50" cy="50" r="34" fill="none" stroke="#111" stroke-width="6"/><text x="50" y="59" text-anchor="middle" font-family="Arial Rounded MT Bold,Arial" font-size="24" font-weight="900" fill="#111">cue</text></svg>
+  <p class="hey">✦ Find / Book / Pay / Review</p>
+  <h1>THE STAGE<br/>STARTS <span class="y">HERE.</span></h1>
+  <p class="hsub">Connect verified DJs with clubs, agencies, weddings and private events. Smart booking, AI contracts and advanced matching.</p>
+  <div class="hbar">
+    <button class="bh y" onclick="window.location.href='inscription.html?type=venue'">I am a Venue</button>
+    <button class="bh o" onclick="window.location.href='inscription.html?type=dj'">I am a DJ</button>
+  </div>
+  <div class="hstats">
+    <div><div class="hstat-val">2M+</div><div class="hstat-label">DJs worldwide</div></div>
+    <div style="width:1px;background:var(--BORDER)"></div>
+    <div><div class="hstat-val">55%</div><div class="hstat-label">Want more gigs</div></div>
+    <div style="width:1px;background:var(--BORDER)"></div>
+    <div><div class="hstat-val">9B$</div><div class="hstat-label">Global market</div></div>
+  </div>
+  <div class="ticker">
+    <div class="ticker-inner">
+      <span class="ticker-item"><span>✦</span>FIND</span><span class="ticker-item"><span>✦</span>BOOK</span><span class="ticker-item"><span>✦</span>PAY</span><span class="ticker-item"><span>✦</span>REVIEW</span><span class="ticker-item"><span>✦</span>CONNECT</span><span class="ticker-item"><span>✦</span>PERFORM</span><span class="ticker-item"><span>✦</span>FIND</span><span class="ticker-item"><span>✦</span>BOOK</span><span class="ticker-item"><span>✦</span>PAY</span><span class="ticker-item"><span>✦</span>REVIEW</span><span class="ticker-item"><span>✦</span>CONNECT</span><span class="ticker-item"><span>✦</span>PERFORM</span>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <p class="stag">Platform</p>
+  <h2 class="stitle">EVERYTHING<br/>YOU NEED.</h2><p class="ssub">From search to payment, CUE handles every step of the booking process intelligently.</p>
+  <div class="fg3">
+    <div class="fcard"><div class="fcard-icon">🎯</div><div class="fcard-title">AI Matching</div><div class="fcard-desc">Our algorithm analyzes the vibe, budget and style to find the perfect DJ for your event.</div></div>
+    <div class="fcard"><div class="fcard-icon">📋</div><div class="fcard-title">Smart Contracts</div><div class="fcard-desc">AI-generated performance contracts in seconds. 10 legal sections, ready to sign.</div></div>
+    <div class="fcard"><div class="fcard-icon">💳</div><div class="fcard-title">Secure Payment</div><div class="fcard-desc">Deposit and balance via Stripe. The DJ is paid after performance validation.</div></div>
+    <div class="fcard"><div class="fcard-icon">⭐</div><div class="fcard-title">Verified Reviews</div><div class="fcard-desc">Only reviews from real bookings. Build your reputation on solid foundations.</div></div>
+    <div class="fcard"><div class="fcard-icon">📅</div><div class="fcard-title">Live Calendar</div><div class="fcard-desc">Manage your availability in real time. Venues instantly see who is available.</div></div>
+    <div class="fcard"><div class="fcard-icon">🛡️</div><div class="fcard-title">Verified Profiles</div><div class="fcard-desc">Every DJ is verified by our team. Identity, experience and references checked.</div></div>
+  </div>
+</section>
+
+<section id="matching" style="background:#0a0a0a">
+  <p class="stag">Artificial Intelligence</p>
+  <h2 class="stitle">FIND THE<br/><span style="color:var(--Y)">PERFECT</span> DJ.</h2>
+  <p class="ssub">Describe your event and let our AI select the best profiles for you.</p>
+  <div style="margin-top:52px;text-align:center">
+    <div style="background:var(--CARD);border:1px solid var(--BORDER);padding:60px 40px;max-width:600px;margin:0 auto">
+      <div style="font-size:64px;margin-bottom:20px">🎯</div>
+      <h3 style="font-family:var(--D);font-size:28px;font-weight:900;text-transform:uppercase;color:#fff;margin-bottom:12px">AI MATCHING</h3>
+      <p style="font-size:14px;color:var(--MUTED);line-height:1.7;margin-bottom:28px;max-width:400px;margin-left:auto;margin-right:auto">Our algorithm analyzes vibe, budget and style to find the perfect DJ for your event. Create a free account to access this feature.</p>
+      <button class="bh y" onclick="window.location.href='inscription.html'" style="margin:0 auto">🚀 CREATE FREE ACCOUNT</button>
+    </div>
+  </div>
+</section>
+
+<section id="contracts">
+  <p class="stag">AI Contracts</p>
+  <h2 class="stitle">A CONTRACT<br/>IN <span style="color:var(--Y)">30 SECONDS.</span></h2>
+  <p class="ssub">Describe your performance and get a complete professional contract in 10 sections.</p>
+  <div style="margin-top:52px;text-align:center">
+    <div style="background:var(--CARD);border:1px solid var(--BORDER);padding:60px 40px;max-width:600px;margin:0 auto">
+      <div style="font-size:64px;margin-bottom:20px">📋</div>
+      <h3 style="font-family:var(--D);font-size:28px;font-weight:900;text-transform:uppercase;color:#fff;margin-bottom:12px">AI CONTRACTS</h3>
+      <p style="font-size:14px;color:var(--MUTED);line-height:1.7;margin-bottom:28px;max-width:400px;margin-left:auto;margin-right:auto">Generate complete professional contracts with 10 legal sections in seconds. Create a free account to access this feature.</p>
+      <button class="bh y" onclick="window.location.href='inscription.html'" style="margin:0 auto">🚀 CREATE FREE ACCOUNT</button>
+    </div>
+  </div>
+</section>
+
+<section id="pricing" style="background:#0a0a0a">
+  <p class="stag">Pricing</p>
+  <h2 class="stitle">SIMPLE &<br/>TRANSPARENT.</h2>
+  <p class="ssub">Pay only when you book. No hidden fees.</p>
+  <div class="pgrid">
+    <div class="pcard">
+      <div class="pcard-name">Starter</div>
+      <div class="pcard-price"><sup>€</sup>0<span>/mois</span></div>
+      <div class="pcard-comm">15% commission</div>
+      <ul class="pcard-features"><li>Complete DJ profile</li><li>Matching access</li><li>Secure Payment</li><li>Email support</li></ul>
+      <button class="pcard-btn" onclick="window.location.href='inscription.html'">START FREE</button>
+    </div>
+    <div class="pcard featured">
+      <div class="pcard-badge">POPULAIRE</div>
+      <div class="pcard-name">Pro DJ</div>
+      <div class="pcard-price"><sup>€</sup>24<span>/mois</span></div>
+      <div class="pcard-comm">5% commission</div>
+      <ul class="pcard-features"><li>Everything in Starter</li><li>Unlimited AI contracts</li><li>"Pro" badge on profile</li><li>Priority in matching</li><li>Advanced analytics</li></ul>
+      <button class="pcard-btn" onclick="startCheckout('pro')">GO PRO</button>
+    </div>
+    <div class="pcard">
+      <div class="pcard-name">Business</div>
+      <div class="pcard-price"><sup>€</sup>79<span>/mois</span></div>
+      <div class="pcard-comm">0% commission</div>
+      <ul class="pcard-features"><li>Everything in Pro</li><li>0% commission</li><li>Multi-users (5 accounts)</li><li>API access</li><li>Dedicated account manager</li><li>Elite badge ✨</li><li>Custom contracts</li><li>Express payout (24h)</li><li>Homepage featured</li><li>Exclusive training</li></ul>
+      <button class="pcard-btn" onclick="startCheckout('business')">GET STARTED</button>
+    </div>
+  </div>
+</section>
+
+<section style="text-align:center;padding:100px 52px">
+  <p class="stag">Join CUE</p>
+  <h2 class="stitle" style="max-width:600px;margin:0 auto 24px">READY TO PLAY<br/>THE <span style="color:var(--Y)">NEXT LEVEL?</span></h2>
+  <p style="font-size:15px;color:var(--MUTED);margin-bottom:36px;font-weight:300">100+ DJs already on board. Be among the first.</p>
+  <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+    <button class="bh y" onclick="window.location.href='inscription.html?type=dj'">🎧 I am a DJ</button>
+    <button class="bh o" onclick="window.location.href='inscription.html?type=venue'">🏢 I am a Venue</button>
+  </div>
+</section>
+
+<footer>
+  <div class="fbrand">
+    <svg width="42" height="42" viewBox="0 0 100 100"><rect width="100" height="100" rx="16" fill="#FFC300"/><circle cx="50" cy="50" r="34" fill="none" stroke="#111" stroke-width="6"/><text x="50" y="59" text-anchor="middle" font-family="Arial Rounded MT Bold,Arial" font-size="24" font-weight="900" fill="#111">cue</text></svg>
+    <p>The platform connecting talented DJs with the venues that need them.</p>
+  </div>
+  <div class="fcol"><h5>Platform</h5><ul><li><a href="#features">Features</a></li><li><a href="#matching">AI Matching</a></li><li><a href="#contracts">Contracts</a></li><li><a href="#pricing">Pricing</a></li></ul></div>
+  <div class="fcol"><h5>Company</h5><ul><li><a href="#">About</a></li><li><a href="#">Blog</a></li><li><a href="#">Press</a></li><li><a href="#">Contact</a></li></ul></div>
+  <div class="fcol"><h5>Contact</h5><ul><li><a href="/cdn-cgi/l/email-protection#046771612a606e2a657474446369656d682a676b69"><span class="__cf_email__" data-cfemail="d7b4a2b2f9b3bdf9b6a7a797b0bab6bebbf9b4b8ba">[email&#160;protected]</span></a></li><li><a href="tel:+33767011532">+33 7 67 01 15 32</a></li><li><a href="#">@cuedjapp</a></li></ul></div>
+</footer>
+<div class="fbot">
+  <span>© 2025 CUE. All rights reserved.</span>
+  <span style="cursor:pointer;color:#111" onclick="showModoLogin()">⚙</span>
+</div>
+
+</div>
+
+<div class="dashboard" id="dashDJ">
+  <nav style="position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,8,8,.97);border-bottom:1px solid var(--BORDER);display:flex;align-items:center;justify-content:space-between;padding:12px 52px">
+    <a href="#" onclick="goHome()" style="display:flex;align-items:center"><svg class="logo-svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="16" fill="#FFC300"/><circle cx="50" cy="50" r="34" fill="none" stroke="#111" stroke-width="6"/><text x="50" y="59" text-anchor="middle" font-family="Arial Rounded MT Bold,Arial" font-size="24" font-weight="900" fill="#111">cue</text></svg></a>
+    <div style="display:flex;align-items:center;gap:16px">
+      <div class="dash-user"><div class="dash-avatar" id="djAvatar">D</div><div><div class="dash-name" id="djName">DJ</div><div class="dash-role">DJ · Pro</div></div></div>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+  <div class="dash-header"><div><div class="dash-title">MY <span>STAGE</span></div><div style="font-size:12px;color:var(--MUTED);margin-top:6px">DJ Dashboard · CUE Platform</div></div></div>
+  <div class="dash-grid">
+    <div class="dstat"><div class="dstat-val">0</div><div class="dstat-label">Active bookings</div></div>
+    <div class="dstat"><div class="dstat-val">0</div><div class="dstat-label">Revenue this month</div></div>
+    <div class="dstat"><div class="dstat-val">—</div><div class="dstat-label">Average rating</div></div>
+    <div class="dstat"><div class="dstat-val">0</div><div class="dstat-label">Profile views</div></div>
+  </div>
+  <div class="dash-section">
+    <div class="dsec-title">Quick actions</div>
+    <div class="dash-cards">
+      <div class="dcard" onclick="scrollToContract()"><div class="dcard-icon">📋</div><div class="dcard-title">Generate a contract</div><div class="dcard-desc">Complete AI contract in 30 seconds</div><div class="dcard-badge">IA</div></div>
+      <div class="dcard"><div class="dcard-icon">👤</div><div class="dcard-title">My profile</div><div class="dcard-desc">Edit biography, genres, photos</div></div>
+      <div class="dcard"><div class="dcard-icon">📅</div><div class="dcard-title">My bookings</div><div class="dcard-desc">Manage your confirmations and requests</div></div>
+      <div class="dcard"><div class="dcard-icon">💰</div><div class="dcard-title">Payments</div><div class="dcard-desc">History and account statements</div></div>
+      <div class="dcard"><div class="dcard-icon">📊</div><div class="dcard-title">Analytics</div><div class="dcard-desc">Views, clicks and profile performance</div></div>
+      <div class="dcard"><div class="dcard-icon">⚙️</div><div class="dcard-title">Settings</div><div class="dcard-desc">Notifications, security, subscription</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="dashboard" id="dashVenue">
+  <nav style="position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,8,8,.97);border-bottom:1px solid var(--BORDER);display:flex;align-items:center;justify-content:space-between;padding:12px 52px">
+    <a href="#" onclick="goHome()" style="display:flex;align-items:center"><svg class="logo-svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="16" fill="#FFC300"/><circle cx="50" cy="50" r="34" fill="none" stroke="#111" stroke-width="6"/><text x="50" y="59" text-anchor="middle" font-family="Arial Rounded MT Bold,Arial" font-size="24" font-weight="900" fill="#111">cue</text></svg></a>
+    <div style="display:flex;align-items:center;gap:16px">
+      <div class="dash-user"><div class="dash-avatar" id="venueAvatar">V</div><div><div class="dash-name" id="venueName">Venue</div><div class="dash-role">Venue · Pro</div></div></div>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+  <div class="dash-header"><div><div class="dash-title">MY <span>VENUE</span></div><div style="font-size:12px;color:var(--MUTED);margin-top:6px">Venue Dashboard · CUE Platform</div></div></div>
+  <div class="dash-grid">
+    <div class="dstat"><div class="dstat-val">0</div><div class="dstat-label">Active events</div></div>
+    <div class="dstat"><div class="dstat-val">0</div><div class="dstat-label">Booked DJs</div></div>
+    <div class="dstat"><div class="dstat-val">0</div><div class="dstat-label">Pending</div></div>
+    <div class="dstat"><div class="dstat-val">—</div><div class="dstat-label">Budget used</div></div>
+  </div>
+  <div class="dash-section">
+    <div class="dsec-title">Quick actions</div>
+    <div class="dash-cards">
+      <div class="dcard" onclick="scrollToMatching()"><div class="dcard-icon">🎯</div><div class="dcard-title">Find a DJ</div><div class="dcard-desc">AI matching by vibe, budget, style</div><div class="dcard-badge">IA</div></div>
+      <div class="dcard" onclick="scrollToContract()"><div class="dcard-icon">📋</div><div class="dcard-title">Generate a contract</div><div class="dcard-desc">Professional contract in 30 seconds</div><div class="dcard-badge">IA</div></div>
+      <div class="dcard"><div class="dcard-icon">📅</div><div class="dcard-title">My bookings</div><div class="dcard-desc">Manage your events and confirmations</div></div>
+      <div class="dcard"><div class="dcard-icon">🏢</div><div class="dcard-title">My venue</div><div class="dcard-desc">Edit technical sheet and equipment</div></div>
+      <div class="dcard"><div class="dcard-icon">💳</div><div class="dcard-title">Payments</div><div class="dcard-desc">Invoices and transaction history</div></div>
+      <div class="dcard"><div class="dcard-icon">⚙️</div><div class="dcard-title">Settings</div><div class="dcard-desc">Notifications, security, subscription</div></div>
+    </div>
+  </div>
+</div>
+
+<button class="chat-fab" id="chatFab" onclick="toggleChat()">💬</button>
+<div class="cwin" id="cwin">
+  <div class="chin">
+    <svg width="28" height="28" viewBox="0 0 100 100"><rect width="100" height="100" rx="16" fill="#FFC300"/><circle cx="50" cy="50" r="34" fill="none" stroke="#111" stroke-width="6"/><text x="50" y="59" text-anchor="middle" font-family="Arial Rounded MT Bold,Arial" font-size="24" font-weight="900" fill="#111">cue</text></svg>
+    <div class="chin-info"><h4>CUE Support</h4><p>AI Assistant · Built-in FAQ ●</p></div>
+    <button class="cclose" onclick="toggleChat()">✕</button>
+  </div>
+  <div class="cmsgs" id="cmsgs">
+    <div class="cmsg bot">Hello! 👋 I'm MAX, the CUE assistant. I answer all your questions about the platform. How can I help you?</div>
+  </div>
+  <div class="cinrow">
+    <input class="cinput" id="cinput" placeholder="Your question..." onkeydown="if(event.key==='Enter')sendChat()"/>
+    <button class="csend" id="csend" onclick="sendChat()">↑</button>
+  </div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+const API_BASE = '/.netlify/functions';
+let currentUser = null, selectedRole = null;
+const USERS = [{email:'stanislas.kleb@outlook.com', pass:'Stan131234', roles:['dj','venue'], name:'Stanislas Kleb'}];
+
+function openAuth(){document.getElementById('authOverlay').classList.remove('hidden');}
+function openAuthAs(role){selectRole(role);openAuth();}
+function closeAuth(){document.getElementById('authOverlay').classList.add('hidden');selectedRole=null;resetAuthSteps();}
+function resetAuthSteps(){
+  document.getElementById('stepRole').style.display='block';
+  document.getElementById('stepLogin').style.display='none';
+  document.getElementById('optDJ').classList.remove('sel');
+  document.getElementById('optVenue').classList.remove('sel');
+  document.getElementById('loginErr').classList.remove('on');
+  document.getElementById('loginSpin').style.display='none';
+  document.getElementById('loginLabel').textContent='SE CONNECTER →';
+}
+function selectRole(role){
+  selectedRole=role;
+  document.getElementById('optDJ').classList.toggle('sel',role==='dj');
+  document.getElementById('optVenue').classList.toggle('sel',role==='venue');
+  document.getElementById('roleTag').textContent=role==='dj'?'🎧 DJ Login':'🏢 Venue Login';
+  document.getElementById('stepRole').style.display='none';
+  document.getElementById('stepLogin').style.display='block';
+  setTimeout(()=>document.getElementById('loginEmail').focus(),80);
+}
+function backToRole(){
+  document.getElementById('stepRole').style.display='block';
+  document.getElementById('stepLogin').style.display='none';
+}
+function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pass=document.getElementById('loginPassword').value;
+  const user=USERS.find(u=>u.email===email&&u.pass===pass&&u.roles.includes(selectedRole));
+  if(!user){document.getElementById('loginErr').classList.add('on');return;}
+  currentUser=user;
+  document.getElementById('authOverlay').classList.add('hidden');
+  resetAuthSteps();
+  if(selectedRole==='dj'){
+    document.getElementById('dashDJ').classList.add('active');
+    document.getElementById('mainSite').style.display='none';
+    document.getElementById('djName').textContent=user.name;
+    document.getElementById('djAvatar').textContent=user.name[0].toUpperCase();
+  } else {
+    document.getElementById('dashVenue').classList.add('active');
+    document.getElementById('mainSite').style.display='none';
+    document.getElementById('venueName').textContent=user.name;
+    document.getElementById('venueAvatar').textContent=user.name[0].toUpperCase();
+  }
+  document.getElementById('navCta').innerHTML=`<button class="logout-btn" onclick="logout()">Logout</button>`;
+  window.scrollTo(0,0);
+}
+function logout(){
+  currentUser=null;selectedRole=null;
+  document.getElementById('dashDJ').classList.remove('active');
+  document.getElementById('dashVenue').classList.remove('active');
+  document.getElementById('mainSite').style.display='block';
+  document.getElementById('navCta').innerHTML=`<button class="bg" onclick="openAuth()">Login</button><button class="bp" onclick="openAuth()">Join CUE</button>`;
+  window.scrollTo(0,0);
+}
+function goHome(){
+  document.getElementById('dashDJ').classList.remove('active');
+  document.getElementById('dashVenue').classList.remove('active');
+  document.getElementById('mainSite').style.display='block';
+  window.scrollTo(0,0);
+}
+function scrollToMatching(){goHome();setTimeout(()=>document.getElementById('matching').scrollIntoView({behavior:'smooth'}),100);}
+function scrollToContract(){goHome();setTimeout(()=>document.getElementById('contracts').scrollIntoView({behavior:'smooth'}),100);}
+
+window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('s',scrollY>50));
+
+async function runMatching(){
+  const btn=document.getElementById('matchBtn');
+  const spin=document.getElementById('matchSpin');
+  const lab=document.getElementById('matchLabel');
+  const out=document.getElementById('matchResults');
+  btn.disabled=true;spin.classList.add('on');lab.textContent='Searching...';
+  out.innerHTML='<div class="result-placeholder"><div class="result-placeholder-icon pulsing">🎧</div><div class="result-placeholder-text pulsing">Analysing...</div></div>';
+  const payload={type:document.getElementById('evType').value,vibe:document.getElementById('evVibe').value||'Non précisé',budget:document.getElementById('evBudget').value,city:document.getElementById('evCity').value||'Non précisée',details:document.getElementById('evDetails').value||'Aucun'};
+  try{
+    const res=await fetch(`${API_BASE}/match`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.detail||'Erreur serveur');
+    const djs=data.djs;
+    out.innerHTML='<div class="dj-results">'+djs.map(d=>`<div class="dj-card"><div class="dj-avatar">${d.name.split(' ').map(w=>w[0]).join('').slice(0,2)}</div><div style="flex:1"><div class="dj-name">${d.name}</div><div class="dj-tags">${d.tags.map(t=>`<span class="dj-tag y">${t}</span>`).join('')}<span class="dj-tag">${d.price}</span></div><div class="dj-desc">${d.bio}</div></div><div style="text-align:right;flex-shrink:0"><div class="dj-match">${d.match}%</div><div class="dj-match-label">Match</div><button class="bp" style="margin-top:10px;padding:6px 14px;font-size:11px" onclick="openAuth()">BOOK</button></div></div>`).join('')+'</div>';
+  }catch(e){out.innerHTML=`<div class="result-placeholder"><div class="result-placeholder-text" style="color:#ff4444;opacity:1">❌ ${e.message}</div></div>`;}
+  btn.disabled=false;spin.classList.remove('on');lab.textContent='⚡ FIND DJs →';
+}
+
+let contractText='';
+async function runContract(){
+  const dj=document.getElementById('cDJ').value.trim();
+  const venue=document.getElementById('cVenue').value.trim();
+  if(!dj||!venue){alert('Le nom du DJ et du Venue sont requis.');return;}
+  const btn=document.getElementById('contractBtn');
+  const spin=document.getElementById('contractSpin');
+  const lab=document.getElementById('contractLabel');
+  const out=document.getElementById('contractOutput');
+  const toolbar=document.getElementById('contractToolbar');
+  btn.disabled=true;spin.classList.add('on');lab.textContent='Generating...';toolbar.style.display='none';
+  out.innerHTML='<div style="text-align:center;padding:40px;color:var(--MUTED)" class="pulsing">⚡ Génération du contrat en cours...</div>';
+  const payload={dj,venue,date:document.getElementById('cDate').value,start:document.getElementById('cStart').value,end:document.getElementById('cEnd').value,fee:parseFloat(document.getElementById('cFee').value)||0,rider:document.getElementById('cRider').value,clauses:document.getElementById('cClauses').value};
+  try{
+    const res=await fetch(`${API_BASE}/contract`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.detail||'Erreur serveur');
+    contractText=data.contract_text;
+    const text=contractText;
+    const dateVal=document.getElementById('cDate').value;
+    const feeVal=document.getElementById('cFee').value;
+    const startVal=document.getElementById('cStart').value;
+    const endVal=document.getElementById('cEnd').value;
+    const today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+    let html='<div class="contract-header-bar"><div><div class="contract-logo">CUE</div><div style="font-size:9px;color:rgba(0,0,0,.5);letter-spacing:1px;text-transform:uppercase;margin-top:2px">DJ Performance Contract</div></div><div style="text-align:right"><div style="font-size:10px;color:#000;font-weight:700">'+dj+' x '+venue+'</div><div style="font-size:9px;color:rgba(0,0,0,.5);margin-top:2px">'+(dateVal||'Date TBC')+' - '+startVal+' to '+endVal+(feeVal?' - '+feeVal+'€':'')+'</div></div></div><div class="contract-inner">';
+    var re=/###SECTION_(\d+):\s*([^#]+)###([\s\S]*?)(?=###SECTION_|\s*$)/g;
+    var m,found=false;
+    while((m=re.exec(text))!==null){found=true;html+='<div class="section-block"><div class="section-title"><span class="sec-num">'+m[1].trim()+'</span>'+m[2].trim()+'</div><p>'+m[3].trim().replace(/\n/g,'<br>')+'</p></div>';}
+    if(!found) html+='<p>'+text.replace(/\n/g,'<br>')+'</p>';
+    html+='</div><div class="contract-footer-bar"><span>Generated by CUE AI - '+today+'</span><span style="color:#FFC300">OFFICIAL DOCUMENT</span></div>';
+    out.innerHTML=html;toolbar.style.display='flex';
+  }catch(e){out.innerHTML=`<div style="padding:20px;color:#ff4444">❌ ${e.message}</div>`;}
+  btn.disabled=false;spin.classList.remove('on');lab.textContent='📋 GENERATE CONTRACT →';
+}
+function copyContract(){navigator.clipboard?.writeText(contractText);const btn=document.getElementById('copyBtn');btn.textContent='✓ Copied!';btn.style.color='#00c864';setTimeout(()=>{btn.textContent='📋 Copy';btn.style.color='';},2000);}
+
+let chatOpen=false,chatHist=[];
+function toggleChat(){chatOpen=!chatOpen;document.getElementById('cwin').classList.toggle('open',chatOpen);if(chatOpen)document.getElementById('cinput').focus();}
+function addCMsg(t,r){const e=document.createElement('div');e.className='cmsg '+r;if(r==='bot')e.style.whiteSpace='pre-line';e.textContent=t;const m=document.getElementById('cmsgs');m.appendChild(e);m.scrollTop=m.scrollHeight;return e;}
+function addTyping(){const e=document.createElement('div');e.className='cmsg typing';e.id='ctyp';e.innerHTML='<div class="dot"></div><div class="dot"></div><div class="dot"></div>';const m=document.getElementById('cmsgs');m.appendChild(e);m.scrollTop=m.scrollHeight;}
+function rmTyping(){document.getElementById('ctyp')?.remove();}
+async function sendChat(){const i=document.getElementById('cinput');const msg=i.value.trim();if(!msg)return;i.value='';document.getElementById('csend').disabled=true;addCMsg(msg,'user');chatHist.push({role:'user',content:msg});addTyping();try{const res=await fetch(`${API_BASE}/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})});const d=await res.json();if(!res.ok)throw new Error(d.detail||`Erreur ${res.status}`);const rep=d.reply||'Désolé, une erreur est survenue.';rmTyping();addCMsg(rep,'bot');chatHist.push({role:'assistant',content:rep});}catch(e){rmTyping();addCMsg(`❌ ${e.message}`,'bot');}document.getElementById('csend').disabled=false;i.focus();}
+
+function showModoLogin(){document.getElementById('modoLoginWrap').classList.remove('hidden');}
+function hideModoLogin(){document.getElementById('modoLoginWrap').classList.add('hidden');}
+function modoLogin(){const email=document.getElementById('modoEmail').value.trim().toLowerCase();const pass=document.getElementById('modoPass').value;const err=document.getElementById('modoErr');err.style.display='none';if(email!=='stanislas.kleb@outlook.com'||pass!=='Stan131234'){err.style.display='block';return;}hideModoLogin();document.getElementById('modoDash').classList.add('open');renderFAQEditor();}
+function modoLogout(){document.getElementById('modoDash').classList.remove('open');}
+function switchMTab(el,sec){document.querySelectorAll('.mtab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.msec').forEach(s=>s.classList.remove('active'));el.classList.add('active');document.getElementById(sec).classList.add('active');}
+let FAQ_DATA=[{q:"Connexion",r:"Vérifiez email/mdp. Utilisez 'Password oublié'."},{q:"Email validation",r:"Vérifiez spams."},{q:"Commission",r:"Starter: 15%. Pro DJ 24€/mois: 5%. Business 79€/mois: 0%."}];
+function renderFAQEditor(){const c=document.getElementById('faqEditorContainer');c.innerHTML=FAQ_DATA.map((f,i)=>`<div class="faq-item"><div class="faq-q" onclick="toggleFaqItem(${i})"><span><span class="faq-q-num">${String(i+1).padStart(2,'0')}.</span><span class="faq-q-text">${f.q}</span></span><span id="faq-arr-${i}" style="color:#333;font-size:14px">▼</span></div><div class="faq-a" id="faq-a-${i}" style="display:none;padding:12px 16px;background:#0a0a0a;border-top:1px solid var(--BORDER);"><textarea style="width:100%;min-height:80px;background:#000;border:1px solid var(--BORDER);color:var(--TEXT);padding:10px;font-size:13px;resize:vertical;" onchange="FAQ_DATA[${i}].r=this.value">${f.r}</textarea></div></div>`).join('');}
+function toggleFaqItem(i){const a=document.getElementById('faq-a-'+i);const arr=document.getElementById('faq-arr-'+i);if(a.style.display==='none'){a.style.display='block';arr.textContent='▲';}else{a.style.display='none';arr.textContent='▼';}}
+</script>
+<script>
+async function startCheckout(plan) {
+  const btn = event.target;
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Chargement...';
+
+  try {
+    const res = await fetch('/.netlify/functions/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan })
+    });
+    const { url } = await res.json();
+    window.location.href = url;
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = originalText;
+    alert('Erreur, réessaie.');
+  }
+}
+</script>
+</body>
+</html>
