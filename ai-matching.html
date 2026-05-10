@@ -85,12 +85,27 @@ footer{border-top:1px solid var(--BORDER);padding:60px 52px 30px;display:grid;gr
   <p class="stag">Artificial Intelligence</p>
   <h2 class="stitle">FIND THE<br/><span style="color:var(--Y)">PERFECT</span> DJ.</h2>
   <p class="ssub">Describe your event and let our AI select the best profiles for you.</p>
-  <div style="margin-top:52px;text-align:center">
+
+  <!-- Bloc visible si NON connecté -->
+  <div id="content-locked" style="display:none;margin-top:52px;text-align:center">
+    <div style="background:var(--CARD);border:1px solid var(--BORDER);padding:60px 40px;max-width:520px;margin:0 auto">
+      <div style="font-size:48px;margin-bottom:16px">🔒</div>
+      <h2 style="font-family:var(--D);font-size:28px;font-weight:900;text-transform:uppercase;color:#fff;margin-bottom:10px">Accès réservé aux membres</h2>
+      <p style="font-size:14px;color:var(--MUTED);line-height:1.7;margin-bottom:28px">Crée un compte gratuit pour accéder à cette fonctionnalité.</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <a href="inscription.html" style="font-family:var(--D);font-size:16px;font-weight:900;letter-spacing:2px;text-transform:uppercase;background:var(--Y);color:#000;text-decoration:none;padding:12px 28px;transition:all .2s">Créer un compte</a>
+        <a href="login.html" style="font-family:var(--D);font-size:16px;font-weight:900;letter-spacing:2px;text-transform:uppercase;background:transparent;color:var(--MUTED);text-decoration:none;padding:12px 28px;border:1px solid var(--BORDER);transition:all .2s">Se connecter</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bloc visible si connecté -->
+  <div id="content-main" style="display:none;margin-top:52px;text-align:center">
     <div style="background:var(--CARD);border:1px solid var(--BORDER);padding:60px 40px;max-width:600px;margin:0 auto">
       <div style="font-size:64px;margin-bottom:20px">🎯</div>
       <h3 style="font-family:var(--D);font-size:28px;font-weight:900;text-transform:uppercase;color:#fff;margin-bottom:12px">AI MATCHING</h3>
-      <p style="font-size:14px;color:var(--MUTED);line-height:1.7;margin-bottom:28px;max-width:400px;margin-left:auto;margin-right:auto">Our algorithm analyzes vibe, budget and style to find the perfect DJ for your event. Create a free account to access this feature.</p>
-      <button class="bh y" onclick="window.location.href='inscription.html'" style="margin:0 auto">🚀 CREATE FREE ACCOUNT</button>
+      <p style="font-size:14px;color:var(--MUTED);line-height:1.7;margin-bottom:28px;max-width:400px;margin-left:auto;margin-right:auto">Our algorithm analyzes vibe, budget and style to find the perfect DJ for your event.</p>
+      <button class="bh y" onclick="window.location.href='dashboard.html'" style="margin:0 auto">🚀 ACCÉDER AU DASHBOARD</button>
     </div>
   </div>
 </section>
@@ -125,7 +140,11 @@ footer{border-top:1px solid var(--BORDER);padding:60px 52px 30px;display:grid;gr
 <script>
 const isLogged = localStorage.getItem('cue_logged_in') === 'true';
 if (!isLogged) {
-  window.location.href = 'login.html?redirect=' + window.location.pathname;
+  document.getElementById('content-locked').style.display = 'block';
+  document.getElementById('content-main').style.display = 'none';
+} else {
+  document.getElementById('content-locked').style.display = 'none';
+  document.getElementById('content-main').style.display = 'block';
 }
 const API_BASE = '/.netlify/functions';
 let chatOpen = false;
