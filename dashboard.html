@@ -904,11 +904,10 @@ function requestWithdraw(e) {
 }
 
 function confirmDelete() {
-  if (confirm('Es-tu sûr de vouloir supprimer ton compte ? Cette action est irréversible.')) {
-    localStorage.removeItem('cue_user');
-    localStorage.removeItem('cue_logged_in');
-    window.location.href = 'index.html';
-  }
+  if (!confirm('Supprimer définitivement ton compte ?')) return;
+  localStorage.clear();
+  sessionStorage.clear();
+  window.location.href = 'index.html';
 }
 
 function logout() {

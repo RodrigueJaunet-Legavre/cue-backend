@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data:;">
 <title>CUE — Inscription</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
@@ -323,6 +324,16 @@ function checkReferral() {
 
 async function submitStep1(e) {
   e.preventDefault();
+
+  // Nettoyage complet — repart de zéro
+  localStorage.removeItem('cue_user');
+  localStorage.removeItem('cue_logged_in');
+  sessionStorage.removeItem('reg_user');
+  sessionStorage.removeItem('verif_code');
+  sessionStorage.removeItem('verif_code_expiry');
+  sessionStorage.removeItem('verif_email');
+  sessionStorage.removeItem('google_temp');
+
   document.querySelectorAll('.form-error').forEach(el => el.classList.remove('show'));
   
   const data = { firstName: document.getElementById('firstName').value.trim(), lastName: document.getElementById('lastName').value.trim(), email: document.getElementById('email').value.trim(), phone: document.getElementById('phone').value.trim(), password: document.getElementById('password').value, confirmPassword: document.getElementById('confirmPassword').value, userType: document.getElementById('userType').value, referralCode: document.getElementById('referralCode').value.trim() };
@@ -359,9 +370,15 @@ function handleCodeKeydown(e, input) { if (e.key === 'Backspace' && !input.value
 
 async function verifyEmailCode() {
   const code = Array.from(document.getElementById('emailCodeWrap').querySelectorAll('.code-digit')).map(i => i.value).join('');
+  const storedCode = sessionStorage.getItem('verif_code');
+  const expiry = sessionStorage.getItem('verif_code_expiry');
+  console.log('Code entré:', code);
+  console.log('Code stocké:', storedCode);
+  console.log('Expiré:', Date.now() > Number(expiry));
   if (!verifyCode(code)) { document.getElementById('emailCodeError').classList.add('show'); return; }
   document.getElementById('verifyEmailBtn').disabled = true;
   document.getElementById('verifyEmailSpinner').classList.add('on');
+  console.log('Code correct → completeRegistration()');
   sessionStorage.setItem('reg_user', JSON.stringify({ ...formData, createdAt: new Date().toISOString() }));
   await completeRegistration();
 }
