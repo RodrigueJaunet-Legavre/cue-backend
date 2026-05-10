@@ -125,7 +125,7 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
   <div class="register-container">
     
     <div id="step1" class="register-box">
-      <div class="steps"><div class="step active"></div><div class="step"></div><div class="step"></div></div>
+      <div class="steps"><div class="step active"></div><div class="step"></div></div>
       <h1>Rejoins <span>CUE</span></h1>
       <p class="register-subtitle">Crée ton compte en 2 minutes</p>
       
@@ -155,7 +155,7 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
     </div>
     
     <div id="step2" class="register-box" style="display:none">
-      <div class="steps"><div class="step done"></div><div class="step active"></div><div class="step"></div></div>
+      <div class="steps"><div class="step done"></div><div class="step active"></div></div>
       <div class="verify-icon">📧</div><div class="verify-title">Vérifie ton email</div>
       <div class="verify-desc">Nous avons envoyé un code à</div><div class="verify-email" id="displayEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ed87888c83ad88958c809d8188c38e8280">[email&#160;protected]</a></div>
       <div class="demo-box" style="display:none"><div class="demo-label">🧪 Code de démo</div><div class="demo-code" id="emailCodeDisplay">------</div></div>
@@ -163,17 +163,6 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
       <div class="form-error" id="emailCodeError" style="text-align:center">Code incorrect</div>
       <button class="btn-primary" id="verifyEmailBtn" onclick="verifyEmailCode()"><span id="verifyEmailLabel">Vérifier</span><div class="spinner" id="verifyEmailSpinner"></div></button>
       <div class="resend-link">Pas reçu ? <button id="resendEmailBtn" onclick="resendCode('email')">Renvoyer le code</button></div>
-    </div>
-    
-    <div id="step3" class="register-box" style="display:none">
-      <div class="steps"><div class="step done"></div><div class="step done"></div><div class="step active"></div></div>
-      <div class="verify-icon">📱</div><div class="verify-title">Vérifie ton téléphone</div>
-      <div class="verify-desc">Un SMS a été envoyé au</div><div class="verify-email" id="displayPhone">+33 6 12 34 56 78</div>
-      <div class="demo-box"><div class="demo-label">🧪 Code SMS de démo</div><div class="demo-code" id="phoneCodeDisplay">------</div></div>
-      <div class="code-input-wrap" id="phoneCodeWrap"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'phone')" onkeydown="handleCodeKeydown(event,this)"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'phone')" onkeydown="handleCodeKeydown(event,this)"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'phone')" onkeydown="handleCodeKeydown(event,this)"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'phone')" onkeydown="handleCodeKeydown(event,this)"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'phone')" onkeydown="handleCodeKeydown(event,this)"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'phone')" onkeydown="handleCodeKeydown(event,this)"></div>
-      <div class="form-error" id="phoneCodeError" style="text-align:center">Code incorrect</div>
-      <button class="btn-primary" id="verifyPhoneBtn" onclick="verifyPhoneCode()"><span id="verifyPhoneLabel">Valider et créer mon compte</span><div class="spinner" id="verifyPhoneSpinner"></div></button>
-      <div class="resend-link">Pas reçu ? <button id="resendPhoneBtn" onclick="resendCode('phone')">Renvoyer le SMS</button></div>
     </div>
     
     <div id="stepSuccess" class="register-box" style="display:none">
@@ -185,7 +174,7 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
 
 <script>
 const GOOGLE_CLIENT_ID = '1096446567466-b1ia5c4far7j137k0564go80t1r3lf23.apps.googleusercontent.com';
-let formData = {}, emailCode = '', phoneCode = '';
+let formData = {};
 
 function generateCode() { return Math.floor(100000 + Math.random() * 900000).toString(); }
 
@@ -259,7 +248,7 @@ function handleCodeInput(input, type) {
   if (input.value) { input.classList.add('filled'); if (input.nextElementSibling?.classList.contains('code-digit')) input.nextElementSibling.focus(); }
   else input.classList.remove('filled');
   const code = Array.from(document.getElementById(type + 'CodeWrap').querySelectorAll('.code-digit')).map(i => i.value).join('');
-  if (code.length === 6) type === 'email' ? verifyEmailCode() : verifyPhoneCode();
+  if (code.length === 6) verifyEmailCode();
 }
 
 function handleCodeKeydown(e, input) { if (e.key === 'Backspace' && !input.value && input.previousElementSibling?.classList.contains('code-digit')) input.previousElementSibling.focus(); }
@@ -269,32 +258,16 @@ async function verifyEmailCode() {
   if (!verifyCode(code)) { document.getElementById('emailCodeError').classList.add('show'); return; }
   document.getElementById('verifyEmailBtn').disabled = true;
   document.getElementById('verifyEmailSpinner').classList.add('on');
-  await new Promise(r => setTimeout(r, 1000));
-  phoneCode = generateCode();
-  document.getElementById('phoneCodeDisplay').textContent = phoneCode;
-  document.getElementById('displayPhone').textContent = '+33 ' + formData.phone;
-  document.getElementById('step2').style.display = 'none';
-  document.getElementById('step3').style.display = 'block';
-}
-
-async function verifyPhoneCode() {
-  const code = Array.from(document.getElementById('phoneCodeWrap').querySelectorAll('.code-digit')).map(i => i.value).join('');
-  if (code !== phoneCode) { document.getElementById('phoneCodeError').classList.add('show'); return; }
-  document.getElementById('verifyPhoneBtn').disabled = true;
-  document.getElementById('verifyPhoneSpinner').classList.add('on');
-  await new Promise(r => setTimeout(r, 1500));
   const user = { id: Date.now(), ...formData, referralCodeOwn: 'REF' + formData.firstName.substring(0,2).toUpperCase() + Date.now().toString().slice(-4), verified: true, createdAt: new Date().toISOString() };
   await completeRegistration(user);
 }
 
 async function resendCode(type) {
-  const btn = document.getElementById('resend' + (type === 'email' ? 'Email' : 'Phone') + 'Btn');
+  const btn = document.getElementById('resendEmailBtn');
   btn.disabled = true; btn.textContent = 'Envoi...';
-  await new Promise(r => setTimeout(r, 1500));
-  if (type === 'email') { await sendVerificationCode(formData.email, formData.firstName); }
-  else { phoneCode = generateCode(); document.getElementById('phoneCodeDisplay').textContent = phoneCode; }
+  await sendVerificationCode(formData.email, formData.firstName);
   btn.disabled = false;
-  btn.textContent = type === 'email' ? 'Renvoyer le code' : 'Renvoyer le SMS';
+  btn.textContent = 'Renvoyer le code';
 }
 
 async function sendVerificationCode(email, firstName) {
