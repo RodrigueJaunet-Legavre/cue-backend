@@ -1,7 +1,7 @@
-const { neon } = require('@neondatabase/serverless');
+const postgres = require('postgres');
 
 exports.handler = async (event) => {
-  const sql = neon(process.env.NETLIFY_DATABASE_URL);
+  const sql = postgres(process.env.NETLIFY_DATABASE_URL, { ssl: 'require' });
   const body = JSON.parse(event.body);
   const { action, senderId, receiverId, content, conversationId, offerId } = body;
 

@@ -1,4 +1,4 @@
-const { neon } = require('@neondatabase/serverless');
+const postgres = require('postgres');
 
 exports.handler = async (event) => {
   const { adminSecret } = JSON.parse(event.body);
@@ -7,7 +7,7 @@ exports.handler = async (event) => {
     return { statusCode: 401, body: 'Non autorisé' };
   }
 
-  const sql = neon(process.env.NETLIFY_DATABASE_URL);
+  const sql = postgres(process.env.NETLIFY_DATABASE_URL, { ssl: 'require' });
 
   const [djs] = await sql`SELECT COUNT(*) FROM users WHERE user_type = 'dj'`;
   const [venues] = await sql`SELECT COUNT(*) FROM users WHERE user_type = 'venue'`;

@@ -1,4 +1,4 @@
-const { neon } = require('@neondatabase/serverless');
+const postgres = require('postgres');
 
 exports.handler = async (event) => {
   const { adminSecret, filter, status, type } = JSON.parse(event.body);
@@ -7,7 +7,7 @@ exports.handler = async (event) => {
     return { statusCode: 401, body: 'Non autorisé' };
   }
 
-  const sql = neon(process.env.NETLIFY_DATABASE_URL);
+  const sql = postgres(process.env.NETLIFY_DATABASE_URL, { ssl: 'require' });
   let users;
 
   if (filter === 'verif') {

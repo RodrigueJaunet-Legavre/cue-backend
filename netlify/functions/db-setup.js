@@ -1,7 +1,7 @@
-const { neon } = require('@neondatabase/serverless');
+const postgres = require('postgres');
 
 exports.handler = async () => {
-  const sql = neon(process.env.NETLIFY_DATABASE_URL);
+  const sql = postgres(process.env.NETLIFY_DATABASE_URL, { ssl: 'require' });
 
   // Crée toutes les tables
   await sql`
