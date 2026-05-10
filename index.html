@@ -818,7 +818,10 @@ async function startCheckout(plan) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ plan })
     });
-    const { url } = await res.json();
+    const data = await res.json();
+    console.log('Réponse reçue:', data);
+    const { url } = data;
+    console.log('URL:', url);
     window.location.href = url;
   } catch (err) {
     btn.disabled = false;

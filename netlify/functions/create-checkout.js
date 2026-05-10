@@ -6,12 +6,17 @@ const PRICES = {
 };
 
 exports.handler = async (event) => {
+  console.log('Body reçu:', event.body);
+  console.log('STRIPE_SECRET_KEY présent:', !!process.env.STRIPE_SECRET_KEY);
+  console.log('PRICES:', PRICES);
+
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
   try {
     const { plan } = JSON.parse(event.body);
+    console.log('Plan demandé:', plan);
 
     if (!PRICES[plan]) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Plan invalide' }) };
@@ -24,6 +29,8 @@ exports.handler = async (event) => {
       cancel_url: 'https://cuedj.eu/#pricing',
       locale: 'fr'
     });
+
+    console.log('Session URL:', session.url);
 
     return {
       statusCode: 200,
