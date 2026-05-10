@@ -625,19 +625,53 @@
   let gigs = JSON.parse(localStorage.getItem('cue_gigs') || '[]');
   let reviews = JSON.parse(localStorage.getItem('cue_reviews') || '[]');
   let calendarDate = new Date();
+  let conversations = [];
+  let currentConv = null;
+  let messagesInterval = null;
 
-  function init() {
-    if (!localStorage.getItem('cue_logged_in') || user.userType !== 'dj') {
+  async function init() {
+    const token = localStorage.getItem('cue_token');
+
+    if (!token) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    try {
+      const res = await fetch('/.netlify/functions/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify_token', token })
+      });
+
+      if (!res.ok) {
+        localStorage.clear();
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const data = await res.json();
+      Object.assign(user, data.user);
+      localStorage.setItem('cue_user', JSON.stringify(user));
+    } catch (err) {
+      if (!localStorage.getItem('cue_logged_in')) {
+        window.location.href = 'login.html';
+        return;
+      }
+    }
+
+    if (user.user_type !== 'dj' && user.userType !== 'dj') {
       window.location.href = 'index.html';
       return;
     }
 
-    document.getElementById('sidebar-name').textContent = (user.firstName || '') + ' ' + (user.lastName || '');
-    document.getElementById('header-name').textContent = user.firstName || 'DJ';
+    document.getElementById('sidebar-name').textContent = (user.first_name || user.firstName || '') + ' ' + (user.last_name || user.lastName || '');
+    document.getElementById('header-name').textContent = user.first_name || user.firstName || 'DJ';
     document.getElementById('sidebar-plan').textContent = (user.plan || 'STARTER').toUpperCase();
 
-    if (user.profile?.photo) {
-      document.getElementById('sidebar-avatar').innerHTML = `<img src="${user.profile.photo}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;">`;
+    if (user.profile?.photo || user.picture) {
+      const src = user.profile?.photo || user.picture;
+      document.getElementById('sidebar-avatar').innerHTML = `<img src="${src}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;">`;
     }
 
     loadStats();
@@ -647,11 +681,18 @@
     loadProfile();
   }
 
-  function showPage(page, el) {
+  async function showPage(page, el) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById('page-' + page).classList.add('active');
     if (el) el.classList.add('active');
+
+    if (page === 'messages') {
+      await loadConversations();
+      startPolling();
+    } else {
+      stopPolling();
+    }
     if (page === 'calendar') renderCalendar();
     if (page === 'gigs') renderGigs('all');
     if (page === 'reviews') renderReviews();
@@ -886,24 +927,268 @@
           </div>
         </div>
       </div>
-      <div style="margin-top:32px;text-align:right;">
-        <a href="dj-onboarding.html" class="btn btn-outline" style="padding:10px 24px;border-radius:10px;border:1px solid var(--Y);color:var(--Y);text-decoration:none;font-weight:700;">✏️ Modifier le profil</a>
+      <div style="margin-top:32px;display:flex;gap:12px;justify-content:flex-end;">
+        <a href="dj-onboarding.html" style="padding:10px 24px;border-radius:10px;border:1px solid var(--BORDER);color:var(--MUTED);text-decoration:none;font-weight:700;font-size:14px;">✏️ Modifier le profil</a>
+        <a href="dj-profile.html?id=${user.id}" target="_blank" style="padding:10px 24px;border-radius:10px;border:1px solid var(--Y);color:var(--Y);text-decoration:none;font-weight:700;font-size:14px;">👁 Voir mon profil public</a>
       </div>
     `;
   }
 
-  function sendMessage() {
+  async function loadConversations() {
+    try {
+      const res = await fetch('/.netlify/functions/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_conversations', userId: user.id, userType: 'dj' })
+      });
+      const data = await res.json();
+      conversations = data.conversations || [];
+      renderConversations();
+      updateUnreadBadge();
+    } catch (err) {
+      console.log('Erreur chargement conversations:', err);
+    }
+  }
+
+  function renderConversations() {
+    const list = document.getElementById('messages-list');
+    if (!conversations.length) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-emoji">💬</div>
+          <div class="empty-title">Aucun message</div>
+          <div class="empty-sub">Les offres des venues apparaîtront ici</div>
+        </div>`;
+      return;
+    }
+    list.innerHTML = conversations.map(conv => `
+      <div class="message-item ${currentConv?.id === conv.id ? 'active' : ''}" onclick="openConversation('${conv.id}')">
+        <div class="message-avatar">🏛️</div>
+        <div class="message-content">
+          <div class="message-sender">${conv.venue_name}</div>
+          <div class="message-preview">${conv.last_message || 'Nouvelle conversation'}</div>
+        </div>
+        <div class="message-time">${formatTime(conv.last_message_at)}</div>
+      </div>
+    `).join('');
+  }
+
+  async function openConversation(convId) {
+    currentConv = conversations.find(c => c.id === convId);
+    if (!currentConv) return;
+    document.getElementById('conversation-empty').style.display = 'none';
+    document.getElementById('conversation-active').style.display = 'flex';
+    document.getElementById('conv-venue-name').textContent = currentConv.venue_name;
+    await loadMessages(convId);
+    renderConversations();
+  }
+
+  async function loadMessages(convId) {
+    try {
+      const res = await fetch('/.netlify/functions/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_messages', conversationId: convId, senderId: user.id })
+      });
+      const data = await res.json();
+      renderMessages(data.messages || []);
+    } catch (err) {
+      console.log('Erreur chargement messages:', err);
+    }
+  }
+
+  function renderMessages(msgs) {
+    const container = document.getElementById('conv-messages');
+    container.innerHTML = msgs.map(msg => {
+      const isMe = msg.sender_id === user.id;
+      if (msg.type === 'offer') {
+        const offer = msg.offer_data;
+        const status = msg.offer_status;
+        return `
+          <div style="background:rgba(255,195,0,.08); border:1px solid var(--BORDER); border-radius:16px; padding:20px; margin:8px 0;">
+            <div style="color:var(--Y); font-weight:700; font-size:12px; letter-spacing:1px; margin-bottom:12px;">💼 OFFRE DE BOOKING</div>
+            <div style="color:#fff; font-weight:700; font-size:16px; margin-bottom:4px;">${offer.type}</div>
+            <div style="color:var(--MUTED); font-size:13px; margin-bottom:4px;">📅 ${offer.date} • ${offer.start}→${offer.end}</div>
+            <div style="font-family:'Barlow Condensed'; font-weight:900; font-size:28px; color:var(--Y); margin:12px 0;">${offer.budget}€</div>
+            <p style="color:var(--MUTED); font-size:14px; margin-bottom:16px;">${offer.message}</p>
+            ${!status ? `
+              <div style="display:flex; gap:12px;">
+                <button class="btn btn-primary" style="padding:8px 20px; font-size:13px;" onclick="respondOffer('${msg.id}', 'accepted')">✅ Accepter</button>
+                <button class="btn" style="padding:8px 20px; font-size:13px; border:1px solid #ff4444; color:#ff4444; background:transparent;" onclick="respondOffer('${msg.id}', 'declined')">❌ Refuser</button>
+              </div>
+            ` : `
+              <div style="padding:8px 16px; border-radius:8px; display:inline-block; font-weight:700; font-size:13px;
+                          background:${status === 'accepted' ? 'rgba(0,200,100,.15)' : 'rgba(255,68,68,.15)'};
+                          color:${status === 'accepted' ? 'var(--SUCCESS)' : 'var(--ERROR)'};">
+                ${status === 'accepted' ? '✅ Offre acceptée' : '❌ Offre refusée'}
+              </div>
+            `}
+          </div>`;
+      }
+      return `
+        <div style="display:flex; justify-content:${isMe ? 'flex-end' : 'flex-start'}; margin:4px 0;">
+          <div style="max-width:70%; padding:12px 16px;
+                      border-radius:${isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px'};
+                      background:${isMe ? 'var(--Y)' : '#1a1a1a'};
+                      color:${isMe ? '#000' : 'var(--TEXT)'};
+                      font-size:14px; line-height:1.5;">
+            ${msg.content}
+          </div>
+        </div>`;
+    }).join('');
+    container.scrollTop = container.scrollHeight;
+  }
+
+  async function sendMessage() {
+    if (!currentConv) return;
     const input = document.getElementById('message-input');
-    if (!input.value.trim()) return;
+    const content = input.value.trim();
+    if (!content) return;
     input.value = '';
+
+    await fetch('/.netlify/functions/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'send_message',
+        convId: currentConv.id,
+        djId: currentConv.dj_id,
+        venueId: currentConv.venue_id,
+        djName: currentConv.dj_name,
+        venueName: currentConv.venue_name,
+        senderType: 'dj',
+        message: {
+          senderId: user.id,
+          senderName: user.firstName + ' ' + user.lastName,
+          content,
+          type: 'text'
+        }
+      })
+    });
+
+    await loadMessages(currentConv.id);
+    await loadConversations();
+  }
+
+  async function respondOffer(messageId, status) {
+    await fetch('/.netlify/functions/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update_offer', messageId, status })
+    });
+
+    const reply = status === 'accepted'
+      ? "✅ J'ai accepté votre offre ! Hâte de mixer pour vous."
+      : '❌ Je ne suis malheureusement pas disponible pour cette date.';
+
+    await fetch('/.netlify/functions/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'send_message',
+        convId: currentConv.id,
+        djId: currentConv.dj_id,
+        venueId: currentConv.venue_id,
+        djName: currentConv.dj_name,
+        venueName: currentConv.venue_name,
+        senderType: 'dj',
+        message: {
+          senderId: user.id,
+          senderName: user.firstName + ' ' + user.lastName,
+          content: reply,
+          type: 'text'
+        }
+      })
+    });
+
+    await loadMessages(currentConv.id);
+
+    if (status === 'accepted') {
+      const res = await fetch('/.netlify/functions/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_messages', conversationId: currentConv.id, senderId: user.id })
+      });
+      const data = await res.json();
+      const offerMsg = data.messages.find(m => m.type === 'offer');
+      if (offerMsg?.offer_data) {
+        const offer = offerMsg.offer_data;
+        gigs = JSON.parse(localStorage.getItem('cue_gigs') || '[]');
+        gigs.unshift({
+          id: Date.now().toString(),
+          venue: currentConv.venue_name,
+          city: offer.city || 'À définir',
+          date: offer.date,
+          time: offer.start,
+          fee: parseInt(offer.budget) || 0,
+          status: 'confirmed',
+          source: 'cue',
+          createdAt: new Date().toISOString()
+        });
+        localStorage.setItem('cue_gigs', JSON.stringify(gigs));
+        loadStats();
+        alert('✅ Gig ajouté automatiquement à ton agenda !');
+      }
+    }
+  }
+
+  async function updateUnreadBadge() {
+    try {
+      const res = await fetch('/.netlify/functions/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'unread_count', userId: user.id })
+      });
+      const data = await res.json();
+      const badge = document.getElementById('unread-badge');
+      if (data.count > 0) {
+        badge.textContent = data.count;
+        badge.style.display = 'block';
+      } else {
+        badge.style.display = 'none';
+      }
+    } catch (err) {}
+  }
+
+  function startPolling() {
+    if (messagesInterval) return;
+    messagesInterval = setInterval(async () => {
+      await loadConversations();
+      if (currentConv) await loadMessages(currentConv.id);
+    }, 5000);
+  }
+
+  function stopPolling() {
+    if (messagesInterval) { clearInterval(messagesInterval); messagesInterval = null; }
+  }
+
+  function formatTime(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const diff = Date.now() - d;
+    if (diff < 60000) return "À l'instant";
+    if (diff < 3600000) return Math.floor(diff / 60000) + 'min';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + 'h';
+    return d.toLocaleDateString('fr-FR');
   }
 
   function closeModal(id) {
     document.getElementById(id).classList.remove('open');
   }
 
-  function logout() {
-    localStorage.removeItem('cue_logged_in');
+  async function logout() {
+    const token = localStorage.getItem('cue_token');
+    if (token) {
+      try {
+        await fetch('/.netlify/functions/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'logout', token })
+        });
+      } catch (_) {}
+    }
+    localStorage.clear();
+    sessionStorage.clear();
     window.location.href = 'index.html';
   }
 

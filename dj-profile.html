@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CUE — Profil DJ</title>
+  <meta property="og:title" id="og-title" content="Profil DJ sur CUE">
+  <meta property="og:description" id="og-desc" content="Découvrez ce DJ sur CUE">
+  <meta property="og:image" content="https://cuedj.eu/og-image.png">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --Y:#FFC300; --Y2:#FFD740; --BG:#080808; --CARD:#111;
+      --BORDER:rgba(255,195,0,.13); --TEXT:#ddd; --MUTED:#bbb;
+    }
+    body { background:var(--BG); color:var(--TEXT); font-family:Barlow,sans-serif; min-height:100vh; }
+
+    /* HEADER */
+    .top-bar {
+      padding:16px 40px; display:flex; align-items:center; justify-content:space-between;
+      border-bottom:1px solid var(--BORDER); position:sticky; top:0;
+      background:rgba(8,8,8,.95); backdrop-filter:blur(10px); z-index:100;
+    }
+    .logo { color:var(--Y); font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px; text-decoration:none; }
+    .top-bar-actions { display:flex; gap:12px; }
+
+    /* HERO */
+    .hero {
+      position:relative; height:320px; overflow:hidden;
+      background:linear-gradient(135deg, #0d0d0d 0%, #111 50%, #0a0a0a 100%);
+    }
+    .hero::before {
+      content:''; position:absolute; inset:0;
+      background:radial-gradient(ellipse at 60% 50%, rgba(255,195,0,.12) 0%, transparent 60%);
+    }
+    .hero-particles { position:absolute; inset:0; overflow:hidden; }
+    .particle {
+      position:absolute; border-radius:50%; background:rgba(255,195,0,.15);
+      animation:float linear infinite;
+    }
+    @keyframes float {
+      0% { transform:translateY(100%) rotate(0deg); opacity:0; }
+      10% { opacity:1; }
+      90% { opacity:1; }
+      100% { transform:translateY(-100vh) rotate(720deg); opacity:0; }
+    }
+
+    .hero-content {
+      position:relative; z-index:2; height:100%; display:flex;
+      align-items:flex-end; padding:0 60px 40px;
+    }
+    .hero-avatar-wrap { position:relative; margin-right:32px; }
+    .hero-avatar {
+      width:120px; height:120px; border-radius:50%; border:4px solid var(--Y);
+      object-fit:cover; background:#1a1a1a; display:flex; align-items:center;
+      justify-content:center; font-size:48px; overflow:hidden;
+      box-shadow:0 0 40px rgba(255,195,0,.3);
+    }
+    .verified-ring { position:absolute; bottom:4px; right:4px; background:var(--SUCCESS); width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; border:3px solid var(--BG); }
+    .hero-info { flex:1; }
+    .hero-name { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:56px; color:#fff; line-height:1; margin-bottom:8px; }
+    .hero-genres { color:var(--Y); font-weight:700; font-size:16px; margin-bottom:12px; }
+    .hero-meta { display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+    .hero-rating { display:flex; align-items:center; gap:8px; }
+    .hero-stars { color:var(--Y); font-size:20px; }
+    .hero-rating-num { font-size:20px; font-weight:900; color:#fff; }
+    .hero-reviews { color:var(--MUTED); font-size:14px; }
+    .hero-badge { background:rgba(255,195,0,.15); color:var(--Y); padding:6px 14px; border-radius:20px; font-size:12px; font-weight:700; border:1px solid rgba(255,195,0,.3); }
+    .hero-plan-badge { padding:6px 14px; border-radius:20px; font-size:12px; font-weight:700; }
+    .plan-business { background:rgba(255,195,0,.2); color:var(--Y); border:1px solid var(--Y); }
+    .plan-pro { background:rgba(100,100,255,.15); color:#8888ff; border:1px solid rgba(100,100,255,.3); }
+
+    /* MAIN LAYOUT */
+    .main-layout {
+      max-width:1100px; margin:0 auto; padding:48px 24px;
+      display:grid; grid-template-columns:1fr 360px; gap:32px;
+    }
+
+    /* SECTIONS */
+    .section { margin-bottom:40px; }
+    .section-title { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px; color:#fff; margin-bottom:20px; display:flex; align-items:center; gap:12px; }
+    .section-title::after { content:''; flex:1; height:1px; background:var(--BORDER); }
+
+    /* ABOUT */
+    .about-text { color:var(--MUTED); font-size:16px; line-height:1.8; }
+
+    /* GENRES CHIPS */
+    .genre-chips { display:flex; flex-wrap:wrap; gap:10px; }
+    .genre-chip { padding:8px 18px; border-radius:50px; border:1px solid var(--BORDER); font-size:14px; font-weight:600; color:var(--Y); background:rgba(255,195,0,.06); }
+
+    /* MIX PLAYER */
+    .mix-player {
+      background:linear-gradient(135deg, #111 0%, #1a1a1a 100%);
+      border:1px solid var(--BORDER); border-radius:16px; padding:24px;
+      display:flex; align-items:center; gap:20px;
+    }
+    .play-btn {
+      width:56px; height:56px; border-radius:50%; background:var(--Y); border:none;
+      color:#000; font-size:20px; cursor:pointer; display:flex; align-items:center;
+      justify-content:center; flex-shrink:0; transition:all .2s;
+    }
+    .play-btn:hover { background:var(--Y2); transform:scale(1.05); }
+    .mix-info { flex:1; }
+    .mix-title { font-weight:700; font-size:16px; color:#fff; margin-bottom:4px; }
+    .mix-duration { color:var(--MUTED); font-size:13px; }
+    .mix-waveform {
+      height:40px; display:flex; align-items:center; gap:2px; margin-top:12px;
+    }
+    .waveform-bar {
+      flex:1; border-radius:2px; background:rgba(255,195,0,.3);
+      animation:wave 1.5s ease-in-out infinite alternate;
+    }
+    @keyframes wave { from { height:8px; } to { height:100%; } }
+
+    /* TRACKS */
+    .tracks-list { display:flex; flex-direction:column; gap:10px; }
+    .track-item {
+      display:flex; align-items:center; gap:16px; padding:16px 20px;
+      background:var(--CARD); border:1px solid var(--BORDER); border-radius:12px;
+      transition:all .2s; cursor:pointer;
+    }
+    .track-item:hover { border-color:rgba(255,195,0,.3); background:#1a1a1a; }
+    .track-num { color:var(--MUTED); font-size:13px; font-weight:700; width:24px; text-align:center; }
+    .track-icon { font-size:20px; }
+    .track-name { flex:1; font-weight:600; font-size:14px; }
+    .track-play { color:var(--MUTED); font-size:18px; transition:color .2s; }
+    .track-item:hover .track-play { color:var(--Y); }
+
+    /* REVIEWS */
+    .reviews-list { display:flex; flex-direction:column; gap:16px; }
+    .review-card {
+      background:var(--CARD); border:1px solid var(--BORDER); border-radius:16px; padding:24px;
+      transition:all .2s;
+    }
+    .review-card:hover { border-color:rgba(255,195,0,.2); }
+    .review-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+    .review-venue { font-weight:700; font-size:15px; color:#fff; }
+    .review-date { color:var(--MUTED); font-size:12px; }
+    .review-stars { color:var(--Y); font-size:18px; margin-bottom:10px; }
+    .review-text { color:var(--MUTED); font-size:14px; line-height:1.7; }
+
+    /* SOCIALS */
+    .socials-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+    .social-link {
+      display:flex; align-items:center; gap:12px; padding:16px;
+      background:var(--CARD); border:1px solid var(--BORDER); border-radius:12px;
+      text-decoration:none; color:var(--TEXT); transition:all .2s; font-weight:600; font-size:14px;
+    }
+    .social-link:hover { border-color:var(--Y); color:var(--Y); transform:translateY(-2px); }
+    .social-link span:first-child { font-size:22px; }
+
+    /* SIDEBAR STICKY */
+    .sidebar-sticky { position:sticky; top:80px; }
+    .contact-card {
+      background:var(--CARD); border:1px solid var(--BORDER); border-radius:20px;
+      padding:32px; margin-bottom:24px;
+    }
+    .contact-card h3 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px; color:#fff; margin-bottom:8px; }
+    .contact-card p { color:var(--MUTED); font-size:14px; margin-bottom:24px; line-height:1.6; }
+    .btn-contact {
+      width:100%; padding:16px; border-radius:12px; border:none;
+      background:var(--Y); color:#000; cursor:pointer; font-weight:700;
+      font-size:16px; font-family:Barlow,sans-serif; transition:all .2s; margin-bottom:12px;
+    }
+    .btn-contact:hover { background:var(--Y2); transform:translateY(-1px); }
+    .btn-fav {
+      width:100%; padding:16px; border-radius:12px;
+      border:1px solid var(--BORDER); background:transparent; color:var(--MUTED);
+      cursor:pointer; font-weight:700; font-size:16px; font-family:Barlow,sans-serif;
+      transition:all .2s;
+    }
+    .btn-fav:hover { border-color:var(--Y); color:var(--Y); }
+    .btn-fav.active { border-color:var(--Y); color:var(--Y); background:rgba(255,195,0,.08); }
+
+    /* SHARE */
+    .share-card { background:var(--CARD); border:1px solid var(--BORDER); border-radius:20px; padding:24px; }
+    .share-card h4 { font-weight:700; font-size:14px; margin-bottom:16px; color:var(--MUTED); text-transform:uppercase; letter-spacing:1px; }
+    .share-btns { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+    .share-btn { padding:12px; border-radius:10px; border:1px solid var(--BORDER); background:transparent; color:var(--MUTED); cursor:pointer; font-weight:700; font-size:13px; transition:all .2s; font-family:Barlow,sans-serif; }
+    .share-btn:hover { border-color:var(--Y); color:var(--Y); }
+
+    /* STATS ROW */
+    .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:40px; }
+    .mini-stat { background:var(--CARD); border:1px solid var(--BORDER); border-radius:12px; padding:20px; text-align:center; }
+    .mini-stat-value { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:32px; color:#fff; }
+    .mini-stat-label { color:var(--MUTED); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
+
+    /* MODAL */
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:200; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+    .modal.open { display:flex; animation:fadeIn .2s ease; }
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+    .modal-card { background:#111; border:1px solid var(--BORDER); border-radius:20px; padding:40px; width:520px; }
+    .modal-title { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:32px; color:#fff; margin-bottom:24px; }
+    .form-group { margin-bottom:16px; }
+    .form-label { display:block; color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+    .form-input { width:100%; background:#1a1a1a; border:1px solid var(--BORDER); color:var(--TEXT); padding:14px 16px; border-radius:10px; font-size:15px; font-family:Barlow,sans-serif; transition:border-color .2s; }
+    .form-input:focus { outline:none; border-color:var(--Y); }
+    .modal-actions { display:flex; gap:12px; margin-top:24px; }
+    .btn-primary { padding:14px 28px; border-radius:10px; border:none; background:var(--Y); color:#000; cursor:pointer; font-weight:700; font-size:15px; font-family:Barlow,sans-serif; transition:all .2s; }
+    .btn-primary:hover { background:var(--Y2); }
+    .btn-outline { padding:14px 28px; border-radius:10px; border:1px solid var(--BORDER); background:transparent; color:var(--MUTED); cursor:pointer; font-weight:700; font-size:15px; font-family:Barlow,sans-serif; transition:all .2s; }
+    .btn-outline:hover { border-color:var(--Y); color:var(--Y); }
+
+    /* NOT FOUND */
+    .not-found { text-align:center; padding:120px 24px; }
+    .not-found h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:48px; color:#fff; margin-bottom:16px; }
+    .not-found p { color:var(--MUTED); font-size:16px; }
+
+    @media (max-width:768px) {
+      .main-layout { grid-template-columns:1fr; }
+      .hero-content { padding:0 24px 32px; }
+      .hero-name { font-size:36px; }
+      .sidebar-sticky { position:static; }
+      .stats-row { grid-template-columns:repeat(3,1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <a href="index.html" class="logo">CUE</a>
+  <div class="top-bar-actions">
+    <a href="index.html" style="color:var(--MUTED); text-decoration:none; font-weight:600; font-size:14px; padding:10px 20px; border:1px solid var(--BORDER); border-radius:10px; transition:all .2s;" onmouseover="this.style.borderColor='var(--Y)'; this.style.color='var(--Y)'" onmouseout="this.style.borderColor='var(--BORDER)'; this.style.color='var(--MUTED)'">← Retour</a>
+    <a href="inscription.html" style="background:var(--Y); color:#000; text-decoration:none; font-weight:700; font-size:14px; padding:10px 20px; border-radius:10px;">Rejoindre CUE</a>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero" id="hero-section">
+  <div class="hero-particles" id="particles"></div>
+  <div class="hero-content">
+    <div class="hero-avatar-wrap">
+      <div class="hero-avatar" id="hero-avatar">🎧</div>
+      <div class="verified-ring" id="verified-ring" style="display:none;">✅</div>
+    </div>
+    <div class="hero-info">
+      <h1 class="hero-name" id="hero-name">Chargement...</h1>
+      <div class="hero-genres" id="hero-genres"></div>
+      <div class="hero-meta">
+        <div class="hero-rating">
+          <span class="hero-stars" id="hero-stars">☆☆☆☆☆</span>
+          <span class="hero-rating-num" id="hero-rating-num"></span>
+          <span class="hero-reviews" id="hero-reviews-count"></span>
+        </div>
+        <span class="hero-badge" id="hero-verified-badge" style="display:none;">✅ Vérifié CUE</span>
+        <span class="hero-plan-badge" id="hero-plan-badge"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main-layout" id="main-content" style="display:none;">
+
+  <!-- LEFT COLUMN -->
+  <div class="left-col">
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="mini-stat">
+        <div class="mini-stat-value" id="stat-gigs">0</div>
+        <div class="mini-stat-label">Gigs</div>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-stat-value" id="stat-rating-big" style="color:var(--Y);">—</div>
+        <div class="mini-stat-label">Note</div>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-stat-value" id="stat-reviews-big">0</div>
+        <div class="mini-stat-label">Avis</div>
+      </div>
+    </div>
+
+    <!-- ABOUT -->
+    <div class="section">
+      <div class="section-title">À PROPOS</div>
+      <p class="about-text" id="about-text">Aucune description ajoutée.</p>
+    </div>
+
+    <!-- GENRES -->
+    <div class="section" id="genres-section" style="display:none;">
+      <div class="section-title">GENRES</div>
+      <div class="genre-chips" id="genres-chips"></div>
+    </div>
+
+    <!-- MIX SET -->
+    <div class="section" id="mix-section" style="display:none;">
+      <div class="section-title">MIX DE PRÉSENTATION</div>
+      <div class="mix-player">
+        <button class="play-btn" onclick="togglePlay()">▶</button>
+        <div class="mix-info">
+          <div class="mix-title" id="mix-title">Mix de présentation</div>
+          <div class="mix-duration">10-20 min</div>
+          <div class="mix-waveform" id="waveform"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRACKS -->
+    <div class="section" id="tracks-section" style="display:none;">
+      <div class="section-title">TRACKS</div>
+      <div class="tracks-list" id="tracks-list"></div>
+    </div>
+
+    <!-- AVIS -->
+    <div class="section" id="reviews-section">
+      <div class="section-title">AVIS <span style="color:var(--MUTED); font-size:16px; font-weight:400;" id="reviews-label"></span></div>
+      <div class="reviews-list" id="reviews-list">
+        <div style="color:var(--MUTED); text-align:center; padding:40px;">Aucun avis pour l'instant</div>
+      </div>
+    </div>
+
+    <!-- RÉSEAUX SOCIAUX -->
+    <div class="section" id="socials-section" style="display:none;">
+      <div class="section-title">RÉSEAUX SOCIAUX</div>
+      <div class="socials-grid" id="socials-grid"></div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT COLUMN (STICKY) -->
+  <div class="sidebar-sticky">
+
+    <!-- CONTACT CARD -->
+    <div class="contact-card">
+      <h3>BOOKER CE DJ</h3>
+      <p>Envoie une offre directement à ce DJ via la plateforme CUE.</p>
+      <button class="btn-contact" onclick="openContactModal()">💬 Envoyer une offre</button>
+      <button class="btn-fav" id="fav-btn" onclick="toggleFav()">🤍 Ajouter aux favoris</button>
+    </div>
+
+    <!-- SHARE CARD -->
+    <div class="share-card">
+      <h4>Partager ce profil</h4>
+      <div class="share-btns">
+        <button class="share-btn" onclick="share('whatsapp')">💬 WhatsApp</button>
+        <button class="share-btn" onclick="share('instagram')">📸 Instagram</button>
+        <button class="share-btn" onclick="share('copy')">🔗 Copier</button>
+        <button class="share-btn" onclick="share('messages')">✉️ Messages</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- NOT FOUND -->
+<div class="not-found" id="not-found" style="display:none;">
+  <div style="font-size:64px; margin-bottom:24px;">🎧</div>
+  <h1>Profil introuvable</h1>
+  <p>Ce profil DJ n'existe pas ou a été supprimé.</p>
+  <a href="index.html" style="display:inline-block; margin-top:24px; background:var(--Y); color:#000; padding:14px 32px; border-radius:10px; font-weight:700; text-decoration:none;">← Retour à l'accueil</a>
+</div>
+
+<!-- MODAL CONTACT -->
+<div id="modal-contact" class="modal">
+  <div class="modal-card">
+    <h2 class="modal-title">💬 ENVOYER UNE OFFRE</h2>
+    <div id="contact-logged-in" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Date de l'événement</label>
+        <input type="date" id="offer-date" class="form-input">
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="form-group">
+          <label class="form-label">Début</label>
+          <input type="time" id="offer-start" class="form-input" value="23:00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fin</label>
+          <input type="time" id="offer-end" class="form-input" value="02:00">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Budget (€)</label>
+        <input type="number" id="offer-budget" class="form-input" placeholder="500">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Type d'événement</label>
+        <select id="offer-type" class="form-input">
+          <option>Soirée club</option>
+          <option>Mariage</option>
+          <option>Festival</option>
+          <option>Événement privé</option>
+          <option>Corporate</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Message</label>
+        <textarea id="offer-message" class="form-input" rows="4" placeholder="Bonjour, nous organisons un événement..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-outline" onclick="closeModal()">Annuler</button>
+        <button class="btn-primary" onclick="sendOffer()">Envoyer l'offre ✓</button>
+      </div>
+    </div>
+    <div id="contact-not-logged" style="display:none; text-align:center; padding:20px 0;">
+      <div style="font-size:48px; margin-bottom:16px;">🔒</div>
+      <p style="color:var(--MUTED); margin-bottom:24px;">Tu dois avoir un compte venue pour contacter ce DJ.</p>
+      <a href="inscription.html" style="display:block; background:var(--Y); color:#000; padding:14px; border-radius:10px; font-weight:700; text-decoration:none; margin-bottom:12px;">Créer un compte →</a>
+      <a href="login.html" style="display:block; border:1px solid var(--BORDER); color:var(--MUTED); padding:14px; border-radius:10px; font-weight:700; text-decoration:none;">Se connecter</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  let djData = null;
+  let isFav = false;
+  let isPlaying = false;
+
+  const params = new URLSearchParams(window.location.search);
+  const djId = params.get('id');
+
+  function init() {
+    createParticles();
+
+    const user = JSON.parse(localStorage.getItem('cue_user') || '{}');
+
+    if (user.id === djId || (!djId && user.userType === 'dj')) {
+      djData = {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        userType: user.userType,
+        plan: user.plan || 'starter',
+        verified: user.identityStatus === 'verified',
+        profile: user.profile || {},
+        genres: user.genres || [],
+        tracks: user.tracks || []
+      };
+      renderProfile();
+      return;
+    }
+
+    const demoDJs = [
+      { id:'dj1', firstName:'Alex', lastName:'Martin', genres:['House','Tech House'], rating:4.8, reviews:24, description:'DJ professionnel depuis 10 ans, spécialisé dans la house et tech house.', verified:true, plan:'pro', instagram:'instagram.com/alexmartin', soundcloud:'soundcloud.com/alexmartin', gigs:47 },
+      { id:'dj2', firstName:'Sarah', lastName:'K', genres:['Techno','Minimal'], rating:4.6, reviews:18, description:'Techno underground depuis 2015. Sets entre 3 et 5 heures.', verified:true, plan:'pro', gigs:31 },
+      { id:'dj3', firstName:'Marco', lastName:'B', genres:['Deep House','Afro House'], rating:4.9, reviews:41, description:'Deep et afro house, ambassadeur de la scène parisienne.', verified:true, plan:'business', gigs:89 },
+    ];
+
+    djData = demoDJs.find(dj => dj.id === djId);
+
+    if (!djData) {
+      document.getElementById('hero-section').style.display = 'none';
+      document.getElementById('not-found').style.display = 'block';
+      return;
+    }
+
+    renderProfile();
+  }
+
+  function renderProfile() {
+    const dj = djData;
+    const reviews = JSON.parse(localStorage.getItem('cue_reviews') || '[]').filter(r => r.djId === dj.id);
+    const avgRating = reviews.length ? (reviews.reduce((s,r) => s + r.rating, 0) / reviews.length).toFixed(1) : (dj.rating || null);
+    const reviewCount = reviews.length || dj.reviews || 0;
+
+    document.title = `${dj.firstName} ${dj.lastName} — DJ sur CUE`;
+    document.getElementById('og-title').content = `${dj.firstName} ${dj.lastName} — DJ sur CUE`;
+    document.getElementById('og-desc').content = dj.profile?.description || dj.description || '';
+
+    document.getElementById('hero-name').textContent = dj.firstName + ' ' + dj.lastName;
+    document.getElementById('hero-genres').textContent = (dj.genres || []).join(' · ');
+
+    if (avgRating) {
+      const stars = '★'.repeat(Math.round(avgRating)) + '☆'.repeat(5 - Math.round(avgRating));
+      document.getElementById('hero-stars').textContent = stars;
+      document.getElementById('hero-rating-num').textContent = avgRating;
+      document.getElementById('hero-reviews-count').textContent = `(${reviewCount} avis)`;
+    }
+
+    if (dj.verified || dj.identityStatus === 'verified') {
+      document.getElementById('verified-ring').style.display = 'flex';
+      document.getElementById('hero-verified-badge').style.display = 'inline-block';
+    }
+
+    const planBadge = document.getElementById('hero-plan-badge');
+    if (dj.plan === 'business') { planBadge.textContent = '✨ Elite'; planBadge.classList.add('plan-business'); }
+    else if (dj.plan === 'pro') { planBadge.textContent = '⚡ Pro'; planBadge.classList.add('plan-pro'); }
+
+    if (dj.profile?.photo) {
+      document.getElementById('hero-avatar').innerHTML = `<img src="${dj.profile.photo}" style="width:100%; height:100%; object-fit:cover;">`;
+    }
+
+    document.getElementById('stat-gigs').textContent = dj.gigs || 0;
+    document.getElementById('stat-rating-big').textContent = avgRating || '—';
+    document.getElementById('stat-reviews-big').textContent = reviewCount;
+
+    document.getElementById('about-text').textContent = dj.profile?.description || dj.description || 'Aucune description ajoutée.';
+
+    if (dj.genres?.length) {
+      document.getElementById('genres-section').style.display = 'block';
+      document.getElementById('genres-chips').innerHTML = dj.genres.map(g => `<div class="genre-chip">${g}</div>`).join('');
+    }
+
+    if (dj.profile?.mix || dj.mix) {
+      document.getElementById('mix-section').style.display = 'block';
+      document.getElementById('mix-title').textContent = dj.profile?.mix || dj.mix;
+      renderWaveform();
+    }
+
+    if (dj.tracks?.length || dj.profile?.tracks?.length) {
+      const tracks = dj.tracks || dj.profile.tracks || [];
+      document.getElementById('tracks-section').style.display = 'block';
+      document.getElementById('tracks-list').innerHTML = tracks.map((t, i) => `
+        <div class="track-item">
+          <span class="track-num">${i+1}</span>
+          <span class="track-icon">🎵</span>
+          <span class="track-name">${typeof t === 'string' ? t.replace('.mp3','') : t.name?.replace('.mp3','')}</span>
+          <span class="track-play">▶</span>
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('reviews-label').textContent = reviewCount ? `(${reviewCount})` : '';
+    if (reviews.length) {
+      document.getElementById('reviews-list').innerHTML = reviews.map(r => `
+        <div class="review-card">
+          <div class="review-header">
+            <span class="review-venue">${r.venue}</span>
+            <span class="review-date">${new Date(r.date).toLocaleDateString('fr-FR')}</span>
+          </div>
+          <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+          <div class="review-text">${r.comment}</div>
+        </div>
+      `).join('');
+    }
+
+    const socials = [];
+    const profile = dj.profile || dj;
+    if (profile.instagram) socials.push({ icon:'📸', label:'Instagram', url:`https://${profile.instagram}` });
+    if (profile.soundcloud) socials.push({ icon:'🎵', label:'SoundCloud', url:`https://${profile.soundcloud}` });
+    if (profile.spotify) socials.push({ icon:'🎶', label:'Spotify', url:`https://${profile.spotify}` });
+    if (profile.youtube) socials.push({ icon:'▶️', label:'YouTube', url:`https://${profile.youtube}` });
+
+    if (socials.length) {
+      document.getElementById('socials-section').style.display = 'block';
+      document.getElementById('socials-grid').innerHTML = socials.map(s => `
+        <a href="${s.url}" target="_blank" class="social-link">
+          <span>${s.icon}</span><span>${s.label}</span>
+        </a>
+      `).join('');
+    }
+
+    const favorites = JSON.parse(localStorage.getItem('cue_favorites') || '[]');
+    isFav = favorites.includes(dj.id);
+    updateFavBtn();
+
+    document.getElementById('main-content').style.display = 'grid';
+  }
+
+  function renderWaveform() {
+    const waveform = document.getElementById('waveform');
+    const bars = Array.from({length:40}, (_, i) => {
+      const height = Math.random() * 80 + 20;
+      const delay = (i * 0.05).toFixed(2);
+      return `<div class="waveform-bar" style="height:${height}%; animation-delay:${delay}s; animation-duration:${(Math.random() * 0.5 + 1).toFixed(2)}s;"></div>`;
+    });
+    waveform.innerHTML = bars.join('');
+  }
+
+  function togglePlay() {
+    isPlaying = !isPlaying;
+    document.querySelector('.play-btn').textContent = isPlaying ? '⏸' : '▶';
+  }
+
+  function createParticles() {
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 15; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = Math.random() * 6 + 2;
+      p.style.cssText = `
+        width:${size}px; height:${size}px;
+        left:${Math.random() * 100}%;
+        animation-duration:${Math.random() * 10 + 8}s;
+        animation-delay:${Math.random() * 8}s;
+      `;
+      container.appendChild(p);
+    }
+  }
+
+  function openContactModal() {
+    const isLogged = localStorage.getItem('cue_logged_in') === 'true';
+    const user = JSON.parse(localStorage.getItem('cue_user') || '{}');
+    const isVenue = user.userType === 'venue';
+
+    document.getElementById('contact-logged-in').style.display = (isLogged && isVenue) ? 'block' : 'none';
+    document.getElementById('contact-not-logged').style.display = (!isLogged || !isVenue) ? 'block' : 'none';
+    document.getElementById('modal-contact').classList.add('open');
+  }
+
+  function sendOffer() {
+    const bookings = JSON.parse(localStorage.getItem('cue_venue_bookings') || '[]');
+    bookings.unshift({
+      id: Date.now().toString(),
+      djId: djData.id,
+      djName: djData.firstName + ' ' + djData.lastName,
+      date: document.getElementById('offer-date').value,
+      start: document.getElementById('offer-start').value,
+      end: document.getElementById('offer-end').value,
+      budget: document.getElementById('offer-budget').value,
+      type: document.getElementById('offer-type').value,
+      message: document.getElementById('offer-message').value,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    });
+    localStorage.setItem('cue_venue_bookings', JSON.stringify(bookings));
+    closeModal();
+    alert('✅ Offre envoyée !');
+  }
+
+  function toggleFav() {
+    const isLogged = localStorage.getItem('cue_logged_in') === 'true';
+    if (!isLogged) { window.location.href = 'login.html'; return; }
+
+    const favorites = JSON.parse(localStorage.getItem('cue_favorites') || '[]');
+    if (isFav) {
+      const idx = favorites.indexOf(djData.id);
+      if (idx > -1) favorites.splice(idx, 1);
+      isFav = false;
+    } else {
+      favorites.push(djData.id);
+      isFav = true;
+    }
+    localStorage.setItem('cue_favorites', JSON.stringify(favorites));
+    updateFavBtn();
+  }
+
+  function updateFavBtn() {
+    const btn = document.getElementById('fav-btn');
+    btn.textContent = isFav ? '❤️ Dans mes favoris' : '🤍 Ajouter aux favoris';
+    btn.classList.toggle('active', isFav);
+  }
+
+  function share(platform) {
+    const url = window.location.href;
+    const text = `🎧 Découvre ${djData?.firstName} ${djData?.lastName} sur CUE — ${url}`;
+    switch(platform) {
+      case 'whatsapp': window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank'); break;
+      case 'instagram': navigator.clipboard.writeText(url); alert('Lien copié ! Colle-le dans ta bio Instagram.'); break;
+      case 'copy': navigator.clipboard.writeText(url); alert('✅ Lien copié !'); break;
+      case 'messages': window.open(`sms:?body=${encodeURIComponent(text)}`, '_blank'); break;
+    }
+  }
+
+  function closeModal() { document.getElementById('modal-contact').classList.remove('open'); }
+
+  init();
+</script>
+</body>
+</html>

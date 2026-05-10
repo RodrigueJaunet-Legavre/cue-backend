@@ -219,23 +219,45 @@ async function handleLogin(e) {
     }
   } catch (_) { /* function indisponible, continue */ }
 
-  // 2. Connexion utilisateur normale
-  const storedUser = localStorage.getItem('cue_user');
-  if (storedUser) {
-    const user = JSON.parse(storedUser);
-    if (user.email === email && user.password === password) {
-      document.getElementById('successAlert').classList.add('show');
-      localStorage.setItem('cue_logged_in', 'true');
-      setTimeout(() => window.location.href = getRedirectUrl(), 1500);
+  // 2. Connexion normale via API
+  try {
+    const res = await fetch('/.netlify/functions/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'login', email, password })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      document.getElementById('errorAlert').classList.add('show');
+      btn.disabled = false;
+      spinner.classList.remove('on');
+      label.textContent = 'Se connecter';
       return;
     }
-  }
 
-  // 3. Erreur
-  document.getElementById('errorAlert').classList.add('show');
-  btn.disabled = false;
-  spinner.classList.remove('on');
-  label.textContent = 'Se connecter';
+    localStorage.setItem('cue_token', data.token);
+    localStorage.setItem('cue_user', JSON.stringify(data.user));
+    localStorage.setItem('cue_logged_in', 'true');
+
+    document.getElementById('successAlert').classList.add('show');
+
+    setTimeout(() => {
+      const redirect = new URLSearchParams(window.location.search).get('redirect');
+      if (redirect) { window.location.href = redirect; return; }
+      if (data.user.user_type === 'dj') {
+        window.location.href = data.user.profile_complete ? 'dashboard-dj.html' : 'dj-onboarding.html';
+      } else {
+        window.location.href = 'dashboard-venue.html';
+      }
+    }, 800);
+  } catch (err) {
+    document.getElementById('errorAlert').classList.add('show');
+    btn.disabled = false;
+    spinner.classList.remove('on');
+    label.textContent = 'Se connecter';
+  }
 }
 
 // Google Sign-In

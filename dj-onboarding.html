@@ -485,11 +485,40 @@
   async function completeProfile() {
     saveCurrentStep();
 
-    user.profileComplete = true;
-    user.profile = profileData;
-    user.genres = selectedGenres;
-    user.tracks = tracks.map(t => t.name);
-    localStorage.setItem('cue_user', JSON.stringify(user));
+    const token = localStorage.getItem('cue_token');
+    if (token) {
+      try {
+        const res = await fetch('/.netlify/functions/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'update_profile',
+            token,
+            description: profileData.description,
+            genres: selectedGenres,
+            instagram: profileData.instagram,
+            soundcloud: profileData.soundcloud,
+            spotify: profileData.spotify,
+            youtube: profileData.youtube,
+            mixUrl: profileData.mix,
+            tracks: tracks.map(t => t.name || t)
+          })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          localStorage.setItem('cue_user', JSON.stringify({ ...user, ...data.user }));
+        }
+      } catch (err) {
+        console.log('Erreur mise à jour profil:', err);
+      }
+    } else {
+      // Fallback localStorage
+      user.profileComplete = true;
+      user.profile = profileData;
+      user.genres = selectedGenres;
+      user.tracks = tracks.map(t => t.name);
+      localStorage.setItem('cue_user', JSON.stringify(user));
+    }
 
     document.getElementById('step-' + currentStep).classList.remove('active');
     document.getElementById('step-complete').classList.add('active');
@@ -501,7 +530,7 @@
       document.getElementById('preview-avatar').src = profileData.photo;
       document.getElementById('preview-avatar').style.display = 'block';
     }
-    document.getElementById('preview-name').textContent = (user.firstName || '') + ' ' + (user.lastName || '');
+    document.getElementById('preview-name').textContent = (user.firstName || user.first_name || '') + ' ' + (user.lastName || user.last_name || '');
     document.getElementById('preview-genres').textContent = selectedGenres.join(' · ');
   }
 

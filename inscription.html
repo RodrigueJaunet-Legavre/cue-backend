@@ -412,37 +412,54 @@ function verifyCode(inputCode) {
 }
 
 async function completeRegistration() {
-  const user = JSON.parse(sessionStorage.getItem('reg_user'));
+  const regUser = JSON.parse(sessionStorage.getItem('reg_user'));
+  if (!regUser) { window.location.href = 'inscription.html'; return; }
 
-  user.id = Date.now().toString();
-  user.verified = true;
-  user.identityStatus = 'pending';
-  user.referralCodeOwn = 'REF' +
-    user.firstName.charAt(0).toUpperCase() +
-    user.lastName.charAt(0).toUpperCase() +
-    Math.floor(1000 + Math.random() * 9000);
+  try {
+    const res = await fetch('/.netlify/functions/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'register',
+        firstName: regUser.firstName,
+        lastName: regUser.lastName,
+        email: regUser.email,
+        phone: regUser.phone,
+        password: regUser.password,
+        userType: regUser.userType,
+        referralCode: sessionStorage.getItem('referral_code') || null
+      })
+    });
 
-  localStorage.setItem('cue_user', JSON.stringify(user));
-  localStorage.setItem('cue_logged_in', 'true');
+    const data = await res.json();
 
-  console.log('Envoi email bienvenue à:', user.email);
+    if (!res.ok) {
+      alert(data.error || "Erreur lors de l'inscription.");
+      return;
+    }
 
-  const res = await fetch('/.netlify/functions/send-email', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      type: 'welcome',
-      email: user.email,
-      firstName: user.firstName
-    })
-  });
+    localStorage.setItem('cue_token', data.token);
+    localStorage.setItem('cue_user', JSON.stringify(data.user));
+    localStorage.setItem('cue_logged_in', 'true');
+    sessionStorage.clear();
 
-  console.log('Réponse send-email:', await res.json());
+    await fetch('/.netlify/functions/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'welcome',
+        email: data.user.email,
+        firstName: data.user.first_name
+      })
+    });
 
-  if (user.userType === 'dj') {
-    window.location.href = 'dj-onboarding.html';
-  } else {
-    window.location.href = 'dashboard-venue.html';
+    if (data.user.user_type === 'dj') {
+      window.location.href = 'dj-onboarding.html';
+    } else {
+      window.location.href = 'dashboard-venue.html';
+    }
+  } catch (err) {
+    alert('Erreur. Réessaie.');
   }
 }
 </script>

@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CUE — Dashboard Venue</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --Y:#FFC300; --Y2:#FFD740; --BG:#080808; --CARD:#111;
+      --BORDER:rgba(255,195,0,.13); --TEXT:#ddd; --MUTED:#bbb;
+      --SUCCESS:#00c864; --ERROR:#ff4444; --PENDING:#ffaa00;
+    }
+    body { background:var(--BG); color:var(--TEXT); font-family:Barlow,sans-serif; display:flex; min-height:100vh; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width:260px; background:#0a0a0a; border-right:1px solid var(--BORDER);
+      display:flex; flex-direction:column; position:fixed; height:100vh; overflow-y:auto; z-index:50;
+    }
+    .sidebar-profile {
+      padding:32px 24px; border-bottom:1px solid var(--BORDER);
+      background:linear-gradient(135deg, #111 0%, #0a0a0a 100%);
+    }
+    .venue-avatar {
+      width:64px; height:64px; border-radius:12px; border:2px solid var(--Y);
+      margin-bottom:12px; background:var(--CARD);
+      display:flex; align-items:center; justify-content:center; font-size:28px;
+    }
+    .profile-name { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; color:#fff; }
+    .profile-type { color:var(--Y); font-size:12px; font-weight:700; letter-spacing:2px; margin:4px 0 8px; }
+    .profile-plan { display:inline-block; background:rgba(255,195,0,.1); color:var(--Y); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+
+    .nav-section { padding:16px 0; }
+    .nav-section-title { padding:8px 24px; color:var(--MUTED); font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; }
+    .nav-item {
+      padding:12px 24px; cursor:pointer; display:flex; align-items:center;
+      gap:12px; color:var(--MUTED); transition:all .2s; font-weight:600; font-size:14px; position:relative;
+    }
+    .nav-item:hover { color:var(--Y); background:rgba(255,195,0,.04); }
+    .nav-item.active { color:var(--Y); background:rgba(255,195,0,.08); }
+    .nav-item.active::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--Y); border-radius:0 2px 2px 0; }
+    .nav-icon { font-size:18px; width:22px; text-align:center; }
+    .nav-badge { margin-left:auto; background:var(--ERROR); color:#fff; border-radius:20px; padding:2px 8px; font-size:10px; font-weight:700; }
+
+    .sidebar-footer { padding:24px; border-top:1px solid var(--BORDER); margin-top:auto; }
+    .btn-logout { width:100%; padding:12px; border:1px solid var(--BORDER); border-radius:10px; background:transparent; color:var(--MUTED); cursor:pointer; font-weight:600; font-size:14px; transition:all .2s; }
+    .btn-logout:hover { border-color:#ff4444; color:#ff4444; }
+
+    /* MAIN */
+    .main { margin-left:260px; flex:1; padding:40px; }
+    .page { display:none; animation:fadeIn .3s ease; }
+    .page.active { display:block; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+    /* PAGE HEADER */
+    .page-header { margin-bottom:32px; display:flex; justify-content:space-between; align-items:flex-start; }
+    .page-title { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:40px; color:#fff; }
+    .page-sub { color:var(--MUTED); font-size:15px; margin-top:4px; }
+
+    /* STATS */
+    .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px; }
+    .stat-card {
+      background:var(--CARD); border:1px solid var(--BORDER); border-radius:16px;
+      padding:24px; position:relative; overflow:hidden; transition:transform .2s; cursor:pointer;
+    }
+    .stat-card:hover { transform:translateY(-2px); border-color:rgba(255,195,0,.3); }
+    .stat-label { color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; }
+    .stat-value { font-size:40px; font-weight:900; color:#fff; margin:8px 0 4px; font-family:'Barlow Condensed',sans-serif; }
+    .stat-sub { color:var(--MUTED); font-size:13px; }
+
+    /* CARDS */
+    .card { background:var(--CARD); border:1px solid var(--BORDER); border-radius:16px; overflow:hidden; margin-bottom:24px; }
+    .card-header { padding:20px 24px; border-bottom:1px solid var(--BORDER); display:flex; justify-content:space-between; align-items:center; }
+    .card-title { font-weight:700; font-size:16px; }
+
+    /* FIND DJ */
+    .search-bar { display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap; }
+    .search-input {
+      flex:1; min-width:200px; background:var(--CARD); border:1px solid var(--BORDER);
+      color:var(--TEXT); padding:14px 20px; border-radius:12px; font-size:15px;
+      font-family:Barlow,sans-serif; transition:border-color .2s;
+    }
+    .search-input:focus { outline:none; border-color:var(--Y); }
+    .filter-select {
+      background:var(--CARD); border:1px solid var(--BORDER); color:var(--TEXT);
+      padding:14px 16px; border-radius:12px; font-size:14px; cursor:pointer;
+      font-family:Barlow,sans-serif; transition:border-color .2s;
+    }
+    .filter-select:focus { outline:none; border-color:var(--Y); }
+
+    /* DJ CARDS */
+    .dj-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+    .dj-card {
+      background:var(--CARD); border:1px solid var(--BORDER); border-radius:16px;
+      overflow:hidden; transition:all .3s; cursor:pointer; position:relative;
+    }
+    .dj-card:hover { transform:translateY(-4px); border-color:rgba(255,195,0,.4); box-shadow:0 20px 40px rgba(0,0,0,.4); }
+    .dj-card-banner { height:80px; background:linear-gradient(135deg, #1a1a1a 0%, #111 100%); position:relative; }
+    .dj-card-banner::after { content:''; position:absolute; inset:0; background:radial-gradient(circle at 70% 50%, rgba(255,195,0,.08) 0%, transparent 70%); }
+    .dj-card-avatar { width:72px; height:72px; border-radius:50%; border:3px solid var(--Y); position:absolute; bottom:-36px; left:20px; background:#0a0a0a; display:flex; align-items:center; justify-content:center; font-size:28px; overflow:hidden; }
+    .dj-card-body { padding:44px 20px 20px; }
+    .dj-card-name { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; color:#fff; }
+    .dj-card-genres { color:var(--Y); font-size:12px; font-weight:700; margin:6px 0; }
+    .dj-card-rating { display:flex; align-items:center; gap:6px; margin-bottom:12px; }
+    .dj-card-stars { color:var(--Y); font-size:14px; }
+    .dj-card-reviews { color:var(--MUTED); font-size:12px; }
+    .dj-card-desc { color:var(--MUTED); font-size:13px; line-height:1.5; margin-bottom:16px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .dj-card-footer { display:flex; gap:8px; }
+    .fav-btn {
+      position:absolute; top:12px; right:12px; background:rgba(0,0,0,.6);
+      border:none; color:var(--MUTED); font-size:20px; cursor:pointer;
+      padding:8px; border-radius:8px; transition:all .2s; backdrop-filter:blur(4px);
+    }
+    .fav-btn:hover { color:var(--Y); }
+    .fav-btn.active { color:var(--Y); }
+    .verified-badge { display:inline-flex; align-items:center; gap:4px; background:rgba(0,200,100,.1); color:var(--SUCCESS); padding:3px 8px; border-radius:20px; font-size:11px; font-weight:700; margin-bottom:8px; }
+
+    /* TABS */
+    .tabs { display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+    .tab { padding:8px 20px; border-radius:50px; cursor:pointer; font-weight:700; font-size:13px; background:var(--CARD); color:var(--MUTED); border:1px solid var(--BORDER); transition:all .2s; }
+    .tab:hover { border-color:var(--Y); color:var(--Y); }
+    .tab.active { background:var(--Y); color:#000; border-color:var(--Y); }
+
+    /* MESSAGES */
+    .message-item {
+      display:flex; gap:16px; padding:20px 24px;
+      border-bottom:1px solid rgba(255,195,0,.06); cursor:pointer; transition:background .2s;
+    }
+    .message-item:hover { background:rgba(255,195,0,.03); }
+    .message-avatar { width:48px; height:48px; border-radius:50%; background:#1a1a1a; border:1px solid var(--BORDER); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+    .message-content { flex:1; }
+    .message-sender { font-weight:700; font-size:14px; color:#fff; }
+    .message-preview { color:var(--MUTED); font-size:13px; margin-top:2px; }
+    .message-time { color:var(--MUTED); font-size:12px; }
+
+    /* CALENDAR */
+    .calendar { background:var(--CARD); border:1px solid var(--BORDER); border-radius:16px; overflow:hidden; }
+    .calendar-header { padding:20px 24px; border-bottom:1px solid var(--BORDER); display:flex; justify-content:space-between; align-items:center; }
+    .calendar-nav { background:transparent; border:1px solid var(--BORDER); color:var(--TEXT); padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:700; transition:all .2s; }
+    .calendar-nav:hover { border-color:var(--Y); color:var(--Y); }
+    .calendar-month { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:24px; color:#fff; }
+    .calendar-grid { display:grid; grid-template-columns:repeat(7,1fr); }
+    .calendar-day-label { padding:12px; text-align:center; color:var(--MUTED); font-size:12px; font-weight:700; border-bottom:1px solid var(--BORDER); }
+    .calendar-day { padding:10px 6px; text-align:center; min-height:60px; border-right:1px solid rgba(255,195,0,.06); border-bottom:1px solid rgba(255,195,0,.06); position:relative; }
+    .calendar-day.today { background:rgba(255,195,0,.08); }
+    .calendar-day.today .day-num { color:var(--Y); font-weight:900; }
+    .calendar-day.other-month .day-num { color:#333; }
+    .day-num { font-size:14px; font-weight:600; margin-bottom:4px; }
+    .day-event { background:var(--Y); color:#000; border-radius:4px; font-size:9px; font-weight:700; padding:2px 4px; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+    /* RATING MODAL */
+    .stars-input { display:flex; gap:8px; justify-content:center; margin:16px 0; }
+    .star-btn { font-size:36px; cursor:pointer; color:#333; transition:all .2s; background:none; border:none; }
+    .star-btn.active { color:var(--Y); transform:scale(1.1); }
+
+    /* BUTTONS */
+    .btn { padding:10px 24px; border-radius:10px; border:none; cursor:pointer; font-weight:700; font-size:14px; font-family:Barlow,sans-serif; transition:all .2s; }
+    .btn-primary { background:var(--Y); color:#000; }
+    .btn-primary:hover { background:var(--Y2); transform:translateY(-1px); }
+    .btn-outline { background:transparent; color:var(--Y); border:1px solid var(--Y); }
+    .btn-outline:hover { background:rgba(255,195,0,.1); }
+    .btn-sm { padding:8px 16px; font-size:13px; }
+
+    /* MODAL */
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:200; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+    .modal.open { display:flex; animation:fadeIn .2s ease; }
+    .modal-card { background:#111; border:1px solid var(--BORDER); border-radius:20px; padding:40px; width:560px; max-height:85vh; overflow-y:auto; }
+    .modal-title { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:32px; color:#fff; margin-bottom:24px; }
+    .form-group { margin-bottom:20px; }
+    .form-label { display:block; color:var(--MUTED); font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+    .form-input { width:100%; background:#1a1a1a; border:1px solid var(--BORDER); color:var(--TEXT); padding:14px 16px; border-radius:10px; font-size:15px; font-family:Barlow,sans-serif; transition:border-color .2s; }
+    .form-input:focus { outline:none; border-color:var(--Y); }
+    .modal-actions { display:flex; gap:12px; margin-top:24px; }
+
+    /* CONTRACT */
+    .contract-form { background:var(--CARD); border:1px solid var(--BORDER); border-radius:16px; padding:32px; }
+    .ai-dots { display:flex; justify-content:center; gap:8px; margin:24px 0; }
+    .ai-dot { width:12px; height:12px; border-radius:50%; background:var(--Y); animation:dot-bounce .8s ease infinite; }
+    .ai-dot:nth-child(2) { animation-delay:.15s; }
+    .ai-dot:nth-child(3) { animation-delay:.3s; }
+    @keyframes dot-bounce { 0%,80%,100% { transform:scale(.8); opacity:.5; } 40% { transform:scale(1.2); opacity:1; } }
+    .contract-result { background:#0d0d0d; border:1px solid var(--BORDER); border-radius:12px; padding:24px; white-space:pre-wrap; font-size:14px; line-height:1.8; margin-top:24px; font-family:monospace; max-height:400px; overflow-y:auto; }
+
+    /* EMPTY STATE */
+    .empty-state { text-align:center; padding:60px 24px; }
+    .empty-emoji { font-size:48px; margin-bottom:16px; }
+    .empty-title { font-weight:700; font-size:18px; color:#fff; margin-bottom:8px; }
+    .empty-sub { color:var(--MUTED); font-size:14px; margin-bottom:24px; }
+
+    /* DJ PROFILE MODAL */
+    .dj-profile-header { position:relative; height:120px; background:linear-gradient(135deg, #1a1a1a 0%, #111 100%); border-radius:12px 12px 0 0; margin:-40px -40px 60px; }
+    .dj-profile-avatar { position:absolute; bottom:-40px; left:32px; width:80px; height:80px; border-radius:50%; border:3px solid var(--Y); background:#0a0a0a; display:flex; align-items:center; justify-content:center; font-size:32px; overflow:hidden; }
+
+    @media (max-width:1200px) { .dj-grid { grid-template-columns:repeat(2,1fr); } }
+    @media (max-width:768px) { .dj-grid { grid-template-columns:1fr; } .stats-grid { grid-template-columns:repeat(2,1fr); } }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-profile">
+    <div class="venue-avatar">🏛️</div>
+    <div class="profile-name" id="sidebar-name">Venue</div>
+    <div class="profile-type">✦ VENUE</div>
+    <div class="profile-plan" id="sidebar-plan">STARTER</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Principal</div>
+    <div class="nav-item active" onclick="showPage('overview', this)">
+      <span class="nav-icon">📊</span> Overview
+    </div>
+    <div class="nav-item" onclick="showPage('find-dj', this)">
+      <span class="nav-icon">🔍</span> Find DJ
+    </div>
+    <div class="nav-item" onclick="showPage('favorites', this)">
+      <span class="nav-icon">❤️</span> Favoris
+      <span class="nav-badge" id="fav-count-badge" style="background:var(--Y); color:#000; display:none;"></span>
+    </div>
+    <div class="nav-item" onclick="showPage('messages', this)">
+      <span class="nav-icon">💬</span> Messages
+      <span class="nav-badge" id="unread-badge" style="display:none;"></span>
+    </div>
+    <div class="nav-item" onclick="showPage('calendar', this)">
+      <span class="nav-icon">📅</span> Calendrier
+    </div>
+    <div class="nav-item" onclick="showPage('contracts', this)">
+      <span class="nav-icon">📄</span> Contrats IA
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Gestion</div>
+    <div class="nav-item" onclick="showPage('bookings', this)">
+      <span class="nav-icon">🎤</span> Mes Bookings
+    </div>
+    <div class="nav-item" onclick="showPage('reviews', this)">
+      <span class="nav-icon">⭐</span> Mes Avis
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Compte</div>
+    <div class="nav-item" onclick="showPage('settings', this)">
+      <span class="nav-icon">⚙️</span> Paramètres
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <button class="btn-logout" onclick="logout()">Déconnexion</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- OVERVIEW -->
+  <div id="page-overview" class="page active">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">BONJOUR, <span id="header-name" style="color:var(--Y)">VENUE</span> 👋</h1>
+        <p class="page-sub">Bienvenue sur votre tableau de bord</p>
+      </div>
+      <button class="btn btn-primary" onclick="showPage('find-dj', document.querySelectorAll('.nav-item')[1])">🔍 Trouver un DJ</button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card" onclick="showPage('favorites', document.querySelectorAll('.nav-item')[2])">
+        <div class="stat-label">DJs en favoris</div>
+        <div class="stat-value" id="stat-favs">0</div>
+        <div class="stat-sub">Cliquer pour voir →</div>
+      </div>
+      <div class="stat-card" onclick="showPage('bookings', document.querySelectorAll('.nav-item')[6])">
+        <div class="stat-label">Events à venir</div>
+        <div class="stat-value" id="stat-upcoming" style="color:var(--Y)">0</div>
+        <div class="stat-sub">Prochains événements</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total bookings</div>
+        <div class="stat-value" id="stat-bookings-total">0</div>
+        <div class="stat-sub">Depuis le début</div>
+      </div>
+      <div class="stat-card" onclick="showPage('messages', document.querySelectorAll('.nav-item')[3])">
+        <div class="stat-label">Messages</div>
+        <div class="stat-value" id="stat-messages">0</div>
+        <div class="stat-sub">Conversations actives</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📅 Prochains événements</span>
+        <button class="btn btn-outline btn-sm" onclick="showPage('calendar', document.querySelectorAll('.nav-item')[4])">Voir calendrier</button>
+      </div>
+      <div id="upcoming-events-list">
+        <div class="empty-state">
+          <div class="empty-emoji">🎵</div>
+          <div class="empty-title">Aucun événement prévu</div>
+          <div class="empty-sub">Trouve un DJ pour ton prochain événement</div>
+          <button class="btn btn-primary" onclick="showPage('find-dj', document.querySelectorAll('.nav-item')[1])">🔍 Trouver un DJ</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">❤️ DJs favoris</span>
+        <button class="btn btn-outline btn-sm" onclick="showPage('favorites', document.querySelectorAll('.nav-item')[2])">Voir tout</button>
+      </div>
+      <div id="fav-preview" style="padding:24px; display:flex; gap:16px; flex-wrap:wrap;">
+        <div class="empty-state" style="width:100%;">
+          <div class="empty-emoji">❤️</div>
+          <div class="empty-title">Aucun favori</div>
+          <div class="empty-sub">Ajoute des DJs en favoris depuis Find DJ</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIND DJ -->
+  <div id="page-find-dj" class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">FIND DJ</h1>
+        <p class="page-sub">Trouve le DJ parfait pour ton événement</p>
+      </div>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" class="search-input" id="search-query" placeholder="🔍 Rechercher un DJ, un style..." oninput="filterDJs()">
+      <select class="filter-select" id="filter-genre" onchange="filterDJs()">
+        <option value="">Tous les genres</option>
+        <option>House</option><option>Tech House</option><option>Techno</option>
+        <option>Deep House</option><option>Hip-Hop</option><option>R&B</option>
+        <option>Commercial</option><option>Open Format</option><option>Afro House</option><option>Reggaeton</option>
+      </select>
+      <select class="filter-select" id="filter-rating" onchange="filterDJs()">
+        <option value="">Toutes les notes</option>
+        <option value="4">★★★★+ (4 étoiles)</option>
+        <option value="3">★★★+ (3 étoiles)</option>
+      </select>
+      <select class="filter-select" id="filter-verified" onchange="filterDJs()">
+        <option value="">Tous</option>
+        <option value="verified">✅ Vérifiés seulement</option>
+      </select>
+      <select class="filter-select" id="filter-sort" onchange="filterDJs()">
+        <option value="rating">Mieux notés</option>
+        <option value="newest">Plus récents</option>
+        <option value="reviews">Plus d'avis</option>
+      </select>
+    </div>
+
+    <div id="dj-count" style="color:var(--MUTED); font-size:14px; margin-bottom:20px;"></div>
+    <div class="dj-grid" id="dj-grid"></div>
+  </div>
+
+  <!-- FAVORIS -->
+  <div id="page-favorites" class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">MES FAVORIS</h1>
+        <p class="page-sub">DJs que tu as mis en favoris</p>
+      </div>
+    </div>
+    <div class="dj-grid" id="fav-grid">
+      <div class="empty-state" style="grid-column:1/-1;">
+        <div class="empty-emoji">❤️</div>
+        <div class="empty-title">Aucun favori</div>
+        <div class="empty-sub">Ajoute des DJs en favoris depuis Find DJ</div>
+        <button class="btn btn-primary" onclick="showPage('find-dj', document.querySelectorAll('.nav-item')[1])">🔍 Trouver un DJ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MESSAGES -->
+  <div id="page-messages" class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">MESSAGES</h1>
+        <p class="page-sub">Tes conversations avec les DJs</p>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:360px 1fr; gap:24px; height:calc(100vh - 200px);">
+      <div class="card" style="overflow-y:auto; margin-bottom:0;">
+        <div id="messages-list">
+          <div class="empty-state">
+            <div class="empty-emoji">💬</div>
+            <div class="empty-title">Aucune conversation</div>
+            <div class="empty-sub">Contacte un DJ depuis Find DJ</div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:0; display:flex; flex-direction:column;">
+        <div style="display:flex; align-items:center; justify-content:center; flex:1;">
+          <div class="empty-state">
+            <div class="empty-emoji">👈</div>
+            <div class="empty-title">Sélectionne une conversation</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDRIER -->
+  <div id="page-calendar" class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">CALENDRIER</h1>
+        <p class="page-sub">Tous tes événements</p>
+      </div>
+    </div>
+    <div class="calendar">
+      <div class="calendar-header">
+        <button class="calendar-nav" onclick="changeMonth(-1)">← Précédent</button>
+        <span class="calendar-month" id="calendar-month-label"></span>
+        <button class="calendar-nav" onclick="changeMonth(1)">Suivant →</button>
+      </div>
+      <div class="calendar-grid" id="calendar-days-labels"></div>
+      <div class="calendar-grid" id="calendar-grid"></div>
+    </div>
+  </div>
+
+  <!-- CONTRATS IA -->
+  <div id="page-contracts" class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">CONTRATS IA</h1>
+        <p class="page-sub">Génère un contrat professionnel en 30 secondes</p>
+      </div>
+    </div>
+    <div class="contract-form">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+        <div class="form-group"><label class="form-label">Nom du DJ</label><input type="text" id="c-dj" class="form-input" placeholder="DJ Snake..."></div>
+        <div class="form-group"><label class="form-label">Date</label><input type="date" id="c-date" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Heure de début</label><input type="time" id="c-start" class="form-input" value="22:00"></div>
+        <div class="form-group"><label class="form-label">Heure de fin</label><input type="time" id="c-end" class="form-input" value="02:00"></div>
+        <div class="form-group"><label class="form-label">Cachet (€)</label><input type="number" id="c-fee" class="form-input" placeholder="500"></div>
+        <div class="form-group"><label class="form-label">Type d'événement</label>
+          <select id="c-type" class="form-input"><option>Soirée club</option><option>Mariage</option><option>Festival</option><option>Événement privé</option><option>Corporate</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Détails</label><textarea id="c-details" class="form-input" rows="3" placeholder="Conditions spéciales..."></textarea></div>
+      <button class="btn btn-primary" style="width:100%; padding:16px; font-size:16px;" onclick="generateContract()">✨ Générer le contrat avec l'IA</button>
+      <div id="ai-generating" style="display:none; text-align:center; padding:32px;">
+        <div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>
+        <p style="color:var(--MUTED);">L'IA génère ton contrat...</p>
+      </div>
+      <div id="contract-result" style="display:none;">
+        <div class="contract-result" id="contract-text"></div>
+        <div style="display:flex; gap:12px; margin-top:16px;">
+          <button class="btn btn-primary" onclick="copyContract()">📋 Copier</button>
+          <button class="btn btn-outline" onclick="printContract()">🖨️ Imprimer</button>
+          <button class="btn btn-outline" onclick="document.getElementById('contract-result').style.display='none'">↺ Nouveau</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOOKINGS -->
+  <div id="page-bookings" class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">MES BOOKINGS</h1>
+        <p class="page-sub">Tous tes DJs bookés</p>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab active" onclick="filterBookings('all', this)">Tous</div>
+      <div class="tab" onclick="filterBookings('upcoming', this)">À venir</div>
+      <div class="tab" onclick="filterBookings('past', this)">Passés</div>
+    </div>
+    <div class="card">
+      <div id="bookings-list">
+        <div class="empty-state">
+          <div class="empty-emoji">🎤</div>
+          <div class="empty-title">Aucun booking</div>
+          <div class="empty-sub">Trouve un DJ et envoie-lui une offre</div>
+          <button class="btn btn-primary" onclick="showPage('find-dj', document.querySelectorAll('.nav-item')[1])">🔍 Trouver un DJ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AVIS -->
+  <div id="page-reviews" class="page">
+    <div class="page-header"><div><h1 class="page-title">MES AVIS</h1><p class="page-sub">Avis que tu as laissés sur des DJs</p></div></div>
+    <div class="card">
+      <div id="given-reviews-list">
+        <div class="empty-state">
+          <div class="empty-emoji">⭐</div>
+          <div class="empty-title">Aucun avis donné</div>
+          <div class="empty-sub">Note un DJ après un booking</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="page-settings" class="page">
+    <div class="page-header"><h1 class="page-title">PARAMÈTRES</h1></div>
+    <div class="card"><div style="padding:24px;">
+      <button class="btn" style="background:#ff4444; color:#fff;" onclick="deleteAccount()">🗑️ Supprimer mon compte</button>
+    </div></div>
+  </div>
+
+</div>
+
+<!-- MODAL DJ PROFILE -->
+<div id="modal-dj-profile" class="modal">
+  <div class="modal-card">
+    <div class="dj-profile-header"><div class="dj-profile-avatar">🎧</div></div>
+    <div style="margin-bottom:16px;">
+      <h2 class="modal-title" id="modal-dj-name" style="margin-bottom:4px;"></h2>
+      <div id="modal-dj-genres" style="color:var(--Y); font-weight:700; font-size:14px; margin-bottom:8px;"></div>
+      <div id="modal-dj-stars" style="color:var(--Y); font-size:18px; margin-bottom:8px;"></div>
+      <div id="modal-dj-verified"></div>
+    </div>
+    <p id="modal-dj-desc" style="color:var(--MUTED); line-height:1.6; margin-bottom:24px;"></p>
+    <div id="modal-dj-socials" style="display:flex; gap:16px; margin-bottom:24px; flex-wrap:wrap;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-dj-profile')">Fermer</button>
+      <button class="btn btn-outline" id="modal-fav-btn" onclick="toggleFavFromModal()">🤍 Ajouter aux favoris</button>
+      <button class="btn btn-primary" onclick="contactDJFromModal()">💬 Contacter</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOTER UN DJ -->
+<div id="modal-rate-dj" class="modal">
+  <div class="modal-card">
+    <h2 class="modal-title">⭐ NOTER CE DJ</h2>
+    <div class="stars-input">
+      <button class="star-btn" onclick="setRating(1)">★</button>
+      <button class="star-btn" onclick="setRating(2)">★</button>
+      <button class="star-btn" onclick="setRating(3)">★</button>
+      <button class="star-btn" onclick="setRating(4)">★</button>
+      <button class="star-btn" onclick="setRating(5)">★</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ton avis</label>
+      <textarea id="review-text" class="form-input" rows="4" placeholder="Très professionnel, ponctuel..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-rate-dj')">Annuler</button>
+      <button class="btn btn-primary" onclick="submitReview()">Publier l'avis ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONTACT DJ -->
+<div id="modal-contact-dj" class="modal">
+  <div class="modal-card">
+    <h2 class="modal-title">💬 ENVOYER UNE OFFRE</h2>
+    <div class="form-group"><label class="form-label">Date de l'événement</label><input type="date" id="offer-date" class="form-input"></div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+      <div class="form-group"><label class="form-label">Heure de début</label><input type="time" id="offer-start" class="form-input" value="23:00"></div>
+      <div class="form-group"><label class="form-label">Heure de fin</label><input type="time" id="offer-end" class="form-input" value="02:00"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Budget (€)</label><input type="number" id="offer-budget" class="form-input" placeholder="500"></div>
+    <div class="form-group"><label class="form-label">Type d'événement</label>
+      <select id="offer-type" class="form-input"><option>Soirée club</option><option>Mariage</option><option>Festival</option><option>Événement privé</option><option>Corporate</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">Message</label><textarea id="offer-message" class="form-input" rows="4" placeholder="Bonjour, nous organisons..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-contact-dj')">Annuler</button>
+      <button class="btn btn-primary" onclick="sendOffer()">Envoyer l'offre ✓</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const user = JSON.parse(localStorage.getItem('cue_user') || '{}');
+  let favorites = JSON.parse(localStorage.getItem('cue_favorites') || '[]');
+  let bookings = JSON.parse(localStorage.getItem('cue_venue_bookings') || '[]');
+  let calendarDate = new Date();
+  let currentRating = 0;
+  let currentDJ = null;
+  let allDJs = [];
+
+  const demoDJs = [
+    { id:'dj1', firstName:'Alex', lastName:'Martin', genres:['House','Tech House'], rating:4.8, reviews:24, description:'DJ professionnel depuis 10 ans, spécialisé dans la house et tech house. Résident du Club XXX à Paris.', verified:true, plan:'pro', instagram:'instagram.com/alexmartin', soundcloud:'soundcloud.com/alexmartin' },
+    { id:'dj2', firstName:'Sarah', lastName:'K', genres:['Techno','Minimal'], rating:4.6, reviews:18, description:'Techno underground depuis 2015. Sets entre 3 et 5 heures, voyage sonore garanti.', verified:true, plan:'pro', instagram:'instagram.com/sarahk_dj' },
+    { id:'dj3', firstName:'Marco', lastName:'B', genres:['Deep House','Afro House'], rating:4.9, reviews:41, description:'Deep et afro house, ambassadeur de la scène parisienne. Bookable pour clubs, mariages et événements privés.', verified:true, plan:'business' },
+    { id:'dj4', firstName:'Léa', lastName:'Fontes', genres:['Commercial','Open Format'], rating:4.3, reviews:12, description:'Open format DJ, m\'adapte à tous les événements. Mariage, anniversaire, corporate.', verified:false, plan:'starter' },
+    { id:'dj5', firstName:'Tom', lastName:'Wave', genres:['Hip-Hop','R&B'], rating:4.7, reviews:29, description:'Hip-hop et R&B depuis 2010. Ambiances garanties, set personnalisé selon votre public.', verified:true, plan:'pro' },
+    { id:'dj6', firstName:'Nina', lastName:'Cruz', genres:['Reggaeton','Commercial'], rating:4.5, reviews:16, description:'Spécialiste reggaeton et hits latins. Parfait pour les soirées festives et mariages.', verified:true, plan:'pro' },
+  ];
+
+  async function init() {
+    const token = localStorage.getItem('cue_token');
+
+    if (!token) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    try {
+      const res = await fetch('/.netlify/functions/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify_token', token })
+      });
+
+      if (!res.ok) {
+        localStorage.clear();
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const data = await res.json();
+      Object.assign(user, data.user);
+      localStorage.setItem('cue_user', JSON.stringify(user));
+    } catch (err) {
+      if (!localStorage.getItem('cue_logged_in')) {
+        window.location.href = 'login.html';
+        return;
+      }
+    }
+
+    if (user.user_type !== 'venue' && user.userType !== 'venue') {
+      window.location.href = 'index.html';
+      return;
+    }
+
+    document.getElementById('sidebar-name').textContent = (user.first_name || user.firstName || '') + ' ' + (user.last_name || user.lastName || '');
+    document.getElementById('header-name').textContent = user.first_name || user.firstName || 'Venue';
+    document.getElementById('sidebar-plan').textContent = (user.plan || 'STARTER').toUpperCase();
+
+    allDJs = demoDJs;
+    loadStats();
+    await filterDJs();
+    renderFavorites();
+    renderCalendar();
+    updateFavBadge();
+  }
+
+  async function showPage(page, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    if (el) el.classList.add('active');
+    if (page === 'calendar') renderCalendar();
+    if (page === 'find-dj') filterDJs();
+    if (page === 'favorites') renderFavorites();
+    if (page === 'messages') await loadVenueConversations();
+  }
+
+  function loadStats() {
+    document.getElementById('stat-favs').textContent = favorites.length;
+    document.getElementById('stat-upcoming').textContent = bookings.filter(b => new Date(b.date) >= new Date()).length;
+    document.getElementById('stat-bookings-total').textContent = bookings.length;
+  }
+
+  async function filterDJs() {
+    const query = document.getElementById('search-query').value;
+    const genre = document.getElementById('filter-genre').value;
+    const minRating = document.getElementById('filter-rating').value;
+    const verifiedOnly = document.getElementById('filter-verified').value === 'verified';
+    const sort = document.getElementById('filter-sort').value;
+
+    try {
+      const res = await fetch('/.netlify/functions/get-djs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ search: query, genre, minRating, verifiedOnly, sort })
+      });
+      const data = await res.json();
+      allDJs = data.djs?.length ? data.djs : demoDJs;
+    } catch (err) {
+      allDJs = demoDJs;
+    }
+
+    document.getElementById('dj-count').textContent = allDJs.length + ' DJ' + (allDJs.length > 1 ? 's' : '') + ' trouvé' + (allDJs.length > 1 ? 's' : '');
+    renderDJs(allDJs);
+  }
+
+  function renderDJs(djs) {
+    const grid = document.getElementById('dj-grid');
+    if (!djs.length) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-emoji">🔍</div><div class="empty-title">Aucun DJ trouvé</div></div>';
+      return;
+    }
+    grid.innerHTML = djs.map(dj => djCardHTML(dj)).join('');
+  }
+
+  function djCardHTML(dj) {
+    const isFav = favorites.includes(dj.id);
+    const stars = '★'.repeat(Math.round(dj.rating)) + '☆'.repeat(5 - Math.round(dj.rating));
+    const planBadge = dj.plan === 'business' ? '✨ Elite' : dj.plan === 'pro' ? '⚡ Pro' : '';
+    return `
+      <div class="dj-card" onclick="openDJProfile('${dj.id}')">
+        <div class="dj-card-banner">
+          ${planBadge ? `<span style="position:absolute;top:12px;left:12px;background:rgba(255,195,0,.9);color:#000;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;z-index:1;">${planBadge}</span>` : ''}
+        </div>
+        <div class="dj-card-avatar">🎧</div>
+        <button class="fav-btn ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); toggleFav('${dj.id}', this)">${isFav ? '❤️' : '🤍'}</button>
+        <div class="dj-card-body">
+          ${dj.verified ? '<div class="verified-badge">✅ Vérifié CUE</div>' : ''}
+          <div class="dj-card-name">${dj.firstName} ${dj.lastName}</div>
+          <div class="dj-card-genres">${dj.genres.join(' · ')}</div>
+          <div class="dj-card-rating"><span class="dj-card-stars">${stars}</span><span style="color:#fff;font-weight:700;">${dj.rating}</span><span class="dj-card-reviews">(${dj.reviews} avis)</span></div>
+          <div class="dj-card-desc">${dj.description}</div>
+          <div class="dj-card-footer">
+            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openContactModal('${dj.id}')">💬 Contacter</button>
+            <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); openDJProfile('${dj.id}')">Voir profil</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function toggleFav(djId, btn) {
+    if (favorites.includes(djId)) {
+      favorites = favorites.filter(id => id !== djId);
+      btn.textContent = '🤍'; btn.classList.remove('active');
+    } else {
+      favorites.push(djId);
+      btn.textContent = '❤️'; btn.classList.add('active');
+    }
+    localStorage.setItem('cue_favorites', JSON.stringify(favorites));
+    updateFavBadge(); loadStats();
+  }
+
+  function toggleFavFromModal() {
+    if (!currentDJ) return;
+    const isFav = favorites.includes(currentDJ.id);
+    if (isFav) { favorites = favorites.filter(id => id !== currentDJ.id); document.getElementById('modal-fav-btn').textContent = '🤍 Ajouter aux favoris'; }
+    else { favorites.push(currentDJ.id); document.getElementById('modal-fav-btn').textContent = '❤️ Retirer des favoris'; }
+    localStorage.setItem('cue_favorites', JSON.stringify(favorites));
+    updateFavBadge(); loadStats();
+  }
+
+  function updateFavBadge() {
+    const b = document.getElementById('fav-count-badge');
+    b.textContent = favorites.length; b.style.display = favorites.length ? 'block' : 'none';
+  }
+
+  function renderFavorites() {
+    const favDJs = allDJs.filter(dj => favorites.includes(dj.id));
+    const grid = document.getElementById('fav-grid');
+    const preview = document.getElementById('fav-preview');
+    if (!favDJs.length) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-emoji">❤️</div><div class="empty-title">Aucun favori</div><button class="btn btn-primary" style="margin-top:16px;" onclick="showPage(\'find-dj\',document.querySelectorAll(\'.nav-item\')[1])">🔍 Trouver un DJ</button></div>';
+      if (preview) preview.innerHTML = '<div class="empty-state" style="width:100%;"><div class="empty-emoji">❤️</div><div class="empty-title">Aucun favori</div></div>';
+      return;
+    }
+    grid.innerHTML = favDJs.map(dj => djCardHTML(dj)).join('');
+    if (preview) {
+      preview.innerHTML = favDJs.slice(0,4).map(dj => `
+        <div style="text-align:center;cursor:pointer;" onclick="openDJProfile('${dj.id}')">
+          <div style="width:56px;height:56px;border-radius:50%;background:#1a1a1a;border:2px solid var(--Y);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 8px;">🎧</div>
+          <div style="font-size:12px;font-weight:700;color:#fff;">${dj.firstName}</div>
+          <div style="font-size:10px;color:var(--Y);">★${dj.rating}</div>
+        </div>
+      `).join('');
+    }
+  }
+
+  function openDJProfile(djId) {
+    currentDJ = allDJs.find(dj => dj.id === djId);
+    if (!currentDJ) return;
+    const isFav = favorites.includes(djId);
+    const stars = '★'.repeat(Math.round(currentDJ.rating)) + '☆'.repeat(5-Math.round(currentDJ.rating));
+    document.getElementById('modal-dj-name').textContent = currentDJ.firstName + ' ' + currentDJ.lastName;
+    document.getElementById('modal-dj-genres').textContent = currentDJ.genres.join(' · ');
+    document.getElementById('modal-dj-stars').textContent = stars + ' ' + currentDJ.rating + ' (' + currentDJ.reviews + ' avis)';
+    document.getElementById('modal-dj-desc').textContent = currentDJ.description;
+    document.getElementById('modal-fav-btn').textContent = isFav ? '❤️ Retirer des favoris' : '🤍 Ajouter aux favoris';
+    document.getElementById('modal-dj-verified').innerHTML = currentDJ.verified ? '<div class="verified-badge">✅ Identité vérifiée CUE</div>' : '';
+    const socials = [];
+    if (currentDJ.instagram) socials.push(`<a href="https://${currentDJ.instagram}" target="_blank" style="color:var(--MUTED);font-size:14px;text-decoration:none;">📸 Instagram</a>`);
+    if (currentDJ.soundcloud) socials.push(`<a href="https://${currentDJ.soundcloud}" target="_blank" style="color:var(--MUTED);font-size:14px;text-decoration:none;">🎵 SoundCloud</a>`);
+    document.getElementById('modal-dj-socials').innerHTML = socials.join('');
+    document.getElementById('modal-dj-profile').classList.add('open');
+  }
+
+  function contactDJFromModal() { closeModal('modal-dj-profile'); openContactModal(currentDJ.id); }
+
+  function openContactModal(djId) {
+    currentDJ = allDJs.find(dj => dj.id === djId);
+    document.getElementById('modal-contact-dj').classList.add('open');
+  }
+
+  async function sendOffer() {
+    if (!currentDJ) return;
+
+    const offer = {
+      date: document.getElementById('offer-date').value,
+      start: document.getElementById('offer-start').value,
+      end: document.getElementById('offer-end').value,
+      budget: document.getElementById('offer-budget').value,
+      type: document.getElementById('offer-type').value,
+      message: document.getElementById('offer-message').value,
+      city: user.city || ''
+    };
+
+    if (!offer.date || !offer.budget) {
+      alert('Remplis la date et le budget.');
+      return;
+    }
+
+    const convId = [user.id, currentDJ.id].sort().join('_');
+
+    try {
+      await fetch('/.netlify/functions/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'send_message',
+          convId,
+          djId: currentDJ.id,
+          venueId: user.id,
+          djName: currentDJ.firstName + ' ' + currentDJ.lastName,
+          venueName: user.firstName + ' ' + user.lastName,
+          senderType: 'venue',
+          message: {
+            senderId: user.id,
+            senderName: user.firstName + ' ' + user.lastName,
+            content: `Offre de booking — ${offer.type} le ${offer.date}`,
+            type: 'offer',
+            offerData: offer
+          }
+        })
+      });
+    } catch (err) {
+      console.log('Erreur envoi offre:', err);
+    }
+
+    bookings.unshift({
+      id: Date.now().toString(),
+      djId: currentDJ.id,
+      djName: currentDJ.firstName + ' ' + currentDJ.lastName,
+      ...offer,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    });
+    localStorage.setItem('cue_venue_bookings', JSON.stringify(bookings));
+
+    closeModal('modal-contact-dj');
+    loadStats();
+    alert('✅ Offre envoyée à ' + currentDJ.firstName + ' !');
+  }
+
+  async function loadVenueConversations() {
+    try {
+      const res = await fetch('/.netlify/functions/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_conversations', userId: user.id, userType: 'venue' })
+      });
+      const data = await res.json();
+      renderVenueConversations(data.conversations || []);
+    } catch (err) {
+      console.log('Erreur:', err);
+    }
+  }
+
+  function renderVenueConversations(convs) {
+    const list = document.getElementById('messages-list');
+    if (!list) return;
+    if (!convs.length) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-emoji">💬</div>
+          <div class="empty-title">Aucune conversation</div>
+          <div class="empty-sub">Contacte un DJ depuis Find DJ</div>
+        </div>`;
+      return;
+    }
+    list.innerHTML = convs.map(conv => `
+      <div class="message-item" onclick="openVenueConversation('${conv.id}', '${conv.dj_name.replace(/'/g, "\\'")}')">
+        <div class="message-avatar">🎧</div>
+        <div class="message-content">
+          <div class="message-sender">${conv.dj_name}</div>
+          <div class="message-preview">${conv.last_message || 'Nouvelle conversation'}</div>
+        </div>
+        <div class="message-time">${formatTime(conv.last_message_at)}</div>
+      </div>
+    `).join('');
+  }
+
+  function openVenueConversation(convId, djName) {
+    const convActive = document.getElementById('conversation-active');
+    const convEmpty = document.getElementById('conversation-empty');
+    if (convActive) {
+      convActive.style.display = 'flex';
+      document.getElementById('conv-dj-name').textContent = djName;
+    }
+    if (convEmpty) convEmpty.style.display = 'none';
+  }
+
+  function formatTime(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const diff = Date.now() - d;
+    if (diff < 60000) return "À l'instant";
+    if (diff < 3600000) return Math.floor(diff / 60000) + 'min';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + 'h';
+    return d.toLocaleDateString('fr-FR');
+  }
+
+  function setRating(n) {
+    currentRating = n;
+    document.querySelectorAll('.star-btn').forEach((btn, i) => btn.classList.toggle('active', i < n));
+  }
+
+  function submitReview() {
+    if (!currentRating) { alert('Sélectionne une note.'); return; }
+    const review = {
+      djId: currentDJ?.id, djName: currentDJ?.firstName + ' ' + currentDJ?.lastName,
+      venue: user.firstName + ' ' + user.lastName,
+      rating: currentRating, comment: document.getElementById('review-text').value,
+      date: new Date().toISOString()
+    };
+    const reviews = JSON.parse(localStorage.getItem('cue_reviews') || '[]');
+    reviews.unshift(review);
+    localStorage.setItem('cue_reviews', JSON.stringify(reviews));
+    closeModal('modal-rate-dj'); alert('⭐ Avis publié !'); currentRating = 0;
+  }
+
+  function filterBookings(filter, el) {
+    document.querySelectorAll('#page-bookings .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    let filtered = bookings;
+    const now = new Date();
+    if (filter === 'upcoming') filtered = bookings.filter(b => new Date(b.date) >= now);
+    else if (filter === 'past') filtered = bookings.filter(b => new Date(b.date) < now);
+    const list = document.getElementById('bookings-list');
+    if (!filtered.length) { list.innerHTML = '<div class="empty-state"><div class="empty-emoji">🎤</div><div class="empty-title">Aucun booking</div></div>'; return; }
+    list.innerHTML = filtered.map(b => `
+      <div style="padding:20px 24px;border-bottom:1px solid rgba(255,195,0,.06);display:flex;align-items:center;gap:20px;">
+        <div style="font-size:32px;">🎧</div>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:15px;color:#fff;">${b.djName}</div>
+          <div style="color:var(--MUTED);font-size:13px;margin-top:2px;">${b.type} • ${b.date} • ${b.start}→${b.end}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:'Barlow Condensed';font-weight:900;font-size:24px;color:var(--Y);">${b.budget}€</div>
+          <span style="background:rgba(255,170,0,.15);color:var(--PENDING);padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;">${b.status}</span>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="currentDJ=allDJs.find(d=>d.id==='${b.djId}');document.getElementById('modal-rate-dj').classList.add('open');">⭐ Noter</button>
+      </div>
+    `).join('');
+  }
+
+  function renderCalendar() {
+    const year = calendarDate.getFullYear(), month = calendarDate.getMonth();
+    const months = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    document.getElementById('calendar-month-label').textContent = months[month] + ' ' + year;
+    document.getElementById('calendar-days-labels').innerHTML = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(d => `<div class="calendar-day-label">${d}</div>`).join('');
+    const firstDay = new Date(year, month, 1), lastDay = new Date(year, month + 1, 0);
+    const startDow = (firstDay.getDay() + 6) % 7, today = new Date();
+    let html = '';
+    for (let i = 0; i < startDow; i++) { const d = new Date(year, month, -startDow+i+1); html += `<div class="calendar-day other-month"><div class="day-num">${d.getDate()}</div></div>`; }
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const events = bookings.filter(b => b.date === dateStr);
+      const isToday = today.getFullYear()===year && today.getMonth()===month && today.getDate()===d;
+      html += `<div class="calendar-day ${isToday?'today':''}"><div class="day-num">${d}</div>${events.map(e=>`<div class="day-event">${e.djName?.split(' ')[0]}</div>`).join('')}</div>`;
+    }
+    document.getElementById('calendar-grid').innerHTML = html;
+  }
+
+  function changeMonth(dir) { calendarDate.setMonth(calendarDate.getMonth()+dir); renderCalendar(); }
+
+  async function generateContract() {
+    const dj = document.getElementById('c-dj').value, date = document.getElementById('c-date').value, fee = document.getElementById('c-fee').value;
+    if (!dj||!date||!fee) { alert('Remplis au minimum le DJ, la date et le cachet.'); return; }
+    document.getElementById('ai-generating').style.display = 'block';
+    document.getElementById('contract-result').style.display = 'none';
+    try {
+      const res = await fetch('/.netlify/functions/generate-contract', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ djName:dj, venue:user.firstName+' '+user.lastName, date, start:document.getElementById('c-start').value, end:document.getElementById('c-end').value, fee, type:document.getElementById('c-type').value, details:document.getElementById('c-details').value })
+      });
+      const data = await res.json();
+      document.getElementById('contract-text').textContent = data.contract;
+      document.getElementById('ai-generating').style.display = 'none';
+      document.getElementById('contract-result').style.display = 'block';
+    } catch(err) { document.getElementById('ai-generating').style.display='none'; alert('Erreur. Réessaie.'); }
+  }
+
+  function copyContract() { navigator.clipboard.writeText(document.getElementById('contract-text').textContent); alert('Copié ✅'); }
+  function printContract() { const w=window.open(''); w.document.write(`<pre style="font-family:Arial;padding:40px;">${document.getElementById('contract-text').textContent}</pre>`); w.print(); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  async function logout() {
+    const token = localStorage.getItem('cue_token');
+    if (token) {
+      try {
+        await fetch('/.netlify/functions/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'logout', token })
+        });
+      } catch (_) {}
+    }
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.href = 'index.html';
+  }
+  function deleteAccount() { if(!confirm('Supprimer ton compte ?')) return; localStorage.clear(); sessionStorage.clear(); window.location.href='index.html'; }
+
+  init();
+</script>
+</body>
+</html>
