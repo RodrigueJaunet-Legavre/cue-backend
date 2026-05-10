@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>CUE — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --Y: #FFC300; --BG: #080808; --CARD: #111;
+      --BORDER: rgba(255,195,0,.13); --TEXT: #ddd; --MUTED: #bbb;
+    }
+    body { background:var(--BG); color:var(--TEXT); font-family:Barlow,sans-serif; display:flex; min-height:100vh; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 240px; background:#0d0d0d; border-right:1px solid var(--BORDER);
+      padding:24px 0; display:flex; flex-direction:column; position:fixed; height:100vh;
+    }
+    .sidebar-logo {
+      padding:0 24px 32px; border-bottom:1px solid var(--BORDER);
+    }
+    .sidebar-logo span { color:var(--Y); font-weight:900; font-size:24px; }
+    .sidebar-logo small { color:var(--MUTED); font-size:11px; display:block; }
+    .nav-item {
+      padding:14px 24px; cursor:pointer; display:flex; align-items:center;
+      gap:12px; color:var(--MUTED); transition:all .2s; font-weight:600; font-size:14px;
+    }
+    .nav-item:hover, .nav-item.active { color:var(--Y); background:rgba(255,195,0,.06); }
+    .nav-item .icon { font-size:18px; width:24px; text-align:center; }
+
+    /* MAIN */
+    .main { margin-left:240px; flex:1; padding:40px; }
+    .page { display:none; }
+    .page.active { display:block; }
+
+    /* CARDS */
+    .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px; }
+    .stat-card {
+      background:var(--CARD); border:1px solid var(--BORDER); border-radius:12px; padding:24px;
+    }
+    .stat-card .label { color:var(--MUTED); font-size:12px; font-weight:700; text-transform:uppercase; }
+    .stat-card .value { font-size:36px; font-weight:900; color:#fff; margin:8px 0 4px; }
+    .stat-card .sub { color:var(--MUTED); font-size:13px; }
+    .stat-card .trend { color:#00c864; font-size:13px; font-weight:700; }
+
+    /* TABLE */
+    .table-card { background:var(--CARD); border:1px solid var(--BORDER); border-radius:12px; overflow:hidden; }
+    .table-header { padding:20px 24px; border-bottom:1px solid var(--BORDER); display:flex; justify-content:space-between; align-items:center; }
+    .table-header h3 { font-weight:700; font-size:16px; }
+    table { width:100%; border-collapse:collapse; }
+    th { padding:12px 24px; text-align:left; color:var(--MUTED); font-size:12px; font-weight:700; text-transform:uppercase; border-bottom:1px solid var(--BORDER); }
+    td { padding:16px 24px; border-bottom:1px solid rgba(255,195,0,.06); font-size:14px; }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:rgba(255,195,0,.03); }
+
+    /* BADGES */
+    .badge { padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+    .badge-pending { background:rgba(255,170,0,.15); color:#ffaa00; }
+    .badge-verified { background:rgba(0,200,100,.15); color:#00c864; }
+    .badge-rejected { background:rgba(255,68,68,.15); color:#ff4444; }
+    .badge-dj { background:rgba(255,195,0,.15); color:var(--Y); }
+    .badge-venue { background:rgba(100,100,255,.15); color:#8888ff; }
+    .badge-open { background:rgba(255,170,0,.15); color:#ffaa00; }
+    .badge-resolved { background:rgba(0,200,100,.15); color:#00c864; }
+
+    /* BUTTONS */
+    .btn { padding:8px 16px; border-radius:8px; border:none; cursor:pointer; font-weight:700; font-size:13px; }
+    .btn-approve { background:#00c864; color:#000; }
+    .btn-reject { background:#ff4444; color:#fff; }
+    .btn-warn { background:#ffaa00; color:#000; }
+    .btn-view { background:rgba(255,195,0,.15); color:var(--Y); }
+
+    /* LOGIN */
+    #login-overlay {
+      position:fixed; inset:0; background:var(--BG); z-index:999;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .login-card {
+      background:var(--CARD); border:1px solid var(--BORDER); border-radius:16px;
+      padding:48px; width:400px; text-align:center;
+    }
+    .login-card h1 { color:var(--Y); font-size:28px; margin-bottom:8px; }
+    .login-card p { color:var(--MUTED); margin-bottom:32px; }
+    .login-card input {
+      width:100%; background:#1a1a1a; border:1px solid #333; color:var(--TEXT);
+      padding:14px; border-radius:8px; font-size:16px; margin-bottom:16px;
+    }
+    .login-card button {
+      width:100%; background:var(--Y); color:#000; border:none;
+      padding:14px; border-radius:8px; font-weight:700; font-size:16px; cursor:pointer;
+    }
+
+    /* SECTION HEADERS */
+    .section-title { font-size:24px; font-weight:900; margin-bottom:8px; }
+    .section-sub { color:var(--MUTED); margin-bottom:32px; }
+
+    /* TABS */
+    .tabs { display:flex; gap:8px; margin-bottom:24px; }
+    .tab { padding:8px 20px; border-radius:8px; cursor:pointer; font-weight:700; font-size:13px; background:var(--CARD); color:var(--MUTED); border:1px solid var(--BORDER); }
+    .tab.active { background:var(--Y); color:#000; }
+
+    /* MODAL */
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.8); z-index:100; align-items:center; justify-content:center; }
+    .modal.open { display:flex; }
+    .modal-card { background:var(--CARD); border:1px solid var(--BORDER); border-radius:16px; padding:32px; width:600px; max-height:80vh; overflow-y:auto; }
+    .modal-card h2 { color:var(--Y); margin-bottom:24px; }
+    .doc-preview { display:flex; gap:16px; margin-bottom:24px; }
+    .doc-preview img { width:100%; border-radius:8px; border:1px solid var(--BORDER); }
+    .modal-actions { display:flex; gap:12px; margin-top:24px; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-overlay">
+  <div class="login-card">
+    <h1>CUE</h1>
+    <p>Espace administrateur</p>
+    <input type="password" id="admin-pwd" placeholder="Mot de passe admin" onkeypress="if(event.key==='Enter')adminLogin()">
+    <button onclick="adminLogin()">Accéder →</button>
+    <p id="login-error" style="color:#ff4444; margin-top:16px; display:none;">Mot de passe incorrect</p>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <span>CUE</span>
+    <small>Admin Dashboard</small>
+  </div>
+  <div class="nav-item active" onclick="showPage('overview', this)">
+    <span class="icon">📊</span> Overview
+  </div>
+  <div class="nav-item" onclick="showPage('verifications', this)">
+    <span class="icon">🪪</span> Vérifications
+    <span id="verif-badge" style="margin-left:auto; background:#ff4444; color:#fff; border-radius:20px; padding:2px 8px; font-size:11px;"></span>
+  </div>
+  <div class="nav-item" onclick="showPage('users', this)">
+    <span class="icon">👥</span> Users
+  </div>
+  <div class="nav-item" onclick="showPage('bookings', this)">
+    <span class="icon">📅</span> Bookings
+  </div>
+  <div class="nav-item" onclick="showPage('payouts', this)">
+    <span class="icon">💸</span> Payouts
+  </div>
+  <div class="nav-item" onclick="showPage('reports', this)">
+    <span class="icon">🚨</span> Reports
+    <span id="reports-badge" style="margin-left:auto; background:#ff4444; color:#fff; border-radius:20px; padding:2px 8px; font-size:11px;"></span>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+  <!-- OVERVIEW -->
+  <div id="page-overview" class="page active">
+    <h1 class="section-title">Overview</h1>
+    <p class="section-sub">Tableau de bord en temps réel</p>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">DJs inscrits</div>
+        <div class="value" id="stat-djs">—</div>
+        <div class="sub">Total depuis le début</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Venues inscrits</div>
+        <div class="value" id="stat-venues">—</div>
+        <div class="sub">Total depuis le début</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Bookings ce mois</div>
+        <div class="value" id="stat-bookings-month">—</div>
+        <div class="sub" id="stat-bookings-total">Total : —</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Revenus ce mois</div>
+        <div class="value" id="stat-revenue-month">—</div>
+        <div class="sub" id="stat-revenue-total">Total : —</div>
+      </div>
+    </div>
+
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
+      <div class="stat-card">
+        <div class="label">Revenus cette semaine</div>
+        <div class="value" id="stat-revenue-week">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Vérifications en attente</div>
+        <div class="value" id="stat-pending-verif" style="color:#ffaa00;">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Reports ouverts</div>
+        <div class="value" id="stat-open-reports" style="color:#ff4444;">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VERIFICATIONS -->
+  <div id="page-verifications" class="page">
+    <h1 class="section-title">Vérifications</h1>
+    <p class="section-sub">Identités en attente de validation</p>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchVerifTab('pending', this)">En attente</div>
+      <div class="tab" onclick="switchVerifTab('incomplete', this)">Profils incomplets</div>
+      <div class="tab" onclick="switchVerifTab('verified', this)">Validés</div>
+      <div class="tab" onclick="switchVerifTab('rejected', this)">Refusés</div>
+    </div>
+
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Utilisateur</th>
+            <th>Type</th>
+            <th>Email</th>
+            <th>Soumis le</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="verif-table-body">
+          <tr><td colspan="6" style="text-align:center; color:var(--MUTED);">Chargement...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- USERS -->
+  <div id="page-users" class="page">
+    <h1 class="section-title">Utilisateurs</h1>
+    <p class="section-sub">Tous les comptes inscrits</p>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchUsersTab('all', this)">Tous</div>
+      <div class="tab" onclick="switchUsersTab('dj', this)">DJs</div>
+      <div class="tab" onclick="switchUsersTab('venue', this)">Venues</div>
+    </div>
+
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Nom</th>
+            <th>Type</th>
+            <th>Email</th>
+            <th>Plan</th>
+            <th>Identité</th>
+            <th>Inscrit le</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="users-table-body">
+          <tr><td colspan="7" style="text-align:center; color:var(--MUTED);">Chargement...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BOOKINGS -->
+  <div id="page-bookings" class="page">
+    <h1 class="section-title">Bookings</h1>
+    <p class="section-sub">Tous les bookings sur la plateforme</p>
+
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>DJ</th>
+            <th>Venue</th>
+            <th>Date événement</th>
+            <th>Montant</th>
+            <th>Statut</th>
+            <th>Créé le</th>
+          </tr>
+        </thead>
+        <tbody id="bookings-table-body">
+          <tr><td colspan="6" style="text-align:center; color:var(--MUTED);">Aucun booking pour l'instant</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PAYOUTS -->
+  <div id="page-payouts" class="page">
+    <h1 class="section-title">Payouts</h1>
+    <p class="section-sub">Historique des paiements</p>
+
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Utilisateur</th>
+            <th>Montant</th>
+            <th>Méthode</th>
+            <th>Statut</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="payouts-table-body">
+          <tr><td colspan="5" style="text-align:center; color:var(--MUTED);">Aucun payout pour l'instant</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- REPORTS -->
+  <div id="page-reports" class="page">
+    <h1 class="section-title">Reports</h1>
+    <p class="section-sub">Signalements et litiges</p>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchReportsTab('all', this)">Tous</div>
+      <div class="tab" onclick="switchReportsTab('booking_dispute', this)">Booking dispute</div>
+      <div class="tab" onclick="switchReportsTab('payment', this)">Paiement</div>
+      <div class="tab" onclick="switchReportsTab('no_show', this)">No show</div>
+      <div class="tab" onclick="switchReportsTab('fake_info', this)">Falsification</div>
+      <div class="tab" onclick="switchReportsTab('spam', this)">Spam</div>
+    </div>
+
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Signaleur</th>
+            <th>Signalé</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Statut</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="reports-table-body">
+          <tr><td colspan="7" style="text-align:center; color:var(--MUTED);">Aucun signalement pour l'instant</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL VÉRIFICATION -->
+<div id="modal-verif" class="modal">
+  <div class="modal-card">
+    <h2>Documents d'identité</h2>
+    <div id="modal-user-info" style="margin-bottom:24px;"></div>
+    <div class="doc-preview">
+      <div style="flex:1;">
+        <p style="color:var(--MUTED); font-size:12px; margin-bottom:8px;">SELFIE</p>
+        <img id="modal-selfie" src="" alt="Selfie" style="max-width:100%;">
+      </div>
+      <div style="flex:1;">
+        <p style="color:var(--MUTED); font-size:12px; margin-bottom:8px;">PIÈCE D'IDENTITÉ</p>
+        <img id="modal-document" src="" alt="Document" style="max-width:100%;">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-approve" onclick="validateUser('approve')">✅ Approuver</button>
+      <button class="btn btn-warn" onclick="validateUser('request_new')">🔄 Demander nouveaux docs</button>
+      <button class="btn btn-reject" onclick="validateUser('reject')">❌ Refuser</button>
+      <button class="btn btn-view" onclick="closeModal()" style="margin-left:auto;">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentVerifUserId = null;
+
+  // LOGIN
+  function adminLogin() {
+    const pwd = document.getElementById('admin-pwd').value;
+    fetch('/.netlify/functions/admin-stats', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminSecret: pwd })
+    }).then(r => {
+      if (r.ok) {
+        sessionStorage.setItem('admin_secret', pwd);
+        document.getElementById('login-overlay').style.display = 'none';
+        loadAllData();
+      } else {
+        document.getElementById('login-error').style.display = 'block';
+      }
+    });
+  }
+
+  function getSecret() { return sessionStorage.getItem('admin_secret'); }
+
+  // NAVIGATION
+  function showPage(page, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    el.classList.add('active');
+  }
+
+  // LOAD DATA
+  async function loadAllData() {
+    await Promise.all([loadStats(), loadVerifications(), loadUsers()]);
+  }
+
+  async function loadStats() {
+    const res = await fetch('/.netlify/functions/admin-stats', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminSecret: getSecret() })
+    });
+    const data = await res.json();
+    document.getElementById('stat-djs').textContent = data.djs || 0;
+    document.getElementById('stat-venues').textContent = data.venues || 0;
+    document.getElementById('stat-bookings-month').textContent = data.bookingsMonth || 0;
+    document.getElementById('stat-bookings-total').textContent = 'Total : ' + (data.bookingsTotal || 0);
+    document.getElementById('stat-revenue-month').textContent = (data.revenueMonth || 0) + '€';
+    document.getElementById('stat-revenue-total').textContent = 'Total : ' + (data.revenueTotal || 0) + '€';
+    document.getElementById('stat-revenue-week').textContent = (data.revenueWeek || 0) + '€';
+    document.getElementById('stat-pending-verif').textContent = data.pendingVerif || 0;
+    document.getElementById('stat-open-reports').textContent = data.openReports || 0;
+    if (data.pendingVerif > 0) document.getElementById('verif-badge').textContent = data.pendingVerif;
+    if (data.openReports > 0) document.getElementById('reports-badge').textContent = data.openReports;
+  }
+
+  async function loadVerifications(status = 'pending') {
+    const res = await fetch('/.netlify/functions/admin-get-users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminSecret: getSecret(), filter: 'verif', status })
+    });
+    const { users } = await res.json();
+    const tbody = document.getElementById('verif-table-body');
+
+    if (!users?.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--MUTED); padding:40px;">Aucun résultat</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td><strong>${u.first_name} ${u.last_name}</strong></td>
+        <td><span class="badge badge-${u.user_type}">${u.user_type?.toUpperCase()}</span></td>
+        <td>${u.email}</td>
+        <td>${new Date(u.created_at).toLocaleDateString('fr-FR')}</td>
+        <td><span class="badge badge-${u.identity_status}">${u.identity_status}</span></td>
+        <td>
+          <button class="btn btn-view" onclick="openVerifModal('${u.id}', '${u.first_name} ${u.last_name}', '${u.email}', '${u.user_type}')">
+            👁 Voir docs
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async function loadUsers(type = 'all') {
+    const res = await fetch('/.netlify/functions/admin-get-users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminSecret: getSecret(), filter: 'users', type })
+    });
+    const { users } = await res.json();
+    const tbody = document.getElementById('users-table-body');
+
+    if (!users?.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--MUTED); padding:40px;">Aucun utilisateur</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td><strong>${u.first_name} ${u.last_name}</strong></td>
+        <td><span class="badge badge-${u.user_type}">${u.user_type?.toUpperCase()}</span></td>
+        <td>${u.email}</td>
+        <td>${u.plan || 'starter'}</td>
+        <td><span class="badge badge-${u.identity_status}">${u.identity_status}</span></td>
+        <td>${new Date(u.created_at).toLocaleDateString('fr-FR')}</td>
+        <td>
+          <button class="btn btn-reject" onclick="suspendUser('${u.id}')">🚫 Suspendre</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // TABS
+  function switchVerifTab(status, el) {
+    document.querySelectorAll('#page-verifications .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    loadVerifications(status);
+  }
+
+  function switchUsersTab(type, el) {
+    document.querySelectorAll('#page-users .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    loadUsers(type);
+  }
+
+  function switchReportsTab(type, el) {
+    document.querySelectorAll('#page-reports .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // MODAL
+  function openVerifModal(userId, name, email, type) {
+    currentVerifUserId = userId;
+    document.getElementById('modal-user-info').innerHTML = `
+      <p><strong>${name}</strong> — ${type?.toUpperCase()}</p>
+      <p style="color:var(--MUTED);">${email}</p>
+    `;
+    document.getElementById('modal-verif').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal-verif').classList.remove('open');
+  }
+
+  async function validateUser(action) {
+    await fetch('/.netlify/functions/admin-verify-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: currentVerifUserId,
+        action,
+        adminSecret: getSecret()
+      })
+    });
+
+    const messages = {
+      approve: '✅ Compte approuvé !',
+      request_new: '🔄 Nouveaux documents demandés.',
+      reject: '❌ Compte refusé.'
+    };
+    alert(messages[action]);
+    closeModal();
+    loadVerifications();
+    loadStats();
+  }
+
+  async function suspendUser(userId) {
+    if (!confirm('Suspendre cet utilisateur ?')) return;
+    await fetch('/.netlify/functions/admin-verify-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, action: 'suspend', adminSecret: getSecret() })
+    });
+    alert('Utilisateur suspendu.');
+    loadUsers();
+  }
+
+  // Vérifie si déjà connecté
+  if (sessionStorage.getItem('admin_secret')) {
+    document.getElementById('login-overlay').style.display = 'none';
+    loadAllData();
+  }
+</script>
+</body>
+</html>

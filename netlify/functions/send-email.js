@@ -12,7 +12,6 @@ exports.handler = async (event) => {
         subject: 'Ton code de vérification CUE',
         html: `
           <div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
-            <img src="https://cuedj.eu/logo.png" width="80" style="margin-bottom:24px;">
             <h1 style="color:#FFC300; font-size:28px;">Vérifie ton email</h1>
             <p>Bonjour ${firstName},</p>
             <p>Voici ton code de vérification :</p>
@@ -35,7 +34,6 @@ exports.handler = async (event) => {
         subject: `Bienvenue sur CUE, ${firstName} 🎧`,
         html: `
           <div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
-            <img src="https://cuedj.eu/logo.png" width="80" style="margin-bottom:24px;">
             <h1 style="color:#FFC300; font-size:32px;">THE STAGE STARTS HERE.</h1>
             <p>Bonjour ${firstName},</p>
             <p>Ton compte CUE est maintenant actif. Tu fais partie de la plateforme qui connecte les meilleurs DJs avec les meilleurs événements.</p>

@@ -164,35 +164,37 @@ function getRedirectUrl() {
   return redirect || 'dashboard.html';
 }
 
+const ADMIN_EMAIL = 'admin@cuedj.eu';
+
 // Handle login
 async function handleLogin(e) {
   e.preventDefault();
-  
+
   // Clear errors
   document.querySelectorAll('.form-error').forEach(el => el.classList.remove('show'));
   document.querySelectorAll('.form-input').forEach(el => el.classList.remove('error'));
   document.getElementById('errorAlert').classList.remove('show');
   document.getElementById('successAlert').classList.remove('show');
-  
+
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
-  
+
   let hasError = false;
-  
+
   if (!email || !email.includes('@')) {
     document.getElementById('email').classList.add('error');
     document.getElementById('emailError').classList.add('show');
     hasError = true;
   }
-  
+
   if (!password) {
     document.getElementById('password').classList.add('error');
     document.getElementById('passwordError').classList.add('show');
     hasError = true;
   }
-  
+
   if (hasError) return;
-  
+
   // Show loading
   const btn = document.getElementById('submitBtn');
   const spinner = document.getElementById('submitSpinner');
@@ -200,6 +202,26 @@ async function handleLogin(e) {
   btn.disabled = true;
   spinner.classList.add('on');
   label.textContent = 'Connexion...';
+
+  // Vérifie si c'est l'admin
+  if (email === ADMIN_EMAIL) {
+    const res = await fetch('/.netlify/functions/admin-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    if (res.ok) {
+      const { secret } = await res.json();
+      sessionStorage.setItem('admin_secret', secret);
+      window.location.href = 'admin.html';
+      return;
+    }
+    document.getElementById('errorAlert').classList.add('show');
+    btn.disabled = false;
+    spinner.classList.remove('on');
+    label.textContent = 'Se connecter';
+    return;
+  }
   
   // Simulate API call
   await new Promise(r => setTimeout(r, 1500));
