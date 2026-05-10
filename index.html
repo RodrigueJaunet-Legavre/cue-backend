@@ -24,13 +24,14 @@ nav.s{border-color:var(--BORDER);background:rgba(8,8,8,.97);backdrop-filter:blur
 .bg:hover{border-color:var(--Y);color:var(--Y)}
 .bp{padding:8px 20px;border:none;background:var(--Y);color:#000;font-family:var(--D);font-size:14px;font-weight:900;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
 .bp:hover{background:var(--Y2)}
-#nav-links{display:flex;gap:24px;align-items:center;list-style:none}
+#nav-links{position:absolute;left:50%;transform:translateX(-50%);display:flex;gap:24px;align-items:center;list-style:none}
+#nav-cta{display:flex;gap:10px;align-items:center}
 #nav-links a{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);text-decoration:none;transition:color .2s}
 #nav-links a:hover{color:#fff}
-#nav-links .btn-outline{padding:7px 16px;border:1px solid var(--BORDER);background:transparent;color:var(--MUTED);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;transition:all .2s}
-#nav-links .btn-outline:hover{border-color:var(--Y);color:var(--Y)}
-#nav-links .btn-primary{padding:7px 16px;background:var(--Y);color:#000;font-family:var(--D);font-size:13px;font-weight:900;letter-spacing:2px;text-transform:uppercase;text-decoration:none;transition:all .2s}
-#nav-links .btn-primary:hover{background:var(--Y2)}
+.btn-outline{padding:7px 16px;border:1px solid var(--BORDER);background:transparent;color:var(--MUTED);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;transition:all .2s}
+.btn-outline:hover{border-color:var(--Y);color:var(--Y)}
+.btn-primary{padding:7px 16px;background:var(--Y);color:#000;font-family:var(--D);font-size:13px;font-weight:900;letter-spacing:2px;text-transform:uppercase;text-decoration:none;transition:all .2s}
+.btn-primary:hover{background:var(--Y2)}
 
 /* ─── HERO ─── */
 .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 24px 60px;position:relative;overflow:hidden}
@@ -467,6 +468,7 @@ footer{border-top:1px solid var(--BORDER);padding:60px 52px 30px;display:grid;gr
     <svg class="logo-svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="16" fill="#FFC300"/><circle cx="50" cy="50" r="34" fill="none" stroke="#111" stroke-width="6"/><text x="50" y="59" text-anchor="middle" font-family="Arial Rounded MT Bold,Arial" font-size="24" font-weight="900" fill="#111">cue</text></svg>
   </a>
   <div id="nav-links"></div>
+  <div id="nav-cta"></div>
 </nav>
 
 <section class="hero" id="heroSection">
@@ -895,14 +897,16 @@ async function sendChat(){const i=document.getElementById('cinput');const msg=i.
 function initNav(){
   const isLogged=localStorage.getItem('cue_logged_in')==='true';
   const nl=document.getElementById('nav-links');
+  const nc=document.getElementById('nav-cta');
+  nl.innerHTML=`<a href="#features">FEATURES</a><a href="#ai-matching">AI MATCHING</a><a href="#contracts">CONTRACTS</a><a href="#pricing">PRICING</a>`;
   if(isLogged){
-    nl.innerHTML=`<a href="#features">FEATURES</a><a href="#ai-matching">AI MATCHING</a><a href="#contracts">CONTRACTS</a><a href="#pricing">PRICING</a><a href="dashboard.html" class="btn-outline">DASHBOARD</a><a href="#" onclick="logout();return false;" class="btn-primary">DÉCONNEXION</a>`;
+    nc.innerHTML=`<a href="dashboard.html" class="btn-outline">DASHBOARD</a><a href="#" onclick="logout();return false;" class="btn-primary">DÉCONNEXION</a>`;
     document.getElementById('ai-matching-teaser').style.display='none';
     document.getElementById('contracts-teaser').style.display='none';
     document.getElementById('ai-matching-real').style.display='block';
     document.getElementById('contracts-real').style.display='block';
   }else{
-    nl.innerHTML=`<a href="#features">FEATURES</a><a href="#ai-matching">AI MATCHING</a><a href="#contracts">CONTRACTS</a><a href="#pricing">PRICING</a><a href="login.html" class="btn-outline">CONNEXION</a><a href="inscription.html" class="btn-primary">S'INSCRIRE</a>`;
+    nc.innerHTML=`<a href="login.html" class="btn-outline">CONNEXION</a><a href="inscription.html" class="btn-primary">S'INSCRIRE</a>`;
     document.getElementById('ai-matching-teaser').style.display='';
     document.getElementById('contracts-teaser').style.display='';
     document.getElementById('ai-matching-real').style.display='none';
