@@ -117,7 +117,10 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
       
       <div class="form-group">
         <label class="form-label">Mot de passe</label>
-        <input type="password" class="form-input" id="password" placeholder="Ton mot de passe" required>
+        <div style="position:relative;">
+          <input type="password" class="form-input" id="password" placeholder="Ton mot de passe" required style="padding-right:48px;">
+          <span onclick="togglePassword()" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:18px;color:#bbb;user-select:none;">👁</span>
+        </div>
         <div class="form-error" id="passwordError">Mot de passe requis</div>
       </div>
       
@@ -164,7 +167,10 @@ function getRedirectUrl() {
   return redirect || 'dashboard.html';
 }
 
-const ADMIN_EMAIL = 'admin@cuedj.eu';
+function togglePassword() {
+  const input = document.getElementById('password');
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
 
 // Handle login
 async function handleLogin(e) {
@@ -203,66 +209,34 @@ async function handleLogin(e) {
   spinner.classList.add('on');
   label.textContent = 'Connexion...';
 
-  // Vérifie si c'est l'admin
-  if (email === ADMIN_EMAIL) {
-    const res = await fetch('/.netlify/functions/admin-login', {
+  // 1. Vérifie admin EN PREMIER (pour tous les emails, la function retournera 401 si non admin)
+  try {
+    const adminRes = await fetch('/.netlify/functions/admin-login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
-    if (res.ok) {
-      const { secret } = await res.json();
+    if (adminRes.ok) {
+      const { secret } = await adminRes.json();
       sessionStorage.setItem('admin_secret', secret);
       window.location.href = 'admin.html';
       return;
     }
-    document.getElementById('errorAlert').classList.add('show');
-    btn.disabled = false;
-    spinner.classList.remove('on');
-    label.textContent = 'Se connecter';
-    return;
-  }
-  
-  // Simulate API call
-  await new Promise(r => setTimeout(r, 1500));
-  
-  // Check stored user or allow any login for demo
+  } catch (_) { /* function indisponible, continue */ }
+
+  // 2. Connexion utilisateur normale
   const storedUser = localStorage.getItem('cue_user');
-  
   if (storedUser) {
     const user = JSON.parse(storedUser);
     if (user.email === email && user.password === password) {
-      // Success
       document.getElementById('successAlert').classList.add('show');
       localStorage.setItem('cue_logged_in', 'true');
       setTimeout(() => window.location.href = getRedirectUrl(), 1500);
       return;
     }
   }
-  
-  // For demo: allow any login with password >= 8 chars
-  if (password.length >= 8) {
-    // Create mock user
-    const mockUser = {
-      id: Date.now(),
-      firstName: email.split('@')[0],
-      lastName: 'User',
-      email: email,
-      phone: '612345678',
-      userType: 'dj',
-      referralCodeOwn: 'REF' + Date.now().toString().slice(-6),
-      verified: true,
-      createdAt: new Date().toISOString()
-    };
-    localStorage.setItem('cue_user', JSON.stringify(mockUser));
-    localStorage.setItem('cue_logged_in', 'true');
-    
-    document.getElementById('successAlert').classList.add('show');
-    setTimeout(() => window.location.href = getRedirectUrl(), 1500);
-    return;
-  }
-  
-  // Error
+
+  // 3. Erreur
   document.getElementById('errorAlert').classList.add('show');
   btn.disabled = false;
   spinner.classList.remove('on');

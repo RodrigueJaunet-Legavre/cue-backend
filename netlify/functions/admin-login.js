@@ -1,4 +1,7 @@
 exports.handler = async (event) => {
+  console.log('ADMIN_EMAIL:', process.env.ADMIN_EMAIL);
+  console.log('Reçu email:', JSON.parse(event.body).email);
+
   const { email, password } = JSON.parse(event.body);
 
   if (
