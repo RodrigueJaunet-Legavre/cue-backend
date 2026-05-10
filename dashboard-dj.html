@@ -549,11 +549,135 @@
   <!-- PROFIL -->
   <div id="page-profile" class="page">
     <div class="page-header">
-      <h1 class="page-title">MON PROFIL</h1>
-      <p class="page-sub">Ce que voient les venues</p>
+      <div>
+        <h1 class="page-title">MON PROFIL</h1>
+        <p class="page-sub">Ce que voient les venues sur ta page publique</p>
+      </div>
+      <div style="display:flex; gap:12px;">
+        <a id="view-public-btn" href="#" target="_blank" class="btn btn-outline">👁 Voir mon profil public</a>
+        <button class="btn btn-primary" onclick="saveProfile()">💾 Sauvegarder</button>
+      </div>
     </div>
+
+    <!-- PHOTO DE PROFIL -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-header"><span class="card-title">📸 Photo de profil</span></div>
+      <div class="card-body" style="display:flex; align-items:center; gap:32px;">
+        <div id="profile-avatar-preview" style="width:120px; height:120px; border-radius:50%; border:3px solid var(--Y); background:#1a1a1a; display:flex; align-items:center; justify-content:center; font-size:48px; overflow:hidden; flex-shrink:0;">
+          🎧
+        </div>
+        <div>
+          <button class="btn btn-primary" onclick="document.getElementById('photo-upload-input').click()">
+            📷 Changer la photo
+          </button>
+          <input type="file" id="photo-upload-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handlePhotoChange(this)">
+          <p style="color:var(--MUTED); font-size:13px; margin-top:12px;">JPG, PNG ou WebP • Max 5MB • Carré recommandé (400x400px minimum)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- DESCRIPTION -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-header"><span class="card-title">📝 Description</span></div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">Ta description</label>
+          <textarea id="profile-description" class="form-input" rows="5"
+            placeholder="DJ depuis 8 ans, spécialisé dans la house et la techno. J'ai mixé dans plus de 50 clubs en Europe..."></textarea>
+          <div style="text-align:right; color:var(--MUTED); font-size:12px; margin-top:4px;">
+            <span id="desc-count">0</span>/500
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GENRES -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-header"><span class="card-title">🎵 Genres musicaux</span></div>
+      <div class="card-body">
+        <p style="color:var(--MUTED); font-size:13px; margin-bottom:16px;">Sélectionne jusqu'à 5 genres (min. 1)</p>
+        <div style="display:flex; flex-wrap:wrap; gap:10px;" id="genres-selector"></div>
+      </div>
+    </div>
+
+    <!-- MIX SET -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-header"><span class="card-title">🎧 Mix de présentation</span></div>
+      <div class="card-body">
+        <div id="mix-current" style="display:none; background:#0a0a0a; border:1px solid var(--BORDER); border-radius:12px; padding:16px; align-items:center; gap:16px; margin-bottom:16px;">
+          <span style="font-size:28px;">🎧</span>
+          <div style="flex:1;">
+            <div id="mix-name" style="font-weight:700; color:#fff;"></div>
+            <div style="color:var(--MUTED); font-size:12px; margin-top:4px;">Mix actuel</div>
+          </div>
+          <button onclick="removeMix()" style="background:rgba(255,68,68,.15); color:#ff4444; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:700;">✕ Supprimer</button>
+        </div>
+        <div id="mix-upload-zone" style="border:2px dashed var(--BORDER); border-radius:16px; padding:32px; text-align:center; cursor:pointer; transition:all .3s; position:relative;"
+             onclick="document.getElementById('mix-input').click()"
+             onmouseover="this.style.borderColor='var(--Y)'"
+             onmouseout="this.style.borderColor='var(--BORDER)'">
+          <input type="file" id="mix-input" accept=".mp3,audio/mpeg" style="display:none" onchange="handleMixChange(this)">
+          <div style="font-size:36px; margin-bottom:12px;">🎵</div>
+          <div style="font-weight:700; font-size:16px; margin-bottom:8px;">Upload ton mix</div>
+          <div style="color:var(--MUTED); font-size:13px;">MP3 uniquement • 10 à 20 minutes • Max 50MB</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRACKS -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-header">
+        <span class="card-title">🎵 Tracks signature</span>
+        <button class="btn btn-outline" style="padding:6px 16px; font-size:13px;" onclick="document.getElementById('tracks-input').click()">+ Ajouter</button>
+      </div>
+      <div class="card-body">
+        <input type="file" id="tracks-input" accept=".mp3,audio/mpeg" multiple style="display:none" onchange="handleTracksChange(this)">
+        <div id="tracks-list-profile" style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;"></div>
+        <p style="color:var(--MUTED); font-size:13px;">MP3 uniquement • Max 10 tracks • Max 20MB par track</p>
+      </div>
+    </div>
+
+    <!-- RÉSEAUX SOCIAUX -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-header"><span class="card-title">🔗 Réseaux sociaux</span></div>
+      <div class="card-body">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="form-group">
+            <label class="form-label">📸 Instagram</label>
+            <input type="text" id="social-instagram" class="form-input" placeholder="instagram.com/tonpseudo">
+          </div>
+          <div class="form-group">
+            <label class="form-label">🎵 TikTok</label>
+            <input type="text" id="social-tiktok" class="form-input" placeholder="tiktok.com/@tonpseudo">
+          </div>
+          <div class="form-group">
+            <label class="form-label">🎧 SoundCloud</label>
+            <input type="text" id="social-soundcloud" class="form-input" placeholder="soundcloud.com/tonpseudo">
+          </div>
+          <div class="form-group">
+            <label class="form-label">🎶 Spotify</label>
+            <input type="text" id="social-spotify" class="form-input" placeholder="open.spotify.com/artist/...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">▶️ YouTube</label>
+            <input type="text" id="social-youtube" class="form-input" placeholder="youtube.com/@tonpseudo">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PARTAGE -->
     <div class="card">
-      <div class="card-body" id="profile-content"></div>
+      <div class="card-header"><span class="card-title">🔗 Partager mon profil</span></div>
+      <div class="card-body">
+        <p style="color:var(--MUTED); font-size:14px; margin-bottom:16px;">Partage ton profil DJ directement depuis ici</p>
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px;">
+          <button class="btn btn-outline" onclick="shareProfile('whatsapp')">💬 WhatsApp</button>
+          <button class="btn btn-outline" onclick="shareProfile('instagram')">📸 Instagram</button>
+          <button class="btn btn-outline" onclick="shareProfile('messages')">✉️ Messages</button>
+          <button class="btn btn-outline" onclick="shareProfile('copy')">🔗 Copier lien</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -929,27 +1053,224 @@
     document.getElementById('contract-text').textContent = '';
   }
 
+  // VARIABLES PROFIL
+  let profilePhoto = null;
+  let profileMix = null;
+  let profileTracks = [];
+  let selectedGenres = [];
+
+  const ALL_GENRES = ['House', 'Tech House', 'Techno', 'Deep House', 'Minimal',
+    'Afro House', 'Melodic Techno', 'Progressive House', 'Trance', 'Drum & Bass',
+    'Hip-Hop', 'R&B', 'Reggaeton', 'Commercial', 'Open Format', 'Disco', 'Funk'];
+
   function loadProfile() {
-    const p = user.profile || {};
-    document.getElementById('profile-content').innerHTML = `
-      <div style="display:flex; gap:32px; align-items:flex-start;">
-        ${p.photo ? `<img src="${p.photo}" style="width:120px;height:120px;border-radius:50%;border:3px solid var(--Y);object-fit:cover;">` : '<div style="width:120px;height:120px;border-radius:50%;background:#1a1a1a;border:3px solid var(--Y);display:flex;align-items:center;justify-content:center;font-size:48px;">🎧</div>'}
-        <div style="flex:1;">
-          <h2 style="font-family:'Barlow Condensed';font-weight:900;font-size:32px;color:#fff;">${user.firstName || ''} ${user.lastName || ''}</h2>
-          <p style="color:var(--Y);font-weight:700;margin:8px 0;">${(user.genres || []).join(' · ')}</p>
-          <p style="color:var(--MUTED);line-height:1.6;">${p.description || 'Aucune description ajoutée.'}</p>
-          <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
-            ${p.instagram ? `<a href="${p.instagram}" target="_blank" style="color:var(--MUTED);font-size:13px;">📸 Instagram</a>` : ''}
-            ${p.soundcloud ? `<a href="${p.soundcloud}" target="_blank" style="color:var(--MUTED);font-size:13px;">🎵 SoundCloud</a>` : ''}
-            ${p.spotify ? `<a href="${p.spotify}" target="_blank" style="color:var(--MUTED);font-size:13px;">🎶 Spotify</a>` : ''}
-          </div>
-        </div>
+    const profile = user.profile || {};
+    const genres = user.genres || [];
+    selectedGenres = [...genres];
+
+    const photo = user.picture || profile.photo;
+    if (photo) {
+      document.getElementById('profile-avatar-preview').innerHTML =
+        `<img src="${photo}" style="width:120px; height:120px; border-radius:50%; object-fit:cover;">`;
+    }
+
+    const desc = document.getElementById('profile-description');
+    if (desc) {
+      desc.value = user.description || profile.description || '';
+      document.getElementById('desc-count').textContent = desc.value.length;
+      desc.addEventListener('input', () => {
+        document.getElementById('desc-count').textContent = desc.value.length;
+      });
+    }
+
+    renderGenresSelector();
+
+    const mixName = user.mix_url || profile.mix;
+    if (mixName) {
+      document.getElementById('mix-current').style.display = 'flex';
+      document.getElementById('mix-upload-zone').style.display = 'none';
+      document.getElementById('mix-name').textContent = mixName;
+    }
+
+    profileTracks = user.tracks || profile.tracks || [];
+    renderTracksList();
+
+    document.getElementById('social-instagram').value = user.instagram || profile.instagram || '';
+    document.getElementById('social-tiktok').value = user.tiktok || profile.tiktok || '';
+    document.getElementById('social-soundcloud').value = user.soundcloud || profile.soundcloud || '';
+    document.getElementById('social-spotify').value = user.spotify || profile.spotify || '';
+    document.getElementById('social-youtube').value = user.youtube || profile.youtube || '';
+
+    const pubBtn = document.getElementById('view-public-btn');
+    if (pubBtn) pubBtn.href = `dj-profile.html?id=${user.id}`;
+  }
+
+  function renderGenresSelector() {
+    const container = document.getElementById('genres-selector');
+    if (!container) return;
+    container.innerHTML = ALL_GENRES.map(g => `
+      <div onclick="toggleGenre('${g}', this)"
+           style="padding:8px 18px; border-radius:50px; cursor:pointer; font-size:14px; font-weight:600;
+                  border:1px solid ${selectedGenres.includes(g) ? 'var(--Y)' : 'var(--BORDER)'};
+                  background:${selectedGenres.includes(g) ? 'var(--Y)' : 'var(--CARD)'};
+                  color:${selectedGenres.includes(g) ? '#000' : 'var(--MUTED)'};
+                  transition:all .2s;">
+        ${g}
       </div>
-      <div style="margin-top:32px;display:flex;gap:12px;justify-content:flex-end;">
-        <a href="dj-onboarding.html" style="padding:10px 24px;border-radius:10px;border:1px solid var(--BORDER);color:var(--MUTED);text-decoration:none;font-weight:700;font-size:14px;">✏️ Modifier le profil</a>
-        <a href="dj-profile.html?id=${user.id}" target="_blank" style="padding:10px 24px;border-radius:10px;border:1px solid var(--Y);color:var(--Y);text-decoration:none;font-weight:700;font-size:14px;">👁 Voir mon profil public</a>
+    `).join('');
+  }
+
+  function toggleGenre(genre, el) {
+    if (selectedGenres.includes(genre)) {
+      selectedGenres = selectedGenres.filter(g => g !== genre);
+      el.style.background = 'var(--CARD)';
+      el.style.borderColor = 'var(--BORDER)';
+      el.style.color = 'var(--MUTED)';
+    } else {
+      if (selectedGenres.length >= 5) { alert('Maximum 5 genres.'); return; }
+      selectedGenres.push(genre);
+      el.style.background = 'var(--Y)';
+      el.style.borderColor = 'var(--Y)';
+      el.style.color = '#000';
+    }
+  }
+
+  function handlePhotoChange(input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert('La photo ne doit pas dépasser 5MB.'); return; }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      profilePhoto = e.target.result;
+      document.getElementById('profile-avatar-preview').innerHTML =
+        `<img src="${e.target.result}" style="width:120px; height:120px; border-radius:50%; object-fit:cover;">`;
+      document.getElementById('sidebar-avatar').innerHTML =
+        `<img src="${e.target.result}" style="width:64px; height:64px; border-radius:50%; object-fit:cover;">`;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleMixChange(input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 50 * 1024 * 1024) { alert('Le mix ne doit pas dépasser 50MB.'); return; }
+    profileMix = file.name;
+    document.getElementById('mix-current').style.display = 'flex';
+    document.getElementById('mix-upload-zone').style.display = 'none';
+    document.getElementById('mix-name').textContent = file.name;
+  }
+
+  function removeMix() {
+    profileMix = null;
+    document.getElementById('mix-current').style.display = 'none';
+    document.getElementById('mix-upload-zone').style.display = 'block';
+  }
+
+  function handleTracksChange(input) {
+    const files = Array.from(input.files);
+    files.forEach(file => {
+      if (profileTracks.length >= 10) { alert('Maximum 10 tracks.'); return; }
+      if (file.size > 20 * 1024 * 1024) { alert(`${file.name} dépasse 20MB.`); return; }
+      profileTracks.push(file.name);
+      renderTracksList();
+    });
+  }
+
+  function renderTracksList() {
+    const list = document.getElementById('tracks-list-profile');
+    if (!list) return;
+    if (!profileTracks.length) {
+      list.innerHTML = `<p style="color:var(--MUTED); font-size:14px;">Aucune track ajoutée</p>`;
+      return;
+    }
+    list.innerHTML = profileTracks.map((t, i) => `
+      <div style="display:flex; align-items:center; gap:16px; padding:14px 20px;
+                  background:var(--CARD); border:1px solid var(--BORDER); border-radius:12px;">
+        <span style="color:var(--MUTED); font-weight:700; width:24px;">${i+1}</span>
+        <span style="font-size:18px;">🎵</span>
+        <span style="flex:1; font-weight:600; font-size:14px;">${typeof t === 'string' ? t.replace('.mp3','') : t}</span>
+        <button onclick="removeTrack(${i})"
+                style="background:rgba(255,68,68,.15); color:#ff4444; border:none;
+                       padding:6px 12px; border-radius:8px; cursor:pointer; font-weight:700;">✕</button>
       </div>
-    `;
+    `).join('');
+  }
+
+  function removeTrack(index) {
+    profileTracks.splice(index, 1);
+    renderTracksList();
+  }
+
+  async function saveProfile() {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = 'Sauvegarde...';
+
+    const description = document.getElementById('profile-description').value;
+
+    if (!selectedGenres.length) {
+      alert('Sélectionne au moins 1 genre.');
+      btn.disabled = false;
+      btn.textContent = '💾 Sauvegarder';
+      return;
+    }
+
+    const profileData = {
+      description,
+      genres: selectedGenres,
+      instagram: document.getElementById('social-instagram').value,
+      tiktok: document.getElementById('social-tiktok').value,
+      soundcloud: document.getElementById('social-soundcloud').value,
+      spotify: document.getElementById('social-spotify').value,
+      youtube: document.getElementById('social-youtube').value,
+      mixUrl: profileMix || user.mix_url || user.profile?.mix,
+      tracks: profileTracks,
+      photo: profilePhoto || user.picture || user.profile?.photo
+    };
+
+    try {
+      const token = localStorage.getItem('cue_token');
+      if (token) {
+        const res = await fetch('/.netlify/functions/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'update_profile', token, ...profileData })
+        });
+        const data = await res.json();
+        if (res.ok) Object.assign(user, data.user);
+      }
+
+      user.description = profileData.description;
+      user.genres = profileData.genres;
+      user.instagram = profileData.instagram;
+      user.tiktok = profileData.tiktok;
+      user.soundcloud = profileData.soundcloud;
+      user.spotify = profileData.spotify;
+      user.youtube = profileData.youtube;
+      user.profile = { ...user.profile, ...profileData };
+      localStorage.setItem('cue_user', JSON.stringify(user));
+
+      btn.textContent = '✅ Sauvegardé !';
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = '💾 Sauvegarder';
+      }, 2000);
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = '💾 Sauvegarder';
+      alert('Erreur. Réessaie.');
+    }
+  }
+
+  function shareProfile(platform) {
+    const profileUrl = `https://cuedj.eu/dj-profile.html?id=${user.id}`;
+    const text = `🎧 Découvre mon profil DJ sur CUE\n${profileUrl}`;
+    switch(platform) {
+      case 'whatsapp': window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank'); break;
+      case 'instagram': navigator.clipboard.writeText(profileUrl); alert('Lien copié ! Colle-le dans ta bio Instagram.'); break;
+      case 'messages': window.open(`sms:?body=${encodeURIComponent(text)}`, '_blank'); break;
+      case 'copy': navigator.clipboard.writeText(profileUrl); alert('✅ Lien copié !'); break;
+    }
   }
 
   async function loadConversations() {
