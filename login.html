@@ -152,14 +152,18 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
 document.addEventListener('DOMContentLoaded', () => {
   if (localStorage.getItem('cue_logged_in') === 'true') {
     const redirect = new URLSearchParams(window.location.search).get('redirect');
-    window.location.href = redirect || 'dashboard.html';
+    if (redirect) { window.location.href = redirect; return; }
+    smartRedirect();
   }
 });
 
-// Get redirect URL from params
-function getRedirectUrl() {
-  const redirect = new URLSearchParams(window.location.search).get('redirect');
-  return redirect || 'dashboard.html';
+function smartRedirect() {
+  const u = JSON.parse(localStorage.getItem('cue_user') || '{}');
+  if (u.user_type === 'dj' || u.userType === 'dj') {
+    window.location.href = (u.profile_complete || u.profileComplete) ? 'dashboard-dj.html' : 'dj-onboarding.html';
+  } else {
+    window.location.href = 'dashboard-venue.html';
+  }
 }
 
 function togglePassword() {

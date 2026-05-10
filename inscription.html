@@ -209,7 +209,7 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
     </div>
     
     <div id="stepSuccess" class="register-box" style="display:none">
-      <div class="success-box"><div class="success-icon">🎉</div><div class="success-title">Bienvenue sur CUE !</div><div class="success-desc">Ton compte a été créé avec succès.</div><button class="btn-primary" onclick="window.location.href='dashboard.html'">Accéder au Dashboard →</button></div>
+      <div class="success-box"><div class="success-icon">🎉</div><div class="success-title">Bienvenue sur CUE !</div><div class="success-desc">Ton compte a été créé avec succès.</div><button class="btn-primary" onclick="smartRedirect()">Accéder au Dashboard →</button></div>
     </div>
     
   </div>
@@ -245,7 +245,7 @@ async function handleGoogleSignIn(response) {
     const parsed = JSON.parse(existingUser);
     if (parsed.googleId === payload.sub) {
       localStorage.setItem('cue_logged_in', 'true');
-      window.location.href = 'dashboard.html';
+      smartRedirect();
       return;
     }
   }
@@ -296,7 +296,16 @@ async function submitGoogleStep2() {
   sessionStorage.removeItem('verif_code');
   sessionStorage.removeItem('verif_code_expiry');
   await fetch('/.netlify/functions/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'welcome', email: googleUser.email, firstName: googleUser.firstName }) });
-  window.location.href = 'dashboard.html';
+  smartRedirect();
+}
+
+function smartRedirect() {
+  const u = JSON.parse(localStorage.getItem('cue_user') || '{}');
+  if (u.user_type === 'dj' || u.userType === 'dj') {
+    window.location.href = (u.profile_complete || u.profileComplete) ? 'dashboard-dj.html' : 'dj-onboarding.html';
+  } else {
+    window.location.href = 'dashboard-venue.html';
+  }
 }
 
 async function resendGoogleCode() {
