@@ -362,8 +362,8 @@ async function verifyEmailCode() {
   if (!verifyCode(code)) { document.getElementById('emailCodeError').classList.add('show'); return; }
   document.getElementById('verifyEmailBtn').disabled = true;
   document.getElementById('verifyEmailSpinner').classList.add('on');
-  const user = { id: Date.now(), ...formData, referralCodeOwn: 'REF' + formData.firstName.substring(0,2).toUpperCase() + Date.now().toString().slice(-4), verified: true, createdAt: new Date().toISOString() };
-  await completeRegistration(user);
+  sessionStorage.setItem('reg_user', JSON.stringify({ ...formData, createdAt: new Date().toISOString() }));
+  await completeRegistration();
 }
 
 async function resendCode(type) {
@@ -394,14 +394,34 @@ function verifyCode(inputCode) {
   return true;
 }
 
-async function completeRegistration(user) {
+async function completeRegistration() {
+  const user = JSON.parse(sessionStorage.getItem('reg_user'));
+
+  user.id = Date.now().toString();
+  user.verified = true;
+  user.identityStatus = 'pending';
+  user.referralCodeOwn = 'REF' +
+    user.firstName.charAt(0).toUpperCase() +
+    user.lastName.charAt(0).toUpperCase() +
+    Math.floor(1000 + Math.random() * 9000);
+
   localStorage.setItem('cue_user', JSON.stringify(user));
   localStorage.setItem('cue_logged_in', 'true');
-  await fetch('/.netlify/functions/send-email', {
+
+  console.log('Envoi email bienvenue à:', user.email);
+
+  const res = await fetch('/.netlify/functions/send-email', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ type: 'welcome', email: user.email, firstName: user.firstName })
+    body: JSON.stringify({
+      type: 'welcome',
+      email: user.email,
+      firstName: user.firstName
+    })
   });
+
+  console.log('Réponse send-email:', await res.json());
+
   window.location.href = 'dashboard.html';
 }
 </script>
