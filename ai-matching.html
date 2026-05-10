@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Matching — CUE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--Y:#FFC300;--Y2:#FFD740;--BG:#080808;--CARD:#111;--BORDER:rgba(255,195,0,.13);--TEXT:#ddd;--MUTED:#bbb;--D:'Barlow Condensed',sans-serif;--B:'Barlow',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+body{background:var(--BG);color:var(--TEXT);font-family:var(--B);overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#222;border-radius:2px}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:14px 52px;border-bottom:1px solid transparent;transition:all .3s}
+nav.s{border-color:var(--BORDER);background:rgba(8,8,8,.97);backdrop-filter:blur(18px)}
+.logo-svg{width:38px;height:38px;flex-shrink:0}
+.nav-links{display:flex;gap:32px;list-style:none}
+.nav-links a{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:#fff}
+.nav-links a.active{color:#fff;border-bottom:2px solid var(--Y);padding-bottom:2px}
+.nav-cta{display:flex;gap:10px;align-items:center}
+.bg{padding:8px 20px;border:1px solid var(--BORDER);background:transparent;color:var(--MUTED);font-family:var(--B);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.bg:hover{border-color:var(--Y);color:var(--Y)}
+.bp{padding:8px 20px;border:none;background:var(--Y);color:#000;font-family:var(--D);font-size:14px;font-weight:900;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.bp:hover{background:var(--Y2)}
+.bh{padding:14px 32px;font-family:var(--D);font-size:18px;font-weight:900;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.bh.y{background:var(--Y);border:none;color:#000}.bh.y:hover{background:var(--Y2)}
+section{padding:100px 52px}
+.stag{font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--Y);margin-bottom:14px}
+.stitle{font-family:var(--D);font-size:clamp(36px,6vw,72px);font-weight:900;text-transform:uppercase;color:#fff;line-height:.95;letter-spacing:-1px;margin-bottom:20px}
+.ssub{font-size:15px;color:var(--MUTED);max-width:520px;line-height:1.7;font-weight:300}
+footer{border-top:1px solid var(--BORDER);padding:60px 52px 30px;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:40px}
+.fbrand p{font-size:12px;color:#ccc;line-height:1.7;max-width:220px;margin-top:12px}
+.fcol h5{font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--MUTED);margin-bottom:12px}
+.fcol ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+.fcol ul a{font-size:12px;color:#ccc;text-decoration:none;transition:color .2s}
+.fcol ul a:hover{color:var(--Y)}
+.fbot{border-top:1px solid var(--BORDER);padding:18px 52px;display:flex;justify-content:space-between;align-items:center}
+.fbot span{font-size:10px;color:#ccc}
+.chat-fab{position:fixed;bottom:28px;right:28px;z-index:400;width:54px;height:54px;background:var(--Y);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 8px 32px rgba(255,195,0,.3);transition:all .2s}
+.chat-fab:hover{background:var(--Y2);transform:scale(1.07)}
+.cwin{position:fixed;bottom:96px;right:28px;z-index:400;width:360px;background:var(--CARD);border:1px solid var(--BORDER);display:flex;flex-direction:column;height:480px;box-shadow:0 24px 80px rgba(0,0,0,.7);transform:scale(.92) translateY(20px);opacity:0;pointer-events:none;transition:all .25s;transform-origin:bottom right}
+.cwin.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
+.chin{background:#0a0a0a;padding:12px 14px;border-bottom:1px solid var(--BORDER);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.chin-info h4{font-family:var(--D);font-size:13px;font-weight:900;text-transform:uppercase;color:#fff;letter-spacing:.5px}
+.chin-info p{font-size:9px;color:var(--Y);letter-spacing:1.5px;text-transform:uppercase}
+.cclose{margin-left:auto;background:none;border:none;color:var(--MUTED);cursor:pointer;font-size:16px}
+.cclose:hover{color:#fff}
+.cmsgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px}
+.cmsg{max-width:82%;padding:8px 11px;font-size:12px;line-height:1.6;white-space:pre-line}
+.cmsg.user{background:var(--Y);color:#000;font-weight:600;align-self:flex-end}
+.cmsg.bot{background:#1a1a1a;color:var(--TEXT);border:1px solid rgba(255,255,255,.05);align-self:flex-start}
+.cmsg.typing{background:#1a1a1a;border:1px solid rgba(255,255,255,.05);align-self:flex-start;display:flex;gap:4px;align-items:center;padding:10px 12px}
+.dot{width:5px;height:5px;border-radius:50%;background:#444;animation:bounce 1.2s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+.cinrow{padding:9px;border-top:1px solid var(--BORDER);display:flex;gap:6px;background:#0a0a0a;flex-shrink:0}
+.cinput{flex:1;background:#000;border:1px solid var(--BORDER);padding:8px 10px;color:var(--TEXT);font-family:var(--B);font-size:12px;outline:none}
+.cinput:focus{border-color:var(--Y)}
+.csend{width:33px;height:33px;background:var(--Y);border:none;cursor:pointer;font-size:13px;transition:all .2s;flex-shrink:0;color:#000;font-weight:700;display:flex;align-items:center;justify-content:center}
+.csend:hover{background:var(--Y2)}.csend:disabled{opacity:.4;cursor:not-allowed}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
+@media(max-width:900px){nav{padding:12px 18px}.nav-links{display:none}section{padding:60px 18px}footer{grid-template-columns:1fr 1fr;padding:32px 18px}.fbot{padding:14px 18px;flex-direction:column;gap:8px;text-align:center}.cwin{right:8px;left:8px;width:auto;bottom:80px}.chat-fab{bottom:16px;right:16px;width:48px;height:48px}}
+@media(max-width:480px){footer{grid-template-columns:1fr;gap:24px}.fcol{display:none}}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <a href="index.html" style="display:flex;align-items:center">
+    <svg class="logo-svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="16" fill="#FFC300"/><circle cx="50" cy="50" r="34" fill="none" stroke="#111" stroke-width="6"/><text x="50" y="59" text-anchor="middle" font-family="Arial Rounded MT Bold,Arial" font-size="24" font-weight="900" fill="#111">cue</text></svg>
+  </a>
+  <ul class="nav-links">
+    <li><a href="features.html">Features</a></li>
+    <li><a href="ai-matching.html" class="active">AI Matching</a></li>
+    <li><a href="contracts.html">Contracts</a></li>
+    <li><a href="pricing.html">Pricing</a></li>
+  </ul>
+  <div class="nav-cta">
+    <button class="bg" onclick="window.location.href='login.html'">Connexion</button>
+    <button class="bp" onclick="window.location.href='inscription.html'">S'inscrire</button>
+  </div>
+</nav>
+
+<section style="padding-top:140px;background:#0a0a0a">
+  <p class="stag">Artificial Intelligence</p>
+  <h2 class="stitle">FIND THE<br/><span style="color:var(--Y)">PERFECT</span> DJ.</h2>
+  <p class="ssub">Describe your event and let our AI select the best profiles for you.</p>
+  <div style="margin-top:52px;text-align:center">
+    <div style="background:var(--CARD);border:1px solid var(--BORDER);padding:60px 40px;max-width:600px;margin:0 auto">
+      <div style="font-size:64px;margin-bottom:20px">🎯</div>
+      <h3 style="font-family:var(--D);font-size:28px;font-weight:900;text-transform:uppercase;color:#fff;margin-bottom:12px">AI MATCHING</h3>
+      <p style="font-size:14px;color:var(--MUTED);line-height:1.7;margin-bottom:28px;max-width:400px;margin-left:auto;margin-right:auto">Our algorithm analyzes vibe, budget and style to find the perfect DJ for your event. Create a free account to access this feature.</p>
+      <button class="bh y" onclick="window.location.href='inscription.html'" style="margin:0 auto">🚀 CREATE FREE ACCOUNT</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="fbrand">
+    <svg width="42" height="42" viewBox="0 0 100 100"><rect width="100" height="100" rx="16" fill="#FFC300"/><circle cx="50" cy="50" r="34" fill="none" stroke="#111" stroke-width="6"/><text x="50" y="59" text-anchor="middle" font-family="Arial Rounded MT Bold,Arial" font-size="24" font-weight="900" fill="#111">cue</text></svg>
+    <p>The platform connecting talented DJs with the venues that need them.</p>
+  </div>
+  <div class="fcol"><h5>Platform</h5><ul><li><a href="features.html">Features</a></li><li><a href="ai-matching.html">AI Matching</a></li><li><a href="contracts.html">Contracts</a></li><li><a href="pricing.html">Pricing</a></li></ul></div>
+  <div class="fcol"><h5>Company</h5><ul><li><a href="#">About</a></li><li><a href="#">Blog</a></li><li><a href="#">Press</a></li><li><a href="#">Contact</a></li></ul></div>
+  <div class="fcol"><h5>Contact</h5><ul><li><a href="mailto:contact@cuedj.eu">contact@cuedj.eu</a></li><li><a href="tel:+33767011532">+33 7 67 01 15 32</a></li><li><a href="#">@cuedjapp</a></li></ul></div>
+</footer>
+<div class="fbot"><span>© 2025 CUE. All rights reserved.</span></div>
+
+<button class="chat-fab" onclick="toggleChat()">💬</button>
+<div class="cwin" id="cwin">
+  <div class="chin">
+    <svg width="28" height="28" viewBox="0 0 100 100"><rect width="100" height="100" rx="16" fill="#FFC300"/><circle cx="50" cy="50" r="34" fill="none" stroke="#111" stroke-width="6"/><text x="50" y="59" text-anchor="middle" font-family="Arial Rounded MT Bold,Arial" font-size="24" font-weight="900" fill="#111">cue</text></svg>
+    <div class="chin-info"><h4>CUE Support</h4><p>AI Assistant · Built-in FAQ ●</p></div>
+    <button class="cclose" onclick="toggleChat()">✕</button>
+  </div>
+  <div class="cmsgs" id="cmsgs">
+    <div class="cmsg bot">Hello! 👋 I'm MAX, the CUE assistant. How can I help you?</div>
+  </div>
+  <div class="cinrow">
+    <input class="cinput" id="cinput" placeholder="Your question..." onkeydown="if(event.key==='Enter')sendChat()"/>
+    <button class="csend" id="csend" onclick="sendChat()">↑</button>
+  </div>
+</div>
+
+<script>
+const isLogged = localStorage.getItem('cue_logged_in') === 'true';
+if (!isLogged) {
+  window.location.href = 'login.html?redirect=' + window.location.pathname;
+}
+const API_BASE = '/.netlify/functions';
+let chatOpen = false;
+function toggleChat(){chatOpen=!chatOpen;document.getElementById('cwin').classList.toggle('open',chatOpen);if(chatOpen)document.getElementById('cinput').focus();}
+function addCMsg(t,r){const e=document.createElement('div');e.className='cmsg '+r;if(r==='bot')e.style.whiteSpace='pre-line';e.textContent=t;const m=document.getElementById('cmsgs');m.appendChild(e);m.scrollTop=m.scrollHeight;}
+function addTyping(){const e=document.createElement('div');e.className='cmsg typing';e.id='ctyp';e.innerHTML='<div class="dot"></div><div class="dot"></div><div class="dot"></div>';const m=document.getElementById('cmsgs');m.appendChild(e);m.scrollTop=m.scrollHeight;}
+function rmTyping(){document.getElementById('ctyp')?.remove();}
+async function sendChat(){const i=document.getElementById('cinput');const msg=i.value.trim();if(!msg)return;i.value='';document.getElementById('csend').disabled=true;addCMsg(msg,'user');addTyping();try{const res=await fetch(`${API_BASE}/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})});const d=await res.json();rmTyping();addCMsg(d.reply||'Désolé, une erreur est survenue.','bot');}catch(e){rmTyping();addCMsg(`❌ ${e.message}`,'bot');}document.getElementById('csend').disabled=false;document.getElementById('cinput').focus();}
+window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('s',scrollY>50));
+</script>
+</body>
+</html>
