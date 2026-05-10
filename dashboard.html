@@ -183,6 +183,20 @@ body{background:var(--BG);color:var(--TEXT);font-family:var(--B);min-height:100v
 .btn-danger{padding:10px 20px;background:transparent;border:1px solid var(--ERROR);color:var(--ERROR);font-family:var(--D);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s}
 .btn-danger:hover{background:var(--ERROR);color:#fff}
 
+/* ─── IDENTITY VERIFICATION ─── */
+.identity-box{background:var(--CARD);border:1px solid var(--BORDER);padding:32px;max-width:560px}
+.identity-box h3{font-family:var(--D);font-size:22px;font-weight:900;text-transform:uppercase;color:#fff;margin-bottom:10px}
+.identity-box p{font-size:13px;color:var(--MUTED);line-height:1.7;margin-bottom:24px}
+.upload-block{background:#0a0a0a;border:1px dashed rgba(255,195,0,.25);padding:20px;margin-bottom:16px;transition:border-color .2s}
+.upload-block:hover{border-color:var(--Y)}
+.upload-block label{display:block;font-size:12px;font-weight:600;color:#fff;margin-bottom:10px}
+.upload-block input[type=file]{width:100%;font-size:12px;color:var(--MUTED);font-family:var(--B)}
+.upload-block input[type=file]::file-selector-button{background:rgba(255,195,0,.1);border:1px solid rgba(255,195,0,.3);color:var(--Y);font-family:var(--D);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:6px 14px;cursor:pointer;margin-right:12px;transition:all .2s}
+.upload-block input[type=file]::file-selector-button:hover{background:var(--Y);color:#000}
+.btn-submit-id{width:100%;padding:14px;background:var(--Y);border:none;color:#000;font-family:var(--D);font-size:18px;font-weight:900;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;margin-top:8px}
+.btn-submit-id:hover{background:var(--Y2)}
+.identity-status{padding:24px;text-align:center;font-size:14px;color:var(--MUTED);line-height:1.7}
+
 /* ─── RESPONSIVE ─── */
 @media(max-width:1100px){
   .stats-grid{grid-template-columns:repeat(2,1fr)}
@@ -262,6 +276,10 @@ body{background:var(--BG);color:var(--TEXT);font-family:var(--B);min-height:100v
       
       <div class="nav-section">
         <div class="nav-section-title">Compte</div>
+        <a class="nav-item" onclick="showPage('identity')">
+          <span class="icon">🪪</span>
+          <span class="label">Vérification ID</span>
+        </a>
         <a class="nav-item" onclick="showPage('settings')">
           <span class="icon">⚙️</span>
           <span class="label">Paramètres</span>
@@ -563,6 +581,59 @@ body{background:var(--BG);color:var(--TEXT);font-family:var(--B);min-height:100v
       </div>
     </div>
     
+    <!-- IDENTITY VERIFICATION PAGE -->
+    <div class="page-view" id="page-identity">
+      <div class="page-header">
+        <h1 class="page-title">🪪 Vérification <span>d'identité</span></h1>
+        <p class="page-subtitle">Valide ton compte en envoyant une pièce d'identité</p>
+      </div>
+
+      <div id="identity-section">
+
+        <!-- Si pas encore vérifié -->
+        <div id="not-verified" class="identity-box">
+          <h3>Vérification d'identité</h3>
+          <p>Envoie une photo de ton visage et de ton passeport/carte d'identité pour valider ton compte.</p>
+
+          <form name="identity-verification"
+                method="POST"
+                data-netlify="true"
+                enctype="multipart/form-data"
+                onsubmit="handleVerifSubmit(event)">
+
+            <input type="hidden" name="form-name" value="identity-verification">
+            <input type="hidden" name="user-email" id="user-email-field">
+            <input type="hidden" name="user-name" id="user-name-field">
+
+            <div class="upload-block">
+              <label>📸 Photo de ton visage (selfie)</label>
+              <input type="file" name="selfie" accept="image/*" capture="user" required>
+            </div>
+
+            <div class="upload-block">
+              <label>🪪 Photo de ton passeport ou carte d'identité</label>
+              <input type="file" name="document" accept="image/*" required>
+            </div>
+
+            <button type="submit" class="btn-submit-id">
+              Envoyer pour vérification
+            </button>
+          </form>
+        </div>
+
+        <!-- Si en attente de validation -->
+        <div id="pending-verified" class="identity-box" style="display:none">
+          <div class="identity-status">⏳ <strong>Vérification en cours</strong> — tu recevras une réponse sous 24h.</div>
+        </div>
+
+        <!-- Si validé -->
+        <div id="is-verified" class="identity-box" style="display:none">
+          <div class="identity-status">✅ <strong>Identité vérifiée</strong> — ton compte est validé.</div>
+        </div>
+
+      </div>
+    </div>
+
     <!-- SETTINGS PAGE -->
     <div class="page-view" id="page-settings">
       <div class="page-header">
@@ -844,6 +915,38 @@ function logout() {
   localStorage.removeItem('cue_logged_in');
   window.location.href = 'index.html';
 }
+
+// ═══════════════════════════════════════════════════════
+// IDENTITY VERIFICATION
+// ═══════════════════════════════════════════════════════
+
+function initIdentitySection() {
+  const user = JSON.parse(localStorage.getItem('cue_user') || '{}');
+  const emailField = document.getElementById('user-email-field');
+  const nameField = document.getElementById('user-name-field');
+  if (emailField) emailField.value = user.email || '';
+  if (nameField) nameField.value = ((user.firstName || '') + ' ' + (user.lastName || '')).trim();
+
+  if (user.identityStatus === 'verified') {
+    document.getElementById('not-verified').style.display = 'none';
+    document.getElementById('is-verified').style.display = 'block';
+  } else if (user.identityStatus === 'pending') {
+    document.getElementById('not-verified').style.display = 'none';
+    document.getElementById('pending-verified').style.display = 'block';
+  }
+}
+
+function handleVerifSubmit(e) {
+  const user = JSON.parse(localStorage.getItem('cue_user') || '{}');
+  user.identityStatus = 'pending';
+  localStorage.setItem('cue_user', JSON.stringify(user));
+  setTimeout(() => {
+    document.getElementById('not-verified').style.display = 'none';
+    document.getElementById('pending-verified').style.display = 'block';
+  }, 1000);
+}
+
+document.addEventListener('DOMContentLoaded', initIdentitySection);
 
 // ═══════════════════════════════════════════════════════
 // AI MATCHING & CONTRACTS FUNCTIONS
