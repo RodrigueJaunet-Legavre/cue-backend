@@ -1,12 +1,18 @@
 const { Resend } = require('resend');
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 exports.handler = async (event) => {
   const { type, email, firstName, code } = JSON.parse(event.body);
 
+  console.log('Type email demandé:', type);
+  console.log('Destinataire:', email);
+  console.log('RESEND_API_KEY présent:', !!process.env.RESEND_API_KEY);
+
   try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    let result;
+
     if (type === 'verification') {
-      await resend.emails.send({
+      result = await resend.emails.send({
         from: 'CUE DJ <noreply@cuedj.eu>',
         to: email,
         subject: 'Ton code de vérification CUE',
@@ -25,10 +31,11 @@ exports.handler = async (event) => {
           </div>
         `
       });
+      console.log('Email vérification envoyé:', result);
     }
 
     if (type === 'welcome') {
-      await resend.emails.send({
+      result = await resend.emails.send({
         from: 'CUE DJ <noreply@cuedj.eu>',
         to: email,
         subject: `Bienvenue sur CUE, ${firstName} 🎧`,
@@ -53,6 +60,11 @@ exports.handler = async (event) => {
           </div>
         `
       });
+      console.log('Email bienvenue envoyé:', result);
+    }
+
+    if (!result) {
+      console.log('ATTENTION: type inconnu reçu:', type);
     }
 
     return {
@@ -60,6 +72,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({ success: true })
     };
   } catch (err) {
+    console.log('ERREUR:', err.message);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: err.message })
