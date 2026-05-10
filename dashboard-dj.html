@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CUE — Dashboard DJ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --Y:#FFC300; --Y2:#FFD740; --BG:#080808; --CARD:#111;
+      --BORDER:rgba(255,195,0,.13); --TEXT:#ddd; --MUTED:#bbb;
+      --SUCCESS:#00c864; --ERROR:#ff4444; --PENDING:#ffaa00;
+    }
+    body { background:var(--BG); color:var(--TEXT); font-family:Barlow,sans-serif; display:flex; min-height:100vh; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width:260px; background:#0a0a0a; border-right:1px solid var(--BORDER);
+      padding:0; display:flex; flex-direction:column; position:fixed;
+      height:100vh; overflow-y:auto; z-index:50;
+    }
+    .sidebar-profile {
+      padding:32px 24px; border-bottom:1px solid var(--BORDER);
+      background:linear-gradient(135deg, #111 0%, #0a0a0a 100%);
+    }
+    .profile-avatar {
+      width:64px; height:64px; border-radius:50%; border:2px solid var(--Y);
+      margin-bottom:12px; object-fit:cover; background:var(--CARD);
+      display:flex; align-items:center; justify-content:center; font-size:24px;
+    }
+    .profile-name { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; color:#fff; }
+    .profile-type { color:var(--Y); font-size:12px; font-weight:700; letter-spacing:2px; margin:4px 0 8px; }
+    .profile-stars { color:var(--Y); font-size:14px; }
+    .profile-plan { display:inline-block; background:rgba(255,195,0,.1); color:var(--Y); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; margin-top:8px; }
+
+    .nav-section { padding:16px 0; }
+    .nav-section-title { padding:8px 24px; color:var(--MUTED); font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; }
+    .nav-item {
+      padding:12px 24px; cursor:pointer; display:flex; align-items:center;
+      gap:12px; color:var(--MUTED); transition:all .2s; font-weight:600; font-size:14px;
+      position:relative;
+    }
+    .nav-item:hover { color:var(--Y); background:rgba(255,195,0,.04); }
+    .nav-item.active { color:var(--Y); background:rgba(255,195,0,.08); }
+    .nav-item.active::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--Y); border-radius:0 2px 2px 0; }
+    .nav-icon { font-size:18px; width:22px; text-align:center; }
+    .nav-badge { margin-left:auto; background:var(--ERROR); color:#fff; border-radius:20px; padding:2px 8px; font-size:10px; font-weight:700; }
+    .nav-badge.yellow { background:var(--Y); color:#000; }
+
+    .sidebar-footer { padding:24px; border-top:1px solid var(--BORDER); margin-top:auto; }
+    .btn-logout { width:100%; padding:12px; border:1px solid var(--BORDER); border-radius:10px; background:transparent; color:var(--MUTED); cursor:pointer; font-weight:600; font-size:14px; transition:all .2s; }
+    .btn-logout:hover { border-color:#ff4444; color:#ff4444; }
+
+    /* MAIN */
+    .main { margin-left:260px; flex:1; padding:40px; min-height:100vh; }
+    .page { display:none; animation:fadeIn .3s ease; }
+    .page.active { display:block; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+    /* PAGE HEADER */
+    .page-header { margin-bottom:32px; }
+    .page-title { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:40px; color:#fff; }
+    .page-sub { color:var(--MUTED); font-size:15px; margin-top:4px; }
+
+    /* STATS GRID */
+    .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px; }
+    .stat-card {
+      background:var(--CARD); border:1px solid var(--BORDER); border-radius:16px;
+      padding:24px; position:relative; overflow:hidden; transition:transform .2s;
+    }
+    .stat-card:hover { transform:translateY(-2px); }
+    .stat-card::after {
+      content:''; position:absolute; top:0; right:0; width:80px; height:80px;
+      background:radial-gradient(circle, rgba(255,195,0,.06) 0%, transparent 70%);
+    }
+    .stat-label { color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; }
+    .stat-value { font-size:40px; font-weight:900; color:#fff; margin:8px 0 4px; font-family:'Barlow Condensed',sans-serif; }
+    .stat-sub { color:var(--MUTED); font-size:13px; }
+    .stat-trend { font-size:12px; font-weight:700; margin-top:4px; }
+    .stat-trend.up { color:var(--SUCCESS); }
+    .stat-trend.down { color:var(--ERROR); }
+
+    /* CARDS */
+    .card { background:var(--CARD); border:1px solid var(--BORDER); border-radius:16px; overflow:hidden; margin-bottom:24px; }
+    .card-header { padding:20px 24px; border-bottom:1px solid var(--BORDER); display:flex; justify-content:space-between; align-items:center; }
+    .card-title { font-weight:700; font-size:16px; }
+    .card-body { padding:24px; }
+
+    /* TABS */
+    .tabs { display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+    .tab { padding:8px 20px; border-radius:50px; cursor:pointer; font-weight:700; font-size:13px; background:var(--CARD); color:var(--MUTED); border:1px solid var(--BORDER); transition:all .2s; }
+    .tab:hover { border-color:var(--Y); color:var(--Y); }
+    .tab.active { background:var(--Y); color:#000; border-color:var(--Y); }
+
+    /* GIGS */
+    .gig-item {
+      display:flex; align-items:center; gap:20px; padding:20px 24px;
+      border-bottom:1px solid rgba(255,195,0,.06); transition:background .2s;
+    }
+    .gig-item:hover { background:rgba(255,195,0,.03); }
+    .gig-item:last-child { border-bottom:none; }
+    .gig-date { text-align:center; min-width:50px; }
+    .gig-date-day { font-size:28px; font-weight:900; color:#fff; font-family:'Barlow Condensed',sans-serif; line-height:1; }
+    .gig-date-month { font-size:11px; color:var(--Y); font-weight:700; text-transform:uppercase; }
+    .gig-divider { width:1px; height:50px; background:var(--BORDER); }
+    .gig-info { flex:1; }
+    .gig-venue { font-weight:700; font-size:15px; color:#fff; }
+    .gig-location { color:var(--MUTED); font-size:13px; margin-top:2px; }
+    .gig-time { color:var(--MUTED); font-size:13px; margin-top:2px; }
+    .gig-amount { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:24px; color:var(--Y); }
+    .gig-status { padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700; }
+    .status-confirmed { background:rgba(0,200,100,.15); color:var(--SUCCESS); }
+    .status-pending { background:rgba(255,170,0,.15); color:var(--PENDING); }
+    .status-canceled { background:rgba(255,68,68,.15); color:var(--ERROR); }
+    .status-past { background:rgba(255,255,255,.08); color:var(--MUTED); }
+    .status-external { background:rgba(255,195,0,.15); color:var(--Y); }
+
+    /* MESSAGES */
+    .message-item {
+      display:flex; gap:16px; padding:20px 24px;
+      border-bottom:1px solid rgba(255,195,0,.06); cursor:pointer; transition:background .2s;
+    }
+    .message-item:hover { background:rgba(255,195,0,.03); }
+    .message-item.unread { background:rgba(255,195,0,.04); }
+    .message-avatar { width:48px; height:48px; border-radius:50%; background:#1a1a1a; border:1px solid var(--BORDER); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+    .message-content { flex:1; }
+    .message-sender { font-weight:700; font-size:14px; color:#fff; }
+    .message-preview { color:var(--MUTED); font-size:13px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:400px; }
+    .message-time { color:var(--MUTED); font-size:12px; text-align:right; flex-shrink:0; }
+    .message-unread-dot { width:8px; height:8px; border-radius:50%; background:var(--Y); margin-top:6px; margin-left:auto; }
+
+    /* REVIEWS */
+    .review-item { padding:20px 24px; border-bottom:1px solid rgba(255,195,0,.06); }
+    .review-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+    .review-venue { font-weight:700; font-size:14px; }
+    .review-date { color:var(--MUTED); font-size:12px; }
+    .review-stars { color:var(--Y); font-size:16px; margin-bottom:8px; }
+    .review-text { color:var(--MUTED); font-size:14px; line-height:1.6; }
+
+    /* CALENDAR */
+    .calendar { background:var(--CARD); border:1px solid var(--BORDER); border-radius:16px; overflow:hidden; }
+    .calendar-header { padding:20px 24px; border-bottom:1px solid var(--BORDER); display:flex; justify-content:space-between; align-items:center; }
+    .calendar-nav { background:transparent; border:1px solid var(--BORDER); color:var(--TEXT); padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:700; transition:all .2s; }
+    .calendar-nav:hover { border-color:var(--Y); color:var(--Y); }
+    .calendar-month { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:24px; color:#fff; }
+    .calendar-grid { display:grid; grid-template-columns:repeat(7,1fr); }
+    .calendar-day-label { padding:12px; text-align:center; color:var(--MUTED); font-size:12px; font-weight:700; border-bottom:1px solid var(--BORDER); }
+    .calendar-day { padding:10px 6px; text-align:center; min-height:60px; border-right:1px solid rgba(255,195,0,.06); border-bottom:1px solid rgba(255,195,0,.06); cursor:pointer; transition:background .2s; position:relative; }
+    .calendar-day:hover { background:rgba(255,195,0,.04); }
+    .calendar-day.today { background:rgba(255,195,0,.08); }
+    .calendar-day.today .day-num { color:var(--Y); font-weight:900; }
+    .calendar-day.other-month .day-num { color:#333; }
+    .day-num { font-size:14px; font-weight:600; margin-bottom:4px; }
+    .day-event { background:var(--Y); color:#000; border-radius:4px; font-size:9px; font-weight:700; padding:2px 4px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+    /* BUTTONS */
+    .btn { padding:10px 24px; border-radius:10px; border:none; cursor:pointer; font-weight:700; font-size:14px; font-family:Barlow,sans-serif; transition:all .2s; }
+    .btn-primary { background:var(--Y); color:#000; }
+    .btn-primary:hover { background:var(--Y2); transform:translateY(-1px); }
+    .btn-outline { background:transparent; color:var(--Y); border:1px solid var(--Y); }
+    .btn-outline:hover { background:rgba(255,195,0,.1); }
+
+    /* MODAL */
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:200; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+    .modal.open { display:flex; animation:fadeIn .2s ease; }
+    .modal-card { background:#111; border:1px solid var(--BORDER); border-radius:20px; padding:40px; width:560px; max-height:85vh; overflow-y:auto; }
+    .modal-title { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:32px; color:#fff; margin-bottom:24px; }
+    .form-group { margin-bottom:20px; }
+    .form-label { display:block; color:var(--MUTED); font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+    .form-input { width:100%; background:#1a1a1a; border:1px solid var(--BORDER); color:var(--TEXT); padding:14px 16px; border-radius:10px; font-size:15px; font-family:Barlow,sans-serif; transition:border-color .2s; }
+    .form-input:focus { outline:none; border-color:var(--Y); }
+    select.form-input { cursor:pointer; }
+    .modal-actions { display:flex; gap:12px; margin-top:24px; }
+
+    /* RATING */
+    .rating-big { text-align:center; padding:32px; }
+    .rating-number { font-size:64px; font-weight:900; color:#fff; font-family:'Barlow Condensed',sans-serif; line-height:1; }
+    .rating-stars { color:var(--Y); font-size:32px; margin:8px 0; }
+    .rating-count { color:var(--MUTED); font-size:14px; }
+
+    /* EMPTY STATE */
+    .empty-state { text-align:center; padding:60px 24px; }
+    .empty-emoji { font-size:48px; margin-bottom:16px; }
+    .empty-title { font-weight:700; font-size:18px; color:#fff; margin-bottom:8px; }
+    .empty-sub { color:var(--MUTED); font-size:14px; margin-bottom:24px; }
+
+    /* CONTRACT */
+    .contract-form { background:var(--CARD); border:1px solid var(--BORDER); border-radius:16px; padding:32px; }
+    .ai-generating { text-align:center; padding:40px; }
+    .ai-dots { display:flex; justify-content:center; gap:8px; margin-bottom:16px; }
+    .ai-dot { width:12px; height:12px; border-radius:50%; background:var(--Y); animation:dot-bounce .8s ease infinite; }
+    .ai-dot:nth-child(2) { animation-delay:.15s; }
+    .ai-dot:nth-child(3) { animation-delay:.3s; }
+    @keyframes dot-bounce { 0%,80%,100% { transform:scale(.8); opacity:.5; } 40% { transform:scale(1.2); opacity:1; } }
+    .contract-result { background:#0d0d0d; border:1px solid var(--BORDER); border-radius:12px; padding:24px; white-space:pre-wrap; font-size:14px; line-height:1.8; margin-top:24px; font-family:monospace; max-height:400px; overflow-y:auto; }
+
+    @media (max-width:1024px) {
+      .stats-grid { grid-template-columns:repeat(2,1fr); }
+      .sidebar { width:220px; }
+      .main { margin-left:220px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-profile">
+    <div class="profile-avatar" id="sidebar-avatar">🎧</div>
+    <div class="profile-name" id="sidebar-name">DJ Name</div>
+    <div class="profile-type">✦ DJ</div>
+    <div class="profile-stars" id="sidebar-stars">★★★★★</div>
+    <div class="profile-plan" id="sidebar-plan">STARTER</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Principal</div>
+    <div class="nav-item active" onclick="showPage('overview', this)">
+      <span class="nav-icon">📊</span> Overview
+    </div>
+    <div class="nav-item" onclick="showPage('gigs', this)">
+      <span class="nav-icon">🎤</span> Mes Gigs
+      <span class="nav-badge yellow" id="pending-gigs-badge" style="display:none"></span>
+    </div>
+    <div class="nav-item" onclick="showPage('messages', this)">
+      <span class="nav-icon">💬</span> Messages
+      <span class="nav-badge" id="unread-badge" style="display:none"></span>
+    </div>
+    <div class="nav-item" onclick="showPage('calendar', this)">
+      <span class="nav-icon">📅</span> Calendrier
+    </div>
+    <div class="nav-item" onclick="showPage('contracts', this)">
+      <span class="nav-icon">📄</span> Contrats IA
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Profil</div>
+    <div class="nav-item" onclick="showPage('reviews', this)">
+      <span class="nav-icon">⭐</span> Avis & Notes
+    </div>
+    <div class="nav-item" onclick="showPage('profile', this)">
+      <span class="nav-icon">👤</span> Mon Profil
+    </div>
+    <div class="nav-item" onclick="showPage('earnings', this)">
+      <span class="nav-icon">💰</span> Revenus
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Compte</div>
+    <div class="nav-item" onclick="showPage('settings', this)">
+      <span class="nav-icon">⚙️</span> Paramètres
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <button class="btn-logout" onclick="logout()">Déconnexion</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- OVERVIEW -->
+  <div id="page-overview" class="page active">
+    <div class="page-header">
+      <h1 class="page-title">BONJOUR, <span id="header-name" style="color:var(--Y)">DJ</span> 👋</h1>
+      <p class="page-sub">Voici un aperçu de ton activité</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Bookings total</div>
+        <div class="stat-value" id="stat-bookings">0</div>
+        <div class="stat-sub">Depuis le début</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Revenus ce mois</div>
+        <div class="stat-value" id="stat-revenue-month">0€</div>
+        <div class="stat-sub">Ce mois-ci</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Revenus annuels</div>
+        <div class="stat-value" id="stat-revenue-year">0€</div>
+        <div class="stat-sub">Cette année</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Ta note</div>
+        <div class="stat-value" id="stat-rating" style="color:var(--Y)">—</div>
+        <div class="stat-sub" id="stat-reviews-count">Aucun avis</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">🎤 Prochains Gigs</span>
+        <button class="btn btn-primary" onclick="openAddGig()">+ Add Gig</button>
+      </div>
+      <div id="upcoming-gigs-list">
+        <div class="empty-state">
+          <div class="empty-emoji">🎵</div>
+          <div class="empty-title">Aucun gig prévu</div>
+          <div class="empty-sub">Ajoute ton premier gig ou attends une offre d'un venue</div>
+          <button class="btn btn-primary" onclick="openAddGig()">+ Ajouter un gig</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">💬 Dernières offres</span>
+      </div>
+      <div id="recent-messages-list">
+        <div class="empty-state">
+          <div class="empty-emoji">📭</div>
+          <div class="empty-title">Aucune offre reçue</div>
+          <div class="empty-sub">Les venues te contacteront ici</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GIGS -->
+  <div id="page-gigs" class="page">
+    <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <h1 class="page-title">MES GIGS</h1>
+        <p class="page-sub">Tous tes événements passés et à venir</p>
+      </div>
+      <button class="btn btn-primary" onclick="openAddGig()">+ Add Gig</button>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="filterGigs('all', this)">Tous</div>
+      <div class="tab" onclick="filterGigs('confirmed', this)">✅ Confirmés</div>
+      <div class="tab" onclick="filterGigs('pending', this)">⏳ En attente</div>
+      <div class="tab" onclick="filterGigs('past', this)">📁 Passés</div>
+      <div class="tab" onclick="filterGigs('canceled', this)">❌ Annulés</div>
+      <div class="tab" onclick="filterGigs('external', this)">🔗 Externes</div>
+    </div>
+
+    <div class="card">
+      <div id="gigs-list">
+        <div class="empty-state">
+          <div class="empty-emoji">🎤</div>
+          <div class="empty-title">Aucun gig pour l'instant</div>
+          <div class="empty-sub">Ajoute un gig externe ou attends une offre</div>
+          <button class="btn btn-primary" onclick="openAddGig()">+ Ajouter un gig</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MESSAGES -->
+  <div id="page-messages" class="page">
+    <div class="page-header">
+      <h1 class="page-title">MESSAGES</h1>
+      <p class="page-sub">Offres et communications des venues</p>
+    </div>
+
+    <div style="display:grid; grid-template-columns:360px 1fr; gap:24px; height:calc(100vh - 200px);">
+      <div class="card" style="overflow-y:auto; margin-bottom:0;">
+        <div id="messages-list">
+          <div class="empty-state">
+            <div class="empty-emoji">💬</div>
+            <div class="empty-title">Aucun message</div>
+            <div class="empty-sub">Les offres des venues apparaîtront ici</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:0; display:flex; flex-direction:column;">
+        <div id="conversation-empty" style="display:flex; align-items:center; justify-content:center; flex:1;">
+          <div class="empty-state">
+            <div class="empty-emoji">👈</div>
+            <div class="empty-title">Sélectionne une conversation</div>
+          </div>
+        </div>
+        <div id="conversation-active" style="display:none; flex:1; flex-direction:column;">
+          <div class="card-header">
+            <span class="card-title" id="conv-venue-name">Venue</span>
+          </div>
+          <div id="conv-messages" style="flex:1; overflow-y:auto; padding:24px; display:flex; flex-direction:column; gap:12px;"></div>
+          <div style="padding:16px 24px; border-top:1px solid var(--BORDER); display:flex; gap:12px;">
+            <input type="text" id="message-input" class="form-input" placeholder="Répondre..." style="flex:1;" onkeypress="if(event.key==='Enter') sendMessage()">
+            <button class="btn btn-primary" onclick="sendMessage()">Envoyer →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDRIER -->
+  <div id="page-calendar" class="page">
+    <div class="page-header">
+      <h1 class="page-title">CALENDRIER</h1>
+      <p class="page-sub">Tous tes événements du mois</p>
+    </div>
+    <div class="calendar">
+      <div class="calendar-header">
+        <button class="calendar-nav" onclick="changeMonth(-1)">← Précédent</button>
+        <span class="calendar-month" id="calendar-month-label"></span>
+        <button class="calendar-nav" onclick="changeMonth(1)">Suivant →</button>
+      </div>
+      <div class="calendar-grid" id="calendar-days-labels"></div>
+      <div class="calendar-grid" id="calendar-grid"></div>
+    </div>
+  </div>
+
+  <!-- CONTRATS IA -->
+  <div id="page-contracts" class="page">
+    <div class="page-header">
+      <h1 class="page-title">CONTRATS IA</h1>
+      <p class="page-sub">Génère un contrat professionnel en 30 secondes</p>
+    </div>
+
+    <div class="contract-form">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+        <div class="form-group">
+          <label class="form-label">Nom du Venue</label>
+          <input type="text" id="contract-venue" class="form-input" placeholder="Club XYZ">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date de l'événement</label>
+          <input type="date" id="contract-date" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Heure de début</label>
+          <input type="time" id="contract-start" class="form-input" value="23:00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Heure de fin</label>
+          <input type="time" id="contract-end" class="form-input" value="02:00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cachet (€)</label>
+          <input type="number" id="contract-fee" class="form-input" placeholder="500">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Type d'événement</label>
+          <select id="contract-type" class="form-input">
+            <option>Soirée club</option>
+            <option>Mariage</option>
+            <option>Festival</option>
+            <option>Événement privé</option>
+            <option>Corporate</option>
+            <option>Anniversaire</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Détails supplémentaires</label>
+        <textarea id="contract-details" class="form-input" rows="3" placeholder="Équipement fourni, conditions spéciales, rider technique..."></textarea>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%; padding:16px; font-size:16px;" onclick="generateContract()">
+        ✨ Générer le contrat avec l'IA
+      </button>
+
+      <div id="ai-generating" class="ai-generating" style="display:none;">
+        <div class="ai-dots">
+          <div class="ai-dot"></div>
+          <div class="ai-dot"></div>
+          <div class="ai-dot"></div>
+        </div>
+        <p style="color:var(--MUTED);">L'IA génère ton contrat...</p>
+      </div>
+
+      <div id="contract-result" style="display:none;">
+        <div class="contract-result" id="contract-text"></div>
+        <div style="display:flex; gap:12px; margin-top:16px;">
+          <button class="btn btn-primary" onclick="copyContract()">📋 Copier</button>
+          <button class="btn btn-outline" onclick="printContract()">🖨️ Imprimer</button>
+          <button class="btn btn-outline" onclick="resetContract()">↺ Nouveau</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AVIS & NOTES -->
+  <div id="page-reviews" class="page">
+    <div class="page-header">
+      <h1 class="page-title">AVIS & NOTES</h1>
+      <p class="page-sub">Ce que les venues pensent de toi</p>
+    </div>
+
+    <div style="display:grid; grid-template-columns:280px 1fr; gap:24px;">
+      <div class="card">
+        <div class="rating-big">
+          <div class="rating-number" id="avg-rating">—</div>
+          <div class="rating-stars" id="avg-stars">☆☆☆☆☆</div>
+          <div class="rating-count" id="reviews-count">0 avis</div>
+        </div>
+      </div>
+      <div class="card">
+        <div id="reviews-list">
+          <div class="empty-state">
+            <div class="empty-emoji">⭐</div>
+            <div class="empty-title">Aucun avis pour l'instant</div>
+            <div class="empty-sub">Les venues qui t'ont booké pourront te noter ici</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REVENUS -->
+  <div id="page-earnings" class="page">
+    <div class="page-header">
+      <h1 class="page-title">REVENUS</h1>
+      <p class="page-sub">Suivi de tes gains sur CUE</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Cette semaine</div>
+        <div class="stat-value" id="earn-week">0€</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Ce mois</div>
+        <div class="stat-value" id="earn-month">0€</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Cette année</div>
+        <div class="stat-value" id="earn-year">0€</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total</div>
+        <div class="stat-value" id="earn-total">0€</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Historique des paiements</span>
+      </div>
+      <div id="earnings-list">
+        <div class="empty-state">
+          <div class="empty-emoji">💸</div>
+          <div class="empty-title">Aucun paiement</div>
+          <div class="empty-sub">Tes paiements apparaîtront ici après chaque booking</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFIL -->
+  <div id="page-profile" class="page">
+    <div class="page-header">
+      <h1 class="page-title">MON PROFIL</h1>
+      <p class="page-sub">Ce que voient les venues</p>
+    </div>
+    <div class="card">
+      <div class="card-body" id="profile-content"></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="page-settings" class="page">
+    <div class="page-header">
+      <h1 class="page-title">PARAMÈTRES</h1>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <button class="btn" style="background:#ff4444; color:#fff;" onclick="deleteAccount()">
+          🗑️ Supprimer mon compte
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL ADD GIG -->
+<div id="modal-add-gig" class="modal">
+  <div class="modal-card">
+    <h2 class="modal-title">+ AJOUTER UN GIG</h2>
+
+    <div class="form-group">
+      <label class="form-label">Nom du venue / événement</label>
+      <input type="text" id="gig-venue" class="form-input" placeholder="Club XYZ, Mariage Dupont...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ville</label>
+      <input type="text" id="gig-city" class="form-input" placeholder="Paris, Lyon...">
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input type="date" id="gig-date" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Heure</label>
+        <input type="time" id="gig-time" class="form-input" value="23:00">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cachet (€)</label>
+      <input type="number" id="gig-fee" class="form-input" placeholder="500">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Statut</label>
+      <select id="gig-status-select" class="form-input">
+        <option value="confirmed">✅ Confirmé</option>
+        <option value="pending">⏳ En attente</option>
+        <option value="external">🔗 Externe (hors CUE)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea id="gig-notes" class="form-input" rows="2" placeholder="Rider, conditions..."></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-add-gig')">Annuler</button>
+      <button class="btn btn-primary" onclick="addGig()">Ajouter le gig ✓</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const user = JSON.parse(localStorage.getItem('cue_user') || '{}');
+  let gigs = JSON.parse(localStorage.getItem('cue_gigs') || '[]');
+  let reviews = JSON.parse(localStorage.getItem('cue_reviews') || '[]');
+  let calendarDate = new Date();
+
+  function init() {
+    if (!localStorage.getItem('cue_logged_in') || user.userType !== 'dj') {
+      window.location.href = 'index.html';
+      return;
+    }
+
+    document.getElementById('sidebar-name').textContent = (user.firstName || '') + ' ' + (user.lastName || '');
+    document.getElementById('header-name').textContent = user.firstName || 'DJ';
+    document.getElementById('sidebar-plan').textContent = (user.plan || 'STARTER').toUpperCase();
+
+    if (user.profile?.photo) {
+      document.getElementById('sidebar-avatar').innerHTML = `<img src="${user.profile.photo}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;">`;
+    }
+
+    loadStats();
+    renderUpcomingGigs();
+    renderCalendar();
+    renderReviews();
+    loadProfile();
+  }
+
+  function showPage(page, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    if (el) el.classList.add('active');
+    if (page === 'calendar') renderCalendar();
+    if (page === 'gigs') renderGigs('all');
+    if (page === 'reviews') renderReviews();
+    if (page === 'earnings') renderEarnings();
+  }
+
+  function loadStats() {
+    const confirmed = gigs.filter(g => g.status === 'confirmed' || new Date(g.date) < new Date());
+    const now = new Date();
+    const monthRevenue = confirmed.filter(g => new Date(g.date).getMonth() === now.getMonth()).reduce((s, g) => s + (g.fee || 0), 0);
+    const yearRevenue = confirmed.filter(g => new Date(g.date).getFullYear() === now.getFullYear()).reduce((s, g) => s + (g.fee || 0), 0);
+
+    document.getElementById('stat-bookings').textContent = confirmed.length;
+    document.getElementById('stat-revenue-month').textContent = monthRevenue + '€';
+    document.getElementById('stat-revenue-year').textContent = yearRevenue + '€';
+
+    const avg = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : '—';
+    document.getElementById('stat-rating').textContent = avg;
+    document.getElementById('stat-reviews-count').textContent = reviews.length ? reviews.length + ' avis' : 'Aucun avis';
+
+    const pending = gigs.filter(g => g.status === 'pending').length;
+    if (pending > 0) {
+      document.getElementById('pending-gigs-badge').textContent = pending;
+      document.getElementById('pending-gigs-badge').style.display = 'block';
+    }
+  }
+
+  function renderUpcomingGigs() {
+    const upcoming = gigs
+      .filter(g => new Date(g.date) >= new Date() && g.status !== 'canceled')
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .slice(0, 3);
+    const container = document.getElementById('upcoming-gigs-list');
+    if (!upcoming.length) return;
+    container.innerHTML = upcoming.map(gigHTML).join('');
+  }
+
+  function renderGigs(filter) {
+    const now = new Date();
+    let filtered = gigs;
+    if (filter === 'confirmed') filtered = gigs.filter(g => g.status === 'confirmed' && new Date(g.date) >= now);
+    else if (filter === 'pending') filtered = gigs.filter(g => g.status === 'pending');
+    else if (filter === 'past') filtered = gigs.filter(g => new Date(g.date) < now);
+    else if (filter === 'canceled') filtered = gigs.filter(g => g.status === 'canceled');
+    else if (filter === 'external') filtered = gigs.filter(g => g.source === 'external');
+
+    const container = document.getElementById('gigs-list');
+    if (!filtered.length) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-emoji">🎤</div><div class="empty-title">Aucun gig dans cette catégorie</div><button class="btn btn-primary" style="margin-top:16px;" onclick="openAddGig()">+ Ajouter un gig</button></div>`;
+      return;
+    }
+    container.innerHTML = filtered.sort((a, b) => new Date(b.date) - new Date(a.date)).map(gigHTML).join('');
+  }
+
+  function gigHTML(g) {
+    const d = new Date(g.date);
+    const months = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+    const statusClass = { confirmed:'status-confirmed', pending:'status-pending', canceled:'status-canceled', past:'status-past', external:'status-external' };
+    const statusLabel = { confirmed:'✅ Confirmé', pending:'⏳ En attente', canceled:'❌ Annulé', past:'📁 Passé', external:'🔗 Externe' };
+    return `
+      <div class="gig-item">
+        <div class="gig-date">
+          <div class="gig-date-day">${d.getDate()}</div>
+          <div class="gig-date-month">${months[d.getMonth()]}</div>
+        </div>
+        <div class="gig-divider"></div>
+        <div class="gig-info">
+          <div class="gig-venue">${g.venue}</div>
+          <div class="gig-location">📍 ${g.city}</div>
+          <div class="gig-time">🕐 ${g.time}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="gig-amount">${g.fee ? g.fee + '€' : '—'}</div>
+          <span class="gig-status ${statusClass[g.status] || ''}">${statusLabel[g.status] || g.status}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  function filterGigs(filter, el) {
+    document.querySelectorAll('#page-gigs .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderGigs(filter);
+  }
+
+  function openAddGig() {
+    document.getElementById('modal-add-gig').classList.add('open');
+  }
+
+  function addGig() {
+    const gig = {
+      id: Date.now().toString(),
+      venue: document.getElementById('gig-venue').value,
+      city: document.getElementById('gig-city').value,
+      date: document.getElementById('gig-date').value,
+      time: document.getElementById('gig-time').value,
+      fee: parseInt(document.getElementById('gig-fee').value) || 0,
+      status: document.getElementById('gig-status-select').value,
+      notes: document.getElementById('gig-notes').value,
+      source: 'external',
+      createdAt: new Date().toISOString()
+    };
+    if (!gig.venue || !gig.date) { alert('Remplis au minimum le venue et la date.'); return; }
+    gigs.unshift(gig);
+    localStorage.setItem('cue_gigs', JSON.stringify(gigs));
+    closeModal('modal-add-gig');
+    renderUpcomingGigs();
+    renderGigs('all');
+    loadStats();
+    alert('Gig ajouté ✅');
+  }
+
+  function renderCalendar() {
+    const year = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+    const months = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    document.getElementById('calendar-month-label').textContent = months[month] + ' ' + year;
+    document.getElementById('calendar-days-labels').innerHTML = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(d => `<div class="calendar-day-label">${d}</div>`).join('');
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDow = (firstDay.getDay() + 6) % 7;
+    const today = new Date();
+    let html = '';
+
+    for (let i = 0; i < startDow; i++) {
+      const d = new Date(year, month, -startDow + i + 1);
+      html += `<div class="calendar-day other-month"><div class="day-num">${d.getDate()}</div></div>`;
+    }
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dayGigs = gigs.filter(g => g.date === dateStr && g.status !== 'canceled');
+      const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
+      html += `<div class="calendar-day ${isToday ? 'today' : ''}"><div class="day-num">${d}</div>${dayGigs.map(g => `<div class="day-event">${g.venue}</div>`).join('')}</div>`;
+    }
+    document.getElementById('calendar-grid').innerHTML = html;
+  }
+
+  function changeMonth(dir) {
+    calendarDate.setMonth(calendarDate.getMonth() + dir);
+    renderCalendar();
+  }
+
+  function renderReviews() {
+    const avg = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : null;
+    document.getElementById('avg-rating').textContent = avg || '—';
+    document.getElementById('avg-stars').textContent = avg ? '★'.repeat(Math.round(avg)) + '☆'.repeat(5 - Math.round(avg)) : '☆☆☆☆☆';
+    document.getElementById('reviews-count').textContent = reviews.length + ' avis';
+    document.getElementById('sidebar-stars').textContent = avg ? '★'.repeat(Math.round(avg)) + ' ' + avg : '★★★★★';
+    if (!reviews.length) return;
+    document.getElementById('reviews-list').innerHTML = reviews.map(r => `
+      <div class="review-item">
+        <div class="review-header"><span class="review-venue">${r.venue}</span><span class="review-date">${new Date(r.date).toLocaleDateString('fr-FR')}</span></div>
+        <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+        <div class="review-text">${r.comment}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderEarnings() {
+    const now = new Date();
+    const weekAgo = new Date(now - 7*24*60*60*1000);
+    const confirmed = gigs.filter(g => g.status === 'confirmed' || new Date(g.date) < now);
+    document.getElementById('earn-week').textContent = confirmed.filter(g => new Date(g.date) >= weekAgo).reduce((s, g) => s + (g.fee || 0), 0) + '€';
+    document.getElementById('earn-month').textContent = confirmed.filter(g => new Date(g.date).getMonth() === now.getMonth()).reduce((s, g) => s + (g.fee || 0), 0) + '€';
+    document.getElementById('earn-year').textContent = confirmed.filter(g => new Date(g.date).getFullYear() === now.getFullYear()).reduce((s, g) => s + (g.fee || 0), 0) + '€';
+    document.getElementById('earn-total').textContent = confirmed.reduce((s, g) => s + (g.fee || 0), 0) + '€';
+  }
+
+  async function generateContract() {
+    const venue = document.getElementById('contract-venue').value;
+    const date = document.getElementById('contract-date').value;
+    const fee = document.getElementById('contract-fee').value;
+    if (!venue || !date || !fee) { alert('Remplis au minimum le venue, la date et le cachet.'); return; }
+
+    document.getElementById('ai-generating').style.display = 'block';
+    document.getElementById('contract-result').style.display = 'none';
+
+    try {
+      const res = await fetch('/.netlify/functions/generate-contract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          djName: user.firstName + ' ' + user.lastName,
+          venue, date, fee,
+          start: document.getElementById('contract-start').value,
+          end: document.getElementById('contract-end').value,
+          type: document.getElementById('contract-type').value,
+          details: document.getElementById('contract-details').value
+        })
+      });
+      const data = await res.json();
+      document.getElementById('contract-text').textContent = data.contract;
+      document.getElementById('ai-generating').style.display = 'none';
+      document.getElementById('contract-result').style.display = 'block';
+    } catch (err) {
+      document.getElementById('ai-generating').style.display = 'none';
+      alert('Erreur lors de la génération. Réessaie.');
+    }
+  }
+
+  function copyContract() {
+    navigator.clipboard.writeText(document.getElementById('contract-text').textContent);
+    alert('Contrat copié ✅');
+  }
+
+  function printContract() {
+    const text = document.getElementById('contract-text').textContent;
+    const w = window.open('', '_blank');
+    w.document.write(`<pre style="font-family:Arial;padding:40px;max-width:800px;margin:auto;">${text}</pre>`);
+    w.print();
+  }
+
+  function resetContract() {
+    document.getElementById('contract-result').style.display = 'none';
+    document.getElementById('contract-text').textContent = '';
+  }
+
+  function loadProfile() {
+    const p = user.profile || {};
+    document.getElementById('profile-content').innerHTML = `
+      <div style="display:flex; gap:32px; align-items:flex-start;">
+        ${p.photo ? `<img src="${p.photo}" style="width:120px;height:120px;border-radius:50%;border:3px solid var(--Y);object-fit:cover;">` : '<div style="width:120px;height:120px;border-radius:50%;background:#1a1a1a;border:3px solid var(--Y);display:flex;align-items:center;justify-content:center;font-size:48px;">🎧</div>'}
+        <div style="flex:1;">
+          <h2 style="font-family:'Barlow Condensed';font-weight:900;font-size:32px;color:#fff;">${user.firstName || ''} ${user.lastName || ''}</h2>
+          <p style="color:var(--Y);font-weight:700;margin:8px 0;">${(user.genres || []).join(' · ')}</p>
+          <p style="color:var(--MUTED);line-height:1.6;">${p.description || 'Aucune description ajoutée.'}</p>
+          <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+            ${p.instagram ? `<a href="${p.instagram}" target="_blank" style="color:var(--MUTED);font-size:13px;">📸 Instagram</a>` : ''}
+            ${p.soundcloud ? `<a href="${p.soundcloud}" target="_blank" style="color:var(--MUTED);font-size:13px;">🎵 SoundCloud</a>` : ''}
+            ${p.spotify ? `<a href="${p.spotify}" target="_blank" style="color:var(--MUTED);font-size:13px;">🎶 Spotify</a>` : ''}
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:32px;text-align:right;">
+        <a href="dj-onboarding.html" class="btn btn-outline" style="padding:10px 24px;border-radius:10px;border:1px solid var(--Y);color:var(--Y);text-decoration:none;font-weight:700;">✏️ Modifier le profil</a>
+      </div>
+    `;
+  }
+
+  function sendMessage() {
+    const input = document.getElementById('message-input');
+    if (!input.value.trim()) return;
+    input.value = '';
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+
+  function logout() {
+    localStorage.removeItem('cue_logged_in');
+    window.location.href = 'index.html';
+  }
+
+  function deleteAccount() {
+    if (!confirm('Supprimer définitivement ton compte ?')) return;
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.href = 'index.html';
+  }
+
+  init();
+</script>
+</body>
+</html>

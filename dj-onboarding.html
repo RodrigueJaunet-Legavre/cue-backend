@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CUE — Complete ton profil DJ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --Y:#FFC300; --Y2:#FFD740; --BG:#080808; --CARD:#111;
+      --BORDER:rgba(255,195,0,.13); --TEXT:#ddd; --MUTED:#bbb;
+    }
+    body { background:var(--BG); color:var(--TEXT); font-family:Barlow,sans-serif; min-height:100vh; }
+
+    /* PROGRESS BAR */
+    .progress-bar {
+      position:fixed; top:0; left:0; right:0; height:3px;
+      background:rgba(255,195,0,.1); z-index:100;
+    }
+    .progress-fill {
+      height:100%; background:var(--Y);
+      transition:width .5s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* HEADER */
+    .header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:24px 40px; border-bottom:1px solid var(--BORDER);
+      position:sticky; top:0; background:var(--BG); z-index:99;
+    }
+    .logo { color:var(--Y); font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px; }
+    .step-indicator { color:var(--MUTED); font-size:14px; font-weight:600; }
+    .skip-btn { color:var(--MUTED); font-size:14px; cursor:pointer; text-decoration:underline; }
+    .skip-btn:hover { color:var(--TEXT); }
+
+    /* CONTAINER */
+    .container { max-width:700px; margin:0 auto; padding:60px 24px; }
+
+    /* STEP */
+    .step { display:none; animation:fadeUp .4s ease; }
+    .step.active { display:block; }
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(20px); }
+      to { opacity:1; transform:translateY(0); }
+    }
+
+    .step-tag { color:var(--Y); font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; margin-bottom:16px; }
+    .step-title { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:48px; line-height:1; margin-bottom:12px; color:#fff; }
+    .step-sub { color:var(--MUTED); font-size:16px; margin-bottom:40px; line-height:1.6; }
+
+    /* PHOTO UPLOAD */
+    .photo-upload {
+      width:160px; height:160px; border-radius:50%; border:2px dashed var(--Y);
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      cursor:pointer; margin:0 auto 32px; position:relative; overflow:hidden;
+      transition:all .3s; background:var(--CARD);
+    }
+    .photo-upload:hover { border-color:var(--Y2); background:#1a1a1a; }
+    .photo-upload img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+    .photo-upload-icon { font-size:32px; margin-bottom:8px; }
+    .photo-upload-text { font-size:12px; color:var(--MUTED); font-weight:600; }
+    .photo-upload input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+
+    /* TEXTAREA */
+    textarea {
+      width:100%; background:var(--CARD); border:1px solid var(--BORDER);
+      color:var(--TEXT); padding:20px; border-radius:12px; font-family:Barlow,sans-serif;
+      font-size:16px; resize:none; transition:border-color .2s; line-height:1.6;
+    }
+    textarea:focus { outline:none; border-color:var(--Y); }
+    .char-count { text-align:right; color:var(--MUTED); font-size:12px; margin-top:8px; }
+
+    /* GENRES */
+    .genres-grid { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:32px; }
+    .genre-chip {
+      padding:10px 20px; border-radius:50px; border:1px solid var(--BORDER);
+      cursor:pointer; font-size:14px; font-weight:600; transition:all .2s;
+      background:var(--CARD); color:var(--MUTED);
+    }
+    .genre-chip:hover { border-color:var(--Y); color:var(--Y); }
+    .genre-chip.selected { background:var(--Y); color:#000; border-color:var(--Y); }
+
+    /* UPLOAD ZONE */
+    .upload-zone {
+      border:2px dashed var(--BORDER); border-radius:16px; padding:40px;
+      text-align:center; cursor:pointer; transition:all .3s; position:relative;
+      background:var(--CARD);
+    }
+    .upload-zone:hover { border-color:var(--Y); background:#1a1a1a; }
+    .upload-zone.has-file { border-color:#00c864; border-style:solid; }
+    .upload-zone input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+    .upload-icon { font-size:40px; margin-bottom:12px; }
+    .upload-title { font-size:18px; font-weight:700; margin-bottom:8px; }
+    .upload-sub { color:var(--MUTED); font-size:14px; }
+    .upload-file-name { color:#00c864; font-weight:700; margin-top:12px; font-size:14px; }
+
+    /* TRACKS */
+    .tracks-list { margin-top:24px; }
+    .track-item {
+      display:flex; align-items:center; gap:16px; background:var(--CARD);
+      border:1px solid var(--BORDER); border-radius:12px; padding:16px 20px; margin-bottom:12px;
+      animation:fadeUp .3s ease;
+    }
+    .track-icon { font-size:24px; }
+    .track-info { flex:1; }
+    .track-name { font-weight:700; font-size:14px; }
+    .track-size { color:var(--MUTED); font-size:12px; margin-top:2px; }
+    .track-remove { color:#ff4444; cursor:pointer; font-size:20px; padding:4px; }
+    .add-track-btn {
+      width:100%; padding:16px; border:2px dashed var(--BORDER); border-radius:12px;
+      background:transparent; color:var(--MUTED); cursor:pointer; font-size:14px;
+      font-weight:600; transition:all .2s; display:flex; align-items:center; justify-content:center; gap:8px;
+    }
+    .add-track-btn:hover { border-color:var(--Y); color:var(--Y); }
+
+    /* SOCIAL */
+    .social-input {
+      display:flex; align-items:center; gap:12px; background:var(--CARD);
+      border:1px solid var(--BORDER); border-radius:12px; padding:16px 20px; margin-bottom:12px;
+      transition:border-color .2s;
+    }
+    .social-input:focus-within { border-color:var(--Y); }
+    .social-icon { font-size:20px; width:28px; text-align:center; }
+    .social-input input {
+      flex:1; background:transparent; border:none; color:var(--TEXT);
+      font-size:15px; font-family:Barlow,sans-serif;
+    }
+    .social-input input:focus { outline:none; }
+
+    /* NAVIGATION */
+    .nav-buttons { display:flex; gap:12px; margin-top:40px; }
+    .btn-back {
+      padding:16px 32px; border-radius:12px; border:1px solid var(--BORDER);
+      background:transparent; color:var(--MUTED); cursor:pointer; font-weight:700;
+      font-size:16px; transition:all .2s;
+    }
+    .btn-back:hover { border-color:var(--Y); color:var(--Y); }
+    .btn-next {
+      flex:1; padding:16px 32px; border-radius:12px; border:none;
+      background:var(--Y); color:#000; cursor:pointer; font-weight:700;
+      font-size:16px; transition:all .2s; font-family:Barlow,sans-serif;
+    }
+    .btn-next:hover { background:var(--Y2); transform:translateY(-1px); }
+    .btn-next:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+
+    /* COMPLETION */
+    .completion-card {
+      text-align:center; padding:60px 40px; background:var(--CARD);
+      border:1px solid var(--BORDER); border-radius:24px;
+    }
+    .completion-emoji { font-size:64px; margin-bottom:24px; display:block; animation:bounce 1s ease infinite alternate; }
+    @keyframes bounce { from { transform:translateY(0); } to { transform:translateY(-10px); } }
+
+    /* SHARE BUTTONS */
+    .share-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:32px; }
+    .share-btn {
+      padding:16px; border-radius:12px; border:1px solid var(--BORDER);
+      background:var(--CARD); color:var(--TEXT); cursor:pointer; font-weight:700;
+      font-size:14px; display:flex; align-items:center; gap:10px; transition:all .2s;
+    }
+    .share-btn:hover { border-color:var(--Y); color:var(--Y); transform:translateY(-2px); }
+    .share-btn.whatsapp:hover { border-color:#25d366; color:#25d366; }
+    .share-btn.instagram:hover { border-color:#e1306c; color:#e1306c; }
+    .share-btn.copy:hover { border-color:var(--Y); color:var(--Y); }
+
+    /* PROFILE PREVIEW */
+    .profile-preview {
+      background:linear-gradient(135deg, #111 0%, #1a1a1a 100%);
+      border:1px solid var(--BORDER); border-radius:20px; padding:32px;
+      margin-bottom:32px; position:relative; overflow:hidden;
+    }
+    .profile-preview::before {
+      content:''; position:absolute; top:-50%; right:-20%;
+      width:300px; height:300px; background:radial-gradient(circle, rgba(255,195,0,.08) 0%, transparent 70%);
+      border-radius:50%;
+    }
+    .preview-avatar { width:80px; height:80px; border-radius:50%; border:3px solid var(--Y); margin-bottom:16px; object-fit:cover; }
+    .preview-name { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:32px; color:#fff; }
+    .preview-genres { color:var(--Y); font-size:14px; font-weight:600; margin:8px 0; }
+    .preview-stars { color:var(--Y); font-size:18px; margin-bottom:8px; }
+    .preview-badge { display:inline-block; background:rgba(255,195,0,.15); color:var(--Y); padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; }
+  </style>
+</head>
+<body>
+
+<div class="progress-bar">
+  <div class="progress-fill" id="progress-fill" style="width:16.6%"></div>
+</div>
+
+<div class="header">
+  <div class="logo">CUE</div>
+  <div class="step-indicator" id="step-indicator">Étape 1 sur 6</div>
+  <span class="skip-btn" onclick="skipStep()">Passer →</span>
+</div>
+
+<div class="container">
+
+  <!-- ÉTAPE 1 : PHOTO DE PROFIL -->
+  <div class="step active" id="step-1">
+    <div class="step-tag">✦ Étape 1</div>
+    <h1 class="step-title">AJOUTE TA<br>PHOTO.</h1>
+    <p class="step-sub">Ta photo de profil est la première chose que voient les venues. Choisis une photo professionnelle.</p>
+
+    <div class="photo-upload" id="photo-upload" onclick="document.getElementById('photo-input').click()">
+      <div class="photo-upload-icon">📸</div>
+      <div class="photo-upload-text">Cliquer pour ajouter</div>
+      <input type="file" id="photo-input" accept="image/*" onchange="handlePhotoUpload(this)">
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn-next" id="btn-next-1" onclick="nextStep()">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 2 : DESCRIPTION -->
+  <div class="step" id="step-2">
+    <div class="step-tag">✦ Étape 2</div>
+    <h1 class="step-title">DÉCRIS-TOI<br>EN QUELQUES<br>MOTS.</h1>
+    <p class="step-sub">Parle de ton style, ton expérience, ce qui te rend unique.</p>
+
+    <textarea id="description" rows="6" maxlength="500" placeholder="DJ depuis 8 ans, spécialisé dans la house et la techno. J'ai mixé dans plus de 50 clubs en Europe et je m'adapte à tous les types d'événements..."
+              oninput="updateCharCount()"></textarea>
+    <div class="char-count"><span id="char-count">0</span>/500</div>
+
+    <div class="nav-buttons">
+      <button class="btn-back" onclick="prevStep()">← Retour</button>
+      <button class="btn-next" onclick="nextStep()">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 3 : GENRES -->
+  <div class="step" id="step-3">
+    <div class="step-tag">✦ Étape 3</div>
+    <h1 class="step-title">TES GENRES<br>MUSICAUX.</h1>
+    <p class="step-sub">Sélectionne jusqu'à 5 genres qui définissent ton style. (min. 1)</p>
+
+    <div class="genres-grid" id="genres-grid"></div>
+
+    <div class="nav-buttons">
+      <button class="btn-back" onclick="prevStep()">← Retour</button>
+      <button class="btn-next" id="btn-next-3" onclick="nextStep()" disabled>Continuer →</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 4 : MIX SET -->
+  <div class="step" id="step-4">
+    <div class="step-tag">✦ Étape 4</div>
+    <h1 class="step-title">TON SET<br>DE PRÉSENTATION.</h1>
+    <p class="step-sub">Upload un mix de 10 à 20 minutes en MP3. C'est ce que les venues écoutent pour te choisir.</p>
+
+    <div class="upload-zone" id="mix-zone">
+      <input type="file" id="mix-input" accept=".mp3,audio/mpeg" onchange="handleMixUpload(this)">
+      <div class="upload-icon">🎧</div>
+      <div class="upload-title">Dépose ton mix ici</div>
+      <div class="upload-sub">MP3 uniquement • 10 à 20 minutes • Max 50MB</div>
+      <div class="upload-file-name" id="mix-file-name"></div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn-back" onclick="prevStep()">← Retour</button>
+      <button class="btn-next" onclick="nextStep()">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 5 : TRACKS -->
+  <div class="step" id="step-5">
+    <div class="step-tag">✦ Étape 5</div>
+    <h1 class="step-title">TES TRACKS<br>SIGNATURE.</h1>
+    <p class="step-sub">Ajoute 3 à 10 tracks MP3 qui représentent ton univers musical.</p>
+
+    <div class="tracks-list" id="tracks-list"></div>
+
+    <input type="file" id="track-input" accept=".mp3,audio/mpeg" multiple style="display:none" onchange="handleTracksUpload(this)">
+    <button class="add-track-btn" onclick="document.getElementById('track-input').click()">
+      <span>+</span> Ajouter des tracks
+    </button>
+
+    <div class="nav-buttons">
+      <button class="btn-back" onclick="prevStep()">← Retour</button>
+      <button class="btn-next" onclick="nextStep()">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 6 : RÉSEAUX SOCIAUX -->
+  <div class="step" id="step-6">
+    <div class="step-tag">✦ Étape 6</div>
+    <h1 class="step-title">TES RÉSEAUX<br>SOCIAUX.</h1>
+    <p class="step-sub">Optionnel mais recommandé — les venues vérifient souvent vos réseaux.</p>
+
+    <div class="social-input">
+      <span class="social-icon">📸</span>
+      <input type="text" id="instagram" placeholder="instagram.com/tonpseudo">
+    </div>
+    <div class="social-input">
+      <span class="social-icon">🎵</span>
+      <input type="text" id="soundcloud" placeholder="soundcloud.com/tonpseudo">
+    </div>
+    <div class="social-input">
+      <span class="social-icon">🎶</span>
+      <input type="text" id="spotify" placeholder="open.spotify.com/artist/...">
+    </div>
+    <div class="social-input">
+      <span class="social-icon">▶️</span>
+      <input type="text" id="youtube" placeholder="youtube.com/@tonpseudo">
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn-back" onclick="prevStep()">← Retour</button>
+      <button class="btn-next" onclick="completeProfile()">Terminer ✓</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE FINALE : PARTAGE -->
+  <div class="step" id="step-complete">
+    <div class="completion-card">
+      <span class="completion-emoji">🎉</span>
+      <h1 style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:48px; color:#fff; margin-bottom:12px;">
+        TON PROFIL EST PRÊT !
+      </h1>
+      <p style="color:var(--MUTED); font-size:16px; margin-bottom:32px;">
+        Partage ton profil DJ pour recevoir des bookings.
+      </p>
+
+      <div class="profile-preview">
+        <img id="preview-avatar" src="" class="preview-avatar" style="display:none">
+        <div class="preview-name" id="preview-name"></div>
+        <div class="preview-genres" id="preview-genres"></div>
+        <div class="preview-stars">★★★★★ <span style="color:var(--MUTED); font-size:14px;">Nouveau profil</span></div>
+        <span class="preview-badge">✦ DJ Vérifié CUE</span>
+      </div>
+
+      <div class="share-grid">
+        <button class="share-btn whatsapp" onclick="shareProfile('whatsapp')">
+          <span>💬</span> WhatsApp
+        </button>
+        <button class="share-btn instagram" onclick="shareProfile('instagram')">
+          <span>📸</span> Instagram
+        </button>
+        <button class="share-btn" onclick="shareProfile('messages')">
+          <span>✉️</span> Messages
+        </button>
+        <button class="share-btn copy" onclick="shareProfile('copy')">
+          <span>🔗</span> Copier le lien
+        </button>
+      </div>
+
+      <button class="btn-next" style="margin-top:24px; width:100%;" onclick="goToDashboard()">
+        Accéder à mon dashboard →
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let currentStep = 1;
+  const totalSteps = 6;
+  let selectedGenres = [];
+  let profileData = {};
+  let tracks = [];
+
+  const user = JSON.parse(localStorage.getItem('cue_user') || '{}');
+
+  // Genres list
+  const GENRES = ['House', 'Tech House', 'Techno', 'Deep House', 'Minimal', 'Afro House', 'Melodic Techno', 'Progressive House', 'Trance', 'Drum & Bass', 'Hip-Hop', 'R&B', 'Reggaeton', 'Salsa', 'Electronic', 'Ambient', 'Commercial', 'Open Format', 'Disco', 'Funk'];
+  document.getElementById('genres-grid').innerHTML = GENRES.map(g =>
+    `<div class="genre-chip" onclick="toggleGenre(this, '${g}')">${g}</div>`
+  ).join('');
+
+  // NAVIGATION
+  function nextStep() {
+    saveCurrentStep();
+    if (currentStep < totalSteps) {
+      showStep(currentStep + 1);
+    } else {
+      completeProfile();
+    }
+  }
+
+  function prevStep() {
+    if (currentStep > 1) showStep(currentStep - 1);
+  }
+
+  function skipStep() {
+    if (currentStep < totalSteps) {
+      showStep(currentStep + 1);
+    } else {
+      completeProfile();
+    }
+  }
+
+  function showStep(n) {
+    document.getElementById('step-' + currentStep).classList.remove('active');
+    currentStep = n;
+    document.getElementById('step-' + currentStep).classList.add('active');
+    document.getElementById('step-indicator').textContent = `Étape ${n} sur ${totalSteps}`;
+    document.getElementById('progress-fill').style.width = ((n / totalSteps) * 100) + '%';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function saveCurrentStep() {
+    if (currentStep === 2) {
+      profileData.description = document.getElementById('description').value;
+    }
+    if (currentStep === 3) {
+      profileData.genres = selectedGenres;
+    }
+    if (currentStep === 6) {
+      profileData.instagram = document.getElementById('instagram').value;
+      profileData.soundcloud = document.getElementById('soundcloud').value;
+      profileData.spotify = document.getElementById('spotify').value;
+      profileData.youtube = document.getElementById('youtube').value;
+    }
+  }
+
+  // PHOTO
+  function handlePhotoUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      profileData.photo = e.target.result;
+      const zone = document.getElementById('photo-upload');
+      zone.innerHTML = `<img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // DESCRIPTION
+  function updateCharCount() {
+    const val = document.getElementById('description').value.length;
+    document.getElementById('char-count').textContent = val;
+  }
+
+  // GENRES
+  function toggleGenre(el, genre) {
+    if (el.classList.contains('selected')) {
+      el.classList.remove('selected');
+      selectedGenres = selectedGenres.filter(g => g !== genre);
+    } else {
+      if (selectedGenres.length >= 5) return;
+      el.classList.add('selected');
+      selectedGenres.push(genre);
+    }
+    document.getElementById('btn-next-3').disabled = selectedGenres.length === 0;
+  }
+
+  // MIX
+  function handleMixUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    profileData.mix = file.name;
+    const zone = document.getElementById('mix-zone');
+    zone.classList.add('has-file');
+    document.getElementById('mix-file-name').textContent = '✅ ' + file.name;
+  }
+
+  // TRACKS
+  function handleTracksUpload(input) {
+    const files = Array.from(input.files);
+    files.forEach(file => {
+      if (tracks.length >= 10) return;
+      tracks.push(file);
+      addTrackToList(file);
+    });
+  }
+
+  function addTrackToList(file) {
+    const list = document.getElementById('tracks-list');
+    const item = document.createElement('div');
+    item.className = 'track-item';
+    item.innerHTML = `
+      <span class="track-icon">🎵</span>
+      <div class="track-info">
+        <div class="track-name">${file.name.replace('.mp3', '')}</div>
+        <div class="track-size">${(file.size / 1024 / 1024).toFixed(1)} MB</div>
+      </div>
+      <span class="track-remove" onclick="this.parentElement.remove(); tracks.splice(tracks.indexOf(file),1);">×</span>
+    `;
+    list.appendChild(item);
+  }
+
+  // COMPLETE
+  async function completeProfile() {
+    saveCurrentStep();
+
+    user.profileComplete = true;
+    user.profile = profileData;
+    user.genres = selectedGenres;
+    user.tracks = tracks.map(t => t.name);
+    localStorage.setItem('cue_user', JSON.stringify(user));
+
+    document.getElementById('step-' + currentStep).classList.remove('active');
+    document.getElementById('step-complete').classList.add('active');
+    document.getElementById('progress-fill').style.width = '100%';
+    document.getElementById('step-indicator').textContent = 'Profil complété ✓';
+    document.querySelector('.skip-btn').style.display = 'none';
+
+    if (profileData.photo) {
+      document.getElementById('preview-avatar').src = profileData.photo;
+      document.getElementById('preview-avatar').style.display = 'block';
+    }
+    document.getElementById('preview-name').textContent = (user.firstName || '') + ' ' + (user.lastName || '');
+    document.getElementById('preview-genres').textContent = selectedGenres.join(' · ');
+  }
+
+  // SHARE
+  function shareProfile(platform) {
+    const profileUrl = `https://cuedj.eu/dj-profile.html?id=${user.id}`;
+    const text = `🎧 Découvre mon profil DJ sur CUE — ${user.firstName} ${user.lastName}\n${profileUrl}`;
+
+    switch(platform) {
+      case 'whatsapp':
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+        break;
+      case 'instagram':
+        navigator.clipboard.writeText(profileUrl);
+        alert('Lien copié ! Colle-le dans ta bio Instagram.');
+        break;
+      case 'messages':
+        window.open(`sms:?body=${encodeURIComponent(text)}`, '_blank');
+        break;
+      case 'copy':
+        navigator.clipboard.writeText(profileUrl);
+        alert('Lien copié dans le presse-papiers ✅');
+        break;
+    }
+  }
+
+  function goToDashboard() {
+    window.location.href = 'dashboard.html';
+  }
+
+  // Vérifie connexion
+  if (!localStorage.getItem('cue_logged_in') || user.userType !== 'dj') {
+    window.location.href = 'index.html';
+  }
+
+  // Si profil déjà complété → dashboard direct
+  if (user.profileComplete) {
+    window.location.href = 'dashboard.html';
+  }
+</script>
+
+</body>
+</html>

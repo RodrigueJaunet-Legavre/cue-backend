@@ -439,7 +439,11 @@ async function completeRegistration() {
 
   console.log('Réponse send-email:', await res.json());
 
-  window.location.href = 'dashboard.html';
+  if (user.userType === 'dj') {
+    window.location.href = 'dj-onboarding.html';
+  } else {
+    window.location.href = 'dashboard-venue.html';
+  }
 }
 </script>
 </body>
