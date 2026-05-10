@@ -154,23 +154,46 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
       <p class="auth-link">Déjà inscrit ? <a href="login.html">Se connecter</a></p>
     </div>
     
-    <!-- Sélection type après Google Sign-In -->
-    <div id="google-type-selection" class="register-box" style="display:none;text-align:center;padding:40px">
+    <!-- Google Step 1 — Type + Téléphone -->
+    <div id="google-step-1" class="register-box" style="display:none;text-align:center;padding:40px">
       <img id="google-avatar" style="width:80px;border-radius:50%;margin-bottom:16px;display:block;margin-left:auto;margin-right:auto">
       <h2 style="font-family:var(--D);font-size:28px;font-weight:900;text-transform:uppercase;color:#fff;margin-bottom:8px">Bienvenue <span id="google-welcome-name"></span> 👋</h2>
-      <p style="font-size:13px;color:var(--MUTED);margin-bottom:24px">Tu rejoins CUE en tant que :</p>
-      <div style="display:flex;gap:16px;justify-content:center;margin:24px 0;flex-wrap:wrap">
-        <div onclick="completeGoogleSignup('dj')" style="cursor:pointer;padding:24px;border:2px solid var(--BORDER);background:#0a0a0a;width:150px;transition:all .2s" onmouseover="this.style.borderColor='#FFC300'" onmouseout="this.style.borderColor='rgba(255,195,0,.13)'">
+      <p style="font-size:13px;color:var(--MUTED);margin-bottom:8px">Quelques infos supplémentaires pour finaliser ton compte</p>
+      <p style="font-size:13px;color:var(--MUTED);margin-top:24px">Tu rejoins CUE en tant que :</p>
+      <div style="display:flex;gap:16px;justify-content:center;margin:16px 0;flex-wrap:wrap">
+        <div id="google-type-dj" onclick="selectGoogleType('dj')" style="cursor:pointer;padding:24px;border:2px solid var(--BORDER);background:#0a0a0a;width:140px;transition:all .2s">
           <div style="font-size:32px">🎧</div>
           <div style="font-family:var(--D);font-size:16px;font-weight:900;text-transform:uppercase;color:#fff;margin-top:8px">DJ</div>
           <div style="color:var(--MUTED);font-size:12px;margin-top:4px">Je cherche des bookings</div>
         </div>
-        <div onclick="completeGoogleSignup('venue')" style="cursor:pointer;padding:24px;border:2px solid var(--BORDER);background:#0a0a0a;width:150px;transition:all .2s" onmouseover="this.style.borderColor='#FFC300'" onmouseout="this.style.borderColor='rgba(255,195,0,.13)'">
+        <div id="google-type-venue" onclick="selectGoogleType('venue')" style="cursor:pointer;padding:24px;border:2px solid var(--BORDER);background:#0a0a0a;width:140px;transition:all .2s">
           <div style="font-size:32px">🏛️</div>
           <div style="font-family:var(--D);font-size:16px;font-weight:900;text-transform:uppercase;color:#fff;margin-top:8px">VENUE</div>
           <div style="color:var(--MUTED);font-size:12px;margin-top:4px">Je cherche des DJs</div>
         </div>
       </div>
+      <div style="margin-top:24px;text-align:left;max-width:400px;margin-left:auto;margin-right:auto">
+        <label class="form-label">Numéro de téléphone</label>
+        <div class="phone-input-wrap" style="margin-top:8px">
+          <div class="phone-prefix">+33</div>
+          <input type="tel" id="google-phone" placeholder="6 12 34 56 78" class="form-input">
+        </div>
+      </div>
+      <button onclick="submitGoogleStep1()" class="btn-primary" style="max-width:400px;margin:24px auto 0">Continuer →</button>
+    </div>
+
+    <!-- Google Step 2 — Vérification email -->
+    <div id="google-step-2" class="register-box" style="display:none;text-align:center;padding:40px">
+      <div class="verify-icon">📧</div>
+      <div class="verify-title" style="color:var(--Y)">Vérifie ton email</div>
+      <div class="verify-desc">Un code a été envoyé à <span id="google-email-display" style="color:var(--Y);font-weight:600"></span></div>
+      <p style="font-size:12px;color:var(--MUTED);margin-top:8px">Même si tu t'es connecté avec Google, on vérifie que tu as bien accès à cet email.</p>
+      <div style="margin:24px auto;max-width:400px">
+        <input type="text" id="google-verif-code" placeholder="000000" maxlength="6"
+               style="width:100%;text-align:center;font-size:32px;font-weight:900;letter-spacing:12px;background:#0a0a0a;border:2px solid var(--Y);color:var(--Y);padding:16px;outline:none;font-family:var(--D)">
+      </div>
+      <button onclick="submitGoogleStep2()" class="btn-primary" style="max-width:400px;margin:0 auto">Vérifier →</button>
+      <p class="resend-link" style="margin-top:16px">Pas reçu ? <button onclick="resendGoogleCode()" style="background:none;border:none;color:var(--Y);cursor:pointer;font-family:var(--B);font-size:12px;text-decoration:underline">Renvoyer</button></p>
     </div>
 
     <div id="step2" class="register-box" style="display:none">
@@ -226,25 +249,62 @@ async function handleGoogleSignIn(response) {
     }
   }
   localStorage.setItem('cue_google_temp', JSON.stringify(googleUser));
-  showGoogleTypeSelection(googleUser);
-}
-
-function showGoogleTypeSelection(user) {
   document.getElementById('step1').style.display = 'none';
-  document.getElementById('google-type-selection').style.display = 'block';
-  document.getElementById('google-welcome-name').textContent = user.firstName;
-  if (user.picture) document.getElementById('google-avatar').src = user.picture;
+  document.getElementById('google-step-1').style.display = 'block';
+  document.getElementById('google-welcome-name').textContent = googleUser.firstName;
+  if (googleUser.picture) document.getElementById('google-avatar').src = googleUser.picture;
 }
 
-async function completeGoogleSignup(userType) {
+let selectedGoogleType = null;
+
+function selectGoogleType(type) {
+  selectedGoogleType = type;
+  document.getElementById('google-type-dj').style.borderColor = type === 'dj' ? '#FFC300' : 'rgba(255,195,0,.13)';
+  document.getElementById('google-type-venue').style.borderColor = type === 'venue' ? '#FFC300' : 'rgba(255,195,0,.13)';
+}
+
+async function submitGoogleStep1() {
+  const phone = document.getElementById('google-phone').value.trim();
+  if (!selectedGoogleType) { alert('Choisis DJ ou Venue.'); return; }
+  if (!phone || phone.replace(/\s/g,'').length < 9) { alert('Entre un numéro de téléphone valide.'); return; }
   const googleUser = JSON.parse(localStorage.getItem('cue_google_temp'));
-  googleUser.userType = userType;
+  googleUser.userType = selectedGoogleType;
+  googleUser.phone = '+33' + phone;
+  localStorage.setItem('cue_google_temp', JSON.stringify(googleUser));
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  sessionStorage.setItem('verif_code', code);
+  sessionStorage.setItem('verif_code_expiry', Date.now() + 10 * 60 * 1000);
+  await fetch('/.netlify/functions/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'verification', email: googleUser.email, firstName: googleUser.firstName, code }) });
+  document.getElementById('google-email-display').textContent = googleUser.email;
+  document.getElementById('google-step-1').style.display = 'none';
+  document.getElementById('google-step-2').style.display = 'block';
+}
+
+async function submitGoogleStep2() {
+  const inputCode = document.getElementById('google-verif-code').value;
+  const storedCode = sessionStorage.getItem('verif_code');
+  const expiry = sessionStorage.getItem('verif_code_expiry');
+  if (Date.now() > Number(expiry)) { alert('Code expiré. Clique sur Renvoyer.'); return; }
+  if (inputCode !== storedCode) { alert('Code incorrect.'); return; }
+  const googleUser = JSON.parse(localStorage.getItem('cue_google_temp'));
+  googleUser.verified = true;
   googleUser.referralCodeOwn = 'REF' + googleUser.firstName.charAt(0).toUpperCase() + googleUser.lastName.charAt(0).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
   localStorage.setItem('cue_user', JSON.stringify(googleUser));
   localStorage.setItem('cue_logged_in', 'true');
   localStorage.removeItem('cue_google_temp');
+  sessionStorage.removeItem('verif_code');
+  sessionStorage.removeItem('verif_code_expiry');
   await fetch('/.netlify/functions/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'welcome', email: googleUser.email, firstName: googleUser.firstName }) });
   window.location.href = 'dashboard.html';
+}
+
+async function resendGoogleCode() {
+  const googleUser = JSON.parse(localStorage.getItem('cue_google_temp'));
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  sessionStorage.setItem('verif_code', code);
+  sessionStorage.setItem('verif_code_expiry', Date.now() + 10 * 60 * 1000);
+  await fetch('/.netlify/functions/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'verification', email: googleUser.email, firstName: googleUser.firstName, code }) });
+  alert('Code renvoyé !');
 }
 
 function selectType(type) {
