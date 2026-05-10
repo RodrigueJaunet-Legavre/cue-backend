@@ -327,7 +327,7 @@ function handleGoogleSignIn(response) {
   
   // Afficher succès et rediriger
   document.getElementById('successAlert').classList.add('show');
-  setTimeout(() => window.location.href = getRedirectUrl(), 1000);
+  setTimeout(() => smartRedirect(), 1000);
 }
 </script>
 

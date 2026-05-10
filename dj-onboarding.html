@@ -207,6 +207,9 @@
       <div class="photo-upload-text">Cliquer pour ajouter</div>
       <input type="file" id="photo-input" accept="image/*" onchange="handlePhotoUpload(this)">
     </div>
+    <p style="text-align:center; color:var(--MUTED); font-size:12px; margin-top:12px;">
+      JPG ou PNG • Max 5MB • Carré recommandé (400x400px minimum)
+    </p>
 
     <div class="nav-buttons">
       <button class="btn-next" id="btn-next-1" onclick="nextStep()">Continuer →</button>
@@ -303,6 +306,10 @@
     <div class="social-input">
       <span class="social-icon">▶️</span>
       <input type="text" id="youtube" placeholder="youtube.com/@tonpseudo">
+    </div>
+    <div class="social-input">
+      <span class="social-icon">🎵</span>
+      <input type="text" id="tiktok" placeholder="tiktok.com/@tonpseudo">
     </div>
 
     <div class="nav-buttons">
@@ -411,6 +418,7 @@
       profileData.soundcloud = document.getElementById('soundcloud').value;
       profileData.spotify = document.getElementById('spotify').value;
       profileData.youtube = document.getElementById('youtube').value;
+      profileData.tiktok = document.getElementById('tiktok').value;
     }
   }
 
@@ -558,17 +566,17 @@
   }
 
   function goToDashboard() {
-    window.location.href = 'dashboard.html';
+    window.location.href = 'dashboard-dj.html';
   }
 
   // Vérifie connexion
-  if (!localStorage.getItem('cue_logged_in') || user.userType !== 'dj') {
+  if (!localStorage.getItem('cue_logged_in') || (user.userType !== 'dj' && user.user_type !== 'dj')) {
     window.location.href = 'index.html';
   }
 
   // Si profil déjà complété → dashboard direct
-  if (user.profileComplete) {
-    window.location.href = 'dashboard.html';
+  if (user.profileComplete || user.profile_complete) {
+    window.location.href = 'dashboard-dj.html';
   }
 </script>
 
