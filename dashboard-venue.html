@@ -591,43 +591,65 @@
 
   async function init() {
     const token = localStorage.getItem('cue_token');
+    const localUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
+    const isLoggedIn = localStorage.getItem('cue_logged_in') === 'true';
 
-    if (!token) {
+    if (!isLoggedIn && !token) {
       window.location.href = 'login.html';
       return;
     }
 
-    try {
-      const res = await fetch('/.netlify/functions/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify_token', token })
-      });
+    if (token) {
+      try {
+        const res = await fetch('/.netlify/functions/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'verify_token', token })
+        });
 
-      if (!res.ok) {
-        localStorage.clear();
-        window.location.href = 'login.html';
-        return;
+        if (res.ok) {
+          const data = await res.json();
+          Object.assign(user, data.user);
+          localStorage.setItem('cue_user', JSON.stringify(user));
+        } else {
+          if (!isLoggedIn) {
+            localStorage.clear();
+            window.location.href = 'login.html';
+            return;
+          }
+        }
+      } catch (err) {
+        console.log('Fallback localStorage');
+        Object.assign(user, localUser);
       }
-
-      const data = await res.json();
-      Object.assign(user, data.user);
-      localStorage.setItem('cue_user', JSON.stringify(user));
-    } catch (err) {
-      if (!localStorage.getItem('cue_logged_in')) {
-        window.location.href = 'login.html';
-        return;
-      }
+    } else {
+      Object.assign(user, localUser);
     }
 
-    if (user.user_type !== 'venue' && user.userType !== 'venue') {
-      window.location.href = 'index.html';
+    const userType = user.user_type || user.userType;
+    if (!userType) {
+      window.location.href = 'login.html';
+      return;
+    }
+    if (userType !== 'venue') {
+      window.location.href = 'dashboard-dj.html';
       return;
     }
 
-    document.getElementById('sidebar-name').textContent = (user.first_name || user.firstName || '') + ' ' + (user.last_name || user.lastName || '');
-    document.getElementById('header-name').textContent = user.first_name || user.firstName || 'Venue';
-    document.getElementById('sidebar-plan').textContent = (user.plan || 'STARTER').toUpperCase();
+    const firstName = user.first_name || user.firstName || 'Venue';
+    const lastName = user.last_name || user.lastName || '';
+    const plan = user.plan || 'starter';
+
+    document.getElementById('sidebar-name').textContent = firstName + ' ' + lastName;
+    document.getElementById('header-name').textContent = firstName;
+    document.getElementById('sidebar-plan').textContent = plan.toUpperCase();
+
+    if (user.picture || user.profile?.photo) {
+      document.getElementById('sidebar-avatar').innerHTML = `
+        <img src="${user.picture || user.profile?.photo}"
+             style="width:64px; height:64px; border-radius:50%; object-fit:cover;">
+      `;
+    }
 
     allDJs = demoDJs;
     loadStats();
