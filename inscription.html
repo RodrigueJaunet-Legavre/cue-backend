@@ -158,7 +158,7 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
       <div class="steps"><div class="step done"></div><div class="step active"></div><div class="step"></div></div>
       <div class="verify-icon">📧</div><div class="verify-title">Vérifie ton email</div>
       <div class="verify-desc">Nous avons envoyé un code à</div><div class="verify-email" id="displayEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ed87888c83ad88958c809d8188c38e8280">[email&#160;protected]</a></div>
-      <div class="demo-box"><div class="demo-label">🧪 Code de démo</div><div class="demo-code" id="emailCodeDisplay">------</div></div>
+      <div class="demo-box" style="display:none"><div class="demo-label">🧪 Code de démo</div><div class="demo-code" id="emailCodeDisplay">------</div></div>
       <div class="code-input-wrap" id="emailCodeWrap"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'email')" onkeydown="handleCodeKeydown(event,this)"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'email')" onkeydown="handleCodeKeydown(event,this)"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'email')" onkeydown="handleCodeKeydown(event,this)"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'email')" onkeydown="handleCodeKeydown(event,this)"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'email')" onkeydown="handleCodeKeydown(event,this)"><input type="text" class="code-digit" maxlength="1" oninput="handleCodeInput(this,'email')" onkeydown="handleCodeKeydown(event,this)"></div>
       <div class="form-error" id="emailCodeError" style="text-align:center">Code incorrect</div>
       <button class="btn-primary" id="verifyEmailBtn" onclick="verifyEmailCode()"><span id="verifyEmailLabel">Vérifier</span><div class="spinner" id="verifyEmailSpinner"></div></button>
@@ -246,10 +246,7 @@ async function submitStep1(e) {
   formData = data;
   document.getElementById('submitBtn').disabled = true;
   document.getElementById('submitSpinner').classList.add('on');
-  await new Promise(r => setTimeout(r, 1500));
-  
-  emailCode = generateCode();
-  document.getElementById('emailCodeDisplay').textContent = emailCode;
+  await sendVerificationCode(data.email, data.firstName);
   document.getElementById('displayEmail').textContent = data.email;
   document.getElementById('step1').style.display = 'none';
   document.getElementById('step2').style.display = 'block';
@@ -269,7 +266,7 @@ function handleCodeKeydown(e, input) { if (e.key === 'Backspace' && !input.value
 
 async function verifyEmailCode() {
   const code = Array.from(document.getElementById('emailCodeWrap').querySelectorAll('.code-digit')).map(i => i.value).join('');
-  if (code !== emailCode) { document.getElementById('emailCodeError').classList.add('show'); return; }
+  if (!verifyCode(code)) { document.getElementById('emailCodeError').classList.add('show'); return; }
   document.getElementById('verifyEmailBtn').disabled = true;
   document.getElementById('verifyEmailSpinner').classList.add('on');
   await new Promise(r => setTimeout(r, 1000));
@@ -287,15 +284,49 @@ async function verifyPhoneCode() {
   document.getElementById('verifyPhoneSpinner').classList.add('on');
   await new Promise(r => setTimeout(r, 1500));
   const user = { id: Date.now(), ...formData, referralCodeOwn: 'REF' + formData.firstName.substring(0,2).toUpperCase() + Date.now().toString().slice(-4), verified: true, createdAt: new Date().toISOString() };
-  localStorage.setItem('cue_user', JSON.stringify(user));
-  localStorage.setItem('cue_logged_in', 'true');
-  document.getElementById('step3').style.display = 'none';
-  document.getElementById('stepSuccess').style.display = 'block';
+  await completeRegistration(user);
 }
 
 async function resendCode(type) {
   const btn = document.getElementById('resend' + (type === 'email' ? 'Email' : 'Phone') + 'Btn');
   btn.disabled = true; btn.textContent = 'Envoi...';
   await new Promise(r => setTimeout(r, 1500));
-  if (type === 'email') { emailCode = generateCode(); document.getElementById('emailCodeDisplay').textContent = emailCode; }
-  else { phoneCode = generateC
+  if (type === 'email') { await sendVerificationCode(formData.email, formData.firstName); }
+  else { phoneCode = generateCode(); document.getElementById('phoneCodeDisplay').textContent = phoneCode; }
+  btn.disabled = false;
+  btn.textContent = type === 'email' ? 'Renvoyer le code' : 'Renvoyer le SMS';
+}
+
+async function sendVerificationCode(email, firstName) {
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  sessionStorage.setItem('verif_code', code);
+  sessionStorage.setItem('verif_code_expiry', Date.now() + 10 * 60 * 1000);
+  sessionStorage.setItem('verif_email', email);
+  await fetch('/.netlify/functions/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'verification', email, firstName, code })
+  });
+}
+
+function verifyCode(inputCode) {
+  const storedCode = sessionStorage.getItem('verif_code');
+  const expiry = sessionStorage.getItem('verif_code_expiry');
+  if (Date.now() > Number(expiry)) { alert('Code expiré. Renvoie un nouveau code.'); return false; }
+  if (inputCode !== storedCode) return false;
+  return true;
+}
+
+async function completeRegistration(user) {
+  localStorage.setItem('cue_user', JSON.stringify(user));
+  localStorage.setItem('cue_logged_in', 'true');
+  await fetch('/.netlify/functions/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'welcome', email: user.email, firstName: user.firstName })
+  });
+  window.location.href = 'dashboard.html';
+}
+</script>
+</body>
+</html>
