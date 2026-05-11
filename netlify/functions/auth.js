@@ -203,21 +203,29 @@ exports.handler = async (event) => {
     }
   }
 
-  // Action : get_user
-  if (action === 'get_user') {
-    const { userId } = body;
+  if (action === 'update_user_type') {
+    console.log('=== UPDATE_USER_TYPE ===')
+    const { userId, userType, phone } = body;
     try {
-      const [user] = await sql`SELECT * FROM users WHERE id = ${userId}`;
+      await sql`
+        UPDATE users SET
+          user_type = ${userType},
+          phone = ${phone || ''}
+        WHERE id = ${userId}
+      `;
+      const users = await sql`SELECT * FROM users WHERE id = ${userId}`;
+      const user = users[0] || null;
+      console.log('User trouvé après update:', !!user);
       return {
         statusCode: 200,
-        body: JSON.stringify({ user: user ? sanitizeUser(user) : null })
+        body: JSON.stringify({ success: true, user: sanitizeUser(user) })
       };
     } catch (err) {
+      console.log('ERREUR:', err.message);
       return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
     }
   }
 
-  // Action : register_supabase
   if (action === 'register_supabase') {
     const { userId, firstName, lastName, email, phone, userType, picture, googleId, referralCode } = body;
     try {
@@ -226,29 +234,17 @@ exports.handler = async (event) => {
         VALUES (${userId}, ${firstName}, ${lastName || ''}, ${email}, ${phone || ''}, ${userType || null}, ${picture || null}, ${googleId || null}, ${referralCode}, false, 'none', 'starter')
         ON CONFLICT (id) DO NOTHING
       `;
-      const [user] = await sql`SELECT * FROM users WHERE id = ${userId}`;
+      const users = await sql`SELECT * FROM users WHERE id = ${userId}`;
+      const user = users[0] || null;
       return { statusCode: 200, body: JSON.stringify({ success: true, user: sanitizeUser(user) }) };
     } catch (err) {
+      console.log('ERREUR register_supabase:', err.message);
       return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
     }
   }
 
-  // Action : update_user_type
-  if (action === 'update_user_type') {
-    const { userId, userType, phone } = body;
-    try {
-      await sql`UPDATE users SET user_type = ${userType}, phone = ${phone || ''} WHERE id = ${userId}`;
-      const [user] = await sql`SELECT * FROM users WHERE id = ${userId}`;
-      return { statusCode: 200, body: JSON.stringify({ success: true, user: sanitizeUser(user) }) };
-    } catch (err) {
-      return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
-    }
-  }
-
-  // Action : update_profile_by_id
   if (action === 'update_profile_by_id') {
     const { userId, description, genres, instagram, tiktok, soundcloud, spotify, youtube, mixUrl, tracks, photo } = body;
-    console.log('update_profile_by_id pour userId:', userId);
     try {
       await sql`
         UPDATE users SET
@@ -266,11 +262,23 @@ exports.handler = async (event) => {
           updated_at = NOW()
         WHERE id = ${userId}
       `;
-      const [user] = await sql`SELECT * FROM users WHERE id = ${userId}`;
-      console.log('✅ profile_complete:', user.profile_complete);
+      const users = await sql`SELECT * FROM users WHERE id = ${userId}`;
+      const user = users[0] || null;
+      console.log('✅ profile_complete:', user?.profile_complete);
       return { statusCode: 200, body: JSON.stringify({ success: true, user: sanitizeUser(user) }) };
     } catch (err) {
       console.log('❌ Erreur:', err.message);
+      return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+    }
+  }
+
+  if (action === 'get_user') {
+    const { userId } = body;
+    try {
+      const users = await sql`SELECT * FROM users WHERE id = ${userId}`;
+      const user = users[0] || null;
+      return { statusCode: 200, body: JSON.stringify({ user: sanitizeUser(user) }) };
+    } catch (err) {
       return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
     }
   }
@@ -279,6 +287,7 @@ exports.handler = async (event) => {
 };
 
 function sanitizeUser(user) {
+  if (!user) return null;
   const { password_hash, ...safe } = user;
   return safe;
 }
