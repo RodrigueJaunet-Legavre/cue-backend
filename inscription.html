@@ -287,15 +287,52 @@ async function submitGoogleStep2() {
   const expiry = sessionStorage.getItem('verif_code_expiry');
   if (Date.now() > Number(expiry)) { alert('Code expiré. Clique sur Renvoyer.'); return; }
   if (inputCode !== storedCode) { alert('Code incorrect.'); return; }
+
   const googleUser = JSON.parse(localStorage.getItem('cue_google_temp'));
-  googleUser.verified = true;
-  googleUser.referralCodeOwn = 'REF' + googleUser.firstName.charAt(0).toUpperCase() + googleUser.lastName.charAt(0).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
-  localStorage.setItem('cue_user', JSON.stringify(googleUser));
-  localStorage.setItem('cue_logged_in', 'true');
+
+  try {
+    const res = await fetch('/.netlify/functions/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'google_login',
+        googleId: googleUser.googleId,
+        email: googleUser.email,
+        firstName: googleUser.firstName,
+        lastName: googleUser.lastName,
+        picture: googleUser.picture || '',
+        userType: googleUser.userType,
+        phone: googleUser.phone || ''
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Erreur lors de la connexion Google.");
+      return;
+    }
+
+    localStorage.setItem('cue_token', data.token);
+    localStorage.setItem('cue_user', JSON.stringify(data.user));
+    localStorage.setItem('cue_logged_in', 'true');
+  } catch (err) {
+    // Fallback local si réseau KO
+    googleUser.verified = true;
+    localStorage.setItem('cue_user', JSON.stringify(googleUser));
+    localStorage.setItem('cue_logged_in', 'true');
+  }
+
   localStorage.removeItem('cue_google_temp');
   sessionStorage.removeItem('verif_code');
   sessionStorage.removeItem('verif_code_expiry');
-  await fetch('/.netlify/functions/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'welcome', email: googleUser.email, firstName: googleUser.firstName }) });
+
+  await fetch('/.netlify/functions/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'welcome', email: googleUser.email, firstName: googleUser.firstName })
+  });
+
   smartRedirect();
 }
 

@@ -203,6 +203,78 @@ exports.handler = async (event) => {
     }
   }
 
+  // Action : get_user
+  if (action === 'get_user') {
+    const { userId } = body;
+    try {
+      const [user] = await sql`SELECT * FROM users WHERE id = ${userId}`;
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ user: user ? sanitizeUser(user) : null })
+      };
+    } catch (err) {
+      return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+    }
+  }
+
+  // Action : register_supabase
+  if (action === 'register_supabase') {
+    const { userId, firstName, lastName, email, phone, userType, picture, googleId, referralCode } = body;
+    try {
+      await sql`
+        INSERT INTO users (id, first_name, last_name, email, phone, user_type, picture, google_id, referral_code, profile_complete, identity_status, plan)
+        VALUES (${userId}, ${firstName}, ${lastName || ''}, ${email}, ${phone || ''}, ${userType || null}, ${picture || null}, ${googleId || null}, ${referralCode}, false, 'none', 'starter')
+        ON CONFLICT (id) DO NOTHING
+      `;
+      const [user] = await sql`SELECT * FROM users WHERE id = ${userId}`;
+      return { statusCode: 200, body: JSON.stringify({ success: true, user: sanitizeUser(user) }) };
+    } catch (err) {
+      return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+    }
+  }
+
+  // Action : update_user_type
+  if (action === 'update_user_type') {
+    const { userId, userType, phone } = body;
+    try {
+      await sql`UPDATE users SET user_type = ${userType}, phone = ${phone || ''} WHERE id = ${userId}`;
+      const [user] = await sql`SELECT * FROM users WHERE id = ${userId}`;
+      return { statusCode: 200, body: JSON.stringify({ success: true, user: sanitizeUser(user) }) };
+    } catch (err) {
+      return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+    }
+  }
+
+  // Action : update_profile_by_id
+  if (action === 'update_profile_by_id') {
+    const { userId, description, genres, instagram, tiktok, soundcloud, spotify, youtube, mixUrl, tracks, photo } = body;
+    console.log('update_profile_by_id pour userId:', userId);
+    try {
+      await sql`
+        UPDATE users SET
+          description = ${description || null},
+          genres = ${genres || []},
+          instagram = ${instagram || null},
+          tiktok = ${tiktok || null},
+          soundcloud = ${soundcloud || null},
+          spotify = ${spotify || null},
+          youtube = ${youtube || null},
+          mix_url = ${mixUrl || null},
+          tracks = ${tracks || []},
+          picture = ${photo || null},
+          profile_complete = true,
+          updated_at = NOW()
+        WHERE id = ${userId}
+      `;
+      const [user] = await sql`SELECT * FROM users WHERE id = ${userId}`;
+      console.log('✅ profile_complete:', user.profile_complete);
+      return { statusCode: 200, body: JSON.stringify({ success: true, user: sanitizeUser(user) }) };
+    } catch (err) {
+      console.log('❌ Erreur:', err.message);
+      return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+    }
+  }
+
   return { statusCode: 400, body: JSON.stringify({ error: 'Action inconnue' }) };
 };
 

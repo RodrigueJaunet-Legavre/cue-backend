@@ -554,32 +554,28 @@
 
   // COMPLETE
   async function completeProfile() {
-    saveCurrentStep();
-    const token = localStorage.getItem('cue_token');
-    console.log('Token présent:', !!token);
-    console.log('Token valeur:', token ? token.substring(0, 20) + '...' : 'AUCUN');
+    saveCurrentStep()
 
-    // Force profile_complete en localStorage immédiatement (avant l'API)
-    const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
+    // Force profile_complete en localStorage immédiatement
+    const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
+    savedUser.profile_complete = true
+    savedUser.profileComplete = true
+    localStorage.setItem('cue_user', JSON.stringify(savedUser))
 
-    if (!token) {
-      console.log('ERREUR: Pas de token - utilisateur non connecté via DB');
-      savedUser.profile_complete = true;
-      savedUser.profileComplete = true;
-      localStorage.setItem('cue_user', JSON.stringify(savedUser));
-    }
-    savedUser.profile_complete = true;
-    savedUser.profileComplete = true;
-    localStorage.setItem('cue_user', JSON.stringify(savedUser));
+    try {
+      const { supabase } = await import('./js/supabase-client.js')
+      const { data: { session } } = await supabase.auth.getSession()
 
-    if (token) {
-      try {
+      if (session) {
+        const userId = session.user.id
+        console.log('Session Supabase trouvée, userId:', userId)
+
         const res = await fetch('/.netlify/functions/auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            action: 'update_profile',
-            token,
+            action: 'update_profile_by_id',
+            userId,
             description: profileData.description || '',
             genres: selectedGenres,
             instagram: profileData.instagram || '',
@@ -588,40 +584,42 @@
             spotify: profileData.spotify || '',
             youtube: profileData.youtube || '',
             mixUrl: profileData.mix || '',
-            tracks: tracks.map(t => t.name || t)
+            tracks: tracks.map(t => t.name || t),
+            photo: profilePhoto || savedUser.picture || ''
           })
-        });
+        })
 
+        const data = await res.json()
         if (res.ok) {
-          const data = await res.json();
-          console.log('Profil sauvegardé:', data.user?.profile_complete);
-          // Met à jour localStorage avec les données serveur + force les deux flags
-          const updatedUser = { ...savedUser, ...data.user, profile_complete: true, profileComplete: true };
-          localStorage.setItem('cue_user', JSON.stringify(updatedUser));
+          console.log('✅ profile_complete sauvegardé en DB:', data.user?.profile_complete)
+          const updatedUser = { ...savedUser, ...data.user, profile_complete: true, profileComplete: true }
+          localStorage.setItem('cue_user', JSON.stringify(updatedUser))
         } else {
-          console.log('Erreur sauvegarde profil:', await res.text());
+          console.log('❌ Erreur:', data.error)
         }
-      } catch (err) {
-        console.log('Erreur réseau:', err.message);
+      } else {
+        console.log('⚠️ Pas de session Supabase — sauvegarde localStorage uniquement')
       }
+    } catch (err) {
+      console.log('Erreur:', err.message)
     }
 
-    // Affiche l'étape finale quoi qu'il arrive
-    document.getElementById('step-' + currentStep).classList.remove('active');
-    document.getElementById('step-complete').classList.add('active');
-    document.getElementById('progress-fill').style.width = '100%';
-    document.getElementById('step-indicator').textContent = 'Profil complété ✓';
-    document.querySelector('.skip-btn').style.display = 'none';
+    // Affiche étape finale
+    document.getElementById('step-' + currentStep).classList.remove('active')
+    document.getElementById('step-complete').classList.add('active')
+    document.getElementById('progress-fill').style.width = '100%'
+    document.getElementById('step-indicator').textContent = 'Profil complété ✓'
+    document.querySelector('.skip-btn').style.display = 'none'
 
-    if (profileData.photo) {
-      document.getElementById('preview-avatar').src = profileData.photo;
-      document.getElementById('preview-avatar').style.display = 'block';
+    if (profilePhoto) {
+      document.getElementById('preview-avatar').src = profilePhoto
+      document.getElementById('preview-avatar').style.display = 'block'
     }
 
-    const firstName = savedUser.first_name || savedUser.firstName || '';
-    const lastName = savedUser.last_name || savedUser.lastName || '';
-    document.getElementById('preview-name').textContent = firstName + ' ' + lastName;
-    document.getElementById('preview-genres').textContent = selectedGenres.join(' · ');
+    const user = JSON.parse(localStorage.getItem('cue_user') || '{}')
+    document.getElementById('preview-name').textContent =
+      (user.first_name || user.firstName || '') + ' ' + (user.last_name || user.lastName || '')
+    document.getElementById('preview-genres').textContent = selectedGenres.join(' · ')
   }
 
   // SHARE
@@ -651,21 +649,52 @@
     window.location.href = 'dashboard-dj.html';
   }
 
-  // Si profil déjà complété → dashboard direct
-  const profileComplete = user.profile_complete === true
-    || user.profile_complete === 'true'
-    || user.profileComplete === true;
+  async function init() {
+    try {
+      const { supabase } = await import('./js/supabase-client.js')
+      const { data: { session } } = await supabase.auth.getSession()
 
-  if (profileComplete) {
-    window.location.href = 'dashboard-dj.html';
-    // stop ici
-  } else {
-    // Vérifie connexion et type
-    const userType = user.user_type || user.userType;
-    if (!localStorage.getItem('cue_logged_in') || !userType || userType !== 'dj') {
-      window.location.href = 'index.html';
+      if (!session) {
+        // Fallback localStorage
+        const localUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
+        const isLogged = localStorage.getItem('cue_logged_in') === 'true'
+        if (!isLogged && !localUser.id) {
+          window.location.href = 'login.html'
+          return
+        }
+
+        // Vérifie si profil déjà complet
+        if (localUser.profile_complete === true || localUser.profileComplete === true) {
+          window.location.href = 'dashboard-dj.html'
+          return
+        }
+        return
+      }
+
+      // Vérifie si profil déjà complet en DB
+      const res = await fetch('/.netlify/functions/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_user', userId: session.user.id })
+      })
+      const data = await res.json()
+
+      if (data.user?.profile_complete === true) {
+        window.location.href = 'dashboard-dj.html'
+        return
+      }
+
+      // Stocke les infos en localStorage
+      if (data.user) {
+        localStorage.setItem('cue_user', JSON.stringify(data.user))
+        localStorage.setItem('cue_logged_in', 'true')
+      }
+    } catch (err) {
+      console.log('Erreur init onboarding:', err.message)
     }
   }
+
+  init()
 </script>
 
 </body>

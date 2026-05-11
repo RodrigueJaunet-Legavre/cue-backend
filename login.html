@@ -6,7 +6,6 @@
 <title>CUE — Connexion</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root{--Y:#FFC300;--Y2:#FFD740;--BG:#080808;--CARD:#111;--BORDER:rgba(255,195,0,.13);--TEXT:#ddd;--MUTED:#bbb;--D:'Barlow Condensed',sans-serif;--B:'Barlow',sans-serif;--SUCCESS:#00c864;--ERROR:#ff4444}
 *{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
@@ -139,208 +138,141 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
     </form>
     
     <div class="divider"><span>ou</span></div>
-    
-    <!-- Google Sign-In Button -->
-    <div id="googleSignInBtn" style="display:flex;justify-content:center;margin-bottom:10px"></div>
+
+    <button type="button" onclick="signInWithGoogle()" class="social-btn">
+      <img src="https://www.google.com/favicon.ico" width="18" height="18"> Continuer avec Google
+    </button>
     
     <p class="auth-link">Pas encore inscrit ? <a href="inscription.html">Créer un compte</a></p>
   </div>
 </main>
 
 <script>
-// Check if already logged in
-document.addEventListener('DOMContentLoaded', () => {
-  if (localStorage.getItem('cue_logged_in') === 'true') {
-    const redirect = new URLSearchParams(window.location.search).get('redirect');
-    if (redirect) { window.location.href = redirect; return; }
-    smartRedirect();
-  }
-});
-
-function redirectAfterLogin(userData) {
-  const userType = userData.user_type || userData.userType;
-  const profileComplete = userData.profile_complete === true
-    || userData.profile_complete === 'true'
-    || userData.profileComplete === true;
-
-  console.log('userType:', userType);
-  console.log('profile_complete:', userData.profile_complete);
-  console.log('profileComplete:', userData.profileComplete);
-  console.log('→ redirection:', profileComplete ? 'dashboard' : 'onboarding');
-
-  if (userType === 'dj') {
-    window.location.href = profileComplete ? 'dashboard-dj.html' : 'dj-onboarding.html';
-  } else if (userType === 'venue') {
-    window.location.href = 'dashboard-venue.html';
-  } else {
-    window.location.href = 'index.html';
-  }
-}
-
-function smartRedirect() {
-  const u = JSON.parse(localStorage.getItem('cue_user') || '{}');
-  redirectAfterLogin(u);
-}
-
 function togglePassword() {
   const input = document.getElementById('password');
   input.type = input.type === 'password' ? 'text' : 'password';
 }
+</script>
 
-// Handle login
+<script type="module">
+import { supabase } from './js/supabase-client.js'
+
 async function handleLogin(e) {
-  e.preventDefault();
+  e.preventDefault()
 
-  // Clear errors
-  document.querySelectorAll('.form-error').forEach(el => el.classList.remove('show'));
-  document.querySelectorAll('.form-input').forEach(el => el.classList.remove('error'));
-  document.getElementById('errorAlert').classList.remove('show');
-  document.getElementById('successAlert').classList.remove('show');
+  document.querySelectorAll('.form-error').forEach(el => el.classList.remove('show'))
+  document.querySelectorAll('.form-input').forEach(el => el.classList.remove('error'))
+  document.getElementById('errorAlert').classList.remove('show')
+  document.getElementById('successAlert').classList.remove('show')
 
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
+  const email = document.getElementById('email').value.trim()
+  const password = document.getElementById('password').value
 
-  let hasError = false;
+  const btn = document.getElementById('submitBtn')
+  const spinner = document.getElementById('submitSpinner')
+  const label = document.getElementById('submitLabel')
+  btn.disabled = true
+  spinner.classList.add('on')
+  label.textContent = 'Connexion...'
 
-  if (!email || !email.includes('@')) {
-    document.getElementById('email').classList.add('error');
-    document.getElementById('emailError').classList.add('show');
-    hasError = true;
-  }
-
-  if (!password) {
-    document.getElementById('password').classList.add('error');
-    document.getElementById('passwordError').classList.add('show');
-    hasError = true;
-  }
-
-  if (hasError) return;
-
-  // Show loading
-  const btn = document.getElementById('submitBtn');
-  const spinner = document.getElementById('submitSpinner');
-  const label = document.getElementById('submitLabel');
-  btn.disabled = true;
-  spinner.classList.add('on');
-  label.textContent = 'Connexion...';
-
-  // 1. Vérifie admin EN PREMIER (pour tous les emails, la function retournera 401 si non admin)
   try {
+    // Vérifie admin d'abord
     const adminRes = await fetch('/.netlify/functions/admin-login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
-    });
+    })
     if (adminRes.ok) {
-      const { secret } = await adminRes.json();
-      sessionStorage.setItem('admin_secret', secret);
-      window.location.href = 'cue-secure-admin-panel.html';
-      return;
+      const { secret } = await adminRes.json()
+      sessionStorage.setItem('admin_secret', secret)
+      window.location.href = 'cue-secure-admin-panel.html'
+      return
     }
-  } catch (_) { /* function indisponible, continue */ }
+  } catch (_) {}
 
-  // 2. Connexion normale via API
   try {
+    // Connexion Supabase
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (error) {
+      document.getElementById('errorAlert').classList.add('show')
+      btn.disabled = false
+      spinner.classList.remove('on')
+      label.textContent = 'Se connecter'
+      return
+    }
+
+    // Récupère les infos depuis notre DB
     const res = await fetch('/.netlify/functions/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'login', email, password })
-    });
+      body: JSON.stringify({ action: 'get_user', userId: data.user.id })
+    })
+    const userData = await res.json()
 
-    const data = await res.json();
+    const dbUser = userData.user || data.user.user_metadata
+    localStorage.setItem('cue_user', JSON.stringify(dbUser))
+    localStorage.setItem('cue_logged_in', 'true')
 
-    if (!res.ok) {
-      document.getElementById('errorAlert').classList.add('show');
-      btn.disabled = false;
-      spinner.classList.remove('on');
-      label.textContent = 'Se connecter';
-      return;
-    }
+    document.getElementById('successAlert').classList.add('show')
+    setTimeout(() => redirectAfterLogin(dbUser), 800)
 
-    localStorage.setItem('cue_token', data.token);
-    localStorage.setItem('cue_user', JSON.stringify(data.user));
-    localStorage.setItem('cue_logged_in', 'true');
-
-    document.getElementById('successAlert').classList.add('show');
-
-    setTimeout(() => {
-      const redirect = new URLSearchParams(window.location.search).get('redirect');
-      if (redirect) { window.location.href = redirect; return; }
-      redirectAfterLogin(data.user);
-    }, 800);
   } catch (err) {
-    document.getElementById('errorAlert').classList.add('show');
-    btn.disabled = false;
-    spinner.classList.remove('on');
-    label.textContent = 'Se connecter';
+    document.getElementById('errorAlert').classList.add('show')
+    btn.disabled = false
+    spinner.classList.remove('on')
+    label.textContent = 'Se connecter'
   }
 }
 
-// Google Sign-In
-// NOTE: Tu dois créer un projet Google Cloud et obtenir un Client ID
-// 1. Va sur https://console.cloud.google.com/
-// 2. Crée un projet ou utilise un existant
-// 3. Active "Google Identity Services API"
-// 4. Crée des credentials OAuth 2.0 (Web application)
-// 5. Ajoute https://cuedj.eu dans les origines autorisées
-// 6. Remplace YOUR_GOOGLE_CLIENT_ID ci-dessous
+async function signInWithGoogle() {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: 'https://cuedj.eu/auth-callback.html' }
+  })
+  if (error) alert('Erreur Google : ' + error.message)
+}
 
-const GOOGLE_CLIENT_ID = '1096446567466-b1ia5c4far7j137k0564go80t1r3lf23.apps.googleusercontent.com'; // ← REMPLACE ICI
+function redirectAfterLogin(userData) {
+  const userType = userData.user_type || userData.userType
+  const profileComplete = userData.profile_complete === true ||
+                          userData.profile_complete === 'true' ||
+                          userData.profileComplete === true
 
-window.onload = function() {
-  if (typeof google !== 'undefined' && GOOGLE_CLIENT_ID !== 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com') {
-    google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleGoogleSignIn
-    });
-    google.accounts.id.renderButton(
-      document.getElementById('googleSignInBtn'),
-      { 
-        theme: 'filled_black', 
-        size: 'large', 
-        width: 300,
-        text: 'continue_with',
-        shape: 'rectangular'
-      }
-    );
+  const redirect = new URLSearchParams(window.location.search).get('redirect')
+  if (redirect) { window.location.href = redirect; return }
+
+  if (userType === 'dj') {
+    window.location.href = profileComplete ? 'dashboard-dj.html' : 'dj-onboarding.html'
+  } else if (userType === 'venue') {
+    window.location.href = 'dashboard-venue.html'
   } else {
-    // Fallback si Google pas configuré
-    document.getElementById('googleSignInBtn').innerHTML = `
-      <button class="social-btn" style="width:100%" onclick="alert('Configure GOOGLE_CLIENT_ID dans login.html')">
-        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-        Continuer avec Google
-      </button>
-    `;
+    window.location.href = 'index.html'
   }
-};
-
-function handleGoogleSignIn(response) {
-  // Décoder le JWT token de Google
-  const payload = JSON.parse(atob(response.credential.split('.')[1]));
-  
-  // Créer l'utilisateur avec les infos Google
-  const googleUser = {
-    id: payload.sub,
-    firstName: payload.given_name || payload.name.split(' ')[0],
-    lastName: payload.family_name || '',
-    email: payload.email,
-    phone: '',
-    userType: 'dj', // Par défaut, peut être changé dans le dashboard
-    referralCodeOwn: 'REF' + payload.sub.slice(-6),
-    verified: payload.email_verified,
-    picture: payload.picture,
-    googleId: payload.sub,
-    createdAt: new Date().toISOString()
-  };
-  
-  // Sauvegarder
-  localStorage.setItem('cue_user', JSON.stringify(googleUser));
-  localStorage.setItem('cue_logged_in', 'true');
-  
-  // Afficher succès et rediriger
-  document.getElementById('successAlert').classList.add('show');
-  setTimeout(() => smartRedirect(), 1000);
 }
+
+window.handleLogin = handleLogin
+window.signInWithGoogle = signInWithGoogle
+
+// Vérifie si déjà connecté
+async function checkSession() {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (session) {
+    const res = await fetch('/.netlify/functions/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_user', userId: session.user.id })
+    })
+    const userData = await res.json()
+    if (userData.user) {
+      localStorage.setItem('cue_user', JSON.stringify(userData.user))
+      localStorage.setItem('cue_logged_in', 'true')
+      redirectAfterLogin(userData.user)
+    }
+  }
+}
+
+checkSession()
 </script>
 
 </body>

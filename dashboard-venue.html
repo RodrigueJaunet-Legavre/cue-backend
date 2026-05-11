@@ -839,73 +839,72 @@
   ];
 
   async function init() {
-    const token = localStorage.getItem('cue_token');
-    const localUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
-    const isLoggedIn = localStorage.getItem('cue_logged_in') === 'true';
+    try {
+      const { supabase } = await import('./js/supabase-client.js')
+      const { data: { session } } = await supabase.auth.getSession()
 
-    if (!isLoggedIn && !token) {
-      window.location.href = 'login.html';
-      return;
-    }
-
-    if (token) {
-      try {
+      if (!session) {
+        // Fallback localStorage
+        const localUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
+        const isLogged = localStorage.getItem('cue_logged_in') === 'true'
+        if (!isLogged || !localUser.id) {
+          window.location.href = 'login.html'
+          return
+        }
+        Object.assign(user, localUser)
+      } else {
+        // Récupère les données depuis notre DB
         const res = await fetch('/.netlify/functions/auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'verify_token', token })
-        });
+          body: JSON.stringify({ action: 'get_user', userId: session.user.id })
+        })
+        const data = await res.json()
 
-        if (res.ok) {
-          const data = await res.json();
-          Object.assign(user, data.user);
-          localStorage.setItem('cue_user', JSON.stringify(user));
+        if (data.user) {
+          Object.assign(user, data.user)
+          localStorage.setItem('cue_user', JSON.stringify(user))
+          localStorage.setItem('cue_logged_in', 'true')
         } else {
-          if (!isLoggedIn) {
-            localStorage.clear();
-            window.location.href = 'login.html';
-            return;
-          }
+          Object.assign(user, JSON.parse(localStorage.getItem('cue_user') || '{}'))
         }
-      } catch (err) {
-        console.log('Fallback localStorage');
-        Object.assign(user, localUser);
       }
-    } else {
-      Object.assign(user, localUser);
+
+      // Vérifie le type utilisateur
+      const userType = user.user_type || user.userType
+      if (!userType || userType !== 'venue') {
+        window.location.href = 'index.html'
+        return
+      }
+
+    } catch (err) {
+      console.log('Erreur init:', err.message)
+      const localUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
+      if (!localUser.id) { window.location.href = 'login.html'; return }
+      Object.assign(user, localUser)
     }
 
-    const userType = user.user_type || user.userType;
-    if (!userType) {
-      window.location.href = 'login.html';
-      return;
-    }
-    if (userType !== 'venue') {
-      window.location.href = 'dashboard-dj.html';
-      return;
-    }
+    // Affiche les infos
+    const firstName = user.first_name || user.firstName || 'Venue'
+    const lastName = user.last_name || user.lastName || ''
+    const plan = user.plan || 'starter'
 
-    const firstName = user.first_name || user.firstName || 'Venue';
-    const lastName = user.last_name || user.lastName || '';
-    const plan = user.plan || 'starter';
+    document.getElementById('sidebar-name').textContent = firstName + ' ' + lastName
+    document.getElementById('header-name').textContent = firstName
+    document.getElementById('sidebar-plan').textContent = plan.toUpperCase()
 
-    document.getElementById('sidebar-name').textContent = firstName + ' ' + lastName;
-    document.getElementById('header-name').textContent = firstName;
-    document.getElementById('sidebar-plan').textContent = plan.toUpperCase();
-
-    if (user.picture || user.profile?.photo) {
-      document.getElementById('sidebar-avatar').innerHTML = `
-        <img src="${user.picture || user.profile?.photo}"
-             style="width:64px; height:64px; border-radius:50%; object-fit:cover;">
-      `;
+    const photo = user.picture || user.profile?.photo
+    if (photo) {
+      document.getElementById('sidebar-avatar').innerHTML =
+        `<img src="${photo}" style="width:64px; height:64px; border-radius:50%; object-fit:cover;">`
     }
 
-    allDJs = demoDJs;
-    loadStats();
-    await filterDJs();
-    renderFavorites();
-    renderCalendar();
-    updateFavBadge();
+    allDJs = demoDJs
+    loadStats()
+    await filterDJs()
+    renderFavorites()
+    renderCalendar()
+    updateFavBadge()
   }
 
   async function showPage(page, el) {
@@ -1447,19 +1446,15 @@
 
   function closeModal(id) { document.getElementById(id).classList.remove('open'); }
   async function logout() {
-    const token = localStorage.getItem('cue_token');
-    if (token) {
-      try {
-        await fetch('/.netlify/functions/auth', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'logout', token })
-        });
-      } catch (_) {}
+    try {
+      const { supabase } = await import('./js/supabase-client.js')
+      await supabase.auth.signOut()
+    } catch (err) {
+      console.log('Erreur logout:', err)
     }
-    localStorage.clear();
-    sessionStorage.clear();
-    window.location.href = 'index.html';
+    localStorage.clear()
+    sessionStorage.clear()
+    window.location.href = 'index.html'
   }
   function deleteAccount() { if(!confirm('Supprimer ton compte ?')) return; localStorage.clear(); sessionStorage.clear(); window.location.href='index.html'; }
 
