@@ -1,177 +1,92 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>CUE — Connexion</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-<style>
-:root{--Y:#FFC300;--Y2:#FFD740;--BG:#080808;--CARD:#111;--BORDER:rgba(255,195,0,.13);--TEXT:#ddd;--MUTED:#bbb;--D:'Barlow Condensed',sans-serif;--B:'Barlow',sans-serif;--SUCCESS:#00c864;--ERROR:#ff4444}
-*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
-body{background:var(--BG);color:var(--TEXT);font-family:var(--B);min-height:100vh;display:flex;flex-direction:column}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#222;border-radius:2px}
-
-/* ─── NAV ─── */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:14px 52px;background:rgba(8,8,8,.97);backdrop-filter:blur(18px);border-bottom:1px solid var(--BORDER)}
-.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
-.logo-box{width:38px;height:38px;background:var(--Y);display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:22px;font-weight:900;color:#000}
-.logo-text{font-family:var(--D);font-size:20px;font-weight:900;color:#fff;letter-spacing:1px}
-.nav-link{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--MUTED);text-decoration:none;transition:color .2s}
-.nav-link:hover{color:var(--Y)}
-
-/* ─── MAIN ─── */
-main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px 20px 40px}
-
-/* ─── LOGIN BOX ─── */
-.login-box{background:var(--CARD);border:1px solid var(--BORDER);padding:44px 40px;width:100%;max-width:420px}
-.login-box h1{font-family:var(--D);font-size:42px;font-weight:900;text-transform:uppercase;color:#fff;text-align:center;margin-bottom:6px;letter-spacing:1px}
-.login-box h1 span{color:var(--Y)}
-.login-subtitle{font-size:13px;color:var(--MUTED);text-align:center;margin-bottom:32px}
-
-/* ─── FORM ─── */
-.form-group{margin-bottom:16px}
-.form-label{display:block;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--MUTED);margin-bottom:6px}
-.form-input{width:100%;background:#0a0a0a;border:1px solid var(--BORDER);padding:13px 16px;color:var(--TEXT);font-family:var(--B);font-size:14px;outline:none;transition:all .2s}
-.form-input:focus{border-color:var(--Y);background:rgba(255,195,0,.02)}
-.form-input::placeholder{color:#555}
-.form-input.error{border-color:var(--ERROR)}
-.form-error{font-size:11px;color:var(--ERROR);margin-top:5px;display:none}
-.form-error.show{display:block}
-
-/* ─── BUTTONS ─── */
-.btn-primary{width:100%;padding:16px;background:var(--Y);border:none;color:#000;font-family:var(--D);font-size:18px;font-weight:900;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px}
-.btn-primary:hover{background:var(--Y2)}
-.btn-primary:disabled{opacity:.5;cursor:not-allowed}
-
-/* ─── SPINNER ─── */
-.spinner{width:18px;height:18px;border:2px solid rgba(0,0,0,.2);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite;display:none}
-.spinner.on{display:block}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* ─── CHECKBOX ─── */
-.remember-row{display:flex;align-items:center;justify-content:space-between;margin:20px 0}
-.remember-wrap{display:flex;align-items:center;gap:8px}
-.remember-wrap input{width:16px;height:16px;accent-color:var(--Y);cursor:pointer}
-.remember-wrap label{font-size:12px;color:var(--MUTED);cursor:pointer}
-.forgot-link{font-size:12px;color:var(--Y);text-decoration:none}
-.forgot-link:hover{text-decoration:underline}
-
-/* ─── DIVIDER ─── */
-.divider{display:flex;align-items:center;gap:16px;margin:28px 0}
-.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--BORDER)}
-.divider span{font-size:11px;color:var(--MUTED);text-transform:uppercase;letter-spacing:1px}
-
-/* ─── SOCIAL BUTTONS ─── */
-.social-btn{width:100%;padding:14px;background:#0a0a0a;border:1px solid var(--BORDER);color:var(--TEXT);font-family:var(--B);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px}
-.social-btn:hover{border-color:var(--Y);background:rgba(255,195,0,.03)}
-.social-btn img{width:18px;height:18px}
-
-/* ─── AUTH LINK ─── */
-.auth-link{font-size:13px;color:var(--MUTED);text-align:center;margin-top:28px}
-.auth-link a{color:var(--Y);text-decoration:none;font-weight:600}
-.auth-link a:hover{text-decoration:underline}
-
-/* ─── ALERT ─── */
-.alert{padding:14px 16px;margin-bottom:20px;font-size:12px;display:none}
-.alert.error{background:rgba(255,68,68,.1);border:1px solid rgba(255,68,68,.3);color:var(--ERROR)}
-.alert.success{background:rgba(0,200,100,.1);border:1px solid rgba(0,200,100,.3);color:var(--SUCCESS)}
-.alert.show{display:block}
-
-/* ─── RESPONSIVE ─── */
-@media(max-width:600px){
-  nav{padding:14px 20px}
-  main{padding:80px 16px 32px}
-  .login-box{padding:32px 24px}
-  .login-box h1{font-size:32px}
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="supabase-key" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yamhrZmR2aWh1dnFjanhoandlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MzU2ODEsImV4cCI6MjA5NDAxMTY4MX0.Ti7anM1O3KqbZYLxRkl1rWbcghJF5FgmRxNqOTV6JL0">
+  <title>CUE — Connexion</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#080808; color:#ddd; font-family:Barlow,sans-serif; min-height:100vh; display:flex; align-items:center; justify-content:center; }
+    .card { background:#111; border:1px solid rgba(255,195,0,.13); border-radius:20px; padding:48px; width:440px; }
+    .logo { color:#FFC300; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:32px; text-align:center; margin-bottom:8px; }
+    h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px; text-align:center; color:#fff; margin-bottom:32px; }
+    .form-group { margin-bottom:16px; }
+    label { display:block; color:#888; font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+    input { width:100%; background:#1a1a1a; border:1px solid #333; color:#ddd; padding:14px 16px; border-radius:10px; font-size:15px; font-family:Barlow,sans-serif; transition:border-color .2s; }
+    input:focus { outline:none; border-color:#FFC300; }
+    .password-wrap { position:relative; }
+    .eye-btn { position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:18px; color:#888; }
+    .btn-primary { width:100%; padding:16px; background:#FFC300; color:#000; border:none; border-radius:10px; font-weight:700; font-size:16px; cursor:pointer; font-family:Barlow,sans-serif; margin-top:8px; transition:all .2s; }
+    .btn-primary:hover { background:#FFD740; }
+    .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+    .btn-google { width:100%; padding:14px; background:#fff; color:#333; border:none; border-radius:10px; font-weight:700; font-size:15px; cursor:pointer; font-family:Barlow,sans-serif; display:flex; align-items:center; justify-content:center; gap:10px; margin-top:12px; transition:all .2s; }
+    .btn-google:hover { background:#f5f5f5; }
+    .divider { display:flex; align-items:center; gap:12px; margin:20px 0; color:#555; font-size:13px; }
+    .divider::before, .divider::after { content:''; flex:1; height:1px; background:#333; }
+    .error { background:rgba(255,68,68,.1); color:#ff4444; border:1px solid rgba(255,68,68,.2); border-radius:8px; padding:12px; font-size:14px; margin-bottom:16px; display:none; }
+    .link { text-align:center; margin-top:24px; color:#888; font-size:14px; }
+    .link a { color:#FFC300; text-decoration:none; font-weight:700; }
+  </style>
 </head>
 <body>
+<div class="card">
+  <div class="logo">CUE</div>
+  <h1>Connexion</h1>
 
-<!-- NAV -->
-<nav>
-  <a href="index.html" class="logo">
-    <div class="logo-box">C</div>
-    <span class="logo-text">CUE</span>
-  </a>
-  <a href="inscription.html" class="nav-link">Créer un compte</a>
-</nav>
+  <div class="error" id="error-msg"></div>
 
-<!-- MAIN -->
-<main>
-  <div class="login-box">
-    <h1>Hey, <span>Welcome</span></h1>
-    <p class="login-subtitle">Connecte-toi à ton compte CUE</p>
-    
-    <div class="alert error" id="errorAlert">Email ou mot de passe incorrect</div>
-    <div class="alert success" id="successAlert">Connexion réussie ! Redirection...</div>
-    
-    <form id="loginForm" onsubmit="handleLogin(event)">
-      <div class="form-group">
-        <label class="form-label">Adresse email</label>
-        <input type="email" class="form-input" id="email" placeholder="jean@example.com" required>
-        <div class="form-error" id="emailError">Email invalide</div>
+  <form onsubmit="handleLogin(event)">
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="ton@email.com" required>
+    </div>
+    <div class="form-group">
+      <label>Mot de passe</label>
+      <div class="password-wrap">
+        <input type="password" id="password" placeholder="••••••••" required>
+        <button type="button" class="eye-btn" onclick="togglePwd()">👁</button>
       </div>
-      
-      <div class="form-group">
-        <label class="form-label">Mot de passe</label>
-        <div style="position:relative;">
-          <input type="password" class="form-input" id="password" placeholder="Ton mot de passe" required style="padding-right:48px;">
-          <span onclick="togglePassword()" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:18px;color:#bbb;user-select:none;">👁</span>
-        </div>
-        <div class="form-error" id="passwordError">Mot de passe requis</div>
-      </div>
-      
-      <div class="remember-row">
-        <div class="remember-wrap">
-          <input type="checkbox" id="remember">
-          <label for="remember">Se souvenir de moi</label>
-        </div>
-        <a href="#" class="forgot-link">Mot de passe oublié ?</a>
-      </div>
-      
-      <button type="submit" class="btn-primary" id="submitBtn">
-        <span id="submitLabel">Se connecter</span>
-        <div class="spinner" id="submitSpinner"></div>
-      </button>
-    </form>
-    
-    <div class="divider"><span>ou</span></div>
+    </div>
+    <button type="submit" class="btn-primary" id="login-btn">Se connecter</button>
+  </form>
 
-    <button type="button" onclick="signInWithGoogle()" class="social-btn">
-      <img src="https://www.google.com/favicon.ico" width="18" height="18"> Continuer avec Google
-    </button>
-    
-    <p class="auth-link">Pas encore inscrit ? <a href="inscription.html">Créer un compte</a></p>
+  <div class="divider">ou</div>
+
+  <button class="btn-google" onclick="loginWithGoogle()">
+    <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/><path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/><path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/></svg>
+    Continuer avec Google
+  </button>
+
+  <div class="link">
+    Pas encore de compte ? <a href="inscription.html">S'inscrire</a>
   </div>
-</main>
+</div>
 
 <script>
-function togglePassword() {
-  const input = document.getElementById('password');
-  input.type = input.type === 'password' ? 'text' : 'password';
+function togglePwd() {
+  const input = document.getElementById('password')
+  input.type = input.type === 'password' ? 'text' : 'password'
 }
-</script>
 
-<script type="module">
-import { supabase } from './js/supabase-client.js'
+function showError(msg) {
+  const el = document.getElementById('error-msg')
+  el.textContent = msg
+  el.style.display = 'block'
+}
 
-// CONNEXION EMAIL
 async function handleLogin(e) {
   e.preventDefault()
   const email = document.getElementById('email').value.trim()
   const password = document.getElementById('password').value
-  const errorEl = document.getElementById('errorAlert')
-  const btn = document.getElementById('submitBtn')
-  const spinner = document.getElementById('submitSpinner')
-  const label = document.getElementById('submitLabel')
+  const btn = document.getElementById('login-btn')
 
-  if (errorEl) errorEl.classList.remove('show')
-  if (btn) { btn.disabled = true; spinner.classList.add('on'); label.textContent = 'Connexion...' }
+  btn.disabled = true
+  btn.textContent = 'Connexion...'
+  document.getElementById('error-msg').style.display = 'none'
 
-  // Check admin
   try {
+    // Check admin
     const adminRes = await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -183,68 +98,67 @@ async function handleLogin(e) {
       window.location.href = 'cue-secure-admin-panel.html'
       return
     }
-  } catch(e) {}
 
-  // Connexion Supabase
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-
-  if (error) {
-    if (errorEl) errorEl.classList.add('show')
-    if (btn) { btn.disabled = false; spinner.classList.remove('on'); label.textContent = 'Se connecter' }
-    return
-  }
-
-  await handleSession(data.session)
-}
-
-// GOOGLE
-async function signInWithGoogle() {
-  await supabase.auth.signOut()
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: 'https://cuedj.eu/auth-callback.html' }
-  })
-  if (error) alert('Erreur : ' + error.message)
-}
-
-// GESTION SESSION
-async function handleSession(session) {
-  if (!session) return
-
-  const res = await fetch('/api/auth', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      action: 'get_user',
-      userId: session.user.id,
-      email: session.user.email
+    // Connexion normale via notre DB
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'login', email, password })
     })
-  })
-  const data = await res.json()
+    const data = await res.json()
 
-  if (data.user) {
+    if (!res.ok || data.error) {
+      showError(data.error || 'Email ou mot de passe incorrect.')
+      btn.disabled = false
+      btn.textContent = 'Se connecter'
+      return
+    }
+
     localStorage.setItem('cue_user', JSON.stringify(data.user))
     localStorage.setItem('cue_logged_in', 'true')
+    localStorage.setItem('cue_token', data.token)
     redirectAfterLogin(data.user)
+
+  } catch(err) {
+    showError('Erreur de connexion. Réessaie.')
+    btn.disabled = false
+    btn.textContent = 'Se connecter'
   }
 }
 
-function redirectAfterLogin(userData) {
-  const userType = userData.user_type || userData.userType
-  const profileComplete = userData.profile_complete === true
+async function loginWithGoogle() {
+  try {
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm')
+    const supabase = createClient(
+      'https://orjhkfdvihuvqcjxhjwe.supabase.co',
+      document.querySelector('meta[name="supabase-key"]').content
+    )
+    await supabase.auth.signOut()
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: 'https://cuedj.eu/auth-callback.html' }
+    })
+    if (error) showError('Erreur Google : ' + error.message)
+  } catch(err) {
+    showError('Erreur Google. Réessaie.')
+  }
+}
 
-  if (userType === 'dj') {
-    window.location.href = profileComplete ? 'dashboard-dj.html' : 'dj-onboarding.html'
-  } else if (userType === 'venue') {
+function redirectAfterLogin(user) {
+  const type = user.user_type || user.userType
+  const done = user.profile_complete === true
+
+  const redirect = new URLSearchParams(window.location.search).get('redirect')
+  if (redirect) { window.location.href = redirect; return }
+
+  if (type === 'dj') {
+    window.location.href = done ? 'dashboard-dj.html' : 'dj-onboarding.html'
+  } else if (type === 'venue') {
     window.location.href = 'dashboard-venue.html'
   } else {
-    window.location.href = 'google-setup.html'
+    window.location.href = 'index.html'
   }
 }
-
-window.handleLogin = handleLogin
-window.signInWithGoogle = signInWithGoogle
 </script>
-
 </body>
 </html>
