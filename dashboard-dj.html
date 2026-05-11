@@ -1266,24 +1266,43 @@
 
   function initVerificationPage() {
     document.getElementById('verif-email-field').value = user.email || '';
-    document.getElementById('verif-name-field').value = (user.first_name || user.firstName || '') + ' ' + (user.last_name || user.lastName || '');
+    document.getElementById('verif-name-field').value =
+      (user.first_name || user.firstName || '') + ' ' +
+      (user.last_name || user.lastName || '');
 
-    const status = user.identity_status;
-    document.getElementById('verif-pending').style.display = (!status || status === 'pending') ? 'flex' : 'none';
-    document.getElementById('verif-approved').style.display = status === 'verified' ? 'flex' : 'none';
-    document.getElementById('verif-rejected').style.display = status === 'rejected' ? 'flex' : 'none';
+    const status = user.identity_status || 'none';
+
+    // Cache tout d'abord
+    document.getElementById('verif-pending').style.display = 'none';
+    document.getElementById('verif-approved').style.display = 'none';
+    document.getElementById('verif-rejected').style.display = 'none';
 
     if (status === 'verified') {
+      document.getElementById('verif-approved').style.display = 'flex';
       document.getElementById('verif-form-card').style.display = 'none';
+    } else if (status === 'rejected') {
+      document.getElementById('verif-rejected').style.display = 'flex';
+      document.getElementById('verif-form-card').style.display = 'block';
+    } else if (status === 'pending') {
+      document.getElementById('verif-pending').style.display = 'flex';
+      document.getElementById('verif-form-card').style.display = 'none';
+    } else {
+      document.getElementById('verif-form-card').style.display = 'block';
     }
 
     const badge = document.getElementById('verif-status-badge');
     if (badge) {
-      if (status === 'verified') {
-        badge.textContent = '✅'; badge.style.background = 'rgba(0,200,100,.2)'; badge.style.color = '#00c864';
-      } else if (status === 'rejected') {
-        badge.textContent = '❌'; badge.style.background = 'rgba(255,68,68,.2)'; badge.style.color = '#ff4444';
-      }
+      const config = {
+        verified: { text: '✅', bg: 'rgba(0,200,100,.2)', color: '#00c864' },
+        pending:  { text: '⏳', bg: 'rgba(255,170,0,.2)', color: '#ffaa00' },
+        rejected: { text: '❌', bg: 'rgba(255,68,68,.2)', color: '#ff4444' },
+        none:     { text: '', bg: 'transparent', color: 'transparent' }
+      };
+      const c = config[status] || config.none;
+      badge.textContent = c.text;
+      badge.style.background = c.bg;
+      badge.style.color = c.color;
+      badge.style.display = c.text ? 'inline-block' : 'none';
     }
   }
 
