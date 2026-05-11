@@ -157,13 +157,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-function smartRedirect() {
-  const u = JSON.parse(localStorage.getItem('cue_user') || '{}');
-  if (u.user_type === 'dj' || u.userType === 'dj') {
-    window.location.href = (u.profile_complete || u.profileComplete) ? 'dashboard-dj.html' : 'dj-onboarding.html';
+function redirectAfterLogin(userData) {
+  const userType = userData.user_type || userData.userType;
+  const profileComplete = userData.profile_complete || userData.profileComplete;
+
+  if (userType === 'dj') {
+    window.location.href = profileComplete ? 'dashboard-dj.html' : 'dj-onboarding.html';
   } else {
     window.location.href = 'dashboard-venue.html';
   }
+}
+
+function smartRedirect() {
+  const u = JSON.parse(localStorage.getItem('cue_user') || '{}');
+  redirectAfterLogin(u);
 }
 
 function togglePassword() {
@@ -218,7 +225,7 @@ async function handleLogin(e) {
     if (adminRes.ok) {
       const { secret } = await adminRes.json();
       sessionStorage.setItem('admin_secret', secret);
-      window.location.href = 'admin.html';
+      window.location.href = 'cue-secure-admin-panel.html';
       return;
     }
   } catch (_) { /* function indisponible, continue */ }
@@ -250,11 +257,7 @@ async function handleLogin(e) {
     setTimeout(() => {
       const redirect = new URLSearchParams(window.location.search).get('redirect');
       if (redirect) { window.location.href = redirect; return; }
-      if (data.user.user_type === 'dj') {
-        window.location.href = data.user.profile_complete ? 'dashboard-dj.html' : 'dj-onboarding.html';
-      } else {
-        window.location.href = 'dashboard-venue.html';
-      }
+      redirectAfterLogin(data.user);
     }, 800);
   } catch (err) {
     document.getElementById('errorAlert').classList.add('show');

@@ -728,10 +728,10 @@
              onclick="document.getElementById('mix-input').click()"
              onmouseover="this.style.borderColor='var(--Y)'"
              onmouseout="this.style.borderColor='var(--BORDER)'">
-          <input type="file" id="mix-input" accept=".mp3,audio/mpeg" style="display:none" onchange="handleMixChange(this)">
+          <input type="file" id="mix-input" accept=".mp3,.wav,audio/mpeg,audio/wav,audio/wave" style="display:none" onchange="handleMixChange(this)">
           <div style="font-size:36px; margin-bottom:12px;">🎵</div>
           <div style="font-weight:700; font-size:16px; margin-bottom:8px;">Upload ton mix</div>
-          <div style="color:var(--MUTED); font-size:13px;">MP3 uniquement • 10 à 20 minutes • Max 50MB</div>
+          <div style="color:var(--MUTED); font-size:13px;">MP3 ou WAV • 10 à 20 minutes • Max 100MB</div>
         </div>
       </div>
     </div>
@@ -743,9 +743,9 @@
         <button class="btn btn-outline" style="padding:6px 16px; font-size:13px;" onclick="document.getElementById('tracks-input').click()">+ Ajouter</button>
       </div>
       <div class="card-body">
-        <input type="file" id="tracks-input" accept=".mp3,audio/mpeg" multiple style="display:none" onchange="handleTracksChange(this)">
+        <input type="file" id="tracks-input" accept=".mp3,.wav,audio/mpeg,audio/wav,audio/wave" multiple style="display:none" onchange="handleTracksChange(this)">
         <div id="tracks-list-profile" style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;"></div>
-        <p style="color:var(--MUTED); font-size:13px;">MP3 uniquement • Max 10 tracks • Max 20MB par track</p>
+        <p style="color:var(--MUTED); font-size:13px;">MP3 ou WAV • Max 10 tracks • Max 50MB par track</p>
       </div>
     </div>
 
@@ -1453,12 +1453,22 @@
   function handleMixChange(input) {
     const file = input.files[0];
     if (!file) return;
-    if (file.size > 50 * 1024 * 1024) { alert('Le mix ne doit pas dépasser 50MB.'); return; }
+
+    const validTypes = ['audio/mpeg', 'audio/wav', 'audio/wave', 'audio/x-wav'];
+    if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|wav)$/i)) {
+      alert('Format non supporté. Utilise un fichier MP3 ou WAV.');
+      return;
+    }
+
+    if (file.size > 100 * 1024 * 1024) {
+      alert('Le fichier ne doit pas dépasser 100MB.');
+      return;
+    }
 
     if (mixURL) URL.revokeObjectURL(mixURL);
     mixURL = URL.createObjectURL(file);
-
     profileMix = file.name;
+
     document.getElementById('mix-current').style.display = 'block';
     document.getElementById('mix-upload-zone').style.display = 'none';
     document.getElementById('mix-name').textContent = file.name;
@@ -1480,7 +1490,15 @@
     const files = Array.from(input.files);
     files.forEach(file => {
       if (profileTracks.length >= 10) { alert('Maximum 10 tracks.'); return; }
-      if (file.size > 20 * 1024 * 1024) { alert(`${file.name} dépasse 20MB.`); return; }
+
+      const validTypes = ['audio/mpeg', 'audio/wav', 'audio/wave', 'audio/x-wav'];
+      if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|wav)$/i)) {
+        alert(`${file.name} : format non supporté. Utilise MP3 ou WAV.`);
+        return;
+      }
+
+      if (file.size > 50 * 1024 * 1024) { alert(`${file.name} dépasse 50MB.`); return; }
+
       const url = URL.createObjectURL(file);
       trackURLs.push(url);
       profileTracks.push(file.name);
@@ -1514,7 +1532,8 @@
           </div>
           ${trackUrl ? `
             <audio controls style="width:100%; border-radius:8px; accent-color:var(--Y);">
-              <source src="${trackUrl}" type="audio/mpeg">
+              <source src="${trackUrl}" type="${trackUrl.endsWith('.wav') ? 'audio/wav' : 'audio/mpeg'}">
+              <source src="${trackUrl}">
             </audio>
           ` : ''}
         </div>

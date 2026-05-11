@@ -299,13 +299,20 @@ async function submitGoogleStep2() {
   smartRedirect();
 }
 
-function smartRedirect() {
-  const u = JSON.parse(localStorage.getItem('cue_user') || '{}');
-  if (u.user_type === 'dj' || u.userType === 'dj') {
-    window.location.href = (u.profile_complete || u.profileComplete) ? 'dashboard-dj.html' : 'dj-onboarding.html';
+function redirectAfterLogin(userData) {
+  const userType = userData.user_type || userData.userType;
+  const profileComplete = userData.profile_complete || userData.profileComplete;
+
+  if (userType === 'dj') {
+    window.location.href = profileComplete ? 'dashboard-dj.html' : 'dj-onboarding.html';
   } else {
     window.location.href = 'dashboard-venue.html';
   }
+}
+
+function smartRedirect() {
+  const u = JSON.parse(localStorage.getItem('cue_user') || '{}');
+  redirectAfterLogin(u);
 }
 
 async function resendGoogleCode() {

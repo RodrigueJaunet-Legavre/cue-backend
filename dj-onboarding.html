@@ -253,10 +253,10 @@
     <p class="step-sub">Upload un mix de 10 à 20 minutes en MP3. C'est ce que les venues écoutent pour te choisir.</p>
 
     <div class="upload-zone" id="mix-zone">
-      <input type="file" id="mix-input" accept=".mp3,audio/mpeg" onchange="handleMixUpload(this)">
+      <input type="file" id="mix-input" accept=".mp3,.wav,audio/mpeg,audio/wav,audio/wave" onchange="handleMixUpload(this)">
       <div class="upload-icon">🎧</div>
       <div class="upload-title">Dépose ton mix ici</div>
-      <div class="upload-sub">MP3 uniquement • 10 à 20 minutes • Max 50MB</div>
+      <div class="upload-sub">MP3 ou WAV • 10 à 20 minutes • Max 100MB</div>
       <div class="upload-file-name" id="mix-file-name"></div>
     </div>
 
@@ -274,7 +274,7 @@
 
     <div class="tracks-list" id="tracks-list"></div>
 
-    <input type="file" id="track-input" accept=".mp3,audio/mpeg" multiple style="display:none" onchange="handleTracksUpload(this)">
+    <input type="file" id="track-input" accept=".mp3,.wav,audio/mpeg,audio/wav,audio/wave" multiple style="display:none" onchange="handleTracksUpload(this)">
     <button class="add-track-btn" onclick="document.getElementById('track-input').click()">
       <span>+</span> Ajouter des tracks
     </button>
@@ -492,10 +492,10 @@
   // COMPLETE
   async function completeProfile() {
     saveCurrentStep();
-
     const token = localStorage.getItem('cue_token');
-    if (token) {
-      try {
+
+    try {
+      if (token) {
         const res = await fetch('/.netlify/functions/auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -505,6 +505,7 @@
             description: profileData.description,
             genres: selectedGenres,
             instagram: profileData.instagram,
+            tiktok: profileData.tiktok,
             soundcloud: profileData.soundcloud,
             spotify: profileData.spotify,
             youtube: profileData.youtube,
@@ -512,21 +513,22 @@
             tracks: tracks.map(t => t.name || t)
           })
         });
-        const data = await res.json();
+
         if (res.ok) {
-          localStorage.setItem('cue_user', JSON.stringify({ ...user, ...data.user }));
+          const data = await res.json();
+          Object.assign(user, data.user);
         }
-      } catch (err) {
-        console.log('Erreur mise à jour profil:', err);
       }
-    } else {
-      // Fallback localStorage
-      user.profileComplete = true;
-      user.profile = profileData;
-      user.genres = selectedGenres;
-      user.tracks = tracks.map(t => t.name);
-      localStorage.setItem('cue_user', JSON.stringify(user));
+    } catch (err) {
+      console.log('Erreur update profil:', err);
     }
+
+    // Marque profile_complete dans les deux formats
+    user.profile_complete = true;
+    user.profileComplete = true;
+    user.profile = { ...user.profile, ...profileData };
+    user.genres = selectedGenres;
+    localStorage.setItem('cue_user', JSON.stringify(user));
 
     document.getElementById('step-' + currentStep).classList.remove('active');
     document.getElementById('step-complete').classList.add('active');
@@ -538,7 +540,7 @@
       document.getElementById('preview-avatar').src = profileData.photo;
       document.getElementById('preview-avatar').style.display = 'block';
     }
-    document.getElementById('preview-name').textContent = (user.firstName || user.first_name || '') + ' ' + (user.lastName || user.last_name || '');
+    document.getElementById('preview-name').textContent = (user.first_name || user.firstName || '') + ' ' + (user.last_name || user.lastName || '');
     document.getElementById('preview-genres').textContent = selectedGenres.join(' · ');
   }
 

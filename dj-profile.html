@@ -289,11 +289,18 @@
     <div class="section" id="mix-section" style="display:none;">
       <div class="section-title">MIX DE PRÉSENTATION</div>
       <div class="mix-player">
-        <button class="play-btn" onclick="togglePlay()">▶</button>
-        <div class="mix-info">
-          <div class="mix-title" id="mix-title">Mix de présentation</div>
-          <div class="mix-duration">10-20 min</div>
-          <div class="mix-waveform" id="waveform"></div>
+        <div style="flex:1;">
+          <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
+            <span style="font-size:36px;">🎧</span>
+            <div>
+              <div class="mix-title" id="mix-title">Mix de présentation</div>
+              <div class="mix-duration" id="mix-duration">Chargement...</div>
+            </div>
+          </div>
+          <audio id="mix-audio-player" controls
+                 style="width:100%; border-radius:12px; accent-color:var(--Y);">
+            Ton navigateur ne supporte pas l'audio.
+          </audio>
         </div>
       </div>
     </div>
@@ -494,23 +501,28 @@
       document.getElementById('genres-chips').innerHTML = dj.genres.map(g => `<div class="genre-chip">${g}</div>`).join('');
     }
 
+    // IMPORTANT : Pour que l'audio soit écoutable sur le profil public,
+    // il faudra à terme stocker les fichiers MP3 sur un service de stockage
+    // comme Supabase Storage, Cloudinary ou AWS S3.
+    // Pour l'instant, l'audio n'est disponible que pendant la session active du DJ.
+
     if (dj.profile?.mix || dj.mix) {
       document.getElementById('mix-section').style.display = 'block';
       document.getElementById('mix-title').textContent = dj.profile?.mix || dj.mix;
-      renderWaveform();
+
+      const mixUrl = dj.profile?.mixUrl || dj.mixUrl;
+      if (mixUrl) {
+        document.getElementById('mix-audio-player').src = mixUrl;
+        document.getElementById('mix-duration').textContent = 'Mix de présentation';
+      } else {
+        document.getElementById('mix-duration').textContent = '⚠️ Fichier non encore hébergé';
+        document.getElementById('mix-audio-player').style.display = 'none';
+      }
     }
 
     if (dj.tracks?.length || dj.profile?.tracks?.length) {
-      const tracks = dj.tracks || dj.profile.tracks || [];
-      document.getElementById('tracks-section').style.display = 'block';
-      document.getElementById('tracks-list').innerHTML = tracks.map((t, i) => `
-        <div class="track-item">
-          <span class="track-num">${i+1}</span>
-          <span class="track-icon">🎵</span>
-          <span class="track-name">${typeof t === 'string' ? t.replace('.mp3','') : t.name?.replace('.mp3','')}</span>
-          <span class="track-play">▶</span>
-        </div>
-      `).join('');
+      const tracks = dj.tracks || dj.profile?.tracks || [];
+      renderTracks(tracks);
     }
 
     document.getElementById('reviews-label').textContent = reviewCount ? `(${reviewCount})` : '';
@@ -548,6 +560,32 @@
     updateFavBtn();
 
     document.getElementById('main-content').style.display = 'grid';
+  }
+
+  function renderTracks(tracks) {
+    const container = document.getElementById('tracks-list');
+    if (!tracks?.length) return;
+
+    document.getElementById('tracks-section').style.display = 'block';
+    container.innerHTML = tracks.map((t, i) => {
+      const trackName = typeof t === 'string' ? t.replace('.mp3', '') : (t.name || t).replace('.mp3', '');
+      return `
+        <div style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:14px;
+                    padding:16px 20px; margin-bottom:10px; transition:all .2s;"
+             onmouseover="this.style.borderColor='rgba(255,195,0,.3)'"
+             onmouseout="this.style.borderColor='var(--BORDER)'">
+          <div style="display:flex; align-items:center; gap:16px; margin-bottom:12px;">
+            <span style="color:var(--Y); font-weight:900; font-family:Barlow Condensed; font-size:20px; width:28px;">${i + 1}</span>
+            <span style="font-size:20px;">🎵</span>
+            <span style="flex:1; font-weight:700; font-size:14px; color:#fff;">${trackName}</span>
+          </div>
+          <audio controls style="width:100%; border-radius:8px; accent-color:var(--Y);">
+            <source src="" type="audio/mpeg">
+            <p style="color:var(--MUTED); font-size:12px;">Écoute disponible après upload du fichier.</p>
+          </audio>
+        </div>
+      `;
+    }).join('');
   }
 
   function renderWaveform() {
