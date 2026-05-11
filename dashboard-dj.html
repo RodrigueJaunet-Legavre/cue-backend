@@ -257,6 +257,12 @@
     <div class="nav-item" onclick="showPage('settings', this)">
       <span class="nav-icon">⚙️</span> Paramètres
     </div>
+    <div class="nav-item" onclick="showPage('contact', this)">
+      <span class="nav-icon">💬</span> Nous contacter
+    </div>
+    <div class="nav-item" onclick="showPage('report', this)">
+      <span class="nav-icon">🚨</span> Signaler un problème
+    </div>
   </div>
 
   <div class="sidebar-footer">
@@ -788,6 +794,114 @@
   </div>
 
   <!-- SETTINGS -->
+  <!-- PAGE CONTACT -->
+  <div id="page-contact" class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">NOUS CONTACTER</h1>
+        <p class="page-sub">Une question ? Réponse garantie sous 24h ⚡</p>
+      </div>
+    </div>
+
+    <div style="max-width:640px;">
+      <div class="card" style="margin-bottom:24px; padding:24px; background:linear-gradient(135deg, rgba(255,195,0,.08) 0%, transparent 100%); border-color:rgba(255,195,0,.3);">
+        <div style="display:flex; align-items:center; gap:16px;">
+          <span style="font-size:36px;">⚡</span>
+          <div>
+            <div style="font-weight:700; color:#fff; font-size:16px;">Réponse garantie sous 24h</div>
+            <div style="color:var(--MUTED); font-size:13px; margin-top:4px;">Notre équipe est disponible 7j/7 pour t'aider</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">✉️ Envoyer un message</span></div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Sujet</label>
+            <select id="contact-subject" class="form-input">
+              <option>Question générale</option>
+              <option>Problème technique</option>
+              <option>Question sur mon abonnement</option>
+              <option>Question sur un paiement</option>
+              <option>Demande de partenariat</option>
+              <option>Autre</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Message</label>
+            <textarea id="contact-message" class="form-input" rows="6"
+              placeholder="Décris ton problème ou ta question en détail..."></textarea>
+          </div>
+          <button class="btn btn-primary" style="width:100%; padding:16px; font-size:16px;"
+                  onclick="sendContactMessage()">
+            Envoyer le message →
+          </button>
+          <p style="color:var(--MUTED); font-size:12px; text-align:center; margin-top:12px;">
+            Tu recevras une confirmation par email à <strong style="color:#fff;" id="contact-email-display"></strong>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE SIGNALEMENT -->
+  <div id="page-report" class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">SIGNALER UN PROBLÈME</h1>
+        <p class="page-sub">Aide-nous à garder CUE sûr pour tous</p>
+      </div>
+    </div>
+
+    <div style="max-width:640px;">
+      <div class="card" style="margin-bottom:24px; padding:24px; background:linear-gradient(135deg, rgba(255,68,68,.06) 0%, transparent 100%); border-color:rgba(255,68,68,.2);">
+        <div style="display:flex; align-items:center; gap:16px;">
+          <span style="font-size:36px;">🛡️</span>
+          <div>
+            <div style="font-weight:700; color:#fff; font-size:16px;">Signalement traité sous 24h</div>
+            <div style="color:var(--MUTED); font-size:13px; margin-top:4px;">Tous les signalements sont examinés par notre équipe</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">🚨 Formulaire de signalement</span></div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Catégorie du problème</label>
+            <select id="report-category" class="form-input">
+              <option value="booking_dispute">⚖️ Litige de booking</option>
+              <option value="payment">💳 Problème de paiement</option>
+              <option value="no_show">❌ No show (absence non justifiée)</option>
+              <option value="fake_info">🎭 Falsification d'informations</option>
+              <option value="spam">📧 Spam ou harcèlement</option>
+              <option value="inappropriate">🔞 Contenu inapproprié</option>
+              <option value="other">📋 Autre problème</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Utilisateur concerné (optionnel)</label>
+            <input type="text" id="report-user" class="form-input"
+              placeholder="Nom ou email de l'utilisateur concerné">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Description du problème</label>
+            <textarea id="report-message" class="form-input" rows="6"
+              placeholder="Décris le problème en détail : quand, comment, quelles preuves tu as..."></textarea>
+          </div>
+          <button class="btn" style="width:100%; padding:16px; font-size:16px; background:#ff4444; color:#fff; border-radius:12px; border:none; cursor:pointer; font-family:Barlow,sans-serif; font-weight:700;"
+                  onclick="sendReport()">
+            🚨 Envoyer le signalement
+          </button>
+          <p style="color:var(--MUTED); font-size:12px; text-align:center; margin-top:12px;">
+            Ton signalement sera traité de manière confidentielle
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="page-settings" class="page">
     <div class="page-header">
       <h1 class="page-title">PARAMÈTRES</h1>
@@ -945,6 +1059,7 @@
     if (page === 'gigs') renderGigs('all');
     if (page === 'reviews') renderReviews();
     if (page === 'earnings') renderEarnings();
+    if (page === 'contact') initContactPage();
   }
 
   function loadStats() {
@@ -1722,6 +1837,88 @@
     if (diff < 3600000) return Math.floor(diff / 60000) + 'min';
     if (diff < 86400000) return Math.floor(diff / 3600000) + 'h';
     return d.toLocaleDateString('fr-FR');
+  }
+
+  function initContactPage() {
+    const emailEl = document.getElementById('contact-email-display');
+    if (emailEl) emailEl.textContent = user.email || '';
+  }
+
+  async function sendContactMessage() {
+    const subject = document.getElementById('contact-subject').value;
+    const message = document.getElementById('contact-message').value.trim();
+
+    if (!message) { alert('Écris ton message avant d\'envoyer.'); return; }
+
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = 'Envoi en cours...';
+
+    try {
+      const res = await fetch('/.netlify/functions/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'contact',
+          senderName: (user.first_name || user.firstName || '') + ' ' + (user.last_name || user.lastName || ''),
+          senderEmail: user.email,
+          subject,
+          message
+        })
+      });
+
+      if (res.ok) {
+        btn.textContent = '✅ Message envoyé !';
+        document.getElementById('contact-message').value = '';
+        setTimeout(() => { btn.disabled = false; btn.textContent = 'Envoyer le message →'; }, 3000);
+      } else {
+        throw new Error('Erreur serveur');
+      }
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Envoyer le message →';
+      alert('Erreur. Réessaie.');
+    }
+  }
+
+  async function sendReport() {
+    const category = document.getElementById('report-category').value;
+    const message = document.getElementById('report-message').value.trim();
+    const reportedUser = document.getElementById('report-user').value.trim();
+
+    if (!message) { alert('Décris le problème avant d\'envoyer.'); return; }
+
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = 'Envoi en cours...';
+
+    try {
+      const res = await fetch('/.netlify/functions/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'report',
+          senderName: (user.first_name || user.firstName || '') + ' ' + (user.last_name || user.lastName || ''),
+          senderEmail: user.email,
+          category,
+          message,
+          reportedUser
+        })
+      });
+
+      if (res.ok) {
+        btn.textContent = '✅ Signalement envoyé !';
+        document.getElementById('report-message').value = '';
+        document.getElementById('report-user').value = '';
+        setTimeout(() => { btn.disabled = false; btn.textContent = '🚨 Envoyer le signalement'; }, 3000);
+      } else {
+        throw new Error('Erreur serveur');
+      }
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = '🚨 Envoyer le signalement';
+      alert('Erreur. Réessaie.');
+    }
   }
 
   function closeModal(id) {

@@ -498,6 +498,50 @@
   function switchReportsTab(type, el) {
     document.querySelectorAll('#page-reports .tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
+    loadReports(type);
+  }
+
+  async function loadReports(type = 'all') {
+    const res = await fetch('/.netlify/functions/admin-get-users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminSecret: getSecret(), filter: 'reports', type })
+    });
+    const { reports } = await res.json();
+    const tbody = document.getElementById('reports-table-body');
+
+    if (!reports?.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--MUTED); padding:40px;">Aucun signalement</td></tr>';
+      return;
+    }
+
+    const labels = {
+      booking_dispute: '⚖️ Litige booking',
+      payment: '💳 Paiement',
+      no_show: '❌ No show',
+      fake_info: '🎭 Falsification',
+      spam: '📧 Spam',
+      inappropriate: '🔞 Inapproprié',
+      other: '📋 Autre'
+    };
+
+    tbody.innerHTML = reports.map(r => `
+      <tr>
+        <td>${r.reporter_id}</td>
+        <td>${r.reported_id || '—'}</td>
+        <td><span class="badge badge-open">${labels[r.type] || r.type}</span></td>
+        <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${r.description}</td>
+        <td><span class="badge badge-${r.status === 'open' ? 'open' : 'verified'}">${r.status}</span></td>
+        <td>${new Date(r.created_at).toLocaleDateString('fr-FR')}</td>
+        <td>
+          <button class="btn btn-sm btn-approve" onclick="resolveReport('${r.id}')">✅ Résoudre</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async function resolveReport(reportId) {
+    alert('Rapport #' + reportId + ' marqué comme résolu.');
   }
 
   // MODAL
