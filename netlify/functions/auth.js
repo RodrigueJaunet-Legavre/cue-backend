@@ -12,8 +12,19 @@ function generateToken() {
 }
 
 exports.handler = async (event) => {
-  const body = JSON.parse(event.body);
+  if (!event.body) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Body vide' }) };
+  }
+
+  let body;
+  try {
+    body = JSON.parse(event.body);
+  } catch (err) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'JSON invalide: ' + err.message }) };
+  }
+
   const { action } = body;
+  console.log('Action reçue:', action);
 
   // INSCRIPTION
   if (action === 'register') {
