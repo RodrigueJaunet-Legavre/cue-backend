@@ -556,7 +556,7 @@
   async function completeProfile() {
     saveCurrentStep()
 
-    // Force profile_complete en localStorage immédiatement
+    // profile_complete = true dès que description + genres sont remplis
     const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
     savedUser.profile_complete = true
     savedUser.profileComplete = true
@@ -567,15 +567,12 @@
       const { data: { session } } = await supabase.auth.getSession()
 
       if (session) {
-        const userId = session.user.id
-        console.log('Session Supabase trouvée, userId:', userId)
-
         const res = await fetch('/.netlify/functions/auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'update_profile_by_id',
-            userId,
+            userId: session.user.id,
             description: profileData.description || '',
             genres: selectedGenres,
             instagram: profileData.instagram || '',
@@ -588,17 +585,16 @@
             photo: profilePhoto || savedUser.picture || ''
           })
         })
-
         const data = await res.json()
-        if (res.ok) {
-          console.log('✅ profile_complete sauvegardé en DB:', data.user?.profile_complete)
-          const updatedUser = { ...savedUser, ...data.user, profile_complete: true, profileComplete: true }
-          localStorage.setItem('cue_user', JSON.stringify(updatedUser))
-        } else {
-          console.log('❌ Erreur:', data.error)
+        console.log('✅ profile_complete:', data.user?.profile_complete)
+        if (data.user) {
+          localStorage.setItem('cue_user', JSON.stringify({
+            ...savedUser,
+            ...data.user,
+            profile_complete: true,
+            profileComplete: true
+          }))
         }
-      } else {
-        console.log('⚠️ Pas de session Supabase — sauvegarde localStorage uniquement')
       }
     } catch (err) {
       console.log('Erreur:', err.message)
