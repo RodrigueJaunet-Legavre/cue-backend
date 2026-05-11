@@ -457,17 +457,23 @@
     renderProfile();
   }
 
+  const getFirstName = (u) => u.first_name || u.firstName || ''
+  const getLastName = (u) => u.last_name || u.lastName || ''
+
   function renderProfile() {
     const dj = djData;
     const reviews = JSON.parse(localStorage.getItem('cue_reviews') || '[]').filter(r => r.djId === dj.id);
     const avgRating = reviews.length ? (reviews.reduce((s,r) => s + r.rating, 0) / reviews.length).toFixed(1) : (dj.rating || null);
     const reviewCount = reviews.length || dj.reviews || 0;
 
-    document.title = `${dj.firstName} ${dj.lastName} — DJ sur CUE`;
-    document.getElementById('og-title').content = `${dj.firstName} ${dj.lastName} — DJ sur CUE`;
+    const firstName = getFirstName(dj)
+    const lastName = getLastName(dj)
+
+    document.title = `${firstName} ${lastName} — DJ sur CUE`;
+    document.getElementById('og-title').content = `${firstName} ${lastName} — DJ sur CUE`;
     document.getElementById('og-desc').content = dj.profile?.description || dj.description || '';
 
-    document.getElementById('hero-name').textContent = dj.firstName + ' ' + dj.lastName;
+    document.getElementById('hero-name').textContent = firstName + ' ' + lastName;
     document.getElementById('hero-genres').textContent = (dj.genres || []).join(' · ');
 
     if (avgRating) {
@@ -634,7 +640,7 @@
     bookings.unshift({
       id: Date.now().toString(),
       djId: djData.id,
-      djName: djData.firstName + ' ' + djData.lastName,
+      djName: getFirstName(djData) + ' ' + getLastName(djData),
       date: document.getElementById('offer-date').value,
       start: document.getElementById('offer-start').value,
       end: document.getElementById('offer-end').value,
@@ -674,7 +680,7 @@
 
   function share(platform) {
     const url = window.location.href;
-    const text = `🎧 Découvre ${djData?.firstName} ${djData?.lastName} sur CUE — ${url}`;
+    const text = `🎧 Découvre ${getFirstName(djData)} ${getLastName(djData)} sur CUE — ${url}`;
     switch(platform) {
       case 'whatsapp': window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank'); break;
       case 'instagram': navigator.clipboard.writeText(url); alert('Lien copié ! Colle-le dans ta bio Instagram.'); break;

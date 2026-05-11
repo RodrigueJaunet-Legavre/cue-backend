@@ -621,7 +621,7 @@
   // SHARE
   function shareProfile(platform) {
     const profileUrl = `https://cuedj.eu/dj-profile.html?id=${user.id}`;
-    const text = `🎧 Découvre mon profil DJ sur CUE — ${user.firstName} ${user.lastName}\n${profileUrl}`;
+    const text = `🎧 Découvre mon profil DJ sur CUE — ${user.first_name || user.firstName || ''} ${user.last_name || user.lastName || ''}\n${profileUrl}`;
 
     switch(platform) {
       case 'whatsapp':
