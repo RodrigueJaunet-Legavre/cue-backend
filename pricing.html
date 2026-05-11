@@ -167,7 +167,7 @@ footer{border-top:1px solid var(--BORDER);padding:60px 52px 30px;display:grid;gr
 </div>
 
 <script>
-const API_BASE = '/.netlify/functions';
+const API_BASE = '/api';
 let chatOpen = false;
 function toggleChat(){chatOpen=!chatOpen;document.getElementById('cwin').classList.toggle('open',chatOpen);if(chatOpen)document.getElementById('cinput').focus();}
 function addCMsg(t,r){const e=document.createElement('div');e.className='cmsg '+r;if(r==='bot')e.style.whiteSpace='pre-line';e.textContent=t;const m=document.getElementById('cmsgs');m.appendChild(e);m.scrollTop=m.scrollHeight;}

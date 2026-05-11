@@ -146,7 +146,7 @@ if (!isLogged) {
   document.getElementById('content-locked').style.display = 'none';
   document.getElementById('content-main').style.display = 'block';
 }
-const API_BASE = '/.netlify/functions';
+const API_BASE = '/api';
 let chatOpen = false;
 function toggleChat(){chatOpen=!chatOpen;document.getElementById('cwin').classList.toggle('open',chatOpen);if(chatOpen)document.getElementById('cinput').focus();}
 function addCMsg(t,r){const e=document.createElement('div');e.className='cmsg '+r;if(r==='bot')e.style.whiteSpace='pre-line';e.textContent=t;const m=document.getElementById('cmsgs');m.appendChild(e);m.scrollTop=m.scrollHeight;}

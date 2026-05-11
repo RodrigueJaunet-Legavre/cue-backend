@@ -562,7 +562,7 @@
     document.getElementById('modal-document').style.display = 'block';
 
     // Charge les documents depuis Netlify Forms
-    fetch(`/.netlify/functions/get-identity-docs?email=${encodeURIComponent(email)}`)
+    fetch(`/api/get-identity-docs?email=${encodeURIComponent(email)}`)
       .then(r => r.json())
       .then(data => {
         if (data.selfie) document.getElementById('modal-selfie').src = data.selfie;
