@@ -419,12 +419,55 @@
   const params = new URLSearchParams(window.location.search);
   const djId = params.get('id');
 
-  function init() {
+  async function loadDJFromDB(userId) {
+    try {
+      const res = await fetch('/.netlify/functions/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_user', userId })
+      })
+      const data = await res.json()
+      return data.user
+    } catch (err) {
+      return null
+    }
+  }
+
+  async function init() {
     createParticles();
 
-    const user = JSON.parse(localStorage.getItem('cue_user') || '{}');
+    const { supabase } = await import('./js/supabase-client.js')
+    const { data: { session } } = await supabase.auth.getSession()
 
-    if (user.id === djId || (!djId && user.userType === 'dj')) {
+    if (session && (session.user.id === djId || !djId)) {
+      const dbUser = await loadDJFromDB(session.user.id)
+      const userData = dbUser || JSON.parse(localStorage.getItem('cue_user') || '{}')
+
+      djData = {
+        id: session.user.id,
+        firstName: userData.first_name || userData.firstName || session.user.user_metadata?.full_name?.split(' ')[0] || '',
+        lastName: userData.last_name || userData.lastName || session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+        userType: userData.user_type || 'dj',
+        plan: userData.plan || 'starter',
+        verified: userData.identity_status === 'verified',
+        genres: userData.genres || [],
+        tracks: userData.tracks || [],
+        description: userData.description || '',
+        instagram: userData.instagram || '',
+        tiktok: userData.tiktok || '',
+        soundcloud: userData.soundcloud || '',
+        spotify: userData.spotify || '',
+        youtube: userData.youtube || '',
+        mix_url: userData.mix_url || '',
+        picture: userData.picture || session.user.user_metadata?.avatar_url || ''
+      }
+      renderProfile()
+      return
+    }
+
+    // Fallback localStorage si pas de session Supabase
+    const user = JSON.parse(localStorage.getItem('cue_user') || '{}')
+    if (user.id === djId || (!djId && (user.user_type === 'dj' || user.userType === 'dj'))) {
       djData = {
         id: user.id,
         firstName: user.first_name || user.firstName || '',
@@ -432,7 +475,6 @@
         userType: user.user_type || user.userType,
         plan: user.plan || 'starter',
         verified: user.identity_status === 'verified',
-        profile: user.profile || {},
         genres: user.genres || [],
         tracks: user.tracks || [],
         description: user.description || '',
@@ -443,9 +485,9 @@
         youtube: user.youtube || '',
         mix_url: user.mix_url || '',
         picture: user.picture || ''
-      };
-      renderProfile();
-      return;
+      }
+      renderProfile()
+      return
     }
 
     const demoDJs = [
