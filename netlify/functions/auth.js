@@ -140,35 +140,35 @@ exports.handler = async (event) => {
   // UPDATE PROFILE
   if (action === 'update_profile') {
     console.log('=== UPDATE PROFILE APPELÉ ===');
-    console.log('Token reçu:', body.token ? 'OUI' : 'NON');
-
-    const { token, description, genres, instagram, tiktok, soundcloud,
-            spotify, youtube, mixUrl, tracks } = body;
+    const { token } = body;
+    console.log('Token reçu:', token ? token.substring(0, 20) + '...' : 'AUCUN');
 
     try {
-      const sessions = await sql`SELECT * FROM sessions WHERE token = ${token}`;
-      console.log('Sessions trouvées:', sessions.length);
+      // Cherche la session SANS filtre expires_at pour déboguer
+      const allSessions = await sql`SELECT * FROM sessions WHERE token = ${token}`;
+      console.log('Sessions trouvées:', allSessions.length);
 
-      if (!sessions.length) {
-        console.log('ERREUR: Aucune session trouvée pour ce token');
-        return { statusCode: 401, body: JSON.stringify({ error: 'Session non trouvée' }) };
+      if (!allSessions.length) {
+        console.log('ERREUR: Token introuvable en DB');
+        return { statusCode: 401, body: JSON.stringify({ error: 'Session introuvable' }) };
       }
 
-      const session = sessions[0];
+      const session = allSessions[0];
+      console.log('Session expirée?', new Date(session.expires_at) < new Date());
       console.log('User ID:', session.user_id);
-      console.log('Session expires_at:', session.expires_at, '— now:', new Date().toISOString());
 
+      // Update même si session expirée (onboarding)
       await sql`
         UPDATE users SET
-          description = ${description || null},
-          genres = ${genres || []},
-          instagram = ${instagram || null},
-          tiktok = ${tiktok || null},
-          soundcloud = ${soundcloud || null},
-          spotify = ${spotify || null},
-          youtube = ${youtube || null},
-          mix_url = ${mixUrl || null},
-          tracks = ${tracks || []},
+          description = ${body.description || null},
+          genres = ${body.genres || []},
+          instagram = ${body.instagram || null},
+          tiktok = ${body.tiktok || null},
+          soundcloud = ${body.soundcloud || null},
+          spotify = ${body.spotify || null},
+          youtube = ${body.youtube || null},
+          mix_url = ${body.mixUrl || null},
+          tracks = ${body.tracks || []},
           profile_complete = true,
           updated_at = NOW()
         WHERE id = ${session.user_id}

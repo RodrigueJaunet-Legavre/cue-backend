@@ -556,9 +556,18 @@
   async function completeProfile() {
     saveCurrentStep();
     const token = localStorage.getItem('cue_token');
+    console.log('Token présent:', !!token);
+    console.log('Token valeur:', token ? token.substring(0, 20) + '...' : 'AUCUN');
 
     // Force profile_complete en localStorage immédiatement (avant l'API)
     const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
+
+    if (!token) {
+      console.log('ERREUR: Pas de token - utilisateur non connecté via DB');
+      savedUser.profile_complete = true;
+      savedUser.profileComplete = true;
+      localStorage.setItem('cue_user', JSON.stringify(savedUser));
+    }
     savedUser.profile_complete = true;
     savedUser.profileComplete = true;
     localStorage.setItem('cue_user', JSON.stringify(savedUser));
