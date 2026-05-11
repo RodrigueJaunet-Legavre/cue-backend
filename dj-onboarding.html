@@ -567,7 +567,7 @@
       const { data: { session } } = await supabase.auth.getSession()
 
       if (session) {
-        const res = await fetch('/.netlify/functions/auth', {
+        const res = await fetch('/api/auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -668,7 +668,7 @@
       }
 
       // Vérifie si profil déjà complet en DB
-      const res = await fetch('/.netlify/functions/auth', {
+      const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'get_user', userId: session.user.id })

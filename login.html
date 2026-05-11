@@ -177,7 +177,7 @@ async function handleLogin(e) {
 
   try {
     // Vérifie admin d'abord
-    const adminRes = await fetch('/.netlify/functions/admin-login', {
+    const adminRes = await fetch('/api/admin-login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
@@ -203,7 +203,7 @@ async function handleLogin(e) {
     }
 
     // Récupère les infos depuis notre DB
-    const res = await fetch('/.netlify/functions/auth', {
+    const res = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'get_user', userId: data.user.id })
@@ -258,7 +258,7 @@ window.signInWithGoogle = signInWithGoogle
 async function checkSession() {
   const { data: { session } } = await supabase.auth.getSession()
   if (session) {
-    const res = await fetch('/.netlify/functions/auth', {
+    const res = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'get_user', userId: session.user.id })

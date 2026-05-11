@@ -29,7 +29,7 @@ async function handleCallback() {
   const meta = user.user_metadata
 
   // Récupère user depuis notre DB
-  const res = await fetch('/.netlify/functions/auth', {
+  const res = await fetch('/api/auth', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action: 'get_user', userId: user.id, email: user.email })
@@ -38,7 +38,7 @@ async function handleCallback() {
 
   if (!data.user) {
     // Nouvel utilisateur → l'insère en DB
-    await fetch('/.netlify/functions/auth', {
+    await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

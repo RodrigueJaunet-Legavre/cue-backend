@@ -275,7 +275,7 @@ async function submitGoogleStep1() {
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   sessionStorage.setItem('verif_code', code);
   sessionStorage.setItem('verif_code_expiry', Date.now() + 10 * 60 * 1000);
-  await fetch('/.netlify/functions/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'verification', email: googleUser.email, firstName: googleUser.firstName, code }) });
+  await fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'verification', email: googleUser.email, firstName: googleUser.firstName, code }) });
   document.getElementById('google-email-display').textContent = googleUser.email;
   document.getElementById('google-step-1').style.display = 'none';
   document.getElementById('google-step-2').style.display = 'block';
@@ -291,7 +291,7 @@ async function submitGoogleStep2() {
   const googleUser = JSON.parse(localStorage.getItem('cue_google_temp'));
 
   try {
-    const res = await fetch('/.netlify/functions/auth', {
+    const res = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -327,7 +327,7 @@ async function submitGoogleStep2() {
   sessionStorage.removeItem('verif_code');
   sessionStorage.removeItem('verif_code_expiry');
 
-  await fetch('/.netlify/functions/send-email', {
+  await fetch('/api/send-email', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type: 'welcome', email: googleUser.email, firstName: googleUser.firstName })
@@ -357,7 +357,7 @@ async function resendGoogleCode() {
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   sessionStorage.setItem('verif_code', code);
   sessionStorage.setItem('verif_code_expiry', Date.now() + 10 * 60 * 1000);
-  await fetch('/.netlify/functions/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'verification', email: googleUser.email, firstName: googleUser.firstName, code }) });
+  await fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'verification', email: googleUser.email, firstName: googleUser.firstName, code }) });
   alert('Code renvoyé !');
 }
 
@@ -449,7 +449,7 @@ async function sendVerificationCode(email, firstName) {
   sessionStorage.setItem('verif_code', code);
   sessionStorage.setItem('verif_code_expiry', Date.now() + 10 * 60 * 1000);
   sessionStorage.setItem('verif_email', email);
-  await fetch('/.netlify/functions/send-email', {
+  await fetch('/api/send-email', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type: 'verification', email, firstName, code })
@@ -469,7 +469,7 @@ async function completeRegistration() {
   if (!regUser) { window.location.href = 'inscription.html'; return; }
 
   try {
-    const res = await fetch('/.netlify/functions/auth', {
+    const res = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -496,7 +496,7 @@ async function completeRegistration() {
     localStorage.setItem('cue_logged_in', 'true');
     sessionStorage.clear();
 
-    await fetch('/.netlify/functions/send-email', {
+    await fetch('/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

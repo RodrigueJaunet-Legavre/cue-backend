@@ -373,7 +373,7 @@
   // LOGIN
   function adminLogin() {
     const pwd = document.getElementById('admin-pwd').value;
-    fetch('/.netlify/functions/admin-stats', {
+    fetch('/api/admin-stats', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ adminSecret: pwd })
@@ -409,7 +409,7 @@
   }
 
   async function loadStats() {
-    const res = await fetch('/.netlify/functions/admin-stats', {
+    const res = await fetch('/api/admin-stats', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ adminSecret: getSecret() })
@@ -429,7 +429,7 @@
   }
 
   async function loadVerifications(status = 'pending') {
-    const res = await fetch('/.netlify/functions/admin-get-users', {
+    const res = await fetch('/api/admin-get-users', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ adminSecret: getSecret(), filter: 'verif', status })
@@ -459,7 +459,7 @@
   }
 
   async function loadUsers(type = 'all') {
-    const res = await fetch('/.netlify/functions/admin-get-users', {
+    const res = await fetch('/api/admin-get-users', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ adminSecret: getSecret(), filter: 'users', type })
@@ -507,7 +507,7 @@
   }
 
   async function loadReports(type = 'all') {
-    const res = await fetch('/.netlify/functions/admin-get-users', {
+    const res = await fetch('/api/admin-get-users', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ adminSecret: getSecret(), filter: 'reports', type })
@@ -583,7 +583,7 @@
   }
 
   async function validateUser(action) {
-    await fetch('/.netlify/functions/admin-verify-user', {
+    await fetch('/api/admin-verify-user', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -606,7 +606,7 @@
 
   async function suspendUser(userId) {
     if (!confirm('Suspendre cet utilisateur ?')) return;
-    await fetch('/.netlify/functions/admin-verify-user', {
+    await fetch('/api/admin-verify-user', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, action: 'suspend', adminSecret: getSecret() })

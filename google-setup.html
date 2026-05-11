@@ -91,7 +91,7 @@ window.continueSetup = async function() {
     const userId = session.user.id
 
     // Met à jour le type en DB
-    const res = await fetch('/.netlify/functions/auth', {
+    const res = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -106,7 +106,7 @@ window.continueSetup = async function() {
 
     // Email de bienvenue
     const meta = session.user.user_metadata
-    await fetch('/.netlify/functions/send-email', {
+    await fetch('/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

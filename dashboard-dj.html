@@ -1173,7 +1173,7 @@
         Object.assign(user, localUser)
       } else {
         // Récupère les données depuis notre DB
-        const res = await fetch('/.netlify/functions/auth', {
+        const res = await fetch('/api/auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'get_user', userId: session.user.id })
@@ -1390,7 +1390,7 @@
 
       const userId = user.id || user.user_id;
 
-      const res = await fetch('/.netlify/functions/upload-identity', {
+      const res = await fetch('/api/upload-identity', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1591,7 +1591,7 @@
     document.getElementById('contract-output').style.display = 'none';
 
     try {
-      const res = await fetch('/.netlify/functions/generate-contract', {
+      const res = await fetch('/api/generate-contract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1944,7 +1944,7 @@
     try {
       const token = localStorage.getItem('cue_token');
       if (token) {
-        const res = await fetch('/.netlify/functions/auth', {
+        const res = await fetch('/api/auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'update_profile', token, ...profileData })
@@ -1988,7 +1988,7 @@
 
   async function loadConversations() {
     try {
-      const res = await fetch('/.netlify/functions/messages', {
+      const res = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'get_conversations', userId: user.id, userType: 'dj' })
@@ -2037,7 +2037,7 @@
 
   async function loadMessages(convId) {
     try {
-      const res = await fetch('/.netlify/functions/messages', {
+      const res = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'get_messages', conversationId: convId, senderId: user.id })
@@ -2098,7 +2098,7 @@
     if (!content) return;
     input.value = '';
 
-    await fetch('/.netlify/functions/messages', {
+    await fetch('/api/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -2123,7 +2123,7 @@
   }
 
   async function respondOffer(messageId, status) {
-    await fetch('/.netlify/functions/messages', {
+    await fetch('/api/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'update_offer', messageId, status })
@@ -2133,7 +2133,7 @@
       ? "✅ J'ai accepté votre offre ! Hâte de mixer pour vous."
       : '❌ Je ne suis malheureusement pas disponible pour cette date.';
 
-    await fetch('/.netlify/functions/messages', {
+    await fetch('/api/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -2156,7 +2156,7 @@
     await loadMessages(currentConv.id);
 
     if (status === 'accepted') {
-      const res = await fetch('/.netlify/functions/messages', {
+      const res = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'get_messages', conversationId: currentConv.id, senderId: user.id })
@@ -2186,7 +2186,7 @@
 
   async function updateUnreadBadge() {
     try {
-      const res = await fetch('/.netlify/functions/messages', {
+      const res = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'unread_count', userId: user.id })
@@ -2240,7 +2240,7 @@
     btn.textContent = 'Envoi en cours...';
 
     try {
-      const res = await fetch('/.netlify/functions/contact', {
+      const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -2278,7 +2278,7 @@
     btn.textContent = 'Envoi en cours...';
 
     try {
-      const res = await fetch('/.netlify/functions/contact', {
+      const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
