@@ -705,13 +705,18 @@
     <div class="card" style="margin-bottom:24px;">
       <div class="card-header"><span class="card-title">🎧 Mix de présentation</span></div>
       <div class="card-body">
-        <div id="mix-current" style="display:none; background:#0a0a0a; border:1px solid var(--BORDER); border-radius:12px; padding:16px; align-items:center; gap:16px; margin-bottom:16px;">
-          <span style="font-size:28px;">🎧</span>
-          <div style="flex:1;">
-            <div id="mix-name" style="font-weight:700; color:#fff;"></div>
-            <div style="color:var(--MUTED); font-size:12px; margin-top:4px;">Mix actuel</div>
+        <div id="mix-current" style="display:none; background:#0a0a0a; border:1px solid var(--BORDER); border-radius:16px; padding:20px; margin-bottom:16px;">
+          <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
+            <span style="font-size:32px;">🎧</span>
+            <div style="flex:1;">
+              <div id="mix-name" style="font-weight:700; color:#fff; font-size:15px;"></div>
+              <div style="color:var(--MUTED); font-size:12px; margin-top:4px;">Mix de présentation</div>
+            </div>
+            <button onclick="removeMix()" style="background:rgba(255,68,68,.15); color:#ff4444; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:700;">✕</button>
           </div>
-          <button onclick="removeMix()" style="background:rgba(255,68,68,.15); color:#ff4444; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:700;">✕ Supprimer</button>
+          <audio id="mix-player" controls style="width:100%; border-radius:8px; accent-color:var(--Y);">
+            Ton navigateur ne supporte pas l'audio.
+          </audio>
         </div>
         <div id="mix-upload-zone" style="border:2px dashed var(--BORDER); border-radius:16px; padding:32px; text-align:center; cursor:pointer; transition:all .3s; position:relative;"
              onclick="document.getElementById('mix-input').click()"
@@ -1236,6 +1241,8 @@
   let profileMix = null;
   let profileTracks = [];
   let selectedGenres = [];
+  let trackURLs = [];
+  let mixURL = null;
 
   const ALL_GENRES = ['House', 'Tech House', 'Techno', 'Deep House', 'Minimal',
     'Afro House', 'Melodic Techno', 'Progressive House', 'Trance', 'Drum & Bass',
@@ -1332,14 +1339,24 @@
     const file = input.files[0];
     if (!file) return;
     if (file.size > 50 * 1024 * 1024) { alert('Le mix ne doit pas dépasser 50MB.'); return; }
+
+    if (mixURL) URL.revokeObjectURL(mixURL);
+    mixURL = URL.createObjectURL(file);
+
     profileMix = file.name;
-    document.getElementById('mix-current').style.display = 'flex';
+    document.getElementById('mix-current').style.display = 'block';
     document.getElementById('mix-upload-zone').style.display = 'none';
     document.getElementById('mix-name').textContent = file.name;
+
+    const player = document.getElementById('mix-player');
+    player.src = mixURL;
   }
 
   function removeMix() {
+    if (mixURL) URL.revokeObjectURL(mixURL);
+    mixURL = null;
     profileMix = null;
+    document.getElementById('mix-player').src = '';
     document.getElementById('mix-current').style.display = 'none';
     document.getElementById('mix-upload-zone').style.display = 'block';
   }
@@ -1349,33 +1366,51 @@
     files.forEach(file => {
       if (profileTracks.length >= 10) { alert('Maximum 10 tracks.'); return; }
       if (file.size > 20 * 1024 * 1024) { alert(`${file.name} dépasse 20MB.`); return; }
+      const url = URL.createObjectURL(file);
+      trackURLs.push(url);
       profileTracks.push(file.name);
       renderTracksList();
     });
+    input.value = '';
   }
 
   function renderTracksList() {
     const list = document.getElementById('tracks-list-profile');
     if (!list) return;
+
     if (!profileTracks.length) {
       list.innerHTML = `<p style="color:var(--MUTED); font-size:14px;">Aucune track ajoutée</p>`;
       return;
     }
-    list.innerHTML = profileTracks.map((t, i) => `
-      <div style="display:flex; align-items:center; gap:16px; padding:14px 20px;
-                  background:var(--CARD); border:1px solid var(--BORDER); border-radius:12px;">
-        <span style="color:var(--MUTED); font-weight:700; width:24px;">${i+1}</span>
-        <span style="font-size:18px;">🎵</span>
-        <span style="flex:1; font-weight:600; font-size:14px;">${typeof t === 'string' ? t.replace('.mp3','') : t}</span>
-        <button onclick="removeTrack(${i})"
-                style="background:rgba(255,68,68,.15); color:#ff4444; border:none;
-                       padding:6px 12px; border-radius:8px; cursor:pointer; font-weight:700;">✕</button>
-      </div>
-    `).join('');
+
+    list.innerHTML = profileTracks.map((t, i) => {
+      const trackName = typeof t === 'string' ? t.replace('.mp3','') : (t.name || t).replace('.mp3','');
+      const trackUrl = trackURLs[i] || null;
+
+      return `
+        <div style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:12px; padding:16px 20px; margin-bottom:10px;">
+          <div style="display:flex; align-items:center; gap:16px; margin-bottom:${trackUrl ? '12px' : '0'};">
+            <span style="color:var(--MUTED); font-weight:700; width:24px; text-align:center;">${i+1}</span>
+            <span style="font-size:20px;">🎵</span>
+            <span style="flex:1; font-weight:600; font-size:14px; color:#fff;">${trackName}</span>
+            <button onclick="removeTrack(${i})"
+                    style="background:rgba(255,68,68,.15); color:#ff4444; border:none;
+                           padding:6px 12px; border-radius:8px; cursor:pointer; font-weight:700;">✕</button>
+          </div>
+          ${trackUrl ? `
+            <audio controls style="width:100%; border-radius:8px; accent-color:var(--Y);">
+              <source src="${trackUrl}" type="audio/mpeg">
+            </audio>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
   }
 
   function removeTrack(index) {
+    if (trackURLs[index]) URL.revokeObjectURL(trackURLs[index]);
     profileTracks.splice(index, 1);
+    trackURLs.splice(index, 1);
     renderTracksList();
   }
 
