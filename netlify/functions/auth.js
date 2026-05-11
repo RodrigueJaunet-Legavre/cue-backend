@@ -139,9 +139,13 @@ exports.handler = async (event) => {
 
   // UPDATE PROFILE
   if (action === 'update_profile') {
-    const { token, description, genres, instagram, soundcloud, spotify, youtube, mixUrl, tracks } = body;
+    const { token, description, genres, instagram, tiktok, soundcloud,
+            spotify, youtube, mixUrl, tracks } = body;
     try {
-      const [session] = await sql`SELECT user_id FROM sessions WHERE token = ${token} AND expires_at > NOW()`;
+      const [session] = await sql`
+        SELECT user_id FROM sessions
+        WHERE token = ${token} AND expires_at > NOW()
+      `;
       if (!session) return { statusCode: 401, body: JSON.stringify({ error: 'Non autorisé' }) };
 
       await sql`
@@ -149,6 +153,7 @@ exports.handler = async (event) => {
           description = ${description || null},
           genres = ${genres || []},
           instagram = ${instagram || null},
+          tiktok = ${tiktok || null},
           soundcloud = ${soundcloud || null},
           spotify = ${spotify || null},
           youtube = ${youtube || null},
@@ -160,8 +165,14 @@ exports.handler = async (event) => {
       `;
 
       const [user] = await sql`SELECT * FROM users WHERE id = ${session.user_id}`;
-      return { statusCode: 200, body: JSON.stringify({ success: true, user: sanitizeUser(user) }) };
+      console.log('profile_complete après update:', user.profile_complete);
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ success: true, user: sanitizeUser(user) })
+      };
     } catch (err) {
+      console.log('Erreur update_profile:', err.message);
       return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
     }
   }

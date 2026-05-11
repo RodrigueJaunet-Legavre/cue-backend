@@ -494,42 +494,47 @@
     saveCurrentStep();
     const token = localStorage.getItem('cue_token');
 
-    try {
-      if (token) {
+    // Force profile_complete en localStorage immédiatement (avant l'API)
+    const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
+    savedUser.profile_complete = true;
+    savedUser.profileComplete = true;
+    localStorage.setItem('cue_user', JSON.stringify(savedUser));
+
+    if (token) {
+      try {
         const res = await fetch('/.netlify/functions/auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'update_profile',
             token,
-            description: profileData.description,
+            description: profileData.description || '',
             genres: selectedGenres,
-            instagram: profileData.instagram,
-            tiktok: profileData.tiktok,
-            soundcloud: profileData.soundcloud,
-            spotify: profileData.spotify,
-            youtube: profileData.youtube,
-            mixUrl: profileData.mix,
+            instagram: profileData.instagram || '',
+            tiktok: profileData.tiktok || '',
+            soundcloud: profileData.soundcloud || '',
+            spotify: profileData.spotify || '',
+            youtube: profileData.youtube || '',
+            mixUrl: profileData.mix || '',
             tracks: tracks.map(t => t.name || t)
           })
         });
 
         if (res.ok) {
           const data = await res.json();
-          Object.assign(user, data.user);
+          console.log('Profil sauvegardé:', data.user?.profile_complete);
+          // Met à jour localStorage avec les données serveur + force les deux flags
+          const updatedUser = { ...savedUser, ...data.user, profile_complete: true, profileComplete: true };
+          localStorage.setItem('cue_user', JSON.stringify(updatedUser));
+        } else {
+          console.log('Erreur sauvegarde profil:', await res.text());
         }
+      } catch (err) {
+        console.log('Erreur réseau:', err.message);
       }
-    } catch (err) {
-      console.log('Erreur update profil:', err);
     }
 
-    // Marque profile_complete dans les deux formats
-    user.profile_complete = true;
-    user.profileComplete = true;
-    user.profile = { ...user.profile, ...profileData };
-    user.genres = selectedGenres;
-    localStorage.setItem('cue_user', JSON.stringify(user));
-
+    // Affiche l'étape finale quoi qu'il arrive
     document.getElementById('step-' + currentStep).classList.remove('active');
     document.getElementById('step-complete').classList.add('active');
     document.getElementById('progress-fill').style.width = '100%';
@@ -540,7 +545,10 @@
       document.getElementById('preview-avatar').src = profileData.photo;
       document.getElementById('preview-avatar').style.display = 'block';
     }
-    document.getElementById('preview-name').textContent = (user.first_name || user.firstName || '') + ' ' + (user.last_name || user.lastName || '');
+
+    const firstName = savedUser.first_name || savedUser.firstName || '';
+    const lastName = savedUser.last_name || savedUser.lastName || '';
+    document.getElementById('preview-name').textContent = firstName + ' ' + lastName;
     document.getElementById('preview-genres').textContent = selectedGenres.join(' · ');
   }
 
