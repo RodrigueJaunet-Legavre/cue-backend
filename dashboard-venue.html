@@ -432,34 +432,165 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">CONTRATS IA</h1>
-        <p class="page-sub">Génère un contrat professionnel en 30 secondes</p>
+        <p class="page-sub">Génère un contrat professionnel et télécharge-le en PDF</p>
       </div>
     </div>
-    <div class="contract-form">
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-        <div class="form-group"><label class="form-label">Nom du DJ</label><input type="text" id="c-dj" class="form-input" placeholder="DJ Snake..."></div>
-        <div class="form-group"><label class="form-label">Date</label><input type="date" id="c-date" class="form-input"></div>
-        <div class="form-group"><label class="form-label">Heure de début</label><input type="time" id="c-start" class="form-input" value="22:00"></div>
-        <div class="form-group"><label class="form-label">Heure de fin</label><input type="time" id="c-end" class="form-input" value="02:00"></div>
-        <div class="form-group"><label class="form-label">Cachet (€)</label><input type="number" id="c-fee" class="form-input" placeholder="500"></div>
-        <div class="form-group"><label class="form-label">Type d'événement</label>
-          <select id="c-type" class="form-input"><option>Soirée club</option><option>Mariage</option><option>Festival</option><option>Événement privé</option><option>Corporate</option></select>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:32px;">
+
+      <!-- FORMULAIRE GAUCHE -->
+      <div>
+        <!-- INFOS DJ -->
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-header">
+            <span class="card-title">🎧 Informations DJ (Prestataire)</span>
+          </div>
+          <div class="card-body" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div class="form-group" style="grid-column:1/-1;">
+              <label class="form-label">Nom complet du DJ</label>
+              <input type="text" id="c-dj-name" class="form-input" placeholder="Rodrigue Jaunet-Legavre">
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label class="form-label">Adresse</label>
+              <input type="text" id="c-dj-address" class="form-input" placeholder="12 rue de la Musique, 75001 Paris">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Téléphone</label>
+              <input type="text" id="c-dj-phone" class="form-input" placeholder="+33 6 12 34 56 78">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="email" id="c-dj-email" class="form-input" placeholder="dj@email.com">
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label class="form-label">SIRET (optionnel)</label>
+              <input type="text" id="c-dj-siret" class="form-input" placeholder="123 456 789 00012">
+            </div>
+          </div>
+        </div>
+
+        <!-- INFOS CLIENT -->
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-header">
+            <span class="card-title">🏛️ Informations Client (Venue)</span>
+          </div>
+          <div class="card-body" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div class="form-group" style="grid-column:1/-1;">
+              <label class="form-label">Nom du venue / client</label>
+              <input type="text" id="c-venue-name" class="form-input" placeholder="Club XYZ">
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label class="form-label">Adresse</label>
+              <input type="text" id="c-venue-address" class="form-input" placeholder="5 avenue de la Nuit, 75008 Paris">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Téléphone</label>
+              <input type="text" id="c-venue-phone" class="form-input" placeholder="+33 1 23 45 67 89">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="email" id="c-venue-email" class="form-input" placeholder="contact@club.com">
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label class="form-label">SIRET (optionnel)</label>
+              <input type="text" id="c-venue-siret" class="form-input" placeholder="987 654 321 00034">
+            </div>
+          </div>
+        </div>
+
+        <!-- INFOS ÉVÉNEMENT -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🎤 Détails de l'événement</span>
+          </div>
+          <div class="card-body" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div class="form-group" style="grid-column:1/-1;">
+              <label class="form-label">Type d'événement</label>
+              <select id="c-type" class="form-input">
+                <option>Soirée club</option>
+                <option>Mariage</option>
+                <option>Festival</option>
+                <option>Événement privé</option>
+                <option>Corporate</option>
+                <option>Anniversaire</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date</label>
+              <input type="date" id="c-date" class="form-input">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Cachet (€ TTC)</label>
+              <input type="number" id="c-fee" class="form-input" placeholder="500">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Heure début</label>
+              <input type="time" id="c-start" class="form-input" value="23:00">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Heure fin</label>
+              <input type="time" id="c-end" class="form-input" value="02:00">
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label class="form-label">Acompte (% du cachet)</label>
+              <select id="c-acompte" class="form-input">
+                <option value="0">Pas d'acompte</option>
+                <option value="30">30% à la signature</option>
+                <option value="50" selected>50% à la signature</option>
+                <option value="100">100% à la signature</option>
+              </select>
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label class="form-label">Détails supplémentaires</label>
+              <textarea id="c-details" class="form-input" rows="3"
+                placeholder="Matériel fourni, rider technique, conditions spéciales, hébergement..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" style="width:100%; padding:18px; font-size:16px; margin-top:20px; border-radius:12px;"
+                onclick="generateContract()">
+          ✨ Générer le contrat avec l'IA
+        </button>
+      </div>
+
+      <!-- RÉSULTAT DROITE -->
+      <div>
+        <!-- ÉTAT VIDE -->
+        <div id="contract-empty-state" style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:16px; padding:60px; text-align:center; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+          <div style="font-size:64px; margin-bottom:24px;">📄</div>
+          <h3 style="font-family:Barlow Condensed; font-weight:900; font-size:28px; color:#fff; margin-bottom:12px;">Ton contrat apparaîtra ici</h3>
+          <p style="color:var(--MUTED); font-size:14px; line-height:1.6;">Remplis le formulaire à gauche et clique sur<br>Générer le contrat avec l'IA</p>
+        </div>
+
+        <!-- LOADING -->
+        <div id="contract-loading" style="display:none; background:var(--CARD); border:1px solid var(--BORDER); border-radius:16px; padding:60px; text-align:center;">
+          <div style="display:flex; justify-content:center; gap:8px; margin-bottom:24px;">
+            <div style="width:12px; height:12px; border-radius:50%; background:var(--Y); animation:dot-bounce .8s ease infinite;"></div>
+            <div style="width:12px; height:12px; border-radius:50%; background:var(--Y); animation:dot-bounce .8s ease infinite; animation-delay:.15s;"></div>
+            <div style="width:12px; height:12px; border-radius:50%; background:var(--Y); animation:dot-bounce .8s ease infinite; animation-delay:.3s;"></div>
+          </div>
+          <p style="color:var(--MUTED); font-size:16px;">L'IA génère ton contrat...</p>
+          <p style="color:#555; font-size:13px; margin-top:8px;">Cela peut prendre 10-20 secondes</p>
+        </div>
+
+        <!-- CONTRAT GÉNÉRÉ -->
+        <div id="contract-output" style="display:none;">
+          <!-- ACTIONS -->
+          <div style="display:flex; gap:12px; margin-bottom:16px;">
+            <button class="btn btn-primary" style="flex:1;" onclick="downloadContractPDF()">
+              ⬇️ Télécharger en PDF
+            </button>
+            <button class="btn btn-outline" onclick="copyContract()">📋 Copier</button>
+            <button class="btn btn-outline" onclick="resetContract()">↺ Nouveau</button>
+          </div>
+
+          <!-- CONTRAT -->
+          <div id="contract-display" style="background:#fff; border-radius:16px; padding:48px; color:#111; font-family:Georgia, serif; line-height:1.8; font-size:14px; max-height:75vh; overflow-y:auto; box-shadow:0 4px 24px rgba(0,0,0,.3);">
+          </div>
         </div>
       </div>
-      <div class="form-group"><label class="form-label">Détails</label><textarea id="c-details" class="form-input" rows="3" placeholder="Conditions spéciales..."></textarea></div>
-      <button class="btn btn-primary" style="width:100%; padding:16px; font-size:16px;" onclick="generateContract()">✨ Générer le contrat avec l'IA</button>
-      <div id="ai-generating" style="display:none; text-align:center; padding:32px;">
-        <div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>
-        <p style="color:var(--MUTED);">L'IA génère ton contrat...</p>
-      </div>
-      <div id="contract-result" style="display:none;">
-        <div class="contract-result" id="contract-text"></div>
-        <div style="display:flex; gap:12px; margin-top:16px;">
-          <button class="btn btn-primary" onclick="copyContract()">📋 Copier</button>
-          <button class="btn btn-outline" onclick="printContract()">🖨️ Imprimer</button>
-          <button class="btn btn-outline" onclick="document.getElementById('contract-result').style.display='none'">↺ Nouveau</button>
-        </div>
-      </div>
+
     </div>
   </div>
 
@@ -993,42 +1124,129 @@
   function changeMonth(dir) { calendarDate.setMonth(calendarDate.getMonth()+dir); renderCalendar(); }
 
   async function generateContract() {
-    const dj = document.getElementById('c-dj').value, date = document.getElementById('c-date').value, fee = document.getElementById('c-fee').value;
-    if (!dj||!date||!fee) { alert('Remplis au minimum le DJ, la date et le cachet.'); return; }
-    document.getElementById('ai-generating').style.display = 'block';
-    document.getElementById('contract-result').style.display = 'none';
+    const djName = document.getElementById('c-dj-name').value;
+    const djAddress = document.getElementById('c-dj-address').value;
+    const djPhone = document.getElementById('c-dj-phone').value;
+    const djEmail = document.getElementById('c-dj-email').value;
+    const djSiret = document.getElementById('c-dj-siret').value;
+    const venueName = document.getElementById('c-venue-name').value || (user.firstName + ' ' + user.lastName);
+    const venueAddress = document.getElementById('c-venue-address').value;
+    const venuePhone = document.getElementById('c-venue-phone').value;
+    const venueEmail = document.getElementById('c-venue-email').value || user.email;
+    const venueSiret = document.getElementById('c-venue-siret').value;
+    const date = document.getElementById('c-date').value;
+    const fee = document.getElementById('c-fee').value;
+    const start = document.getElementById('c-start').value;
+    const end = document.getElementById('c-end').value;
+    const type = document.getElementById('c-type').value;
+    const acompte = document.getElementById('c-acompte').value;
+    const details = document.getElementById('c-details').value;
+
+    if (!djName || !date || !fee) {
+      alert('Remplis au minimum le nom du DJ, la date et le cachet.');
+      return;
+    }
+
+    document.getElementById('contract-empty-state').style.display = 'none';
+    document.getElementById('contract-loading').style.display = 'block';
+    document.getElementById('contract-output').style.display = 'none';
+
     try {
       const res = await fetch('/.netlify/functions/generate-contract', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ djName:dj, venue:user.firstName+' '+user.lastName, date, start:document.getElementById('c-start').value, end:document.getElementById('c-end').value, fee, type:document.getElementById('c-type').value, details:document.getElementById('c-details').value })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          djName, djAddress, djPhone, djEmail, djSiret,
+          venueName, venueAddress, venuePhone, venueEmail, venueSiret,
+          date, fee, start, end, type, acompte, details
+        })
       });
+
       const data = await res.json();
-      document.getElementById('contract-text').innerHTML = markdownToHTML(data.contract);
-      document.getElementById('ai-generating').style.display = 'none';
-      document.getElementById('contract-result').style.display = 'block';
-    } catch(err) { document.getElementById('ai-generating').style.display='none'; alert('Erreur. Réessaie.'); }
+      document.getElementById('contract-loading').style.display = 'none';
+
+      if (!res.ok) {
+        alert('Erreur : ' + (data.error || 'Réessaie.'));
+        document.getElementById('contract-empty-state').style.display = 'flex';
+        return;
+      }
+
+      document.getElementById('contract-display').innerHTML = markdownToHTML(data.contract);
+      document.getElementById('contract-output').style.display = 'block';
+
+    } catch (err) {
+      document.getElementById('contract-loading').style.display = 'none';
+      document.getElementById('contract-empty-state').style.display = 'flex';
+      alert('Erreur. Réessaie.');
+    }
   }
 
   function markdownToHTML(text) {
     return text
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.+?)\*/g, '<em>$1</em>')
-      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-      .replace(/^\* (.+)$/gm, '<li>$1</li>')
-      .replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>')
+      .replace(/^### (.+)$/gm, '<h3 style="color:#111; font-size:16px; margin:20px 0 8px; font-family:Georgia,serif;">$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2 style="color:#111; font-size:18px; margin:24px 0 10px; border-bottom:1px solid #eee; padding-bottom:8px;">$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1 style="color:#111; font-size:22px; text-align:center; margin-bottom:24px;">$1</h1>')
+      .replace(/^\* (.+)$/gm, '<li style="margin:6px 0; color:#333;">$1</li>')
+      .replace(/^- (.+)$/gm, '<li style="margin:6px 0; color:#333;">$1</li>')
       .replace(/\n\n/g, '<br><br>')
       .replace(/\n/g, '<br>');
   }
 
-  function copyContract() { navigator.clipboard.writeText(document.getElementById('contract-text').innerText); alert('Copié ✅'); }
-  function printContract() {
-    const html = document.getElementById('contract-text').innerHTML;
-    const w = window.open('', '_blank');
-    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;padding:40px;max-width:800px;margin:auto;line-height:1.8;}h1,h2,h3{margin:16px 0 8px;}ul{padding-left:24px;}li{margin:4px 0;}</style></head><body>${html}</body></html>`);
-    w.document.close();
-    w.print();
+  async function downloadContractPDF() {
+    const contractHTML = document.getElementById('contract-display').innerHTML;
+    const djName = document.getElementById('c-dj-name').value || 'DJ';
+    const venueName = document.getElementById('c-venue-name').value || (user.firstName + ' ' + user.lastName);
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Contrat DJ — ${djName} × ${venueName}</title>
+        <style>
+          * { margin:0; padding:0; box-sizing:border-box; }
+          body { font-family:Georgia,serif; font-size:13px; line-height:1.8; color:#111; padding:40px 60px; max-width:800px; margin:0 auto; }
+          h1 { font-size:20px; text-align:center; margin-bottom:24px; }
+          h2 { font-size:16px; margin:20px 0 8px; border-bottom:1px solid #ddd; padding-bottom:6px; }
+          h3 { font-size:14px; margin:16px 0 6px; }
+          strong { font-weight:bold; }
+          li { margin:4px 0 4px 20px; }
+          .header { text-align:center; border-bottom:2px solid #111; padding-bottom:20px; margin-bottom:32px; }
+          .header h1 { font-size:24px; letter-spacing:2px; margin-bottom:8px; }
+          .header p { color:#555; font-size:12px; }
+          .footer { margin-top:60px; border-top:1px solid #ddd; padding-top:20px; font-size:11px; color:#888; text-align:center; }
+          @media print { body { padding:20px 40px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>CONTRAT DE PRESTATION DJ</h1>
+          <p>Généré via CUE DJ Platform — cuedj.eu — ${new Date().toLocaleDateString('fr-FR')}</p>
+        </div>
+        ${contractHTML}
+        <div class="footer">
+          <p>Document généré par CUE DJ Platform • cuedj.eu • ${new Date().toLocaleDateString('fr-FR')}</p>
+          <p>Ce contrat est fourni à titre indicatif. Il est recommandé de le faire réviser par un avocat spécialisé.</p>
+        </div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    setTimeout(() => { printWindow.print(); }, 500);
+  }
+
+  function copyContract() {
+    const text = document.getElementById('contract-display').innerText;
+    navigator.clipboard.writeText(text);
+    alert('✅ Contrat copié !');
+  }
+
+  function resetContract() {
+    document.getElementById('contract-output').style.display = 'none';
+    document.getElementById('contract-empty-state').style.display = 'flex';
+    document.getElementById('contract-display').innerHTML = '';
   }
   function closeModal(id) { document.getElementById(id).classList.remove('open'); }
   async function logout() {

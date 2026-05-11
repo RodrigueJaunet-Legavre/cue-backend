@@ -1,5 +1,13 @@
 exports.handler = async (event) => {
-  const { djName, venue, date, start, end, fee, type, details } = JSON.parse(event.body);
+  const {
+    djName, djAddress, djPhone, djEmail, djSiret,
+    venueName, venueAddress, venuePhone, venueEmail, venueSiret,
+    date, fee, start, end, type, acompte, details
+  } = JSON.parse(event.body);
+
+  const acompteText = acompte > 0
+    ? `Un acompte de ${acompte}% (${Math.round(fee * acompte / 100)}€) sera versé à la signature du contrat. Le solde de ${Math.round(fee * (100 - acompte) / 100)}€ sera réglé le soir de la prestation.`
+    : `Le paiement intégral de ${fee}€ sera effectué le soir de la prestation.`;
 
   try {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -10,34 +18,49 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
-        max_tokens: 2000,
+        max_tokens: 2500,
         messages: [
           {
             role: 'system',
-            content: 'Tu es un expert juridique spécialisé dans les contrats de prestation artistique en France. Tu génères des contrats professionnels, complets et juridiquement solides en français.'
+            content: 'Tu es un expert juridique spécialisé dans les contrats de prestation artistique en France. Tu génères des contrats professionnels complets en français. Tu utilises exactement les informations fournies sans mettre de crochets ou de champs vides.'
           },
           {
             role: 'user',
-            content: `Génère un contrat professionnel de prestation DJ avec ces informations :
-- DJ (Prestataire) : ${djName}
-- Venue / Client : ${venue}
-- Type d'événement : ${type}
-- Date : ${date}
+            content: `Génère un contrat professionnel de prestation DJ avec EXACTEMENT ces informations (n'invente rien, n'ajoute pas de crochets) :
+
+**PRESTATAIRE (DJ) :**
+- Nom : ${djName}
+- Adresse : ${djAddress || 'Non renseignée'}
+- Téléphone : ${djPhone || 'Non renseigné'}
+- Email : ${djEmail || 'Non renseigné'}
+${djSiret ? `- SIRET : ${djSiret}` : ''}
+
+**CLIENT :**
+- Nom : ${venueName}
+- Adresse : ${venueAddress || 'Non renseignée'}
+- Téléphone : ${venuePhone || 'Non renseigné'}
+- Email : ${venueEmail || 'Non renseigné'}
+${venueSiret ? `- SIRET : ${venueSiret}` : ''}
+
+**ÉVÉNEMENT :**
+- Type : ${type}
+- Date : ${new Date(date).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
 - Horaires : ${start} → ${end}
 - Cachet : ${fee}€ TTC
-- Détails supplémentaires : ${details || 'Aucun'}
+- Paiement : ${acompteText}
+- Détails : ${details || 'Aucun détail supplémentaire'}
 
-Le contrat doit inclure ces sections :
-1. PARTIES (coordonnées DJ et Client)
+Le contrat doit avoir ces 10 sections numérotées :
+1. PARTIES
 2. OBJET DU CONTRAT
-3. CONDITIONS DE LA PRESTATION (date, lieu, horaires, matériel)
+3. CONDITIONS DE LA PRESTATION
 4. RÉMUNÉRATION ET MODALITÉS DE PAIEMENT
 5. CONDITIONS D'ANNULATION
 6. OBLIGATIONS DU PRESTATAIRE
 7. OBLIGATIONS DU CLIENT
 8. PROPRIÉTÉ INTELLECTUELLE
 9. RESPONSABILITÉ
-10. SIGNATURES (avec espaces pour date et signature)`
+10. SIGNATURES (avec lignes pour date et signature des deux parties)`
           }
         ]
       })
@@ -51,10 +74,9 @@ Le contrat doit inclure ces sections :
       return { statusCode: 500, body: JSON.stringify({ error: data.error?.message || 'Erreur Groq' }) };
     }
 
-    const contract = data.choices[0].message.content;
     return {
       statusCode: 200,
-      body: JSON.stringify({ contract })
+      body: JSON.stringify({ contract: data.choices[0].message.content })
     };
 
   } catch (err) {
