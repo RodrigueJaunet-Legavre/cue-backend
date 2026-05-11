@@ -712,7 +712,6 @@
       </div>
       <div style="display:flex; gap:12px;">
         <a id="view-public-btn" href="#" target="_blank" class="btn btn-outline">👁 Voir mon profil public</a>
-        <button class="btn btn-primary" onclick="saveProfile()">💾 Sauvegarder</button>
       </div>
     </div>
 
@@ -839,6 +838,50 @@
           <button class="btn btn-outline" onclick="shareProfile('messages')">✉️ Messages</button>
           <button class="btn btn-outline" onclick="shareProfile('copy')">🔗 Copier lien</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BARRE DE SAUVEGARDE FIXE -->
+  <div id="save-bar" style="
+    position: fixed;
+    bottom: 0;
+    left: 260px;
+    right: 0;
+    background: linear-gradient(to top, #080808 60%, transparent);
+    padding: 20px 40px 24px;
+    z-index: 99;
+    display: none;
+  ">
+    <div style="
+      background: var(--CARD);
+      border: 1px solid var(--BORDER);
+      border-radius: 16px;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 -8px 32px rgba(0,0,0,.5);
+    ">
+      <div>
+        <div style="font-weight:700; color:#fff; font-size:15px;">Modifications non sauvegardées</div>
+        <div style="color:var(--MUTED); font-size:13px; margin-top:2px;">Clique sur Sauvegarder pour appliquer les changements</div>
+      </div>
+      <div style="display:flex; gap:12px;">
+        <button onclick="resetProfileChanges()"
+                style="padding:12px 24px; border-radius:10px; border:1px solid var(--BORDER);
+                       background:transparent; color:var(--MUTED); cursor:pointer;
+                       font-weight:700; font-size:14px; font-family:Barlow,sans-serif;">
+          Annuler
+        </button>
+        <button onclick="saveProfile()"
+                style="padding:12px 32px; border-radius:10px; border:none;
+                       background:var(--Y); color:#000; cursor:pointer;
+                       font-weight:700; font-size:16px; font-family:Barlow,sans-serif;
+                       box-shadow: 0 4px 20px rgba(255,195,0,.4);
+                       transition: all .2s;">
+          💾 Sauvegarder
+        </button>
       </div>
     </div>
   </div>
@@ -1697,6 +1740,8 @@
 
     const pubBtn = document.getElementById('view-public-btn');
     if (pubBtn) pubBtn.href = `dj-profile.html?id=${user.id}`;
+
+    attachProfileListeners();
   }
 
   function renderGenresSelector() {
@@ -1727,6 +1772,7 @@
       el.style.borderColor = 'var(--Y)';
       el.style.color = '#000';
     }
+    showSaveBar();
   }
 
   function handlePhotoChange(input) {
@@ -1740,6 +1786,7 @@
         `<img src="${e.target.result}" style="width:120px; height:120px; border-radius:50%; object-fit:cover;">`;
       document.getElementById('sidebar-avatar').innerHTML =
         `<img src="${e.target.result}" style="width:64px; height:64px; border-radius:50%; object-fit:cover;">`;
+      showSaveBar();
     };
     reader.readAsDataURL(file);
   }
@@ -1842,17 +1889,42 @@
     renderTracksList();
   }
 
+  function showSaveBar() {
+    const bar = document.getElementById('save-bar');
+    if (bar) bar.style.display = 'block';
+  }
+
+  function hideSaveBar() {
+    const bar = document.getElementById('save-bar');
+    if (bar) bar.style.display = 'none';
+  }
+
+  function resetProfileChanges() {
+    hideSaveBar();
+    loadProfile();
+  }
+
+  function attachProfileListeners() {
+    const fields = [
+      'profile-description',
+      'social-instagram', 'social-tiktok', 'social-soundcloud',
+      'social-spotify', 'social-youtube'
+    ];
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', showSaveBar);
+    });
+  }
+
   async function saveProfile() {
-    const btn = event.target;
-    btn.disabled = true;
-    btn.textContent = 'Sauvegarde...';
+    const saveBtn = document.querySelector('#save-bar button:last-child');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Sauvegarde...'; }
 
     const description = document.getElementById('profile-description').value;
 
     if (!selectedGenres.length) {
       alert('Sélectionne au moins 1 genre.');
-      btn.disabled = false;
-      btn.textContent = '💾 Sauvegarder';
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 Sauvegarder'; }
       return;
     }
 
@@ -1892,14 +1964,13 @@
       localStorage.setItem('cue_user', JSON.stringify(user));
       checkBadgeConditions();
 
-      btn.textContent = '✅ Sauvegardé !';
-      setTimeout(() => {
-        btn.disabled = false;
-        btn.textContent = '💾 Sauvegarder';
-      }, 2000);
+      hideSaveBar();
+      if (saveBtn) {
+        saveBtn.textContent = '✅ Sauvegardé !';
+        setTimeout(() => { saveBtn.disabled = false; saveBtn.textContent = '💾 Sauvegarder'; }, 2000);
+      }
     } catch (err) {
-      btn.disabled = false;
-      btn.textContent = '💾 Sauvegarder';
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 Sauvegarder'; }
       alert('Erreur. Réessaie.');
     }
   }
