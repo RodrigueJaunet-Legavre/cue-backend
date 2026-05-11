@@ -427,14 +427,22 @@
     if (user.id === djId || (!djId && user.userType === 'dj')) {
       djData = {
         id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        userType: user.userType,
+        firstName: user.first_name || user.firstName || '',
+        lastName: user.last_name || user.lastName || '',
+        userType: user.user_type || user.userType,
         plan: user.plan || 'starter',
-        verified: user.identityStatus === 'verified',
+        verified: user.identity_status === 'verified',
         profile: user.profile || {},
         genres: user.genres || [],
-        tracks: user.tracks || []
+        tracks: user.tracks || [],
+        description: user.description || '',
+        instagram: user.instagram || '',
+        tiktok: user.tiktok || '',
+        soundcloud: user.soundcloud || '',
+        spotify: user.spotify || '',
+        youtube: user.youtube || '',
+        mix_url: user.mix_url || '',
+        picture: user.picture || ''
       };
       renderProfile();
       return;
