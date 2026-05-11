@@ -1,41 +1,61 @@
 exports.handler = async (event) => {
-  console.log('Fonction appelée');
-  console.log('Body:', event.body);
-  console.log('ANTHROPIC_API_KEY présent:', !!process.env.ANTHROPIC_API_KEY);
-
   const { djName, venue, date, start, end, fee, type, details } = JSON.parse(event.body);
-  console.log('Données reçues:', { djName, venue, date, fee });
 
   try {
-    console.log('Appel API Anthropic...');
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-20250514',
+        model: 'llama-3.3-70b-versatile',
         max_tokens: 2000,
-        messages: [{
-          role: 'user',
-          content: `Génère un contrat professionnel DJ en français.
-DJ: ${djName}, Venue: ${venue}, Date: ${date}, Cachet: ${fee}€`
-        }]
+        messages: [
+          {
+            role: 'system',
+            content: 'Tu es un expert juridique spécialisé dans les contrats de prestation artistique en France. Tu génères des contrats professionnels, complets et juridiquement solides en français.'
+          },
+          {
+            role: 'user',
+            content: `Génère un contrat professionnel de prestation DJ avec ces informations :
+- DJ (Prestataire) : ${djName}
+- Venue / Client : ${venue}
+- Type d'événement : ${type}
+- Date : ${date}
+- Horaires : ${start} → ${end}
+- Cachet : ${fee}€ TTC
+- Détails supplémentaires : ${details || 'Aucun'}
+
+Le contrat doit inclure ces sections :
+1. PARTIES (coordonnées DJ et Client)
+2. OBJET DU CONTRAT
+3. CONDITIONS DE LA PRESTATION (date, lieu, horaires, matériel)
+4. RÉMUNÉRATION ET MODALITÉS DE PAIEMENT
+5. CONDITIONS D'ANNULATION
+6. OBLIGATIONS DU PRESTATAIRE
+7. OBLIGATIONS DU CLIENT
+8. PROPRIÉTÉ INTELLECTUELLE
+9. RESPONSABILITÉ
+10. SIGNATURES (avec espaces pour date et signature)`
+          }
+        ]
       })
     });
 
-    console.log('Status Anthropic:', response.status);
     const data = await response.json();
-    console.log('Réponse Anthropic:', JSON.stringify(data).slice(0, 200));
+    console.log('Status Groq:', response.status);
 
-    if (data.error) {
-      return { statusCode: 500, body: JSON.stringify({ error: data.error.message }) };
+    if (!response.ok) {
+      console.log('Erreur Groq:', JSON.stringify(data));
+      return { statusCode: 500, body: JSON.stringify({ error: data.error?.message || 'Erreur Groq' }) };
     }
 
-    const contract = data.content[0].text;
-    return { statusCode: 200, body: JSON.stringify({ contract }) };
+    const contract = data.choices[0].message.content;
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ contract })
+    };
 
   } catch (err) {
     console.log('ERREUR:', err.message);
