@@ -523,7 +523,18 @@
     document.getElementById('og-title').content = `${firstName} ${lastName} — DJ sur CUE`;
     document.getElementById('og-desc').content = dj.profile?.description || dj.description || '';
 
-    document.getElementById('hero-name').textContent = firstName + ' ' + lastName;
+    console.log('djData complet:', JSON.stringify(djData))
+
+    const nom = djData.first_name || djData.firstName ||
+                djData.name || djData.displayName ||
+                (djData.profile && (djData.profile.first_name || djData.profile.firstName)) ||
+                'DJ'
+
+    const prenom = djData.last_name || djData.lastName ||
+                   (djData.profile && (djData.profile.last_name || djData.profile.lastName)) ||
+                   ''
+
+    document.getElementById('hero-name').textContent = nom + (prenom ? ' ' + prenom : '')
     document.getElementById('hero-genres').textContent = (dj.genres || []).join(' · ');
 
     if (avgRating) {
