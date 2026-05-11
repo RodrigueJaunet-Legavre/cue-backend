@@ -1,8 +1,6 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-export const config = { api: { bodyParser: false } };
-
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   const sig = req.headers['stripe-signature'];
@@ -24,3 +22,6 @@ export default async function handler(req, res) {
 
   return res.status(200).json({ received: true });
 }
+
+handler.config = { api: { bodyParser: false } };
+module.exports = handler;

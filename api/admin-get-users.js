@@ -1,7 +1,7 @@
 const postgres = require('postgres');
 const sql = postgres(process.env.NETLIFY_DATABASE_URL, { ssl: 'require' });
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   const { adminSecret, filter, status, type } = req.body;

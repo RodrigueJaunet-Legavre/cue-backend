@@ -1,6 +1,6 @@
 const { Resend } = require('resend');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   const { type, email, firstName, code } = req.body;

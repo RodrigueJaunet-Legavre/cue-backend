@@ -5,7 +5,7 @@ const PRICES = {
   business: 'price_1TVEdhRwFuYQb4HDvq7lrKfb'
 };
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   const { plan } = req.body;

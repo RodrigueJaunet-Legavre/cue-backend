@@ -1,9 +1,7 @@
 const postgres = require('postgres');
 const sql = postgres(process.env.NETLIFY_DATABASE_URL, { ssl: 'require' });
 
-export const config = { api: { bodyParser: { sizeLimit: '20mb' } } };
-
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   try {
@@ -47,3 +45,6 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: err.message });
   }
 }
+
+handler.config = { api: { bodyParser: { sizeLimit: '20mb' } } };
+module.exports = handler;

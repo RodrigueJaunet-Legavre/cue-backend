@@ -1,7 +1,7 @@
 const { Resend } = require('resend');
 const postgres = require('postgres');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   const { type, senderName, senderEmail, subject, message, category, reportedUser } = req.body;
