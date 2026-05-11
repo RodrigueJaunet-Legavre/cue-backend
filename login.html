@@ -157,18 +157,6 @@ function togglePassword() {
 <script type="module">
 import { supabase } from './js/supabase-client.js'
 
-async function clearPreviousSession() {
-  try {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session && window.location.pathname.includes('login')) {
-      await supabase.auth.signOut({ scope: 'global' })
-      localStorage.clear()
-      sessionStorage.clear()
-    }
-  } catch (err) {}
-}
-clearPreviousSession()
-
 async function handleLogin(e) {
   e.preventDefault()
 
@@ -266,25 +254,26 @@ function redirectAfterLogin(userData) {
 window.handleLogin = handleLogin
 window.signInWithGoogle = signInWithGoogle
 
-// Vérifie si déjà connecté
-async function checkSession() {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (session) {
-    const res = await fetch('/api/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'get_user', userId: session.user.id })
-    })
-    const userData = await res.json()
-    if (userData.user) {
-      localStorage.setItem('cue_user', JSON.stringify(userData.user))
-      localStorage.setItem('cue_logged_in', 'true')
-      redirectAfterLogin(userData.user)
+async function checkIfAlreadyLoggedIn() {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_user', userId: session.user.id, email: session.user.email })
+      })
+      const data = await res.json()
+      if (data.user) {
+        redirectAfterLogin(data.user)
+      }
     }
+  } catch (err) {
+    console.log('Pas de session active')
   }
 }
 
-checkSession()
+checkIfAlreadyLoggedIn()
 </script>
 
 </body>
