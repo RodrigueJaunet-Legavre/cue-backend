@@ -377,12 +377,25 @@
 
   // NAVIGATION
   function nextStep() {
-    saveCurrentStep();
-    if (currentStep < totalSteps) {
-      showStep(currentStep + 1);
-    } else {
-      completeProfile();
+    // Validation étape 2 - description obligatoire
+    if (currentStep === 2) {
+      const desc = document.getElementById('description').value.trim();
+      const wordCount = desc.split(/\s+/).filter(w => w.length > 0).length;
+      if (wordCount < 10) {
+        showDescError('Ta description doit contenir au moins 10 mots. (' + wordCount + '/10)');
+        return;
+      }
     }
+    // Validation étape 3 - genre obligatoire
+    if (currentStep === 3) {
+      if (selectedGenres.length === 0) {
+        alert('Sélectionne au moins 1 genre musical.');
+        return;
+      }
+    }
+    saveCurrentStep();
+    if (currentStep < totalSteps) showStep(currentStep + 1);
+    else completeProfile();
   }
 
   function prevStep() {
@@ -390,11 +403,35 @@
   }
 
   function skipStep() {
-    if (currentStep < totalSteps) {
-      showStep(currentStep + 1);
-    } else {
-      completeProfile();
+    // Étapes obligatoires : 2 (description) et 3 (genres)
+    if (currentStep === 2) {
+      const desc = document.getElementById('description').value.trim();
+      const wordCount = desc.split(/\s+/).filter(w => w.length > 0).length;
+      if (wordCount < 10) {
+        alert('Ta description doit contenir au moins 10 mots.');
+        return;
+      }
     }
+    if (currentStep === 3) {
+      if (selectedGenres.length === 0) {
+        alert('Sélectionne au moins 1 genre musical.');
+        return;
+      }
+    }
+    if (currentStep < totalSteps) showStep(currentStep + 1);
+    else completeProfile();
+  }
+
+  function showDescError(msg) {
+    let err = document.getElementById('desc-error');
+    if (!err) {
+      err = document.createElement('p');
+      err.id = 'desc-error';
+      err.style.cssText = 'color:#ff4444; font-size:13px; margin-top:8px; font-weight:600;';
+      document.getElementById('description').parentNode.appendChild(err);
+    }
+    err.textContent = msg;
+    document.getElementById('description').style.borderColor = '#ff4444';
   }
 
   function showStep(n) {
@@ -403,6 +440,13 @@
     document.getElementById('step-' + currentStep).classList.add('active');
     document.getElementById('step-indicator').textContent = `Étape ${n} sur ${totalSteps}`;
     document.getElementById('progress-fill').style.width = ((n / totalSteps) * 100) + '%';
+
+    // Cache "Passer" pour les étapes obligatoires
+    const skipBtn = document.querySelector('.skip-btn');
+    if (skipBtn) {
+      skipBtn.style.display = (n === 2 || n === 3) ? 'none' : 'block';
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -437,8 +481,27 @@
 
   // DESCRIPTION
   function updateCharCount() {
-    const val = document.getElementById('description').value.length;
-    document.getElementById('char-count').textContent = val;
+    const val = document.getElementById('description').value;
+    const words = val.trim().split(/\s+/).filter(w => w.length > 0).length;
+    document.getElementById('char-count').textContent = val.length;
+
+    // Compteur de mots
+    let wordCounter = document.getElementById('word-count');
+    if (!wordCounter) {
+      wordCounter = document.createElement('span');
+      wordCounter.id = 'word-count';
+      wordCounter.style.cssText = 'margin-left:12px;';
+      document.querySelector('.char-count').appendChild(wordCounter);
+    }
+    wordCounter.textContent = `• ${words} mot${words > 1 ? 's' : ''} ${words >= 10 ? '✅' : '(min. 10)'}`;
+    wordCounter.style.color = words >= 10 ? '#00c864' : '#ff4444';
+
+    // Reset erreur si atteint 10 mots
+    const err = document.getElementById('desc-error');
+    if (err && words >= 10) {
+      err.remove();
+      document.getElementById('description').style.borderColor = '';
+    }
   }
 
   // GENRES

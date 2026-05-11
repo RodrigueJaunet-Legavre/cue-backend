@@ -254,6 +254,10 @@
 
   <div class="nav-section">
     <div class="nav-section-title">Compte</div>
+    <div class="nav-item" onclick="showPage('verification', this)">
+      <span class="nav-icon">🪪</span> Vérification ID
+      <span id="verif-status-badge" style="margin-left:auto; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; background:rgba(255,170,0,.2); color:#ffaa00;">En attente</span>
+    </div>
     <div class="nav-item" onclick="showPage('settings', this)">
       <span class="nav-icon">⚙️</span> Paramètres
     </div>
@@ -300,6 +304,52 @@
         <div class="stat-label">Ta note</div>
         <div class="stat-value" id="stat-rating" style="color:var(--Y)">—</div>
         <div class="stat-sub" id="stat-reviews-count">Aucun avis</div>
+      </div>
+    </div>
+
+    <!-- BADGE VÉRIFIÉ -->
+    <div class="card" style="margin-bottom:24px; background:linear-gradient(135deg, #111 0%, #1a1a1a 100%); border-color:rgba(255,195,0,.3);">
+      <div class="card-header">
+        <span class="card-title">✨ Obtenir le Badge Vérifié CUE</span>
+        <span id="badge-status" style="font-size:13px; font-weight:700;"></span>
+      </div>
+      <div class="card-body">
+        <p style="color:var(--MUTED); font-size:14px; margin-bottom:24px;">Le badge vérifié booste ta visibilité et inspire confiance aux venues. 3 conditions à remplir :</p>
+        <div style="display:flex; flex-direction:column; gap:12px;" id="badge-conditions">
+
+          <div id="cond-photo" style="display:flex; align-items:center; gap:16px; padding:16px 20px; background:#0a0a0a; border-radius:12px; border:1px solid var(--BORDER);">
+            <span id="cond-photo-icon" style="font-size:24px;">⬜</span>
+            <div style="flex:1;">
+              <div style="font-weight:700; color:#fff; font-size:14px;">Photo de profil</div>
+              <div style="color:var(--MUTED); font-size:12px; margin-top:2px;">Ajoute une photo professionnelle dans Mon Profil</div>
+            </div>
+            <button id="cond-photo-btn" class="btn btn-outline btn-sm" onclick="showPage('profile', document.querySelector('.nav-item[onclick*=profile]'))">Ajouter →</button>
+          </div>
+
+          <div id="cond-identity" style="display:flex; align-items:center; gap:16px; padding:16px 20px; background:#0a0a0a; border-radius:12px; border:1px solid var(--BORDER);">
+            <span id="cond-identity-icon" style="font-size:24px;">⬜</span>
+            <div style="flex:1;">
+              <div style="font-weight:700; color:#fff; font-size:14px;">Vérification d'identité</div>
+              <div style="color:var(--MUTED); font-size:12px; margin-top:2px;">Envoie une photo de ta pièce d'identité pour validation</div>
+            </div>
+            <button id="cond-identity-btn" class="btn btn-outline btn-sm" onclick="showPage('verification', document.querySelector('.nav-item[onclick*=verification]'))">Vérifier →</button>
+          </div>
+
+          <div id="cond-mix" style="display:flex; align-items:center; gap:16px; padding:16px 20px; background:#0a0a0a; border-radius:12px; border:1px solid var(--BORDER);">
+            <span id="cond-mix-icon" style="font-size:24px;">⬜</span>
+            <div style="flex:1;">
+              <div style="font-weight:700; color:#fff; font-size:14px;">Mix de présentation (10-20 min)</div>
+              <div style="color:var(--MUTED); font-size:12px; margin-top:2px;">Upload ton mix dans Mon Profil</div>
+            </div>
+            <button id="cond-mix-btn" class="btn btn-outline btn-sm" onclick="showPage('profile', document.querySelector('.nav-item[onclick*=profile]'))">Uploader →</button>
+          </div>
+
+        </div>
+        <div id="badge-obtained" style="display:none; text-align:center; padding:32px; margin-top:16px; background:rgba(0,200,100,.08); border:1px solid rgba(0,200,100,.3); border-radius:16px;">
+          <div style="font-size:48px; margin-bottom:12px;">✅</div>
+          <div style="font-family:Barlow Condensed; font-weight:900; font-size:28px; color:#00c864;">BADGE VÉRIFIÉ OBTENU !</div>
+          <div style="color:var(--MUTED); margin-top:8px;">Tu apparais maintenant en priorité dans les recherches des venues.</div>
+        </div>
       </div>
     </div>
 
@@ -794,6 +844,97 @@
   </div>
 
   <!-- SETTINGS -->
+  <!-- PAGE VÉRIFICATION ID -->
+  <div id="page-verification" class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">VÉRIFICATION D'IDENTITÉ</h1>
+        <p class="page-sub">Requis pour obtenir le badge vérifié CUE</p>
+      </div>
+    </div>
+
+    <div style="max-width:600px;">
+      <div id="verif-status-card" class="card" style="margin-bottom:24px; padding:24px;">
+        <div id="verif-pending" style="display:flex; align-items:center; gap:16px;">
+          <span style="font-size:36px;">⏳</span>
+          <div>
+            <div style="font-weight:700; color:#fff;">En attente de vérification</div>
+            <div style="color:var(--MUTED); font-size:13px; margin-top:4px;">Envoie tes documents pour que notre équipe les vérifie</div>
+          </div>
+        </div>
+        <div id="verif-approved" style="display:none; align-items:center; gap:16px;">
+          <span style="font-size:36px;">✅</span>
+          <div>
+            <div style="font-weight:700; color:#00c864;">Identité vérifiée !</div>
+            <div style="color:var(--MUTED); font-size:13px; margin-top:4px;">Ton badge vérifié est actif sur ton profil</div>
+          </div>
+        </div>
+        <div id="verif-rejected" style="display:none; align-items:center; gap:16px;">
+          <span style="font-size:36px;">❌</span>
+          <div>
+            <div style="font-weight:700; color:#ff4444;">Documents refusés</div>
+            <div style="color:var(--MUTED); font-size:13px; margin-top:4px;">Renvoie des documents lisibles et valides</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="verif-form-card">
+        <div class="card-header"><span class="card-title">📤 Envoyer mes documents</span></div>
+        <div class="card-body">
+          <p style="color:var(--MUTED); font-size:14px; margin-bottom:24px; line-height:1.6;">
+            Envoie une photo de ton visage (selfie) et une photo de ta pièce d'identité (passeport, carte d'identité ou permis de conduire). Nos équipes valideront tes documents sous 24h.
+          </p>
+
+          <form name="identity-verification" method="POST" data-netlify="true" enctype="multipart/form-data" onsubmit="handleVerifSubmit(event)">
+            <input type="hidden" name="form-name" value="identity-verification">
+            <input type="hidden" name="user-email" id="verif-email-field">
+            <input type="hidden" name="user-name" id="verif-name-field">
+
+            <div class="form-group">
+              <label class="form-label">📸 Selfie (photo de ton visage)</label>
+              <div style="border:2px dashed var(--BORDER); border-radius:12px; padding:24px; text-align:center; cursor:pointer; transition:all .2s;"
+                   onclick="document.getElementById('selfie-input').click()"
+                   onmouseover="this.style.borderColor='var(--Y)'"
+                   onmouseout="this.style.borderColor='var(--BORDER)'">
+                <input type="file" id="selfie-input" name="selfie" accept="image/*" capture="user" required style="display:none" onchange="previewFile(this, 'selfie-preview')">
+                <div id="selfie-preview-wrap">
+                  <div style="font-size:32px; margin-bottom:8px;">🤳</div>
+                  <div style="font-weight:700; color:#fff; margin-bottom:4px;">Cliquer pour ajouter</div>
+                  <div style="color:var(--MUTED); font-size:12px;">JPG ou PNG • Max 10MB</div>
+                </div>
+                <img id="selfie-preview" style="display:none; width:120px; height:120px; object-fit:cover; border-radius:50%; margin:auto;">
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top:16px;">
+              <label class="form-label">🪪 Pièce d'identité (recto)</label>
+              <div style="border:2px dashed var(--BORDER); border-radius:12px; padding:24px; text-align:center; cursor:pointer; transition:all .2s;"
+                   onclick="document.getElementById('doc-input').click()"
+                   onmouseover="this.style.borderColor='var(--Y)'"
+                   onmouseout="this.style.borderColor='var(--BORDER)'">
+                <input type="file" id="doc-input" name="document" accept="image/*" required style="display:none" onchange="previewFile(this, 'doc-preview')">
+                <div id="doc-preview-wrap">
+                  <div style="font-size:32px; margin-bottom:8px;">🪪</div>
+                  <div style="font-weight:700; color:#fff; margin-bottom:4px;">Cliquer pour ajouter</div>
+                  <div style="color:var(--MUTED); font-size:12px;">Passeport, CNI ou permis • JPG ou PNG • Max 10MB</div>
+                </div>
+                <img id="doc-preview" style="display:none; width:100%; max-height:150px; object-fit:contain; border-radius:8px; margin-top:8px;">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%; padding:16px; font-size:16px; margin-top:24px;">
+              📤 Envoyer pour vérification
+            </button>
+          </form>
+
+          <p style="color:var(--MUTED); font-size:12px; text-align:center; margin-top:16px;">
+            🔒 Tes documents sont traités de manière confidentielle et ne sont jamais partagés
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- PAGE CONTACT -->
   <div id="page-contact" class="page">
     <div class="page-header">
@@ -1060,6 +1201,8 @@
     if (page === 'reviews') renderReviews();
     if (page === 'earnings') renderEarnings();
     if (page === 'contact') initContactPage();
+    if (page === 'verification') initVerificationPage();
+    if (page === 'overview') checkBadgeConditions();
   }
 
   function loadStats() {
@@ -1081,6 +1224,89 @@
       document.getElementById('pending-gigs-badge').textContent = pending;
       document.getElementById('pending-gigs-badge').style.display = 'block';
     }
+
+    checkBadgeConditions();
+  }
+
+  function checkBadgeConditions() {
+    const hasPhoto = !!(user.picture || user.profile?.photo);
+    const hasIdentity = user.identity_status === 'verified';
+    const hasMix = !!(user.mix_url || user.profile?.mix);
+
+    document.getElementById('cond-photo-icon').textContent = hasPhoto ? '✅' : '⬜';
+    document.getElementById('cond-photo').style.borderColor = hasPhoto ? 'rgba(0,200,100,.3)' : 'var(--BORDER)';
+    if (hasPhoto) document.getElementById('cond-photo-btn').style.display = 'none';
+
+    const identityIcon = hasIdentity ? '✅' : (user.identity_status === 'pending' ? '⏳' : '⬜');
+    document.getElementById('cond-identity-icon').textContent = identityIcon;
+    document.getElementById('cond-identity').style.borderColor = hasIdentity ? 'rgba(0,200,100,.3)' : 'var(--BORDER)';
+    if (hasIdentity) document.getElementById('cond-identity-btn').style.display = 'none';
+    if (user.identity_status === 'pending') {
+      document.getElementById('cond-identity-btn').textContent = '⏳ En attente';
+      document.getElementById('cond-identity-btn').disabled = true;
+    }
+
+    document.getElementById('cond-mix-icon').textContent = hasMix ? '✅' : '⬜';
+    document.getElementById('cond-mix').style.borderColor = hasMix ? 'rgba(0,200,100,.3)' : 'var(--BORDER)';
+    if (hasMix) document.getElementById('cond-mix-btn').style.display = 'none';
+
+    const allDone = hasPhoto && hasIdentity && hasMix;
+    const badgeStatus = document.getElementById('badge-status');
+
+    if (allDone) {
+      document.getElementById('badge-obtained').style.display = 'block';
+      badgeStatus.textContent = '✅ Badge obtenu';
+      badgeStatus.style.color = '#00c864';
+    } else {
+      const count = [hasPhoto, hasIdentity, hasMix].filter(Boolean).length;
+      badgeStatus.textContent = `${count}/3 conditions remplies`;
+      badgeStatus.style.color = count === 2 ? 'var(--Y)' : 'var(--MUTED)';
+    }
+  }
+
+  function initVerificationPage() {
+    document.getElementById('verif-email-field').value = user.email || '';
+    document.getElementById('verif-name-field').value = (user.first_name || user.firstName || '') + ' ' + (user.last_name || user.lastName || '');
+
+    const status = user.identity_status;
+    document.getElementById('verif-pending').style.display = (!status || status === 'pending') ? 'flex' : 'none';
+    document.getElementById('verif-approved').style.display = status === 'verified' ? 'flex' : 'none';
+    document.getElementById('verif-rejected').style.display = status === 'rejected' ? 'flex' : 'none';
+
+    if (status === 'verified') {
+      document.getElementById('verif-form-card').style.display = 'none';
+    }
+
+    const badge = document.getElementById('verif-status-badge');
+    if (badge) {
+      if (status === 'verified') {
+        badge.textContent = '✅'; badge.style.background = 'rgba(0,200,100,.2)'; badge.style.color = '#00c864';
+      } else if (status === 'rejected') {
+        badge.textContent = '❌'; badge.style.background = 'rgba(255,68,68,.2)'; badge.style.color = '#ff4444';
+      }
+    }
+  }
+
+  function previewFile(input, previewId) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const preview = document.getElementById(previewId);
+      const wrap = document.getElementById(previewId + '-wrap');
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+      if (wrap) wrap.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleVerifSubmit(e) {
+    user.identity_status = 'pending';
+    localStorage.setItem('cue_user', JSON.stringify(user));
+    initVerificationPage();
+    checkBadgeConditions();
+    alert('✅ Documents envoyés ! Notre équipe les vérifiera sous 24h.');
   }
 
   function renderUpcomingGigs() {
@@ -1596,6 +1822,7 @@
       user.youtube = profileData.youtube;
       user.profile = { ...user.profile, ...profileData };
       localStorage.setItem('cue_user', JSON.stringify(user));
+      checkBadgeConditions();
 
       btn.textContent = '✅ Sauvegardé !';
       setTimeout(() => {
