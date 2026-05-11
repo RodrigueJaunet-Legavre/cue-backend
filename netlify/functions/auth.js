@@ -297,12 +297,26 @@ exports.handler = async (event) => {
   }
 
   if (action === 'get_user') {
-    const { userId } = body;
+    const { userId, email } = body;
     try {
-      const users = await sql`SELECT * FROM users WHERE id = ${userId}`;
+      let users = await sql`SELECT * FROM users WHERE id = ${userId}`;
+
+      // Si pas trouvé par ID, cherche par email
+      if (!users.length && email) {
+        users = await sql`SELECT * FROM users WHERE email = ${email}`;
+
+        // Si trouvé par email, met à jour l'ID avec le nouvel UUID Supabase
+        if (users.length) {
+          await sql`UPDATE users SET id = ${userId} WHERE email = ${email}`;
+          users = await sql`SELECT * FROM users WHERE id = ${userId}`;
+          console.log('✅ ID migré vers UUID Supabase');
+        }
+      }
+
       const user = users[0] || null;
       return { statusCode: 200, body: JSON.stringify({ user: sanitizeUser(user) }) };
     } catch (err) {
+      console.log('Erreur get_user:', err.message);
       return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
     }
   }

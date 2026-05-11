@@ -32,7 +32,7 @@ async function handleCallback() {
   const res = await fetch('/.netlify/functions/auth', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'get_user', userId: user.id })
+    body: JSON.stringify({ action: 'get_user', userId: user.id, email: user.email })
   })
   const data = await res.json()
 
