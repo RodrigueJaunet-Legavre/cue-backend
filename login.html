@@ -157,6 +157,18 @@ function togglePassword() {
 <script type="module">
 import { supabase } from './js/supabase-client.js'
 
+async function clearPreviousSession() {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session && window.location.pathname.includes('login')) {
+      await supabase.auth.signOut({ scope: 'global' })
+      localStorage.clear()
+      sessionStorage.clear()
+    }
+  } catch (err) {}
+}
+clearPreviousSession()
+
 async function handleLogin(e) {
   e.preventDefault()
 
