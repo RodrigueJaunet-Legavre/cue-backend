@@ -139,14 +139,24 @@ exports.handler = async (event) => {
 
   // UPDATE PROFILE
   if (action === 'update_profile') {
+    console.log('=== UPDATE PROFILE APPELÉ ===');
+    console.log('Token reçu:', body.token ? 'OUI' : 'NON');
+
     const { token, description, genres, instagram, tiktok, soundcloud,
             spotify, youtube, mixUrl, tracks } = body;
+
     try {
-      const [session] = await sql`
-        SELECT user_id FROM sessions
-        WHERE token = ${token} AND expires_at > NOW()
-      `;
-      if (!session) return { statusCode: 401, body: JSON.stringify({ error: 'Non autorisé' }) };
+      const sessions = await sql`SELECT * FROM sessions WHERE token = ${token}`;
+      console.log('Sessions trouvées:', sessions.length);
+
+      if (!sessions.length) {
+        console.log('ERREUR: Aucune session trouvée pour ce token');
+        return { statusCode: 401, body: JSON.stringify({ error: 'Session non trouvée' }) };
+      }
+
+      const session = sessions[0];
+      console.log('User ID:', session.user_id);
+      console.log('Session expires_at:', session.expires_at, '— now:', new Date().toISOString());
 
       await sql`
         UPDATE users SET
