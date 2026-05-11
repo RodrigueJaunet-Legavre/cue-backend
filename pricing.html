@@ -182,10 +182,10 @@ async function startCheckout(plan) {
   btn.disabled = true;
   btn.textContent = 'Chargement...';
   try {
-    const res = await fetch('/api/create-checkout', {
+    const res = await fetch('/api/stripe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan })
+      body: JSON.stringify({ stripeAction: 'checkout', plan })
     });
     const data = await res.json();
     console.log('Réponse reçue:', data);

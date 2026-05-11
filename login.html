@@ -177,10 +177,10 @@ async function handleLogin(e) {
 
   try {
     // Vérifie admin d'abord
-    const adminRes = await fetch('/api/admin-login', {
+    const adminRes = await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ adminAction: 'login', email, password })
     })
     if (adminRes.ok) {
       const { secret } = await adminRes.json()

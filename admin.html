@@ -373,10 +373,10 @@
   // LOGIN
   function adminLogin() {
     const pwd = document.getElementById('admin-pwd').value;
-    fetch('/api/admin-stats', {
+    fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminSecret: pwd })
+      body: JSON.stringify({ adminAction: 'stats', adminSecret: pwd })
     }).then(r => {
       if (r.ok) {
         sessionStorage.setItem('admin_secret', pwd);
@@ -409,10 +409,10 @@
   }
 
   async function loadStats() {
-    const res = await fetch('/api/admin-stats', {
+    const res = await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminSecret: getSecret() })
+      body: JSON.stringify({ adminAction: 'stats', adminSecret: getSecret() })
     });
     const data = await res.json();
     document.getElementById('stat-djs').textContent = data.djs || 0;
@@ -429,10 +429,10 @@
   }
 
   async function loadVerifications(status = 'pending') {
-    const res = await fetch('/api/admin-get-users', {
+    const res = await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminSecret: getSecret(), filter: 'verif', status })
+      body: JSON.stringify({ adminAction: 'get_users', adminSecret: getSecret(), filter: 'verif', status })
     });
     const { users } = await res.json();
     const tbody = document.getElementById('verif-table-body');
@@ -459,10 +459,10 @@
   }
 
   async function loadUsers(type = 'all') {
-    const res = await fetch('/api/admin-get-users', {
+    const res = await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminSecret: getSecret(), filter: 'users', type })
+      body: JSON.stringify({ adminAction: 'get_users', adminSecret: getSecret(), filter: 'users', type })
     });
     const { users } = await res.json();
     const tbody = document.getElementById('users-table-body');
@@ -507,10 +507,10 @@
   }
 
   async function loadReports(type = 'all') {
-    const res = await fetch('/api/admin-get-users', {
+    const res = await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminSecret: getSecret(), filter: 'reports', type })
+      body: JSON.stringify({ adminAction: 'get_users', adminSecret: getSecret(), filter: 'reports', type })
     });
     const { reports } = await res.json();
     const tbody = document.getElementById('reports-table-body');
@@ -583,10 +583,11 @@
   }
 
   async function validateUser(action) {
-    await fetch('/api/admin-verify-user', {
+    await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        adminAction: 'verify_user',
         userId: currentVerifUserId,
         action,
         adminSecret: getSecret()
@@ -606,10 +607,10 @@
 
   async function suspendUser(userId) {
     if (!confirm('Suspendre cet utilisateur ?')) return;
-    await fetch('/api/admin-verify-user', {
+    await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, action: 'suspend', adminSecret: getSecret() })
+      body: JSON.stringify({ adminAction: 'verify_user', userId, action: 'suspend', adminSecret: getSecret() })
     });
     alert('Utilisateur suspendu.');
     loadUsers();
