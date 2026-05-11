@@ -242,7 +242,20 @@ exports.handler = async (event) => {
     try {
       await sql`
         INSERT INTO users (id, first_name, last_name, email, phone, user_type, picture, google_id, referral_code, profile_complete, identity_status, plan)
-        VALUES (${userId}, ${firstName}, ${lastName || ''}, ${email}, ${phone || ''}, ${userType || null}, ${picture || null}, ${googleId || null}, ${referralCode}, false, 'none', 'starter')
+        VALUES (
+          ${userId},
+          ${firstName},
+          ${lastName || ''},
+          ${email},
+          ${phone || ''},
+          ${userType || 'pending'},
+          ${picture || null},
+          ${googleId || null},
+          ${referralCode},
+          false,
+          'none',
+          'starter'
+        )
         ON CONFLICT (id) DO NOTHING
       `;
       const users = await sql`SELECT * FROM users WHERE id = ${userId}`;
