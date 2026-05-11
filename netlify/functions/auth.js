@@ -82,6 +82,7 @@ exports.handler = async (event) => {
       let [user] = await sql`SELECT * FROM users WHERE google_id = ${googleId} OR email = ${email}`;
 
       if (!user) {
+        // Nouvel utilisateur → créer
         const userId = Date.now().toString();
         const ownReferralCode = 'REF' + firstName.charAt(0).toUpperCase() + lastName.charAt(0).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
         await sql`
@@ -89,8 +90,13 @@ exports.handler = async (event) => {
           VALUES (${userId}, ${firstName}, ${lastName}, ${email}, ${phone || ''}, ${googleId}, ${picture || ''}, ${userType}, ${ownReferralCode})
         `;
         [user] = await sql`SELECT * FROM users WHERE id = ${userId}`;
+      } else if (!user.google_id) {
+        // Compte existant sans Google ID → lier le compte Google
+        await sql`UPDATE users SET google_id = ${googleId}, picture = ${picture || user.picture} WHERE id = ${user.id}`;
+        [user] = await sql`SELECT * FROM users WHERE id = ${user.id}`;
       }
 
+      // Si user existant avec profile_complete → créer juste une session
       const token = generateToken();
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
       await sql`

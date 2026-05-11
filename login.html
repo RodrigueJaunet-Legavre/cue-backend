@@ -159,12 +159,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function redirectAfterLogin(userData) {
   const userType = userData.user_type || userData.userType;
-  const profileComplete = userData.profile_complete || userData.profileComplete;
+  const profileComplete = userData.profile_complete === true
+    || userData.profile_complete === 'true'
+    || userData.profileComplete === true;
+
+  console.log('userType:', userType);
+  console.log('profile_complete:', userData.profile_complete);
+  console.log('profileComplete:', userData.profileComplete);
+  console.log('→ redirection:', profileComplete ? 'dashboard' : 'onboarding');
 
   if (userType === 'dj') {
     window.location.href = profileComplete ? 'dashboard-dj.html' : 'dj-onboarding.html';
-  } else {
+  } else if (userType === 'venue') {
     window.location.href = 'dashboard-venue.html';
+  } else {
+    window.location.href = 'index.html';
   }
 }
 

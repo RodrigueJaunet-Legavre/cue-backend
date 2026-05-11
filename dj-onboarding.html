@@ -571,14 +571,20 @@
     window.location.href = 'dashboard-dj.html';
   }
 
-  // Vérifie connexion
-  if (!localStorage.getItem('cue_logged_in') || (user.userType !== 'dj' && user.user_type !== 'dj')) {
-    window.location.href = 'index.html';
-  }
-
   // Si profil déjà complété → dashboard direct
-  if (user.profileComplete || user.profile_complete) {
+  const profileComplete = user.profile_complete === true
+    || user.profile_complete === 'true'
+    || user.profileComplete === true;
+
+  if (profileComplete) {
     window.location.href = 'dashboard-dj.html';
+    // stop ici
+  } else {
+    // Vérifie connexion et type
+    const userType = user.user_type || user.userType;
+    if (!localStorage.getItem('cue_logged_in') || !userType || userType !== 'dj') {
+      window.location.href = 'index.html';
+    }
   }
 </script>
 
