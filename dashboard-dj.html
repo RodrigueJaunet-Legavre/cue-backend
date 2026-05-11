@@ -2314,12 +2314,10 @@
     try {
       const { supabase } = await import('./js/supabase-client.js')
       await supabase.auth.signOut({ scope: 'global' })
-    } catch (err) {
-      console.log('Erreur logout:', err)
-    }
+    } catch(e) {}
     localStorage.clear()
     sessionStorage.clear()
-    window.location.replace('index.html')
+    window.location.replace('login.html')
   }
 
   function deleteAccount() {

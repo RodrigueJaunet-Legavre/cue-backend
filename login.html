@@ -157,26 +157,21 @@ function togglePassword() {
 <script type="module">
 import { supabase } from './js/supabase-client.js'
 
+// CONNEXION EMAIL
 async function handleLogin(e) {
   e.preventDefault()
-
-  document.querySelectorAll('.form-error').forEach(el => el.classList.remove('show'))
-  document.querySelectorAll('.form-input').forEach(el => el.classList.remove('error'))
-  document.getElementById('errorAlert').classList.remove('show')
-  document.getElementById('successAlert').classList.remove('show')
-
   const email = document.getElementById('email').value.trim()
   const password = document.getElementById('password').value
-
+  const errorEl = document.getElementById('errorAlert')
   const btn = document.getElementById('submitBtn')
   const spinner = document.getElementById('submitSpinner')
   const label = document.getElementById('submitLabel')
-  btn.disabled = true
-  spinner.classList.add('on')
-  label.textContent = 'Connexion...'
 
+  if (errorEl) errorEl.classList.remove('show')
+  if (btn) { btn.disabled = true; spinner.classList.add('on'); label.textContent = 'Connexion...' }
+
+  // Check admin
   try {
-    // Vérifie admin d'abord
     const adminRes = await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -188,92 +183,67 @@ async function handleLogin(e) {
       window.location.href = 'cue-secure-admin-panel.html'
       return
     }
-  } catch (_) {}
+  } catch(e) {}
 
-  try {
-    // Connexion Supabase
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+  // Connexion Supabase
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
-    if (error) {
-      document.getElementById('errorAlert').classList.add('show')
-      btn.disabled = false
-      spinner.classList.remove('on')
-      label.textContent = 'Se connecter'
-      return
-    }
-
-    // Récupère les infos depuis notre DB
-    const res = await fetch('/api/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'get_user', userId: data.user.id })
-    })
-    const userData = await res.json()
-
-    const dbUser = userData.user || data.user.user_metadata
-    localStorage.setItem('cue_user', JSON.stringify(dbUser))
-    localStorage.setItem('cue_logged_in', 'true')
-
-    document.getElementById('successAlert').classList.add('show')
-    setTimeout(() => redirectAfterLogin(dbUser), 800)
-
-  } catch (err) {
-    document.getElementById('errorAlert').classList.add('show')
-    btn.disabled = false
-    spinner.classList.remove('on')
-    label.textContent = 'Se connecter'
+  if (error) {
+    if (errorEl) errorEl.classList.add('show')
+    if (btn) { btn.disabled = false; spinner.classList.remove('on'); label.textContent = 'Se connecter' }
+    return
   }
+
+  await handleSession(data.session)
 }
 
+// GOOGLE
 async function signInWithGoogle() {
+  await supabase.auth.signOut()
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: 'https://cuedj.eu/auth-callback.html' }
   })
-  if (error) alert('Erreur Google : ' + error.message)
+  if (error) alert('Erreur : ' + error.message)
+}
+
+// GESTION SESSION
+async function handleSession(session) {
+  if (!session) return
+
+  const res = await fetch('/api/auth', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'get_user',
+      userId: session.user.id,
+      email: session.user.email
+    })
+  })
+  const data = await res.json()
+
+  if (data.user) {
+    localStorage.setItem('cue_user', JSON.stringify(data.user))
+    localStorage.setItem('cue_logged_in', 'true')
+    redirectAfterLogin(data.user)
+  }
 }
 
 function redirectAfterLogin(userData) {
   const userType = userData.user_type || userData.userType
-  const profileComplete = userData.profile_complete === true ||
-                          userData.profile_complete === 'true' ||
-                          userData.profileComplete === true
-
-  const redirect = new URLSearchParams(window.location.search).get('redirect')
-  if (redirect) { window.location.href = redirect; return }
+  const profileComplete = userData.profile_complete === true
 
   if (userType === 'dj') {
     window.location.href = profileComplete ? 'dashboard-dj.html' : 'dj-onboarding.html'
   } else if (userType === 'venue') {
     window.location.href = 'dashboard-venue.html'
   } else {
-    window.location.href = 'index.html'
+    window.location.href = 'google-setup.html'
   }
 }
 
 window.handleLogin = handleLogin
 window.signInWithGoogle = signInWithGoogle
-
-async function checkIfAlreadyLoggedIn() {
-  try {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session) {
-      const res = await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get_user', userId: session.user.id, email: session.user.email })
-      })
-      const data = await res.json()
-      if (data.user) {
-        redirectAfterLogin(data.user)
-      }
-    }
-  } catch (err) {
-    console.log('Pas de session active')
-  }
-}
-
-checkIfAlreadyLoggedIn()
 </script>
 
 </body>

@@ -21,34 +21,39 @@ async function handleCallback() {
   const { data: { session }, error } = await supabase.auth.getSession()
 
   if (error || !session) {
+    console.log('Pas de session:', error)
     window.location.href = 'login.html'
     return
   }
 
   const user = session.user
-  const meta = user.user_metadata
 
-  // Récupère user depuis notre DB
+  // Récupère ou crée l'user en DB
   const res = await fetch('/api/auth', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'get_user', userId: user.id, email: user.email })
+    body: JSON.stringify({
+      action: 'get_user',
+      userId: user.id,
+      email: user.email
+    })
   })
   const data = await res.json()
 
   if (!data.user) {
-    // Nouvel utilisateur → l'insère en DB
+    // Nouvel utilisateur → crée en DB
+    const meta = user.user_metadata
     await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'register_supabase',
         userId: user.id,
-        firstName: meta.full_name?.split(' ')[0] || '',
+        firstName: meta.full_name?.split(' ')[0] || meta.name?.split(' ')[0] || '',
         lastName: meta.full_name?.split(' ').slice(1).join(' ') || '',
         email: user.email,
         phone: '',
-        userType: null,
+        userType: 'pending',
         picture: meta.avatar_url || meta.picture || '',
         googleId: user.id,
         referralCode: 'REF' + Math.floor(10000 + Math.random() * 90000)
@@ -59,10 +64,13 @@ async function handleCallback() {
   }
 
   const dbUser = data.user
+  localStorage.setItem('cue_user', JSON.stringify(dbUser))
+  localStorage.setItem('cue_logged_in', 'true')
+
   const userType = dbUser.user_type
   const profileComplete = dbUser.profile_complete === true
 
-  if (!userType) {
+  if (!userType || userType === 'pending') {
     window.location.href = 'google-setup.html'
     return
   }
