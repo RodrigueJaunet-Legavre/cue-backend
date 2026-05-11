@@ -181,7 +181,11 @@
     .ai-dot:nth-child(2) { animation-delay:.15s; }
     .ai-dot:nth-child(3) { animation-delay:.3s; }
     @keyframes dot-bounce { 0%,80%,100% { transform:scale(.8); opacity:.5; } 40% { transform:scale(1.2); opacity:1; } }
-    .contract-result { background:#0d0d0d; border:1px solid var(--BORDER); border-radius:12px; padding:24px; white-space:pre-wrap; font-size:14px; line-height:1.8; margin-top:24px; font-family:monospace; max-height:400px; overflow-y:auto; }
+    .contract-result { background:#0d0d0d; border:1px solid var(--BORDER); border-radius:12px; padding:24px; font-family:Barlow,sans-serif; font-size:14px; line-height:1.8; margin-top:24px; max-height:400px; overflow-y:auto; }
+    .contract-result h1, .contract-result h2, .contract-result h3 { color:var(--Y); margin:16px 0 8px; font-family:'Barlow Condensed',sans-serif; font-weight:900; }
+    .contract-result strong { color:#fff; }
+    .contract-result ul { padding-left:24px; margin:8px 0; }
+    .contract-result li { margin:4px 0; color:var(--MUTED); }
 
     /* EMPTY STATE */
     .empty-state { text-align:center; padding:60px 24px; }
@@ -999,14 +1003,33 @@
         body: JSON.stringify({ djName:dj, venue:user.firstName+' '+user.lastName, date, start:document.getElementById('c-start').value, end:document.getElementById('c-end').value, fee, type:document.getElementById('c-type').value, details:document.getElementById('c-details').value })
       });
       const data = await res.json();
-      document.getElementById('contract-text').textContent = data.contract;
+      document.getElementById('contract-text').innerHTML = markdownToHTML(data.contract);
       document.getElementById('ai-generating').style.display = 'none';
       document.getElementById('contract-result').style.display = 'block';
     } catch(err) { document.getElementById('ai-generating').style.display='none'; alert('Erreur. Réessaie.'); }
   }
 
-  function copyContract() { navigator.clipboard.writeText(document.getElementById('contract-text').textContent); alert('Copié ✅'); }
-  function printContract() { const w=window.open(''); w.document.write(`<pre style="font-family:Arial;padding:40px;">${document.getElementById('contract-text').textContent}</pre>`); w.print(); }
+  function markdownToHTML(text) {
+    return text
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      .replace(/^\* (.+)$/gm, '<li>$1</li>')
+      .replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>')
+      .replace(/\n\n/g, '<br><br>')
+      .replace(/\n/g, '<br>');
+  }
+
+  function copyContract() { navigator.clipboard.writeText(document.getElementById('contract-text').innerText); alert('Copié ✅'); }
+  function printContract() {
+    const html = document.getElementById('contract-text').innerHTML;
+    const w = window.open('', '_blank');
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;padding:40px;max-width:800px;margin:auto;line-height:1.8;}h1,h2,h3{margin:16px 0 8px;}ul{padding-left:24px;}li{margin:4px 0;}</style></head><body>${html}</body></html>`);
+    w.document.close();
+    w.print();
+  }
   function closeModal(id) { document.getElementById(id).classList.remove('open'); }
   async function logout() {
     const token = localStorage.getItem('cue_token');
