@@ -1301,12 +1301,61 @@
     reader.readAsDataURL(file);
   }
 
-  function handleVerifSubmit(e) {
-    user.identity_status = 'pending';
-    localStorage.setItem('cue_user', JSON.stringify(user));
-    initVerificationPage();
-    checkBadgeConditions();
-    alert('✅ Documents envoyés ! Notre équipe les vérifiera sous 24h.');
+  async function handleVerifSubmit(e) {
+    e.preventDefault();
+
+    const selfieInput = document.getElementById('selfie-input');
+    const docInput = document.getElementById('doc-input');
+
+    if (!selfieInput.files[0] || !docInput.files[0]) {
+      alert('Ajoute les deux documents avant d\'envoyer.');
+      return;
+    }
+
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = '⏳ Envoi en cours...';
+
+    try {
+      const toBase64 = (file) => new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.readAsDataURL(file);
+      });
+
+      const selfieBase64 = await toBase64(selfieInput.files[0]);
+      const documentBase64 = await toBase64(docInput.files[0]);
+
+      const userId = user.id || user.user_id;
+
+      const res = await fetch('/.netlify/functions/upload-identity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          selfieBase64,
+          documentBase64,
+          selfieType: selfieInput.files[0].type,
+          documentType: docInput.files[0].type
+        })
+      });
+
+      if (res.ok) {
+        user.identity_status = 'pending';
+        localStorage.setItem('cue_user', JSON.stringify(user));
+        initVerificationPage();
+        checkBadgeConditions();
+        alert('✅ Documents envoyés ! Notre équipe les vérifiera sous 24h.');
+      } else {
+        throw new Error('Erreur serveur');
+      }
+    } catch (err) {
+      console.log(err);
+      alert('Erreur lors de l\'envoi. Réessaie.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '📤 Envoyer pour vérification';
+    }
   }
 
   function renderUpcomingGigs() {

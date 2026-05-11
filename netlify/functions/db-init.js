@@ -131,7 +131,7 @@ exports.handler = async () => {
   await sql`
     CREATE TABLE IF NOT EXISTS identity_documents (
       id TEXT PRIMARY KEY,
-      user_id TEXT REFERENCES users(id),
+      user_id TEXT UNIQUE REFERENCES users(id),
       selfie_url TEXT,
       document_url TEXT,
       status TEXT DEFAULT 'pending',

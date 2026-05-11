@@ -550,30 +550,48 @@
   }
 
   // MODAL
-  function openVerifModal(userId, name, email, userType) {
+  async function openVerifModal(userId, name, email, userType) {
     currentVerifUserId = userId;
     document.getElementById('modal-user-info').innerHTML = `
       <p><strong>${name}</strong> — ${userType?.toUpperCase()}</p>
       <p style="color:var(--MUTED);">${email}</p>
     `;
+
+    // Reset images
     document.getElementById('modal-selfie').src = '';
     document.getElementById('modal-document').src = '';
+    document.getElementById('modal-selfie').alt = 'Chargement...';
+    document.getElementById('modal-document').alt = 'Chargement...';
     document.getElementById('modal-selfie').style.display = 'block';
     document.getElementById('modal-document').style.display = 'block';
 
-    // Charge les documents depuis Netlify Forms
-    fetch(`/.netlify/functions/get-identity-docs?email=${encodeURIComponent(email)}`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.selfie) document.getElementById('modal-selfie').src = data.selfie;
-        if (data.document) document.getElementById('modal-document').src = data.document;
-        if (!data.selfie && !data.document) {
-          document.getElementById('modal-user-info').innerHTML += '<p style="color:#FFC300; margin-top:12px;">⚠️ Documents soumis par email — vérifie ta boîte cue.dj.app@gmail.com</p>';
-        }
-      })
-      .catch(() => {
-        document.getElementById('modal-user-info').innerHTML += '<p style="color:#FFC300; margin-top:12px;">⚠️ Documents soumis par email — vérifie ta boîte cue.dj.app@gmail.com</p>';
+    // Charge les documents depuis la DB + Supabase Storage
+    try {
+      const res = await fetch('/.netlify/functions/admin-get-docs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret: getSecret(), userId })
       });
+      const data = await res.json();
+
+      if (data.selfieUrl) {
+        document.getElementById('modal-selfie').src = data.selfieUrl;
+      } else {
+        document.getElementById('modal-selfie').alt = 'Aucun document';
+      }
+
+      if (data.documentUrl) {
+        document.getElementById('modal-document').src = data.documentUrl;
+      } else {
+        document.getElementById('modal-document').alt = 'Aucun document';
+      }
+
+      if (!data.selfieUrl && !data.documentUrl) {
+        document.getElementById('modal-user-info').innerHTML += '<p style="color:#FFC300; margin-top:12px;">⚠️ Aucun document soumis</p>';
+      }
+    } catch (err) {
+      document.getElementById('modal-user-info').innerHTML += `<p style="color:#FFC300; margin-top:12px;">⚠️ Erreur chargement documents</p>`;
+    }
 
     document.getElementById('modal-verif').classList.add('open');
   }
