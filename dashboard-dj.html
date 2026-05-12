@@ -1363,32 +1363,65 @@
     reader.readAsDataURL(file);
   }
 
-  async function handleVerifSubmit(e) {
-    e.preventDefault();
+  async function compressImage(base64, maxSizeMB = 1) {
+    return new Promise((resolve) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        let width = img.width
+        let height = img.height
 
-    const selfieInput = document.getElementById('selfie-input');
-    const docInput = document.getElementById('doc-input');
+        const maxDim = 1200
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round(height * maxDim / width)
+            width = maxDim
+          } else {
+            width = Math.round(width * maxDim / height)
+            height = maxDim
+          }
+        }
+
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, width, height)
+
+        const compressed = canvas.toDataURL('image/jpeg', 0.7).split(',')[1]
+        resolve(compressed)
+      }
+      img.src = 'data:image/jpeg;base64,' + base64
+    })
+  }
+
+  async function handleVerifSubmit(e) {
+    e.preventDefault()
+    const selfieInput = document.getElementById('selfie-input')
+    const docInput = document.getElementById('doc-input')
 
     if (!selfieInput.files[0] || !docInput.files[0]) {
-      alert('Ajoute les deux documents avant d\'envoyer.');
-      return;
+      alert('Ajoute les deux documents.')
+      return
     }
 
-    const btn = e.target.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.textContent = '⏳ Envoi en cours...';
+    const btn = e.target.querySelector('button[type="submit"]')
+    btn.disabled = true
+    btn.textContent = '⏳ Compression et envoi...'
 
     try {
       const toBase64 = (file) => new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result.split(',')[1]);
-        reader.readAsDataURL(file);
-      });
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result.split(',')[1])
+        reader.readAsDataURL(file)
+      })
 
-      const selfieBase64 = await toBase64(selfieInput.files[0]);
-      const documentBase64 = await toBase64(docInput.files[0]);
+      const selfieRaw = await toBase64(selfieInput.files[0])
+      const docRaw = await toBase64(docInput.files[0])
 
-      const userId = user.id || user.user_id;
+      const selfieBase64 = await compressImage(selfieRaw)
+      const documentBase64 = await compressImage(docRaw)
+
+      const userId = user.id || user.user_id
 
       const res = await fetch('/api/upload-identity', {
         method: 'POST',
@@ -1397,26 +1430,25 @@
           userId,
           selfieBase64,
           documentBase64,
-          selfieType: selfieInput.files[0].type,
-          documentType: docInput.files[0].type
+          selfieType: 'image/jpeg',
+          documentType: 'image/jpeg'
         })
-      });
+      })
 
       if (res.ok) {
-        user.identity_status = 'pending';
-        localStorage.setItem('cue_user', JSON.stringify(user));
-        initVerificationPage();
-        checkBadgeConditions();
-        alert('✅ Documents envoyés ! Notre équipe les vérifiera sous 24h.');
+        user.identity_status = 'pending'
+        localStorage.setItem('cue_user', JSON.stringify(user))
+        initVerificationPage()
+        alert('✅ Documents envoyés !')
       } else {
-        throw new Error('Erreur serveur');
+        const data = await res.json()
+        throw new Error(data.error || 'Erreur serveur')
       }
     } catch (err) {
-      console.log(err);
-      alert('Erreur lors de l\'envoi. Réessaie.');
+      alert('Erreur : ' + err.message)
     } finally {
-      btn.disabled = false;
-      btn.textContent = '📤 Envoyer pour vérification';
+      btn.disabled = false
+      btn.textContent = '📤 Envoyer pour vérification'
     }
   }
 
