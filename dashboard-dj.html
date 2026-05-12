@@ -1690,6 +1690,7 @@
 
   // VARIABLES PROFIL
   let profilePhoto = null;
+  let profilePhotoChanged = false;
   let profileMix = null;
   let profileTracks = [];
   let selectedGenres = [];
@@ -1782,6 +1783,7 @@
     const reader = new FileReader();
     reader.onload = (e) => {
       profilePhoto = e.target.result;
+      profilePhotoChanged = true;
       document.getElementById('profile-avatar-preview').innerHTML =
         `<img src="${e.target.result}" style="width:120px; height:120px; border-radius:50%; object-fit:cover;">`;
       document.getElementById('sidebar-avatar').innerHTML =
@@ -1950,7 +1952,7 @@
           youtube: document.getElementById('social-youtube')?.value || '',
           mixUrl: profileMix || user.mix_url || '',
           tracks: profileTracks,
-          photo: profilePhoto || user.picture || ''
+          photo: profilePhotoChanged ? profilePhoto : (user.picture || '')
         })
       })
 
