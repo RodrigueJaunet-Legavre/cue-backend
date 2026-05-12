@@ -556,23 +556,23 @@
   async function completeProfile() {
     saveCurrentStep()
 
-    // profile_complete = true dès que description + genres sont remplis
     const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
     savedUser.profile_complete = true
     savedUser.profileComplete = true
     localStorage.setItem('cue_user', JSON.stringify(savedUser))
 
-    try {
-      const { supabase } = await import('./js/supabase-client.js')
-      const { data: { session } } = await supabase.auth.getSession()
+    // Récupère l'ID utilisateur
+    const userId = savedUser.id || savedUser.user_id
+    console.log('userId pour update:', userId)
 
-      if (session) {
+    if (userId) {
+      try {
         const res = await fetch('/api/auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'update_profile_by_id',
-            userId: session.user.id,
+            userId,
             description: profileData.description || '',
             genres: selectedGenres,
             instagram: profileData.instagram || '',
@@ -585,8 +585,10 @@
             photo: profilePhoto || savedUser.picture || ''
           })
         })
+
         const data = await res.json()
-        console.log('✅ profile_complete:', data.user?.profile_complete)
+        console.log('Résultat update:', data)
+
         if (data.user) {
           localStorage.setItem('cue_user', JSON.stringify({
             ...savedUser,
@@ -595,9 +597,39 @@
             profileComplete: true
           }))
         }
+      } catch (err) {
+        console.log('Erreur update profil:', err.message)
       }
-    } catch (err) {
-      console.log('Erreur:', err.message)
+    } else {
+      // Fallback Supabase session
+      try {
+        const { supabase } = await import('./js/supabase-client.js')
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          const res = await fetch('/api/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'update_profile_by_id',
+              userId: session.user.id,
+              description: profileData.description || '',
+              genres: selectedGenres,
+              instagram: profileData.instagram || '',
+              tiktok: profileData.tiktok || '',
+              soundcloud: profileData.soundcloud || '',
+              spotify: profileData.spotify || '',
+              youtube: profileData.youtube || '',
+              mixUrl: profileData.mix || '',
+              tracks: tracks.map(t => t.name || t),
+              photo: profilePhoto || savedUser.picture || ''
+            })
+          })
+          const data = await res.json()
+          console.log('Résultat Supabase update:', data)
+        }
+      } catch (err) {
+        console.log('Erreur Supabase:', err.message)
+      }
     }
 
     // Affiche étape finale
