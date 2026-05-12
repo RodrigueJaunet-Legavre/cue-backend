@@ -1917,61 +1917,63 @@
   }
 
   async function saveProfile() {
-    const saveBtn = document.querySelector('#save-bar button:last-child');
-    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Sauvegarde...'; }
+    const btn = event.target
+    btn.disabled = true
+    btn.textContent = 'Sauvegarde...'
 
-    const description = document.getElementById('profile-description').value;
+    const description = document.getElementById('profile-description')?.value || ''
+    const userId = user.id || user.user_id
+
+    console.log('saveProfile userId:', userId)
+    console.log('selectedGenres:', selectedGenres)
 
     if (!selectedGenres.length) {
-      alert('Sélectionne au moins 1 genre.');
-      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 Sauvegarder'; }
-      return;
+      alert('Sélectionne au moins 1 genre.')
+      btn.disabled = false
+      btn.textContent = '💾 Sauvegarder'
+      return
     }
 
-    const profileData = {
-      description,
-      genres: selectedGenres,
-      instagram: document.getElementById('social-instagram').value,
-      tiktok: document.getElementById('social-tiktok').value,
-      soundcloud: document.getElementById('social-soundcloud').value,
-      spotify: document.getElementById('social-spotify').value,
-      youtube: document.getElementById('social-youtube').value,
-      mixUrl: profileMix || user.mix_url || user.profile?.mix,
-      tracks: profileTracks,
-      photo: profilePhoto || user.picture || user.profile?.photo
-    };
-
     try {
-      const token = localStorage.getItem('cue_token');
-      if (token) {
-        const res = await fetch('/api/auth', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'update_profile', token, ...profileData })
-        });
-        const data = await res.json();
-        if (res.ok) Object.assign(user, data.user);
-      }
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_profile_by_id',
+          userId,
+          description,
+          genres: selectedGenres,
+          instagram: document.getElementById('social-instagram')?.value || '',
+          tiktok: document.getElementById('social-tiktok')?.value || '',
+          soundcloud: document.getElementById('social-soundcloud')?.value || '',
+          spotify: document.getElementById('social-spotify')?.value || '',
+          youtube: document.getElementById('social-youtube')?.value || '',
+          mixUrl: profileMix || user.mix_url || '',
+          tracks: profileTracks,
+          photo: profilePhoto || user.picture || ''
+        })
+      })
 
-      user.description = profileData.description;
-      user.genres = profileData.genres;
-      user.instagram = profileData.instagram;
-      user.tiktok = profileData.tiktok;
-      user.soundcloud = profileData.soundcloud;
-      user.spotify = profileData.spotify;
-      user.youtube = profileData.youtube;
-      user.profile = { ...user.profile, ...profileData };
-      localStorage.setItem('cue_user', JSON.stringify(user));
-      checkBadgeConditions();
+      const data = await res.json()
+      console.log('Résultat saveProfile:', data)
 
-      hideSaveBar();
-      if (saveBtn) {
-        saveBtn.textContent = '✅ Sauvegardé !';
-        setTimeout(() => { saveBtn.disabled = false; saveBtn.textContent = '💾 Sauvegarder'; }, 2000);
+      if (data.user) {
+        Object.assign(user, data.user)
+        localStorage.setItem('cue_user', JSON.stringify(user))
+        btn.textContent = '✅ Sauvegardé !'
+        hideSaveBar()
+        setTimeout(() => {
+          btn.disabled = false
+          btn.textContent = '💾 Sauvegarder'
+        }, 2000)
+      } else {
+        throw new Error(data.error || 'Erreur serveur')
       }
     } catch (err) {
-      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 Sauvegarder'; }
-      alert('Erreur. Réessaie.');
+      console.log('Erreur saveProfile:', err.message)
+      btn.disabled = false
+      btn.textContent = '💾 Sauvegarder'
+      alert('Erreur. Réessaie.')
     }
   }
 
