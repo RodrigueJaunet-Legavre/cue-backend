@@ -434,77 +434,49 @@
   }
 
   async function init() {
-    createParticles();
+    createParticles()
 
-    const { supabase } = await import('./js/supabase-client.js')
-    const { data: { session } } = await supabase.auth.getSession()
+    // Récupère le DJ depuis la DB
+    if (djId) {
+      try {
+        const res = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'get_user', userId: djId })
+        })
+        const data = await res.json()
 
-    if (session && (session.user.id === djId || !djId)) {
-      const dbUser = await loadDJFromDB(session.user.id)
-      const userData = dbUser || JSON.parse(localStorage.getItem('cue_user') || '{}')
-
-      djData = {
-        id: session.user.id,
-        firstName: userData.first_name || userData.firstName || session.user.user_metadata?.full_name?.split(' ')[0] || '',
-        lastName: userData.last_name || userData.lastName || session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-        userType: userData.user_type || 'dj',
-        plan: userData.plan || 'starter',
-        verified: userData.identity_status === 'verified',
-        genres: userData.genres || [],
-        tracks: userData.tracks || [],
-        description: userData.description || '',
-        instagram: userData.instagram || '',
-        tiktok: userData.tiktok || '',
-        soundcloud: userData.soundcloud || '',
-        spotify: userData.spotify || '',
-        youtube: userData.youtube || '',
-        mix_url: userData.mix_url || '',
-        picture: userData.picture || session.user.user_metadata?.avatar_url || ''
+        if (data.user) {
+          djData = {
+            ...data.user,
+            firstName: data.user.first_name || '',
+            lastName: data.user.last_name || ''
+          }
+          console.log('mix_url brut:', djData.mix_url)
+          renderProfile()
+          return
+        }
+      } catch(err) {
+        console.log('Erreur fetch DJ:', err.message)
       }
+    }
+
+    // Fallback localStorage si c'est le DJ connecté
+    const localUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
+    if (localUser.id && (!djId || localUser.id === djId)) {
+      djData = {
+        ...localUser,
+        firstName: localUser.first_name || localUser.firstName || '',
+        lastName: localUser.last_name || localUser.lastName || ''
+      }
+      console.log('mix_url brut:', djData.mix_url)
       renderProfile()
       return
     }
 
-    // Fallback localStorage si pas de session Supabase
-    const user = JSON.parse(localStorage.getItem('cue_user') || '{}')
-    if (user.id === djId || (!djId && (user.user_type === 'dj' || user.userType === 'dj'))) {
-      djData = {
-        id: user.id,
-        firstName: user.first_name || user.firstName || '',
-        lastName: user.last_name || user.lastName || '',
-        userType: user.user_type || user.userType,
-        plan: user.plan || 'starter',
-        verified: user.identity_status === 'verified',
-        genres: user.genres || [],
-        tracks: user.tracks || [],
-        description: user.description || '',
-        instagram: user.instagram || '',
-        tiktok: user.tiktok || '',
-        soundcloud: user.soundcloud || '',
-        spotify: user.spotify || '',
-        youtube: user.youtube || '',
-        mix_url: user.mix_url || '',
-        picture: user.picture || ''
-      }
-      renderProfile()
-      return
-    }
-
-    const demoDJs = [
-      { id:'dj1', firstName:'Alex', lastName:'Martin', genres:['House','Tech House'], rating:4.8, reviews:24, description:'DJ professionnel depuis 10 ans, spécialisé dans la house et tech house.', verified:true, plan:'pro', instagram:'instagram.com/alexmartin', soundcloud:'soundcloud.com/alexmartin', gigs:47 },
-      { id:'dj2', firstName:'Sarah', lastName:'K', genres:['Techno','Minimal'], rating:4.6, reviews:18, description:'Techno underground depuis 2015. Sets entre 3 et 5 heures.', verified:true, plan:'pro', gigs:31 },
-      { id:'dj3', firstName:'Marco', lastName:'B', genres:['Deep House','Afro House'], rating:4.9, reviews:41, description:'Deep et afro house, ambassadeur de la scène parisienne.', verified:true, plan:'business', gigs:89 },
-    ];
-
-    djData = demoDJs.find(dj => dj.id === djId);
-
-    if (!djData) {
-      document.getElementById('hero-section').style.display = 'none';
-      document.getElementById('not-found').style.display = 'block';
-      return;
-    }
-
-    renderProfile();
+    // DJ non trouvé
+    document.getElementById('hero-section').style.display = 'none'
+    document.getElementById('not-found').style.display = 'block'
   }
 
   const getFirstName = (u) => u.first_name || u.firstName || ''
@@ -575,6 +547,7 @@
     // comme Supabase Storage, Cloudinary ou AWS S3.
     // Pour l'instant, l'audio n'est disponible que pendant la session active du DJ.
 
+    console.log('mix_url brut:', dj.mix_url)
     if (dj.mix_url) {
       let mixObj = dj.mix_url;
       if (typeof dj.mix_url === 'string') {
