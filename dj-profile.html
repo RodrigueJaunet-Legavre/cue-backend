@@ -634,10 +634,17 @@
 
     document.getElementById('tracks-section').style.display = 'block';
     container.innerHTML = tracks.map((t, i) => {
-      const isUrl = typeof t === 'string' && t.startsWith('http');
-      const name = isUrl
-        ? t.split('/').pop().replace(/\.[^.]+$/, '').replace(/_/g, ' ')
-        : (typeof t === 'string' ? t : (t.name || t)).replace(/\.(mp3|wav)$/i, '');
+      const tUrl = typeof t === 'object' ? t.url : t;
+      const isUrl = typeof tUrl === 'string' && tUrl.startsWith('http');
+      let name = typeof t === 'object' ? (t.name || 'Track ' + (i + 1)) : t;
+      if (typeof name === 'string' && name.startsWith('http')) {
+        const fileName = name.split('/').pop();
+        name = /^\d+\.(mp3|wav)$/i.test(fileName)
+          ? 'Track ' + (i + 1)
+          : fileName.replace(/\.[^.]+$/, '').replace(/-/g, ' ');
+      } else {
+        name = name.replace(/\.(mp3|wav)$/i, '');
+      }
 
       return `
         <div style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:14px;
@@ -651,8 +658,8 @@
           </div>
           ${isUrl ? `
             <audio controls style="width:100%; border-radius:8px; accent-color:var(--Y);">
-              <source src="${t}" type="audio/mpeg">
-              <source src="${t}" type="audio/wav">
+              <source src="${tUrl}" type="audio/mpeg">
+              <source src="${tUrl}" type="audio/wav">
             </audio>
           ` : '<p style="color:var(--MUTED); font-size:12px;">Fichier non disponible en ligne</p>'}
         </div>

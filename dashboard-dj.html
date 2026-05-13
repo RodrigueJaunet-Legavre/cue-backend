@@ -1907,7 +1907,7 @@
         const url = await uploadAudioToSupabase(file, 'dj-tracks', userId)
         const localUrl = URL.createObjectURL(file)
         trackURLs.push(localUrl)
-        profileTracks.push(url)
+        profileTracks.push({ name: file.name.replace(/\.[^.]+$/, ''), url: url })
       } catch (err) {
         alert(`Erreur upload ${file.name}: ${err.message}`)
       }
@@ -1927,8 +1927,8 @@
     }
 
     list.innerHTML = profileTracks.map((t, i) => {
-      const trackName = typeof t === 'string' ? t.replace('.mp3','') : (t.name || t).replace('.mp3','');
-      const trackUrl = trackURLs[i] || null;
+      const trackName = typeof t === 'object' ? t.name : (t.startsWith('http') ? 'Track ' + (i+1) : t.replace(/\.(mp3|wav)$/i,''));
+      const trackUrl = typeof t === 'object' ? t.url : (t.startsWith('http') ? t : null) || trackURLs[i] || null;
 
       return `
         <div style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:12px; padding:16px 20px; margin-bottom:10px;">
@@ -2019,7 +2019,7 @@
           spotify: document.getElementById('social-spotify')?.value || '',
           youtube: document.getElementById('social-youtube')?.value || '',
           mixUrl: profileMix || user.mix_url || '',
-          tracks: profileTracks.map(t => typeof t === 'string' ? t : (t.name || t)),
+          tracks: profileTracks.map(t => typeof t === 'object' ? JSON.stringify(t) : t),
           photo: profilePhotoChanged ? profilePhoto : (user.picture || '')
         })
       })
