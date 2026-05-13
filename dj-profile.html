@@ -575,14 +575,27 @@
     // comme Supabase Storage, Cloudinary ou AWS S3.
     // Pour l'instant, l'audio n'est disponible que pendant la session active du DJ.
 
-    const mixUrl = dj.mix_url || dj.profile?.mix || dj.mix
-    if (mixUrl) {
-      document.getElementById('mix-section').style.display = 'block'
-      document.getElementById('mix-title').textContent = 'Mix de présentation'
-      const player = document.getElementById('mix-audio-player')
-      if (player && mixUrl.startsWith('http')) {
-        player.src = mixUrl
-        player.style.display = 'block'
+    if (dj.mix_url) {
+      let mixObj = dj.mix_url;
+      if (typeof dj.mix_url === 'string') {
+        try { mixObj = JSON.parse(dj.mix_url); }
+        catch(e) { mixObj = { name: 'Mix de présentation', url: dj.mix_url.startsWith('http') ? dj.mix_url : null }; }
+      }
+
+      const mixName = mixObj.name || 'Mix de présentation';
+      const mixUrl = mixObj.url || null;
+
+      document.getElementById('mix-section').style.display = 'block';
+      document.getElementById('mix-title').textContent = mixName;
+
+      const player = document.getElementById('mix-audio-player');
+      if (player && mixUrl) {
+        player.src = mixUrl;
+        player.style.display = 'block';
+        document.getElementById('mix-duration').textContent = 'Mix de présentation';
+      } else {
+        document.getElementById('mix-duration').textContent = '⚠️ Fichier non disponible';
+        if (player) player.style.display = 'none';
       }
     }
 
