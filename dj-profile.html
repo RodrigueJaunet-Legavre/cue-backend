@@ -634,16 +634,19 @@
 
     document.getElementById('tracks-section').style.display = 'block';
     container.innerHTML = tracks.map((t, i) => {
-      const tUrl = typeof t === 'object' ? t.url : t;
+      let trackObj = t;
+      if (typeof t === 'string') {
+        try { trackObj = JSON.parse(t); }
+        catch(e) { trackObj = { name: t.replace(/\.(mp3|wav)$/i, ''), url: t.startsWith('http') ? t : null }; }
+      }
+      const tUrl = trackObj.url || null;
       const isUrl = typeof tUrl === 'string' && tUrl.startsWith('http');
-      let name = typeof t === 'object' ? (t.name || 'Track ' + (i + 1)) : t;
+      let name = trackObj.name || ('Track ' + (i + 1));
       if (typeof name === 'string' && name.startsWith('http')) {
         const fileName = name.split('/').pop();
         name = /^\d+\.(mp3|wav)$/i.test(fileName)
           ? 'Track ' + (i + 1)
           : fileName.replace(/\.[^.]+$/, '').replace(/-/g, ' ');
-      } else {
-        name = name.replace(/\.(mp3|wav)$/i, '');
       }
 
       return `

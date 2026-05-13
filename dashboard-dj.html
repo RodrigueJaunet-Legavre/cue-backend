@@ -1934,8 +1934,13 @@
     }
 
     list.innerHTML = profileTracks.map((t, i) => {
-      const trackName = typeof t === 'object' ? t.name : (t.startsWith('http') ? 'Track ' + (i+1) : t.replace(/\.(mp3|wav)$/i,''));
-      const trackUrl = typeof t === 'object' ? t.url : (t.startsWith('http') ? t : null) || trackURLs[i] || null;
+      let trackObj = t;
+      if (typeof t === 'string') {
+        try { trackObj = JSON.parse(t); }
+        catch(e) { trackObj = { name: t.replace(/\.(mp3|wav)$/i, ''), url: t.startsWith('http') ? t : null }; }
+      }
+      const trackName = trackObj.name || ('Track ' + (i + 1));
+      const trackUrl = trackObj.url || trackURLs[i] || null;
 
       return `
         <div style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:12px; padding:16px 20px; margin-bottom:10px;">
