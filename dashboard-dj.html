@@ -309,7 +309,7 @@
     </div>
 
     <!-- BADGE VÉRIFIÉ -->
-    <div class="card" style="margin-bottom:24px; background:linear-gradient(135deg, #111 0%, #1a1a1a 100%); border-color:rgba(255,195,0,.3);">
+    <div class="card" id="badge-section-overview" style="margin-bottom:24px; background:linear-gradient(135deg, #111 0%, #1a1a1a 100%); border-color:rgba(255,195,0,.3);">
       <div class="card-header">
         <span class="card-title">✨ Obtenir le Badge Vérifié CUE</span>
         <span id="badge-status" style="font-size:13px; font-weight:700;"></span>
@@ -1280,10 +1280,24 @@
     // Condition 2 : Identité vérifiée par l'admin
     const hasIdentity = user.identity_status === 'verified';
 
-    // Condition 3 : Mix uploadé sur Supabase (URL complète)
-    const hasMix = !!(user.mix_url && user.mix_url.startsWith('http'));
+    // Condition 3 : Mix uploadé sur Supabase (URL complète ou JSON avec url)
+    const hasMix = !!(user.mix_url && (user.mix_url.startsWith('http') || user.mix_url.includes('"url"')));
 
     console.log('Badge conditions:', { hasPhoto, hasIdentity, hasMix });
+
+    const allDone = hasPhoto && hasIdentity && hasMix;
+
+    // Si badge obtenu → cache toute la section badge de l'overview
+    const badgeSection = document.getElementById('badge-section-overview');
+    if (badgeSection) {
+      badgeSection.style.display = allDone ? 'none' : 'block';
+    }
+
+    // Si identité vérifiée → cache le rappel vérification dans l'overview
+    const verifReminder = document.getElementById('verif-reminder-overview');
+    if (verifReminder) {
+      verifReminder.style.display = hasIdentity ? 'none' : 'block';
+    }
 
     // Update condition 1 - Photo
     document.getElementById('cond-photo-icon').textContent = hasPhoto ? '✅' : '⬜';
@@ -1314,7 +1328,6 @@
     else document.getElementById('cond-mix-btn').style.display = 'block';
 
     // Badge obtenu UNIQUEMENT si les 3 conditions sont remplies
-    const allDone = hasPhoto && hasIdentity && hasMix;
     const badgeStatus = document.getElementById('badge-status');
 
     if (allDone) {
