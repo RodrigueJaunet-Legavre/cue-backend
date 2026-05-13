@@ -1406,33 +1406,20 @@
 
     const btn = e.target.querySelector('button[type="submit"]')
     btn.disabled = true
-    btn.textContent = '⏳ Compression et envoi...'
+    btn.textContent = '⏳ Envoi en cours...'
 
     try {
-      const toBase64 = (file) => new Promise((resolve) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(reader.result.split(',')[1])
-        reader.readAsDataURL(file)
-      })
-
-      const selfieRaw = await toBase64(selfieInput.files[0])
-      const docRaw = await toBase64(docInput.files[0])
-
-      const selfieBase64 = await compressImage(selfieRaw)
-      const documentBase64 = await compressImage(docRaw)
-
       const userId = user.id || user.user_id
+
+      const formData = new FormData()
+      formData.append('userId', userId)
+      formData.append('selfie', selfieInput.files[0])
+      formData.append('identity_card', docInput.files[0])
 
       const res = await fetch('/api/upload-identity', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          selfieBase64,
-          documentBase64,
-          selfieType: 'image/jpeg',
-          documentType: 'image/jpeg'
-        })
+        // Pas de Content-Type — le navigateur gère le boundary multipart
+        body: formData
       })
 
       if (res.ok) {
