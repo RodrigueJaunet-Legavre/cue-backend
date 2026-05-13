@@ -1902,12 +1902,19 @@
       }
       if (file.size > 50 * 1024 * 1024) { alert(`${file.name} dépasse 50MB.`); continue }
 
+      // Demande le nom au DJ
+      const defaultName = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ')
+      const trackName = prompt(`Comment veux-tu appeler ce track ?`, defaultName)
+
+      if (trackName === null) continue // Annulé
+      if (!trackName.trim()) { alert('Le nom ne peut pas être vide.'); continue }
+
       try {
         const userId = user.id || user.user_id
         const url = await uploadAudioToSupabase(file, 'dj-tracks', userId)
         const localUrl = URL.createObjectURL(file)
         trackURLs.push(localUrl)
-        profileTracks.push({ name: file.name.replace(/\.[^.]+$/, ''), url: url })
+        profileTracks.push({ name: trackName.trim(), url: url })
       } catch (err) {
         alert(`Erreur upload ${file.name}: ${err.message}`)
       }
