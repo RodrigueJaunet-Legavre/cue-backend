@@ -1837,6 +1837,7 @@
 
     const player = document.getElementById('mix-player');
     player.src = mixURL;
+    showSaveBar();
   }
 
   function removeMix() {
@@ -1855,7 +1856,7 @@
 
       const validTypes = ['audio/mpeg', 'audio/wav', 'audio/wave', 'audio/x-wav'];
       if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|wav)$/i)) {
-        alert(`${file.name} : format non supporté. Utilise MP3 ou WAV.`);
+        alert(`${file.name} : format non supporté.`);
         return;
       }
 
@@ -1864,9 +1865,9 @@
       const url = URL.createObjectURL(file);
       trackURLs.push(url);
       profileTracks.push(file.name);
-      renderTracksList();
-      showSaveBar();
     });
+    renderTracksList();
+    showSaveBar();
     input.value = '';
   }
 
@@ -1909,6 +1910,7 @@
     profileTracks.splice(index, 1);
     trackURLs.splice(index, 1);
     renderTracksList();
+    showSaveBar();
   }
 
   function showSaveBar() {
