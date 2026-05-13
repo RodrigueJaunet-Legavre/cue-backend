@@ -1848,54 +1848,26 @@
     document.getElementById('mix-upload-zone').style.display = 'block';
   }
 
-  async function handleTracksChange(input) {
+  function handleTracksChange(input) {
     const files = Array.from(input.files);
-    input.value = '';
-
-    for (const file of files) {
-      if (profileTracks.length >= 10) { alert('Maximum 10 tracks.'); break; }
+    files.forEach(file => {
+      if (profileTracks.length >= 10) { alert('Maximum 10 tracks.'); return; }
 
       const validTypes = ['audio/mpeg', 'audio/wav', 'audio/wave', 'audio/x-wav'];
       if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|wav)$/i)) {
         alert(`${file.name} : format non supporté. Utilise MP3 ou WAV.`);
-        continue;
+        return;
       }
 
-      if (file.size > 50 * 1024 * 1024) { alert(`${file.name} dépasse 50MB.`); continue; }
+      if (file.size > 50 * 1024 * 1024) { alert(`${file.name} dépasse 50MB.`); return; }
 
-      // Aperçu local immédiat pendant l'upload
-      const localUrl = URL.createObjectURL(file);
-      const tempEntry = { name: file.name, url: localUrl, uploading: true };
-      profileTracks.push(tempEntry);
-      trackURLs.push(localUrl);
+      const url = URL.createObjectURL(file);
+      trackURLs.push(url);
+      profileTracks.push(file.name);
       renderTracksList();
-
-      try {
-        const formData = new FormData();
-        formData.append('userId', user.id || user.user_id);
-        formData.append('track', file);
-
-        const res = await fetch('/api/upload-track', { method: 'POST', body: formData });
-        const data = await res.json();
-
-        if (!res.ok) throw new Error(data.error || 'Erreur upload');
-
-        // Remplace l'entrée temporaire par l'URL Supabase
-        const idx = profileTracks.indexOf(tempEntry);
-        if (idx !== -1) {
-          profileTracks[idx] = { name: data.name, url: data.url };
-          trackURLs[idx] = data.url;
-        }
-        showSaveBar();
-      } catch (err) {
-        // En cas d'erreur, retire l'entrée temporaire
-        const idx = profileTracks.indexOf(tempEntry);
-        if (idx !== -1) { profileTracks.splice(idx, 1); trackURLs.splice(idx, 1); }
-        alert(`Erreur upload ${file.name} : ${err.message}`);
-      }
-
-      renderTracksList();
-    }
+      showSaveBar();
+    });
+    input.value = '';
   }
 
   function renderTracksList() {
@@ -1908,17 +1880,16 @@
     }
 
     list.innerHTML = profileTracks.map((t, i) => {
-      const trackName = (typeof t === 'string' ? t : (t.name || '')).replace(/\.mp3$/i,'').replace(/\.wav$/i,'');
-      const trackUrl = (typeof t === 'object' ? t.url : null) || trackURLs[i] || null;
-      const isUploading = typeof t === 'object' && t.uploading;
+      const trackName = typeof t === 'string' ? t.replace('.mp3','') : (t.name || t).replace('.mp3','');
+      const trackUrl = trackURLs[i] || null;
 
       return `
         <div style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:12px; padding:16px 20px; margin-bottom:10px;">
           <div style="display:flex; align-items:center; gap:16px; margin-bottom:${trackUrl ? '12px' : '0'};">
             <span style="color:var(--MUTED); font-weight:700; width:24px; text-align:center;">${i+1}</span>
-            <span style="font-size:20px;">${isUploading ? '⏳' : '🎵'}</span>
-            <span style="flex:1; font-weight:600; font-size:14px; color:${isUploading ? 'var(--MUTED)' : '#fff'};">${trackName}${isUploading ? ' — upload...' : ''}</span>
-            <button onclick="removeTrack(${i})" ${isUploading ? 'disabled' : ''}
+            <span style="font-size:20px;">🎵</span>
+            <span style="flex:1; font-weight:600; font-size:14px; color:#fff;">${trackName}</span>
+            <button onclick="removeTrack(${i})"
                     style="background:rgba(255,68,68,.15); color:#ff4444; border:none;
                            padding:6px 12px; border-radius:8px; cursor:pointer; font-weight:700;">✕</button>
           </div>
@@ -2000,7 +1971,7 @@
           spotify: document.getElementById('social-spotify')?.value || '',
           youtube: document.getElementById('social-youtube')?.value || '',
           mixUrl: profileMix || user.mix_url || '',
-          tracks: profileTracks.map(t => typeof t === 'string' ? t : t.url).filter(Boolean),
+          tracks: profileTracks,
           photo: profilePhotoChanged ? profilePhoto : (user.picture || '')
         })
       })
