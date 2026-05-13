@@ -1971,7 +1971,7 @@
           spotify: document.getElementById('social-spotify')?.value || '',
           youtube: document.getElementById('social-youtube')?.value || '',
           mixUrl: profileMix || user.mix_url || '',
-          tracks: profileTracks,
+          tracks: profileTracks.map(t => typeof t === 'string' ? t : (t.name || t)),
           photo: profilePhotoChanged ? profilePhoto : (user.picture || '')
         })
       })
