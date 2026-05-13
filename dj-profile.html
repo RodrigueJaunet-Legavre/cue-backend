@@ -553,8 +553,10 @@
     if (dj.plan === 'business') { planBadge.textContent = '✨ Elite'; planBadge.classList.add('plan-business'); }
     else if (dj.plan === 'pro') { planBadge.textContent = '⚡ Pro'; planBadge.classList.add('plan-pro'); }
 
-    if (dj.profile?.photo) {
-      document.getElementById('hero-avatar').innerHTML = `<img src="${dj.profile.photo}" style="width:100%; height:100%; object-fit:cover;">`;
+    const photo = dj.picture || dj.profile?.photo || dj.photo;
+    if (photo) {
+      document.getElementById('hero-avatar').innerHTML =
+        `<img src="${photo}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
     }
 
     document.getElementById('stat-gigs').textContent = dj.gigs || 0;
@@ -573,23 +575,20 @@
     // comme Supabase Storage, Cloudinary ou AWS S3.
     // Pour l'instant, l'audio n'est disponible que pendant la session active du DJ.
 
-    if (dj.profile?.mix || dj.mix) {
-      document.getElementById('mix-section').style.display = 'block';
-      document.getElementById('mix-title').textContent = dj.profile?.mix || dj.mix;
-
-      const mixUrl = dj.profile?.mixUrl || dj.mixUrl;
-      if (mixUrl) {
-        document.getElementById('mix-audio-player').src = mixUrl;
-        document.getElementById('mix-duration').textContent = 'Mix de présentation';
-      } else {
-        document.getElementById('mix-duration').textContent = '⚠️ Fichier non encore hébergé';
-        document.getElementById('mix-audio-player').style.display = 'none';
+    const mixUrl = dj.mix_url || dj.profile?.mix || dj.mix
+    if (mixUrl) {
+      document.getElementById('mix-section').style.display = 'block'
+      document.getElementById('mix-title').textContent = 'Mix de présentation'
+      const player = document.getElementById('mix-audio-player')
+      if (player && mixUrl.startsWith('http')) {
+        player.src = mixUrl
+        player.style.display = 'block'
       }
     }
 
-    if (dj.tracks?.length || dj.profile?.tracks?.length) {
-      const tracks = dj.tracks || dj.profile?.tracks || [];
-      renderTracks(tracks);
+    const tracks = dj.tracks || dj.profile?.tracks || []
+    if (tracks.length) {
+      renderTracks(tracks)
     }
 
     document.getElementById('reviews-label').textContent = reviewCount ? `(${reviewCount})` : '';
@@ -635,21 +634,27 @@
 
     document.getElementById('tracks-section').style.display = 'block';
     container.innerHTML = tracks.map((t, i) => {
-      const trackName = typeof t === 'string' ? t.replace('.mp3', '') : (t.name || t).replace('.mp3', '');
+      const isUrl = typeof t === 'string' && t.startsWith('http');
+      const name = isUrl
+        ? t.split('/').pop().replace(/\.[^.]+$/, '').replace(/_/g, ' ')
+        : (typeof t === 'string' ? t : (t.name || t)).replace(/\.(mp3|wav)$/i, '');
+
       return `
         <div style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:14px;
                     padding:16px 20px; margin-bottom:10px; transition:all .2s;"
              onmouseover="this.style.borderColor='rgba(255,195,0,.3)'"
              onmouseout="this.style.borderColor='var(--BORDER)'">
-          <div style="display:flex; align-items:center; gap:16px; margin-bottom:12px;">
+          <div style="display:flex; align-items:center; gap:16px; margin-bottom:${isUrl ? '12px' : '0'};">
             <span style="color:var(--Y); font-weight:900; font-family:Barlow Condensed; font-size:20px; width:28px;">${i + 1}</span>
             <span style="font-size:20px;">🎵</span>
-            <span style="flex:1; font-weight:700; font-size:14px; color:#fff;">${trackName}</span>
+            <span style="flex:1; font-weight:700; font-size:14px; color:#fff;">${name}</span>
           </div>
-          <audio controls style="width:100%; border-radius:8px; accent-color:var(--Y);">
-            <source src="" type="audio/mpeg">
-            <p style="color:var(--MUTED); font-size:12px;">Écoute disponible après upload du fichier.</p>
-          </audio>
+          ${isUrl ? `
+            <audio controls style="width:100%; border-radius:8px; accent-color:var(--Y);">
+              <source src="${t}" type="audio/mpeg">
+              <source src="${t}" type="audio/wav">
+            </audio>
+          ` : '<p style="color:var(--MUTED); font-size:12px;">Fichier non disponible en ligne</p>'}
         </div>
       `;
     }).join('');

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="supabase-key" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yamhrZmR2aWh1dnFjanhoandlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MzU2ODEsImV4cCI6MjA5NDAxMTY4MX0.Ti7anM1O3KqbZYLxRkl1rWbcghJF5FgmRxNqOTV6JL0">
   <title>CUE — Dashboard DJ</title>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -1812,32 +1813,70 @@
     reader.readAsDataURL(file);
   }
 
-  function handleMixChange(input) {
-    const file = input.files[0];
-    if (!file) return;
+  function getSupabaseConfig() {
+    return {
+      SUPABASE_URL: 'https://orjhkfdvihuvqcjxhjwe.supabase.co',
+      SUPABASE_ANON_KEY: document.querySelector('meta[name="supabase-key"]')?.content || ''
+    }
+  }
 
-    const validTypes = ['audio/mpeg', 'audio/wav', 'audio/wave', 'audio/x-wav'];
+  async function uploadAudioToSupabase(file, bucket, userId) {
+    const ext = file.name.split('.').pop()
+    const fileName = `${userId}/${Date.now()}.${ext}`
+    const { SUPABASE_URL, SUPABASE_ANON_KEY } = getSupabaseConfig()
+
+    const res = await fetch(
+      `${SUPABASE_URL}/storage/v1/object/${bucket}/${fileName}`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': file.type,
+          'x-upsert': 'true'
+        },
+        body: file
+      }
+    )
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.message || 'Erreur upload Storage')
+    }
+
+    return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${fileName}`
+  }
+
+  async function handleMixChange(input) {
+    const file = input.files[0]
+    if (!file) return
+
+    const validTypes = ['audio/mpeg', 'audio/wav', 'audio/wave', 'audio/x-wav']
     if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|wav)$/i)) {
-      alert('Format non supporté. Utilise un fichier MP3 ou WAV.');
-      return;
+      alert('Format non supporté. MP3 ou WAV uniquement.')
+      return
     }
+    if (file.size > 100 * 1024 * 1024) { alert('Max 100MB.'); return }
 
-    if (file.size > 100 * 1024 * 1024) {
-      alert('Le fichier ne doit pas dépasser 100MB.');
-      return;
+    const zone = document.getElementById('mix-upload-zone')
+    if (zone) zone.innerHTML = '<div style="text-align:center; padding:20px; color:var(--Y);">⏳ Upload en cours...</div>'
+
+    try {
+      const userId = user.id || user.user_id
+      const url = await uploadAudioToSupabase(file, 'dj-mixes', userId)
+
+      if (mixURL) URL.revokeObjectURL(mixURL)
+      mixURL = URL.createObjectURL(file)
+      profileMix = url
+
+      document.getElementById('mix-current').style.display = 'block'
+      document.getElementById('mix-upload-zone').style.display = 'none'
+      document.getElementById('mix-name').textContent = file.name
+      document.getElementById('mix-player').src = mixURL
+      showSaveBar()
+    } catch (err) {
+      alert('Erreur upload : ' + err.message)
+      loadProfile()
     }
-
-    if (mixURL) URL.revokeObjectURL(mixURL);
-    mixURL = URL.createObjectURL(file);
-    profileMix = file.name;
-
-    document.getElementById('mix-current').style.display = 'block';
-    document.getElementById('mix-upload-zone').style.display = 'none';
-    document.getElementById('mix-name').textContent = file.name;
-
-    const player = document.getElementById('mix-player');
-    player.src = mixURL;
-    showSaveBar();
   }
 
   function removeMix() {
@@ -1849,26 +1888,33 @@
     document.getElementById('mix-upload-zone').style.display = 'block';
   }
 
-  function handleTracksChange(input) {
-    const files = Array.from(input.files);
-    files.forEach(file => {
-      if (profileTracks.length >= 10) { alert('Maximum 10 tracks.'); return; }
+  async function handleTracksChange(input) {
+    const files = Array.from(input.files)
+    input.value = ''
 
-      const validTypes = ['audio/mpeg', 'audio/wav', 'audio/wave', 'audio/x-wav'];
+    for (const file of files) {
+      if (profileTracks.length >= 10) { alert('Maximum 10 tracks.'); break }
+
+      const validTypes = ['audio/mpeg', 'audio/wav', 'audio/wave', 'audio/x-wav']
       if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|wav)$/i)) {
-        alert(`${file.name} : format non supporté.`);
-        return;
+        alert(`${file.name} : format non supporté.`)
+        continue
       }
+      if (file.size > 50 * 1024 * 1024) { alert(`${file.name} dépasse 50MB.`); continue }
 
-      if (file.size > 50 * 1024 * 1024) { alert(`${file.name} dépasse 50MB.`); return; }
+      try {
+        const userId = user.id || user.user_id
+        const url = await uploadAudioToSupabase(file, 'dj-tracks', userId)
+        const localUrl = URL.createObjectURL(file)
+        trackURLs.push(localUrl)
+        profileTracks.push(url)
+      } catch (err) {
+        alert(`Erreur upload ${file.name}: ${err.message}`)
+      }
+    }
 
-      const url = URL.createObjectURL(file);
-      trackURLs.push(url);
-      profileTracks.push(file.name);
-    });
-    renderTracksList();
-    showSaveBar();
-    input.value = '';
+    renderTracksList()
+    showSaveBar()
   }
 
   function renderTracksList() {
