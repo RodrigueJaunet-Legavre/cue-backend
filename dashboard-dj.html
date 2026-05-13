@@ -1273,38 +1273,60 @@
   }
 
   function checkBadgeConditions() {
-    const hasPhoto = !!(user.picture || user.profile?.photo);
-    const hasIdentity = user.identity_status === 'verified';
-    const hasMix = !!(user.mix_url || user.profile?.mix);
+    // Condition 1 : Photo de profil (pas la photo Google par défaut)
+    const hasPhoto = !!(user.picture && !user.picture.includes('googleusercontent'))
+      || !!(user.profile?.photo);
 
+    // Condition 2 : Identité vérifiée par l'admin
+    const hasIdentity = user.identity_status === 'verified';
+
+    // Condition 3 : Mix uploadé sur Supabase (URL complète)
+    const hasMix = !!(user.mix_url && user.mix_url.startsWith('http'));
+
+    console.log('Badge conditions:', { hasPhoto, hasIdentity, hasMix });
+
+    // Update condition 1 - Photo
     document.getElementById('cond-photo-icon').textContent = hasPhoto ? '✅' : '⬜';
     document.getElementById('cond-photo').style.borderColor = hasPhoto ? 'rgba(0,200,100,.3)' : 'var(--BORDER)';
     if (hasPhoto) document.getElementById('cond-photo-btn').style.display = 'none';
+    else document.getElementById('cond-photo-btn').style.display = 'block';
 
+    // Update condition 2 - Identité
     const identityIcon = hasIdentity ? '✅' : (user.identity_status === 'pending' ? '⏳' : '⬜');
     document.getElementById('cond-identity-icon').textContent = identityIcon;
     document.getElementById('cond-identity').style.borderColor = hasIdentity ? 'rgba(0,200,100,.3)' : 'var(--BORDER)';
-    if (hasIdentity) document.getElementById('cond-identity-btn').style.display = 'none';
-    if (user.identity_status === 'pending') {
-      document.getElementById('cond-identity-btn').textContent = '⏳ En attente';
-      document.getElementById('cond-identity-btn').disabled = true;
+    const identityBtn = document.getElementById('cond-identity-btn');
+    if (hasIdentity) {
+      identityBtn.style.display = 'none';
+    } else if (user.identity_status === 'pending') {
+      identityBtn.textContent = '⏳ En attente';
+      identityBtn.disabled = true;
+    } else {
+      identityBtn.style.display = 'block';
+      identityBtn.disabled = false;
+      identityBtn.textContent = 'Vérifier →';
     }
 
+    // Update condition 3 - Mix
     document.getElementById('cond-mix-icon').textContent = hasMix ? '✅' : '⬜';
     document.getElementById('cond-mix').style.borderColor = hasMix ? 'rgba(0,200,100,.3)' : 'var(--BORDER)';
     if (hasMix) document.getElementById('cond-mix-btn').style.display = 'none';
+    else document.getElementById('cond-mix-btn').style.display = 'block';
 
+    // Badge obtenu UNIQUEMENT si les 3 conditions sont remplies
     const allDone = hasPhoto && hasIdentity && hasMix;
     const badgeStatus = document.getElementById('badge-status');
 
     if (allDone) {
       document.getElementById('badge-obtained').style.display = 'block';
-      badgeStatus.textContent = '✅ Badge obtenu';
-      badgeStatus.style.color = '#00c864';
+      if (badgeStatus) { badgeStatus.textContent = '✅ Badge obtenu'; badgeStatus.style.color = '#00c864'; }
     } else {
+      document.getElementById('badge-obtained').style.display = 'none';
       const count = [hasPhoto, hasIdentity, hasMix].filter(Boolean).length;
-      badgeStatus.textContent = `${count}/3 conditions remplies`;
-      badgeStatus.style.color = count === 2 ? 'var(--Y)' : 'var(--MUTED)';
+      if (badgeStatus) {
+        badgeStatus.textContent = `${count}/3 conditions remplies`;
+        badgeStatus.style.color = count === 2 ? 'var(--Y)' : 'var(--MUTED)';
+      }
     }
   }
 
