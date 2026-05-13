@@ -437,6 +437,7 @@
     createParticles()
 
     // Récupère le DJ depuis la DB
+    console.log('djId depuis URL:', djId)
     if (djId) {
       try {
         const res = await fetch('/api/auth', {
@@ -445,6 +446,8 @@
           body: JSON.stringify({ action: 'get_user', userId: djId })
         })
         const data = await res.json()
+        console.log('data.user:', data.user)
+        console.log('mix_url:', data.user?.mix_url)
 
         if (data.user) {
           djData = {
@@ -452,7 +455,6 @@
             firstName: data.user.first_name || '',
             lastName: data.user.last_name || ''
           }
-          console.log('mix_url brut:', djData.mix_url)
           renderProfile()
           return
         }
@@ -547,28 +549,27 @@
     // comme Supabase Storage, Cloudinary ou AWS S3.
     // Pour l'instant, l'audio n'est disponible que pendant la session active du DJ.
 
-    console.log('mix_url brut:', dj.mix_url)
     if (dj.mix_url) {
-      let mixObj = dj.mix_url;
-      if (typeof dj.mix_url === 'string') {
-        try { mixObj = JSON.parse(dj.mix_url); }
-        catch(e) { mixObj = { name: 'Mix de présentation', url: dj.mix_url.startsWith('http') ? dj.mix_url : null }; }
+      let mixObj
+      try {
+        mixObj = typeof dj.mix_url === 'string' ? JSON.parse(dj.mix_url) : dj.mix_url
+      } catch(e) {
+        mixObj = { name: 'Mix de présentation', url: dj.mix_url.startsWith('http') ? dj.mix_url : null }
       }
 
-      const mixName = mixObj.name || 'Mix de présentation';
-      const mixUrl = mixObj.url || null;
+      console.log('mixObj parsé:', mixObj)
 
-      document.getElementById('mix-section').style.display = 'block';
-      document.getElementById('mix-title').textContent = mixName;
+      if (mixObj?.url) {
+        document.getElementById('mix-section').style.display = 'block'
+        document.getElementById('mix-title').textContent = 'Mix de présentation'
+        document.getElementById('mix-duration').textContent = ''
 
-      const player = document.getElementById('mix-audio-player');
-      if (player && mixUrl) {
-        player.src = mixUrl;
-        player.style.display = 'block';
-        document.getElementById('mix-duration').textContent = 'Mix de présentation';
-      } else {
-        document.getElementById('mix-duration').textContent = '⚠️ Fichier non disponible';
-        if (player) player.style.display = 'none';
+        const player = document.getElementById('mix-audio-player')
+        if (player) {
+          player.src = mixObj.url
+          player.style.display = 'block'
+          player.load()
+        }
       }
     }
 
