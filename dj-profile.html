@@ -614,9 +614,33 @@
       }
     }
 
-    const tracks = dj.tracks || dj.profile?.tracks || []
+    const tracks = dj.tracks || []
     if (tracks.length) {
-      renderTracks(tracks)
+      document.getElementById('tracks-section').style.display = 'block'
+      document.getElementById('tracks-list').innerHTML = tracks.map((t, i) => {
+        let trackObj = t
+        if (typeof t === 'string') {
+          try { trackObj = JSON.parse(t) }
+          catch(e) { trackObj = { name: t.replace(/\.(mp3|wav)$/i, ''), url: t.startsWith('http') ? t : null } }
+        }
+        const name = trackObj.name || ('Track ' + (i + 1))
+        const url = trackObj.url || null
+        return `
+          <div style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:14px; padding:16px 20px; margin-bottom:10px;">
+            <div style="display:flex; align-items:center; gap:16px; margin-bottom:${url ? '12px' : '0'};">
+              <span style="color:var(--Y); font-weight:900; font-size:20px; width:28px;">${i + 1}</span>
+              <span style="font-size:20px;">🎵</span>
+              <span style="flex:1; font-weight:700; font-size:14px; color:#fff;">${name}</span>
+            </div>
+            ${url ? `
+              <audio controls style="width:100%; border-radius:8px; accent-color:var(--Y);">
+                <source src="${url}" type="audio/mpeg">
+                <source src="${url}" type="audio/wav">
+              </audio>
+            ` : ''}
+          </div>
+        `
+      }).join('')
     }
 
     // Les avis sont chargés via loadReviews() après renderProfile()

@@ -421,8 +421,9 @@
       <p class="page-sub">Offres et communications des venues</p>
     </div>
 
-    <div style="display:grid; grid-template-columns:360px 1fr; gap:24px; height:calc(100vh - 200px);">
-      <div class="card" style="overflow-y:auto; margin-bottom:0;">
+    <div style="display:grid; grid-template-columns:340px 1fr; gap:24px; height:calc(100vh - 220px);">
+      <!-- Liste conversations -->
+      <div class="card" style="overflow-y:auto; margin-bottom:0; height:100%;">
         <div id="messages-list">
           <div class="empty-state">
             <div class="empty-emoji">💬</div>
@@ -432,20 +433,24 @@
         </div>
       </div>
 
-      <div class="card" style="margin-bottom:0; display:flex; flex-direction:column;">
+      <!-- Conversation active -->
+      <div class="card" style="margin-bottom:0; display:flex; flex-direction:column; height:100%;">
         <div id="conversation-empty" style="display:flex; align-items:center; justify-content:center; flex:1;">
           <div class="empty-state">
             <div class="empty-emoji">👈</div>
             <div class="empty-title">Sélectionne une conversation</div>
           </div>
         </div>
-        <div id="conversation-active" style="display:none; flex:1; flex-direction:column;">
-          <div class="card-header">
+        <div id="conversation-active" style="display:none; flex-direction:column; flex:1; overflow:hidden;">
+          <div class="card-header" style="flex-shrink:0;">
             <span class="card-title" id="conv-venue-name">Venue</span>
           </div>
-          <div id="conv-messages" style="flex:1; overflow-y:auto; padding:24px; display:flex; flex-direction:column; gap:12px;"></div>
-          <div style="padding:16px 24px; border-top:1px solid var(--BORDER); display:flex; gap:12px;">
-            <input type="text" id="message-input" class="form-input" placeholder="Répondre..." style="flex:1;" onkeypress="if(event.key==='Enter') sendMessage()">
+          <div id="conv-messages" style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:10px;"></div>
+          <div style="padding:16px 20px; border-top:1px solid var(--BORDER); display:flex; gap:10px; flex-shrink:0;">
+            <input type="text" id="message-input" class="form-input"
+                   placeholder="Répondre..."
+                   style="flex:1;"
+                   onkeypress="if(event.key==='Enter') sendMessage()">
             <button class="btn btn-primary" onclick="sendMessage()">Envoyer →</button>
           </div>
         </div>
@@ -1090,13 +1095,111 @@
   <div id="page-settings" class="page">
     <div class="page-header">
       <h1 class="page-title">PARAMÈTRES</h1>
+      <p class="page-sub">Gère ton compte et tes préférences</p>
     </div>
-    <div class="card">
-      <div class="card-body">
-        <button class="btn" style="background:#ff4444; color:#fff;" onclick="deleteAccount()">
-          🗑️ Supprimer mon compte
-        </button>
+
+    <div style="max-width:640px; display:flex; flex-direction:column; gap:20px;">
+
+      <!-- Notifications -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">🔔 Notifications</span></div>
+        <div class="card-body" style="display:flex; flex-direction:column; gap:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:700; color:#fff;">Nouvelles offres de booking</div>
+              <div style="color:var(--MUTED); font-size:13px;">Reçois un email quand un venue te contacte</div>
+            </div>
+            <label style="cursor:pointer;"><input type="checkbox" id="notif-offers" checked style="width:20px; height:20px; accent-color:var(--Y);"></label>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:700; color:#fff;">Confirmations de booking</div>
+              <div style="color:var(--MUTED); font-size:13px;">Reçois un email quand un booking est confirmé</div>
+            </div>
+            <label style="cursor:pointer;"><input type="checkbox" id="notif-bookings" checked style="width:20px; height:20px; accent-color:var(--Y);"></label>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:700; color:#fff;">Nouveaux avis</div>
+              <div style="color:var(--MUTED); font-size:13px;">Reçois un email quand un venue te note</div>
+            </div>
+            <label style="cursor:pointer;"><input type="checkbox" id="notif-reviews" checked style="width:20px; height:20px; accent-color:var(--Y);"></label>
+          </div>
+        </div>
       </div>
+
+      <!-- Sécurité -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">🔒 Sécurité</span></div>
+        <div class="card-body" style="display:flex; flex-direction:column; gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Nouveau mot de passe</label>
+            <input type="password" id="new-password" class="form-input" placeholder="Minimum 8 caractères">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirmer le mot de passe</label>
+            <input type="password" id="confirm-password" class="form-input" placeholder="Répète le mot de passe">
+          </div>
+          <button class="btn btn-primary" style="width:fit-content;" onclick="changePassword()">Changer le mot de passe</button>
+        </div>
+      </div>
+
+      <!-- Abonnement -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">💳 Abonnement</span></div>
+        <div class="card-body">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+            <div>
+              <div style="font-weight:700; color:#fff; font-size:18px;" id="current-plan-name">Plan Starter</div>
+              <div style="color:var(--MUTED); font-size:13px; margin-top:4px;" id="current-plan-desc">Gratuit — 15% de commission</div>
+            </div>
+            <span id="current-plan-badge" class="profile-plan">STARTER</span>
+          </div>
+          <a href="pricing.html" class="btn btn-outline" style="text-decoration:none; display:inline-block;">Changer de plan →</a>
+        </div>
+      </div>
+
+      <!-- Confidentialité -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">👁 Confidentialité</span></div>
+        <div class="card-body" style="display:flex; flex-direction:column; gap:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:700; color:#fff;">Profil visible dans Find DJ</div>
+              <div style="color:var(--MUTED); font-size:13px;">Les venues peuvent trouver ton profil</div>
+            </div>
+            <label style="cursor:pointer;"><input type="checkbox" id="privacy-visible" checked style="width:20px; height:20px; accent-color:var(--Y);"></label>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:700; color:#fff;">Afficher mes réseaux sociaux</div>
+              <div style="color:var(--MUTED); font-size:13px;">Visible sur ton profil public</div>
+            </div>
+            <label style="cursor:pointer;"><input type="checkbox" id="privacy-socials" checked style="width:20px; height:20px; accent-color:var(--Y);"></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zone danger -->
+      <div class="card" style="border-color:rgba(255,68,68,.2);">
+        <div class="card-header" style="border-color:rgba(255,68,68,.2);">
+          <span class="card-title" style="color:#ff4444;">⚠️ Zone dangereuse</span>
+        </div>
+        <div class="card-body">
+          <p style="color:var(--MUTED); font-size:14px; margin-bottom:20px; line-height:1.6;">
+            La suppression de ton compte est irréversible. Toutes tes données, gigs, messages et avis seront définitivement supprimés.
+          </p>
+          <button onclick="confirmDeleteAccount()"
+                  style="background:transparent; color:#ff4444; border:1px solid rgba(255,68,68,.3);
+                         padding:12px 24px; border-radius:10px; cursor:pointer; font-weight:700;
+                         font-size:14px; font-family:Barlow,sans-serif; transition:all .2s;"
+                  onmouseover="this.style.background='rgba(255,68,68,.1)'"
+                  onmouseout="this.style.background='transparent'">
+            🗑️ Supprimer mon compte
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -1476,8 +1579,10 @@
   }
 
   function renderUpcomingGigs() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const upcoming = gigs
-      .filter(g => new Date(g.date) >= new Date() && g.status !== 'canceled')
+      .filter(g => new Date(g.date) >= today && g.status !== 'canceled')
       .sort((a, b) => new Date(a.date) - new Date(b.date))
       .slice(0, 3);
     const container = document.getElementById('upcoming-gigs-list');
@@ -1486,11 +1591,12 @@
   }
 
   function renderGigs(filter) {
-    const now = new Date();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     let filtered = gigs;
-    if (filter === 'confirmed') filtered = gigs.filter(g => g.status === 'confirmed' && new Date(g.date) >= now);
+    if (filter === 'confirmed') filtered = gigs.filter(g => g.status === 'confirmed' && new Date(g.date) >= today);
     else if (filter === 'pending') filtered = gigs.filter(g => g.status === 'pending');
-    else if (filter === 'past') filtered = gigs.filter(g => new Date(g.date) < now);
+    else if (filter === 'past') filtered = gigs.filter(g => new Date(g.date) < today);
     else if (filter === 'canceled') filtered = gigs.filter(g => g.status === 'canceled');
     else if (filter === 'external') filtered = gigs.filter(g => g.source === 'external');
 
@@ -2525,11 +2631,59 @@
     window.location.replace('login.html')
   }
 
-  function deleteAccount() {
-    if (!confirm('Supprimer définitivement ton compte ?')) return;
-    localStorage.clear();
-    sessionStorage.clear();
-    window.location.href = 'index.html';
+  async function confirmDeleteAccount() {
+    const c1 = confirm('⚠️ Es-tu sûr de vouloir supprimer ton compte ? Cette action est irréversible.');
+    if (!c1) return;
+    const c2 = confirm('🚨 DERNIÈRE CONFIRMATION — Toutes tes données seront perdues définitivement. Supprimer ?');
+    if (!c2) return;
+
+    try {
+      const userId = user.id || user.user_id;
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete_account', userId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        try {
+          const { supabase } = await import('./js/supabase-client.js');
+          await supabase.auth.signOut();
+        } catch(e) {}
+        localStorage.clear();
+        sessionStorage.clear();
+        alert('Ton compte a été supprimé définitivement.');
+        window.location.replace('index.html');
+      } else {
+        alert('Erreur : ' + data.error);
+      }
+    } catch (err) {
+      alert('Erreur. Réessaie.');
+    }
+  }
+
+  async function changePassword() {
+    const newPwd = document.getElementById('new-password')?.value;
+    const confirmPwd = document.getElementById('confirm-password')?.value;
+    if (!newPwd || newPwd.length < 8) { alert('Le mot de passe doit faire au moins 8 caractères.'); return; }
+    if (newPwd !== confirmPwd) { alert('Les mots de passe ne correspondent pas.'); return; }
+
+    try {
+      const userId = user.id || user.user_id;
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'change_password', userId, newPassword: newPwd })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('✅ Mot de passe changé !');
+        document.getElementById('new-password').value = '';
+        document.getElementById('confirm-password').value = '';
+      }
+    } catch(err) {
+      alert('Erreur. Réessaie.');
+    }
   }
 
   init();

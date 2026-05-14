@@ -764,7 +764,13 @@
   <div id="page-settings" class="page">
     <div class="page-header"><h1 class="page-title">PARAMÈTRES</h1></div>
     <div class="card"><div style="padding:24px;">
-      <button class="btn" style="background:#ff4444; color:#fff;" onclick="deleteAccount()">🗑️ Supprimer mon compte</button>
+      <button onclick="confirmDeleteAccount()"
+              style="background:transparent; color:#ff4444; border:1px solid rgba(255,68,68,.3);
+                     padding:12px 24px; border-radius:10px; cursor:pointer; font-weight:700; font-size:14px; font-family:Barlow,sans-serif;"
+              onmouseover="this.style.background='rgba(255,68,68,.1)'"
+              onmouseout="this.style.background='transparent'">
+        🗑️ Supprimer mon compte
+      </button>
     </div></div>
   </div>
 
@@ -1703,7 +1709,36 @@
     sessionStorage.clear()
     window.location.replace('login.html')
   }
-  function deleteAccount() { if(!confirm('Supprimer ton compte ?')) return; localStorage.clear(); sessionStorage.clear(); window.location.href='index.html'; }
+  async function confirmDeleteAccount() {
+    const c1 = confirm('⚠️ Es-tu sûr de vouloir supprimer ton compte ? Cette action est irréversible.');
+    if (!c1) return;
+    const c2 = confirm('🚨 DERNIÈRE CONFIRMATION — Toutes tes données seront perdues définitivement. Supprimer ?');
+    if (!c2) return;
+
+    try {
+      const userId = user.id || user.user_id;
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete_account', userId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        try {
+          const { supabase } = await import('./js/supabase-client.js');
+          await supabase.auth.signOut();
+        } catch(e) {}
+        localStorage.clear();
+        sessionStorage.clear();
+        alert('Ton compte a été supprimé définitivement.');
+        window.location.replace('index.html');
+      } else {
+        alert('Erreur : ' + data.error);
+      }
+    } catch (err) {
+      alert('Erreur. Réessaie.');
+    }
+  }
 
   init();
 </script>

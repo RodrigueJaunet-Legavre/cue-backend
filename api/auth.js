@@ -145,12 +145,31 @@ module.exports = async function handler(req, res) {
 
   // DELETE ACCOUNT
   if (action === 'delete_account') {
-    const { token } = body;
+    const { userId } = body;
     try {
-      const [session] = await sql`SELECT user_id FROM sessions WHERE token = ${token}`;
-      if (!session) return res.status(401).json({ error: 'Non autorisé' });
-      await sql`DELETE FROM sessions WHERE user_id = ${session.user_id}`;
-      await sql`DELETE FROM users WHERE id = ${session.user_id}`;
+      console.log('Suppression compte userId:', userId);
+      await sql`DELETE FROM messages WHERE sender_id = ${userId}`;
+      await sql`DELETE FROM conversations WHERE dj_id = ${userId} OR venue_id = ${userId}`;
+      await sql`DELETE FROM reviews WHERE dj_id = ${userId} OR venue_id = ${userId}`;
+      await sql`DELETE FROM favorites WHERE venue_id = ${userId} OR dj_id = ${userId}`;
+      await sql`DELETE FROM bookings WHERE dj_id = ${userId} OR venue_id = ${userId}`;
+      await sql`DELETE FROM reports WHERE reporter_id = ${userId} OR reported_id = ${userId}`;
+      await sql`DELETE FROM identity_documents WHERE user_id = ${userId}`;
+      await sql`DELETE FROM sessions WHERE user_id = ${userId}`;
+      await sql`DELETE FROM users WHERE id = ${userId}`;
+      console.log('✅ Compte supprimé:', userId);
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      console.log('Erreur suppression:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  if (action === 'change_password') {
+    const { userId, newPassword } = body;
+    try {
+      const passwordHash = hashPassword(newPassword);
+      await sql`UPDATE users SET password_hash = ${passwordHash} WHERE id = ${userId}`;
       return res.status(200).json({ success: true });
     } catch (err) {
       return res.status(500).json({ error: err.message });
