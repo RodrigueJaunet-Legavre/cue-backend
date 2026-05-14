@@ -433,6 +433,47 @@
     }
   }
 
+  async function loadReviews(djId) {
+    if (!djId) return;
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_reviews', djId })
+      });
+      const data = await res.json();
+
+      document.getElementById('stat-rating-big').textContent = data.avgRating > 0 ? data.avgRating : '—';
+      document.getElementById('stat-reviews-big').textContent = data.totalReviews;
+      document.getElementById('reviews-label').textContent = data.totalReviews ? `(${data.totalReviews})` : '';
+
+      if (data.avgRating > 0) {
+        const stars = '★'.repeat(Math.round(data.avgRating)) + '☆'.repeat(5 - Math.round(data.avgRating));
+        document.getElementById('hero-stars').textContent = stars;
+        document.getElementById('hero-rating-num').textContent = data.avgRating;
+      }
+      document.getElementById('hero-reviews-count').textContent = data.totalReviews === 0 ? '0 avis' : `(${data.totalReviews} avis)`;
+
+      const list = document.getElementById('reviews-list');
+      if (!data.reviews || !data.reviews.length) {
+        list.innerHTML = '<div style="color:var(--MUTED); text-align:center; padding:40px;">Aucun avis pour l\'instant</div>';
+        return;
+      }
+      list.innerHTML = data.reviews.map(r => `
+        <div class="review-card">
+          <div class="review-header">
+            <span class="review-venue">${r.venue_name || '—'}</span>
+            <span class="review-date">${new Date(r.created_at).toLocaleDateString('fr-FR')}</span>
+          </div>
+          <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)} <span style="color:var(--MUTED); font-size:13px;">(${r.rating}/5)</span></div>
+          <div class="review-text">${r.comment}</div>
+        </div>
+      `).join('');
+    } catch (err) {
+      console.log('Erreur chargement avis:', err);
+    }
+  }
+
   async function init() {
     createParticles()
 
@@ -578,19 +619,8 @@
       renderTracks(tracks)
     }
 
-    document.getElementById('reviews-label').textContent = reviewCount ? `(${reviewCount})` : '';
-    if (reviews.length) {
-      document.getElementById('reviews-list').innerHTML = reviews.map(r => `
-        <div class="review-card">
-          <div class="review-header">
-            <span class="review-venue">${r.venue}</span>
-            <span class="review-date">${new Date(r.date).toLocaleDateString('fr-FR')}</span>
-          </div>
-          <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
-          <div class="review-text">${r.comment}</div>
-        </div>
-      `).join('');
-    }
+    // Les avis sont chargés via loadReviews() après renderProfile()
+    loadReviews(dj.id)
 
     const socials = [];
     const profile = dj.profile || dj;

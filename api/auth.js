@@ -229,5 +229,33 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'add_review') {
+    const { djId, venueId, venueName, djName, rating, comment } = body;
+    try {
+      const existing = await sql`SELECT id FROM reviews WHERE dj_id = ${djId} AND venue_id = ${venueId}`;
+      if (existing.length) {
+        await sql`UPDATE reviews SET rating = ${rating}, comment = ${comment}, created_at = NOW() WHERE dj_id = ${djId} AND venue_id = ${venueId}`;
+      } else {
+        await sql`INSERT INTO reviews (id, dj_id, venue_id, venue_name, dj_name, rating, comment) VALUES (${Date.now().toString()}, ${djId}, ${venueId}, ${venueName || ''}, ${djName || ''}, ${rating}, ${comment})`;
+      }
+      const reviews = await sql`SELECT rating FROM reviews WHERE dj_id = ${djId}`;
+      const avg = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : 0;
+      return res.status(200).json({ success: true, avgRating: avg, totalReviews: reviews.length });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  if (action === 'get_reviews') {
+    const { djId } = body;
+    try {
+      const reviews = await sql`SELECT * FROM reviews WHERE dj_id = ${djId} ORDER BY created_at DESC`;
+      const avg = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : 0;
+      return res.status(200).json({ reviews, avgRating: avg, totalReviews: reviews.length });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   return res.status(400).json({ error: 'Action inconnue' });
 }

@@ -1581,7 +1581,12 @@
       const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const dayGigs = gigs.filter(g => g.date === dateStr && g.status !== 'canceled');
       const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
-      html += `<div class="calendar-day ${isToday ? 'today' : ''}"><div class="day-num">${d}</div>${dayGigs.map(g => `<div class="day-event">${g.venue}</div>`).join('')}</div>`;
+      html += `
+        <div class="calendar-day ${isToday ? 'today' : ''}" onclick="openDayEvents('${dateStr}')">
+          <div class="day-num">${d}</div>
+          ${dayGigs.map(g => `<div class="day-event">${g.venue || ''}</div>`).join('')}
+        </div>
+      `;
     }
     document.getElementById('calendar-grid').innerHTML = html;
   }
@@ -1591,17 +1596,87 @@
     renderCalendar();
   }
 
+  function openDayEvents(dateStr) {
+    const events = gigs.filter(g => g.date === dateStr);
+    if (!events.length) return;
+    const event = events[0];
+
+    const modal = document.getElementById('modal-event-detail') || createEventModal();
+    document.getElementById('event-detail-venue').textContent = event.venue || '—';
+    document.getElementById('event-detail-date').textContent = new Date(event.date).toLocaleDateString('fr-FR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    document.getElementById('event-detail-time').textContent = (event.time || event.start || '') + (event.end ? ' → ' + event.end : '');
+    document.getElementById('event-detail-fee').textContent = event.fee || event.budget || event.amount ? (event.fee || event.budget || event.amount) + '€' : '—';
+    document.getElementById('event-detail-status').textContent = event.status || '—';
+    document.getElementById('event-detail-notes').textContent = event.notes || event.message || 'Aucune note';
+    document.getElementById('event-detail-type').textContent = event.type || event.event_type || '—';
+    document.getElementById('modal-event-detail').classList.add('open');
+  }
+
+  function createEventModal() {
+    const modal = document.createElement('div');
+    modal.id = 'modal-event-detail';
+    modal.className = 'modal';
+    modal.innerHTML = `
+      <div class="modal-card">
+        <h2 class="modal-title">📅 Détails de l'événement</h2>
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div>
+            <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">VENUE</div>
+            <div id="event-detail-venue" style="font-weight:700; font-size:18px; color:#fff;"></div>
+          </div>
+          <div>
+            <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">DATE</div>
+            <div id="event-detail-date" style="font-weight:600; color:#fff;"></div>
+          </div>
+          <div>
+            <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">HORAIRES</div>
+            <div id="event-detail-time" style="font-weight:600; color:#fff;"></div>
+          </div>
+          <div>
+            <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">TYPE</div>
+            <div id="event-detail-type" style="font-weight:600; color:#fff;"></div>
+          </div>
+          <div>
+            <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">CACHET</div>
+            <div id="event-detail-fee" style="font-family:Barlow Condensed; font-weight:900; font-size:28px; color:var(--Y);"></div>
+          </div>
+          <div>
+            <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">STATUT</div>
+            <div id="event-detail-status" style="font-weight:600; color:#fff;"></div>
+          </div>
+          <div>
+            <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">NOTES</div>
+            <div id="event-detail-notes" style="color:var(--MUTED); font-size:14px; line-height:1.6;"></div>
+          </div>
+        </div>
+        <div class="modal-actions" style="margin-top:24px;">
+          <button class="btn btn-outline" onclick="closeModal('modal-event-detail')">Fermer</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    return modal;
+  }
+
+  function starsHTML(rating, count) {
+    const r = parseFloat(rating) || 0;
+    const stars = '★'.repeat(Math.round(r)) + '☆'.repeat(5 - Math.round(r));
+    const avisText = count === 0 ? '0 avis' : count === 1 ? '1 avis' : `${count} avis`;
+    return `<span style="color:var(--Y);">${stars}</span><span style="color:#fff; font-weight:700; margin-left:6px;">${r > 0 ? r.toFixed(1) : ''}</span><span style="color:var(--MUTED); font-size:13px; margin-left:4px;">(${avisText})</span>`;
+  }
+
   function renderReviews() {
     const avg = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : null;
+    const count = reviews.length;
     document.getElementById('avg-rating').textContent = avg || '—';
     document.getElementById('avg-stars').textContent = avg ? '★'.repeat(Math.round(avg)) + '☆'.repeat(5 - Math.round(avg)) : '☆☆☆☆☆';
-    document.getElementById('reviews-count').textContent = reviews.length + ' avis';
+    document.getElementById('reviews-count').textContent = count === 0 ? '0 avis' : count === 1 ? '1 avis' : `${count} avis`;
     document.getElementById('sidebar-stars').textContent = avg ? '★'.repeat(Math.round(avg)) + ' ' + avg : '★★★★★';
     if (!reviews.length) return;
     document.getElementById('reviews-list').innerHTML = reviews.map(r => `
       <div class="review-item">
-        <div class="review-header"><span class="review-venue">${r.venue}</span><span class="review-date">${new Date(r.date).toLocaleDateString('fr-FR')}</span></div>
-        <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+        <div class="review-header"><span class="review-venue">${r.venue || r.venue_name || '—'}</span><span class="review-date">${new Date(r.date || r.created_at).toLocaleDateString('fr-FR')}</span></div>
+        <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)} <span style="color:var(--MUTED); font-size:12px;">(${r.rating}/5)</span></div>
         <div class="review-text">${r.comment}</div>
       </div>
     `).join('');

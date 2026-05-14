@@ -195,28 +195,6 @@ footer{border-top:1px solid var(--BORDER);padding:60px 52px 30px;display:grid;gr
 .dcard-desc{font-size:11px;color:var(--MUTED);line-height:1.65}
 .dcard-badge{position:absolute;top:12px;right:12px;background:var(--Y);color:#000;font-size:8px;font-weight:700;padding:2px 7px;text-transform:uppercase;letter-spacing:1px}
 
-/* ─── CHATBOT FLOAT ─── */
-.chat-fab{position:fixed;bottom:28px;right:28px;z-index:400;width:54px;height:54px;background:var(--Y);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 8px 32px rgba(255,195,0,.3);transition:all .2s}
-.chat-fab:hover{background:var(--Y2);transform:scale(1.07)}
-.cwin{position:fixed;bottom:96px;right:28px;z-index:400;width:360px;background:var(--CARD);border:1px solid var(--BORDER);display:flex;flex-direction:column;height:480px;box-shadow:0 24px 80px rgba(0,0,0,.7);transform:scale(.92) translateY(20px);opacity:0;pointer-events:none;transition:all .25s;transform-origin:bottom right}
-.cwin.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
-.chin{background:#0a0a0a;padding:12px 14px;border-bottom:1px solid var(--BORDER);display:flex;align-items:center;gap:10px;flex-shrink:0}
-.chin-info h4{font-family:var(--D);font-size:13px;font-weight:900;text-transform:uppercase;color:#fff;letter-spacing:.5px}
-.chin-info p{font-size:9px;color:var(--Y);letter-spacing:1.5px;text-transform:uppercase}
-.cclose{margin-left:auto;background:none;border:none;color:var(--MUTED);cursor:pointer;font-size:16px}
-.cclose:hover{color:#fff}
-.cmsgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px}
-.cmsg{max-width:82%;padding:8px 11px;font-size:12px;line-height:1.6;white-space:pre-line}
-.cmsg.user{background:var(--Y);color:#000;font-weight:600;align-self:flex-end}
-.cmsg.bot{background:#1a1a1a;color:var(--TEXT);border:1px solid rgba(255,255,255,.05);align-self:flex-start}
-.cmsg.typing{background:#1a1a1a;border:1px solid rgba(255,255,255,.05);align-self:flex-start;display:flex;gap:4px;align-items:center;padding:10px 12px}
-.dot{width:5px;height:5px;border-radius:50%;background:#444;animation:bounce 1.2s ease-in-out infinite}
-.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
-.cinrow{padding:9px;border-top:1px solid var(--BORDER);display:flex;gap:6px;background:#0a0a0a;flex-shrink:0}
-.cinput{flex:1;background:#000;border:1px solid var(--BORDER);padding:8px 10px;color:var(--TEXT);font-family:var(--B);font-size:12px;outline:none}
-.cinput:focus{border-color:var(--Y)}
-.csend{width:33px;height:33px;background:var(--Y);border:none;cursor:pointer;font-size:13px;transition:all .2s;flex-shrink:0;color:#000;font-weight:700;display:flex;align-items:center;justify-content:center}
-.csend:hover{background:var(--Y2)}.csend:disabled{opacity:.4;cursor:not-allowed}
 
 /* ─── MODO ─── */
 .modo-login-wrap{position:fixed;inset:0;background:var(--BG);z-index:800;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -743,21 +721,6 @@ footer{border-top:1px solid var(--BORDER);padding:60px 52px 30px;display:grid;gr
   </div>
 </div>
 
-<button class="chat-fab" id="chatFab" onclick="toggleChat()">💬</button>
-<div class="cwin" id="cwin">
-  <div class="chin">
-    <svg width="28" height="28" viewBox="0 0 100 100"><rect width="100" height="100" rx="16" fill="#FFC300"/><circle cx="50" cy="50" r="34" fill="none" stroke="#111" stroke-width="6"/><text x="50" y="59" text-anchor="middle" font-family="Arial Rounded MT Bold,Arial" font-size="24" font-weight="900" fill="#111">cue</text></svg>
-    <div class="chin-info"><h4>CUE Support</h4><p>AI Assistant · Built-in FAQ ●</p></div>
-    <button class="cclose" onclick="toggleChat()">✕</button>
-  </div>
-  <div class="cmsgs" id="cmsgs">
-    <div class="cmsg bot">Hello! 👋 I'm MAX, the CUE assistant. I answer all your questions about the platform. How can I help you?</div>
-  </div>
-  <div class="cinrow">
-    <input class="cinput" id="cinput" placeholder="Your question..." onkeydown="if(event.key==='Enter')sendChat()"/>
-    <button class="csend" id="csend" onclick="sendChat()">↑</button>
-  </div>
-</div>
 
 <script>
 const API_BASE = '/api';
@@ -896,12 +859,6 @@ async function runContract(){
 }
 function copyContract(){navigator.clipboard?.writeText(contractText);const btn=document.getElementById('copyBtn');btn.textContent='✓ Copied!';btn.style.color='#00c864';setTimeout(()=>{btn.textContent='📋 Copy';btn.style.color='';},2000);}
 
-let chatOpen=false,chatHist=[];
-function toggleChat(){chatOpen=!chatOpen;document.getElementById('cwin').classList.toggle('open',chatOpen);if(chatOpen)document.getElementById('cinput').focus();}
-function addCMsg(t,r){const e=document.createElement('div');e.className='cmsg '+r;if(r==='bot')e.style.whiteSpace='pre-line';e.textContent=t;const m=document.getElementById('cmsgs');m.appendChild(e);m.scrollTop=m.scrollHeight;return e;}
-function addTyping(){const e=document.createElement('div');e.className='cmsg typing';e.id='ctyp';e.innerHTML='<div class="dot"></div><div class="dot"></div><div class="dot"></div>';const m=document.getElementById('cmsgs');m.appendChild(e);m.scrollTop=m.scrollHeight;}
-function rmTyping(){document.getElementById('ctyp')?.remove();}
-async function sendChat(){const i=document.getElementById('cinput');const msg=i.value.trim();if(!msg)return;i.value='';document.getElementById('csend').disabled=true;addCMsg(msg,'user');chatHist.push({role:'user',content:msg});addTyping();try{const res=await fetch(`${API_BASE}/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})});const d=await res.json();if(!res.ok)throw new Error(d.detail||`Erreur ${res.status}`);const rep=d.reply||'Désolé, une erreur est survenue.';rmTyping();addCMsg(rep,'bot');chatHist.push({role:'assistant',content:rep});}catch(e){rmTyping();addCMsg(`❌ ${e.message}`,'bot');}document.getElementById('csend').disabled=false;i.focus();}
 
 function initNav(){
   const isLogged=localStorage.getItem('cue_logged_in')==='true';

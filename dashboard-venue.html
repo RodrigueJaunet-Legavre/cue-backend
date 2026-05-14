@@ -1178,18 +1178,43 @@
     document.querySelectorAll('.star-btn').forEach((btn, i) => btn.classList.toggle('active', i < n));
   }
 
-  function submitReview() {
+  async function submitReview() {
     if (!currentRating) { alert('Sélectionne une note.'); return; }
-    const review = {
-      djId: currentDJ?.id, djName: currentDJ?.firstName + ' ' + currentDJ?.lastName,
-      venue: user.firstName + ' ' + user.lastName,
-      rating: currentRating, comment: document.getElementById('review-text').value,
-      date: new Date().toISOString()
-    };
-    const reviews = JSON.parse(localStorage.getItem('cue_reviews') || '[]');
-    reviews.unshift(review);
-    localStorage.setItem('cue_reviews', JSON.stringify(reviews));
-    closeModal('modal-rate-dj'); alert('⭐ Avis publié !'); currentRating = 0;
+    if (!currentDJ) { alert('Erreur: DJ non trouvé.'); return; }
+
+    const comment = document.getElementById('review-text').value.trim();
+    if (!comment) { alert('Écris un commentaire.'); return; }
+
+    const venueUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
+
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'add_review',
+          djId: currentDJ.id,
+          venueId: venueUser.id,
+          venueName: (venueUser.first_name || '') + ' ' + (venueUser.last_name || ''),
+          djName: (currentDJ.first_name || currentDJ.firstName || '') + ' ' + (currentDJ.last_name || currentDJ.lastName || ''),
+          rating: currentRating,
+          comment
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        closeModal('modal-rate-dj');
+        alert('⭐ Avis publié ! Moyenne : ' + data.avgRating + '/5');
+        currentRating = 0;
+        document.querySelectorAll('.star-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('review-text').value = '';
+      } else {
+        alert('Erreur : ' + (data.error || 'Réessaie.'));
+      }
+    } catch (err) {
+      alert('Erreur. Réessaie.');
+    }
   }
 
   function filterBookings(filter, el) {
@@ -1230,12 +1255,79 @@
       const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const events = bookings.filter(b => b.date === dateStr);
       const isToday = today.getFullYear()===year && today.getMonth()===month && today.getDate()===d;
-      html += `<div class="calendar-day ${isToday?'today':''}"><div class="day-num">${d}</div>${events.map(e=>`<div class="day-event">${e.djName?.split(' ')[0]}</div>`).join('')}</div>`;
+      html += `
+        <div class="calendar-day ${isToday?'today':''}" onclick="openDayEvents('${dateStr}')">
+          <div class="day-num">${d}</div>
+          ${events.map(e => `<div class="day-event">${e.djName?.split(' ')[0] || ''}</div>`).join('')}
+        </div>
+      `;
     }
     document.getElementById('calendar-grid').innerHTML = html;
   }
 
   function changeMonth(dir) { calendarDate.setMonth(calendarDate.getMonth()+dir); renderCalendar(); }
+
+  function openDayEvents(dateStr) {
+    const events = bookings.filter(b => b.date === dateStr);
+    if (!events.length) return;
+    const event = events[0];
+
+    const modal = document.getElementById('modal-event-detail') || createEventModal();
+    document.getElementById('event-detail-venue').textContent = event.djName || '—';
+    document.getElementById('event-detail-date').textContent = new Date(event.date).toLocaleDateString('fr-FR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    document.getElementById('event-detail-time').textContent = (event.start || '') + (event.end ? ' → ' + event.end : '');
+    document.getElementById('event-detail-fee').textContent = event.budget || event.amount ? (event.budget || event.amount) + '€' : '—';
+    document.getElementById('event-detail-status').textContent = event.status || '—';
+    document.getElementById('event-detail-notes').textContent = event.notes || event.message || 'Aucune note';
+    document.getElementById('event-detail-type').textContent = event.type || event.event_type || '—';
+    document.getElementById('modal-event-detail').classList.add('open');
+  }
+
+  function createEventModal() {
+    const modal = document.createElement('div');
+    modal.id = 'modal-event-detail';
+    modal.className = 'modal';
+    modal.innerHTML = `
+      <div class="modal-card">
+        <h2 class="modal-title">📅 Détails de l'événement</h2>
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div>
+            <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">DJ</div>
+            <div id="event-detail-venue" style="font-weight:700; font-size:18px; color:#fff;"></div>
+          </div>
+          <div>
+            <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">DATE</div>
+            <div id="event-detail-date" style="font-weight:600; color:#fff;"></div>
+          </div>
+          <div>
+            <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">HORAIRES</div>
+            <div id="event-detail-time" style="font-weight:600; color:#fff;"></div>
+          </div>
+          <div>
+            <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">TYPE</div>
+            <div id="event-detail-type" style="font-weight:600; color:#fff;"></div>
+          </div>
+          <div>
+            <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">BUDGET</div>
+            <div id="event-detail-fee" style="font-family:Barlow Condensed; font-weight:900; font-size:28px; color:var(--Y);"></div>
+          </div>
+          <div>
+            <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">STATUT</div>
+            <div id="event-detail-status" style="font-weight:600; color:#fff;"></div>
+          </div>
+          <div>
+            <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">NOTES</div>
+            <div id="event-detail-notes" style="color:var(--MUTED); font-size:14px; line-height:1.6;"></div>
+          </div>
+        </div>
+        <div class="modal-actions" style="margin-top:24px;">
+          <button class="btn btn-outline" onclick="closeModal('modal-event-detail')">Fermer</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    return modal;
+  }
 
   async function generateContract() {
     const djName = document.getElementById('c-dj-name').value;
