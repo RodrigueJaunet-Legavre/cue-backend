@@ -47,5 +47,42 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ count: count.count });
   }
 
+  if (action === 'confirm_booking') {
+    const { messageId, offerData, djId, venueId, djName, venueName } = body;
+    try {
+      await sql`UPDATE messages SET offer_status = 'confirmed' WHERE id = ${messageId}`;
+      await sql`
+        INSERT INTO bookings (id, dj_id, venue_id, dj_name, venue_name, event_date, start_time, end_time, event_type, amount, status)
+        VALUES (
+          ${Date.now().toString()}, ${djId}, ${venueId}, ${djName || ''}, ${venueName || ''},
+          ${offerData.date}, ${offerData.start}, ${offerData.end},
+          ${offerData.type || ''}, ${offerData.budget || 0}, 'confirmed'
+        )
+      `;
+      const convId = [djId, venueId].sort().join('_');
+      await sql`
+        INSERT INTO messages (id, conversation_id, sender_id, sender_name, sender_type, content, type)
+        VALUES (
+          ${(Date.now() + 1).toString()}, ${convId}, ${venueId}, ${venueName || ''}, 'venue',
+          ${'🎉 Booking confirmé ! On se retrouve le ' + (offerData.date || '') + ' à ' + (offerData.start || '') + '.'},
+          'text'
+        )
+      `;
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  if (action === 'decline_booking') {
+    const { messageId } = body;
+    try {
+      await sql`UPDATE messages SET offer_status = 'declined_by_venue' WHERE id = ${messageId}`;
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   return res.status(400).json({ error: 'Action inconnue' });
 }

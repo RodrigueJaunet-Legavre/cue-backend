@@ -394,7 +394,7 @@
       </div>
     </div>
     <div style="display:grid; grid-template-columns:360px 1fr; gap:24px; height:calc(100vh - 200px);">
-      <div class="card" style="overflow-y:auto; margin-bottom:0;">
+      <div class="card" style="overflow-y:auto; margin-bottom:0; padding:0;">
         <div id="messages-list">
           <div class="empty-state">
             <div class="empty-emoji">💬</div>
@@ -403,11 +403,24 @@
           </div>
         </div>
       </div>
-      <div class="card" style="margin-bottom:0; display:flex; flex-direction:column;">
-        <div style="display:flex; align-items:center; justify-content:center; flex:1;">
+      <div class="card" style="margin-bottom:0; display:flex; flex-direction:column; padding:0; overflow:hidden;">
+        <div id="conversation-empty" style="display:flex; align-items:center; justify-content:center; flex:1;">
           <div class="empty-state">
             <div class="empty-emoji">👈</div>
             <div class="empty-title">Sélectionne une conversation</div>
+          </div>
+        </div>
+        <div id="conversation-active" style="display:none; flex-direction:column; height:100%;">
+          <div style="padding:16px 20px; border-bottom:1px solid var(--BORDER); background:#0a0a0a; display:flex; align-items:center; gap:12px;">
+            <span style="font-size:24px;">🎧</span>
+            <div id="conv-dj-name" style="font-weight:700; font-size:16px; color:#fff;"></div>
+          </div>
+          <div id="conv-messages" style="flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:8px;"></div>
+          <div style="padding:12px 16px; border-top:1px solid var(--BORDER); background:#0a0a0a; display:flex; gap:12px;">
+            <input id="message-input" type="text" placeholder="Ton message..."
+                   style="flex:1; background:#111; border:1px solid var(--BORDER); border-radius:8px; padding:10px 14px; color:#fff; font-size:14px; outline:none;"
+                   onkeydown="if(event.key==='Enter') sendVenueMessage()" />
+            <button class="btn btn-primary" onclick="sendVenueMessage()">Envoyer →</button>
           </div>
         </div>
       </div>
@@ -828,6 +841,19 @@
   let currentRating = 0;
   let currentDJ = null;
   let allDJs = [];
+  let currentVenueConv = null;
+
+  function getName(obj) {
+    if (!obj) return '—';
+    return ((obj.first_name || obj.firstName || '') + ' ' + (obj.last_name || obj.lastName || '')).trim() || '—';
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    try {
+      return new Date(dateStr).toLocaleDateString('fr-FR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    } catch(e) { return dateStr; }
+  }
 
   const demoDJs = [
     { id:'dj1', firstName:'Alex', lastName:'Martin', genres:['House','Tech House'], rating:4.8, reviews:24, description:'DJ professionnel depuis 10 ans, spécialisé dans la house et tech house. Résident du Club XXX à Paris.', verified:true, plan:'pro', instagram:'instagram.com/alexmartin', soundcloud:'soundcloud.com/alexmartin' },
@@ -959,10 +985,14 @@
 
   function djCardHTML(dj) {
     const isFav = favorites.includes(dj.id);
-    const stars = '★'.repeat(Math.round(dj.rating)) + '☆'.repeat(5 - Math.round(dj.rating));
+    const djName = getName(dj);
+    const rating = parseFloat(dj.rating) || 0;
+    const stars = '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating));
+    const reviews = dj.reviews || dj.total_reviews || 0;
     const planBadge = dj.plan === 'business' ? '✨ Elite' : dj.plan === 'pro' ? '⚡ Pro' : '';
+    const genres = (dj.genres || []).join(' · ') || '—';
     return `
-      <div class="dj-card" onclick="openDJProfile('${dj.id}')">
+      <div class="dj-card" onclick="window.open('dj-profile.html?id=${dj.id}', '_blank')">
         <div class="dj-card-banner">
           ${planBadge ? `<span style="position:absolute;top:12px;left:12px;background:rgba(255,195,0,.9);color:#000;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;z-index:1;">${planBadge}</span>` : ''}
         </div>
@@ -970,13 +1000,13 @@
         <button class="fav-btn ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); toggleFav('${dj.id}', this)">${isFav ? '❤️' : '🤍'}</button>
         <div class="dj-card-body">
           ${dj.verified ? '<div class="verified-badge">✅ Vérifié CUE</div>' : ''}
-          <div class="dj-card-name">${dj.firstName} ${dj.lastName}</div>
-          <div class="dj-card-genres">${dj.genres.join(' · ')}</div>
-          <div class="dj-card-rating"><span class="dj-card-stars">${stars}</span><span style="color:#fff;font-weight:700;">${dj.rating}</span><span class="dj-card-reviews">(${dj.reviews} avis)</span></div>
-          <div class="dj-card-desc">${dj.description}</div>
+          <div class="dj-card-name">${djName}</div>
+          <div class="dj-card-genres">${genres}</div>
+          <div class="dj-card-rating"><span class="dj-card-stars">${stars}</span><span style="color:#fff;font-weight:700;">${rating > 0 ? rating : ''}</span><span class="dj-card-reviews">(${reviews} avis)</span></div>
+          <div class="dj-card-desc">${dj.description || ''}</div>
           <div class="dj-card-footer">
             <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openContactModal('${dj.id}')">💬 Contacter</button>
-            <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); openDJProfile('${dj.id}')">Voir profil</button>
+            <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); window.open('dj-profile.html?id=${dj.id}', '_blank')">Voir profil →</button>
           </div>
         </div>
       </div>
@@ -1153,14 +1183,141 @@
     `).join('');
   }
 
-  function openVenueConversation(convId, djName) {
-    const convActive = document.getElementById('conversation-active');
-    const convEmpty = document.getElementById('conversation-empty');
-    if (convActive) {
-      convActive.style.display = 'flex';
-      document.getElementById('conv-dj-name').textContent = djName;
+  async function openVenueConversation(convId, djName) {
+    currentVenueConv = { id: convId, dj_name: djName };
+
+    document.getElementById('conversation-empty').style.display = 'none';
+    document.getElementById('conversation-active').style.display = 'flex';
+    document.getElementById('conv-dj-name').textContent = djName;
+
+    await loadVenueMessages(convId);
+  }
+
+  async function loadVenueMessages(convId) {
+    try {
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_messages', conversationId: convId, senderId: user.id })
+      });
+      const data = await res.json();
+      renderVenueMessages(data.messages || []);
+    } catch (err) {
+      console.log('Erreur messages:', err);
     }
-    if (convEmpty) convEmpty.style.display = 'none';
+  }
+
+  function renderVenueMessages(msgs) {
+    const container = document.getElementById('conv-messages');
+    if (!msgs.length) {
+      container.innerHTML = '<div style="color:var(--MUTED); text-align:center; padding:40px;">Aucun message</div>';
+      return;
+    }
+    container.innerHTML = msgs.map(msg => {
+      const isMe = msg.sender_id === user.id;
+      const isOffer = msg.type === 'offer';
+
+      if (isOffer) {
+        const offer = typeof msg.offer_data === 'string' ? JSON.parse(msg.offer_data) : msg.offer_data;
+        const status = msg.offer_status;
+        return `
+          <div style="background:rgba(255,195,0,.08); border:1px solid var(--BORDER); border-radius:16px; padding:20px; margin:8px 0;">
+            <div style="color:var(--Y); font-weight:700; font-size:12px; letter-spacing:1px; margin-bottom:12px;">💼 OFFRE DE BOOKING ENVOYÉE</div>
+            <div style="color:#fff; font-weight:700; font-size:16px; margin-bottom:4px;">${offer?.type || '—'}</div>
+            <div style="color:var(--MUTED); font-size:13px; margin-bottom:4px;">📅 ${offer?.date || '—'} • ${offer?.start || ''}→${offer?.end || ''}</div>
+            <div style="font-family:Barlow Condensed; font-weight:900; font-size:28px; color:var(--Y); margin:12px 0;">${offer?.budget || '—'}€</div>
+            <p style="color:var(--MUTED); font-size:14px; margin-bottom:16px;">${offer?.message || ''}</p>
+            ${status === 'accepted' ? `
+              <div style="background:rgba(0,200,100,.1); border:1px solid rgba(0,200,100,.3); border-radius:12px; padding:16px; margin-top:12px;">
+                <div style="color:#00c864; font-weight:700; margin-bottom:12px;">✅ Le DJ a accepté votre offre !</div>
+                <div style="display:flex; gap:12px;">
+                  <button class="btn btn-primary btn-sm" onclick="confirmBooking('${msg.id}', ${JSON.stringify(JSON.stringify(offer))})">✅ Confirmer le booking</button>
+                  <button style="background:rgba(255,68,68,.15); color:#ff4444; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:700;" onclick="declineBooking('${msg.id}')">❌ Décliner</button>
+                </div>
+              </div>
+            ` : status === 'declined' ? `
+              <div style="padding:8px 16px; border-radius:8px; background:rgba(255,68,68,.15); color:#ff4444; font-weight:700; font-size:13px; display:inline-block;">❌ Le DJ n'est pas disponible</div>
+            ` : status === 'confirmed' ? `
+              <div style="padding:8px 16px; border-radius:8px; background:rgba(0,200,100,.15); color:#00c864; font-weight:700; font-size:13px; display:inline-block;">🎉 Booking confirmé !</div>
+            ` : `
+              <div style="padding:8px 16px; border-radius:8px; background:rgba(255,170,0,.15); color:#ffaa00; font-weight:700; font-size:13px; display:inline-block;">⏳ En attente de réponse du DJ</div>
+            `}
+          </div>
+        `;
+      }
+
+      return `
+        <div style="display:flex; justify-content:${isMe ? 'flex-end' : 'flex-start'}; margin:4px 0;">
+          <div style="max-width:70%; padding:12px 16px; border-radius:${isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px'};
+                      background:${isMe ? 'var(--Y)' : '#1a1a1a'};
+                      color:${isMe ? '#000' : 'var(--TEXT)'};
+                      font-size:14px; line-height:1.5;">
+            ${msg.content}
+          </div>
+        </div>
+      `;
+    }).join('');
+    container.scrollTop = container.scrollHeight;
+  }
+
+  async function sendVenueMessage() {
+    if (!currentVenueConv) return;
+    const input = document.getElementById('message-input');
+    const content = input.value.trim();
+    if (!content) return;
+    input.value = '';
+
+    await fetch('/api/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'send_message',
+        convId: currentVenueConv.id,
+        senderType: 'venue',
+        message: {
+          senderId: user.id,
+          senderName: getName(user),
+          content,
+          type: 'text'
+        }
+      })
+    });
+
+    await loadVenueMessages(currentVenueConv.id);
+  }
+
+  async function confirmBooking(messageId, offerDataStr) {
+    const offer = typeof offerDataStr === 'string' ? JSON.parse(offerDataStr) : offerDataStr;
+    if (!confirm('Confirmer ce booking ?')) return;
+
+    const djId = currentVenueConv?.dj_id || offer.djId;
+    const venueId = user.id;
+    const djName = currentVenueConv?.dj_name || 'DJ';
+    const venueName = getName(user);
+
+    try {
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'confirm_booking', messageId, offerData: offer, djId, venueId, djName, venueName })
+      });
+      if (res.ok) {
+        alert('🎉 Booking confirmé ! Le DJ sera notifié.');
+        await loadVenueMessages(currentVenueConv.id);
+      }
+    } catch (err) {
+      alert('Erreur. Réessaie.');
+    }
+  }
+
+  async function declineBooking(messageId) {
+    if (!confirm('Décliner cette réponse du DJ ?')) return;
+    await fetch('/api/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'decline_booking', messageId })
+    });
+    await loadVenueMessages(currentVenueConv.id);
   }
 
   function formatTime(dateStr) {

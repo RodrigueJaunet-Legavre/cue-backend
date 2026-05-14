@@ -2335,7 +2335,7 @@
     });
 
     const reply = status === 'accepted'
-      ? "✅ J'ai accepté votre offre ! Hâte de mixer pour vous."
+      ? '✅ Je suis disponible et intéressé par cette date ! En attente de votre confirmation.'
       : '❌ Je ne suis malheureusement pas disponible pour cette date.';
 
     await fetch('/api/messages', {
@@ -2351,7 +2351,7 @@
         senderType: 'dj',
         message: {
           senderId: user.id,
-          senderName: user.firstName + ' ' + user.lastName,
+          senderName: (user.first_name || user.firstName || '') + ' ' + (user.last_name || user.lastName || ''),
           content: reply,
           type: 'text'
         }
