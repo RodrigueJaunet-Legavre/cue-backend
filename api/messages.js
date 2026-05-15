@@ -90,38 +90,57 @@ module.exports = async function handler(req, res) {
 
   if (action === 'confirm_booking') {
     const { messageId, offerData, djId, venueId, djName, venueName } = body;
-    try {
-      const offer = offerData || {};
-      const safeDate = offer.date || '1970-01-01';
-      const safeStart = offer.start || '00:00';
-      const safeEnd = offer.end || '00:00';
-      const safeType = offer.type || '';
-      const safeBudget = offer.budget != null ? Number(offer.budget) : 0;
-      const safeDjId = djId || '';
-      const safeVenueId = venueId || '';
-      const safeDjName = djName || '';
-      const safeVenueName = venueName || '';
-      const bookingId = Date.now().toString();
+    const safeOffer = offerData || {};
+    const safeDate = safeOffer.date || new Date().toISOString().split('T')[0];
+    const safeStart = safeOffer.start || '';
+    const safeEnd = safeOffer.end || '';
+    const safeType = safeOffer.type || 'Soirée';
+    const safeBudget = parseFloat(safeOffer.budget) || 0;
+    const safeCity = safeOffer.city || '';
+    const safeMessage = safeOffer.message || '';
+    const safeDjId = djId || '';
+    const safeVenueId = venueId || '';
+    const safeDjName = djName || 'DJ';
+    const safeVenueName = venueName || 'Venue';
+    const bookingId = Date.now().toString();
+    const convId = [safeDjId, safeVenueId].sort().join('_');
 
+    try {
       await sql`UPDATE messages SET offer_status = 'confirmed' WHERE id = ${messageId}`;
       await sql`
-        INSERT INTO bookings (id, dj_id, venue_id, dj_name, venue_name, event_date, start_time, end_time, event_type, amount, status)
-        VALUES (
-          ${bookingId}, ${safeDjId}, ${safeVenueId}, ${safeDjName}, ${safeVenueName},
-          ${safeDate}, ${safeStart}, ${safeEnd}, ${safeType}, ${safeBudget}, 'confirmed'
+        INSERT INTO bookings (
+          id, dj_id, venue_id, dj_name, venue_name,
+          event_date, start_time, end_time, event_type,
+          amount, status, city, notes
+        ) VALUES (
+          ${bookingId},
+          ${safeDjId}, ${safeVenueId}, ${safeDjName}, ${safeVenueName},
+          ${safeDate}, ${safeStart}, ${safeEnd}, ${safeType},
+          ${safeBudget}, 'confirmed', ${safeCity}, ${safeMessage}
         )
+        ON CONFLICT DO NOTHING
       `;
-      const convId = [safeDjId, safeVenueId].sort().join('_');
       await sql`
         INSERT INTO messages (id, conversation_id, sender_id, sender_name, sender_type, content, type)
         VALUES (
-          ${(Date.now() + 1).toString()}, ${convId}, ${safeVenueId}, ${safeVenueName}, 'venue',
-          ${'🎉 Booking confirmé ! On se retrouve le ' + safeDate + ' à ' + safeStart + '.'},
+          ${(Date.now() + 1).toString()}, ${convId},
+          ${safeVenueId}, ${safeVenueName}, 'venue',
+          ${'🎉 Booking confirmé ! Rendez-vous le ' + safeDate + (safeStart ? ' à ' + safeStart : '') + '. Le gig a été ajouté à votre agenda.'},
           'text'
         )
       `;
-      return res.status(200).json({ success: true });
+      return res.status(200).json({
+        success: true,
+        booking: {
+          id: bookingId, dj_id: safeDjId, venue_id: safeVenueId,
+          dj_name: safeDjName, venue_name: safeVenueName,
+          event_date: safeDate, start_time: safeStart, end_time: safeEnd,
+          event_type: safeType, amount: safeBudget,
+          city: safeCity, notes: safeMessage, status: 'confirmed'
+        }
+      });
     } catch (err) {
+      console.log('Erreur confirm_booking:', err.message);
       return res.status(500).json({ error: err.message });
     }
   }

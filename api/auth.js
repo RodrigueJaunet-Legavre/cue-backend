@@ -286,6 +286,16 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'get_venue_bookings') {
+    const { venueId } = body;
+    try {
+      const bookings = await sql`SELECT * FROM bookings WHERE venue_id = ${venueId} AND status = 'confirmed' ORDER BY event_date ASC`;
+      return res.status(200).json({ bookings });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   if (action === 'toggle_favorite') {
     const { venueId, djId } = body;
     try {
