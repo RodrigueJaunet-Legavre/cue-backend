@@ -169,5 +169,54 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  // TOGGLE SUSPEND
+  if (adminAction === 'toggle_suspend') {
+    try {
+      const { userId } = body;
+      const [userRow] = await sql`SELECT * FROM users WHERE id = ${userId}`;
+      if (!userRow) return res.status(404).json({ error: 'Utilisateur introuvable' });
+      const newSuspended = !userRow.suspended;
+      await sql`UPDATE users SET suspended = ${newSuspended} WHERE id = ${userId}`;
+
+      if (process.env.RESEND_API_KEY && userRow.email) {
+        try {
+          const resend = new Resend(process.env.RESEND_API_KEY);
+          const firstName = userRow.first_name || 'Utilisateur';
+          if (newSuspended) {
+            await resend.emails.send({
+              from: 'CUE DJ <noreply@cuedj.eu>',
+              to: userRow.email,
+              subject: '🚫 Compte suspendu — CUE',
+              html: `<div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
+                <h2 style="color:#ff4444;">Compte suspendu</h2>
+                <p>Bonjour ${firstName},</p>
+                <p>Votre compte CUE a été suspendu. Pour plus d'informations, contactez notre support.</p>
+                <a href="https://cuedj.eu" style="background:#FFC300; color:#000; padding:14px 32px; border-radius:8px; text-decoration:none; font-weight:700; display:inline-block; margin-top:16px;">Retour à CUE</a>
+              </div>`
+            });
+          } else {
+            await resend.emails.send({
+              from: 'CUE DJ <noreply@cuedj.eu>',
+              to: userRow.email,
+              subject: '✅ Compte réactivé — CUE',
+              html: `<div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
+                <h2 style="color:#FFC300;">Compte réactivé ✅</h2>
+                <p>Bonjour ${firstName},</p>
+                <p>Votre compte CUE a été réactivé. Vous pouvez de nouveau accéder à la plateforme.</p>
+                <a href="https://cuedj.eu/login.html" style="background:#FFC300; color:#000; padding:14px 32px; border-radius:8px; text-decoration:none; font-weight:700; display:inline-block; margin-top:16px;">Se connecter →</a>
+              </div>`
+            });
+          }
+        } catch (emailErr) {
+          console.log('Email non envoyé:', emailErr.message);
+        }
+      }
+
+      return res.status(200).json({ success: true, suspended: newSuspended });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   return res.status(400).json({ error: 'adminAction inconnue' });
 }

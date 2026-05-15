@@ -9,9 +9,12 @@ module.exports = async function handler(req, res) {
 
   if (action === 'get_conversations') {
     const { userId, userType } = body;
-    const convs = userType === 'dj'
-      ? await sql`SELECT * FROM conversations WHERE dj_id = ${userId} ORDER BY last_message_at DESC`
-      : await sql`SELECT * FROM conversations WHERE venue_id = ${userId} ORDER BY last_message_at DESC`;
+    let convs;
+    if (userType === 'dj') {
+      convs = await sql`SELECT c.*, u.first_name as venue_first_name, u.last_name as venue_last_name FROM conversations c LEFT JOIN users u ON c.venue_id = u.id WHERE c.dj_id = ${userId} ORDER BY c.last_message_at DESC`;
+    } else {
+      convs = await sql`SELECT c.*, u.first_name as dj_first_name, u.last_name as dj_last_name FROM conversations c LEFT JOIN users u ON c.dj_id = u.id WHERE c.venue_id = ${userId} ORDER BY c.last_message_at DESC`;
+    }
     return res.status(200).json({ conversations: convs });
   }
 
@@ -50,21 +53,32 @@ module.exports = async function handler(req, res) {
   if (action === 'confirm_booking') {
     const { messageId, offerData, djId, venueId, djName, venueName } = body;
     try {
+      const offer = offerData || {};
+      const safeDate = offer.date || '1970-01-01';
+      const safeStart = offer.start || '00:00';
+      const safeEnd = offer.end || '00:00';
+      const safeType = offer.type || '';
+      const safeBudget = offer.budget != null ? Number(offer.budget) : 0;
+      const safeDjId = djId || '';
+      const safeVenueId = venueId || '';
+      const safeDjName = djName || '';
+      const safeVenueName = venueName || '';
+      const bookingId = Date.now().toString();
+
       await sql`UPDATE messages SET offer_status = 'confirmed' WHERE id = ${messageId}`;
       await sql`
         INSERT INTO bookings (id, dj_id, venue_id, dj_name, venue_name, event_date, start_time, end_time, event_type, amount, status)
         VALUES (
-          ${Date.now().toString()}, ${djId}, ${venueId}, ${djName || ''}, ${venueName || ''},
-          ${offerData.date}, ${offerData.start}, ${offerData.end},
-          ${offerData.type || ''}, ${offerData.budget || 0}, 'confirmed'
+          ${bookingId}, ${safeDjId}, ${safeVenueId}, ${safeDjName}, ${safeVenueName},
+          ${safeDate}, ${safeStart}, ${safeEnd}, ${safeType}, ${safeBudget}, 'confirmed'
         )
       `;
-      const convId = [djId, venueId].sort().join('_');
+      const convId = [safeDjId, safeVenueId].sort().join('_');
       await sql`
         INSERT INTO messages (id, conversation_id, sender_id, sender_name, sender_type, content, type)
         VALUES (
-          ${(Date.now() + 1).toString()}, ${convId}, ${venueId}, ${venueName || ''}, 'venue',
-          ${'🎉 Booking confirmé ! On se retrouve le ' + (offerData.date || '') + ' à ' + (offerData.start || '') + '.'},
+          ${(Date.now() + 1).toString()}, ${convId}, ${safeVenueId}, ${safeVenueName}, 'venue',
+          ${'🎉 Booking confirmé ! On se retrouve le ' + safeDate + ' à ' + safeStart + '.'},
           'text'
         )
       `;

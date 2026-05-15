@@ -138,6 +138,19 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
         <div class="type-option" onclick="selectType('venue')"><div class="icon">🏢</div><div class="label">Venue</div><div class="desc">Je cherche des DJs</div></div>
       </div>
       <input type="hidden" id="userType" value="dj">
+
+      <!-- Venue type sub-selector (hidden by default) -->
+      <div id="venue-type-section" style="display:none;margin-bottom:16px">
+        <label class="form-label" style="margin-bottom:8px;display:block">Type de venue</label>
+        <div class="type-selector" style="margin-bottom:12px">
+          <div id="vt-particulier" class="type-option selected" onclick="selectVenueType('particulier')"><div class="icon">👤</div><div class="label">Particulier</div><div class="desc">Organisateur privé</div></div>
+          <div id="vt-organisation" class="type-option" onclick="selectVenueType('organisation')"><div class="icon">🏛️</div><div class="label">Organisation</div><div class="desc">Entreprise / Asso</div></div>
+        </div>
+        <div id="org-fields" style="display:none">
+          <div class="form-group"><label class="form-label">Nom de l'organisation</label><input type="text" class="form-input" id="orgName" placeholder="Ex: Noctambule Events"></div>
+          <div class="form-group"><label class="form-label">SIRET <span style="color:var(--MUTED);font-weight:400">(optionnel)</span></label><input type="text" class="form-input" id="orgSiret" placeholder="Ex: 12345678900012"></div>
+        </div>
+      </div>
       
       <form id="registerForm" onsubmit="submitStep1(event)">
         <div class="form-row">
@@ -362,9 +375,19 @@ async function resendGoogleCode() {
 }
 
 function selectType(type) {
-  document.querySelectorAll('.type-option').forEach(el => el.classList.remove('selected'));
-  document.querySelectorAll('.type-option')[type === 'dj' ? 0 : 1].classList.add('selected');
+  document.querySelectorAll('#step1 > .type-selector .type-option').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('#step1 > .type-selector .type-option')[type === 'dj' ? 0 : 1].classList.add('selected');
   document.getElementById('userType').value = type;
+  document.getElementById('venue-type-section').style.display = type === 'venue' ? 'block' : 'none';
+}
+
+let selectedVenueType = 'particulier';
+
+function selectVenueType(type) {
+  selectedVenueType = type;
+  document.getElementById('vt-particulier').classList.toggle('selected', type === 'particulier');
+  document.getElementById('vt-organisation').classList.toggle('selected', type === 'organisation');
+  document.getElementById('org-fields').style.display = type === 'organisation' ? 'block' : 'none';
 }
 
 function checkReferral() {
@@ -389,7 +412,20 @@ async function submitStep1(e) {
 
   document.querySelectorAll('.form-error').forEach(el => el.classList.remove('show'));
   
-  const data = { firstName: document.getElementById('firstName').value.trim(), lastName: document.getElementById('lastName').value.trim(), email: document.getElementById('email').value.trim(), phone: document.getElementById('phone').value.trim(), password: document.getElementById('password').value, confirmPassword: document.getElementById('confirmPassword').value, userType: document.getElementById('userType').value, referralCode: document.getElementById('referralCode').value.trim() };
+  const uType = document.getElementById('userType').value;
+  const data = {
+    firstName: document.getElementById('firstName').value.trim(),
+    lastName: document.getElementById('lastName').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    phone: document.getElementById('phone').value.trim(),
+    password: document.getElementById('password').value,
+    confirmPassword: document.getElementById('confirmPassword').value,
+    userType: uType,
+    referralCode: document.getElementById('referralCode').value.trim(),
+    venueType: uType === 'venue' ? selectedVenueType : null,
+    orgName: uType === 'venue' && selectedVenueType === 'organisation' ? (document.getElementById('orgName')?.value?.trim() || null) : null,
+    orgSiret: uType === 'venue' && selectedVenueType === 'organisation' ? (document.getElementById('orgSiret')?.value?.trim() || null) : null
+  };
   
   let err = false;
   if (!data.firstName) { document.getElementById('firstNameError').classList.add('show'); err = true; }
@@ -494,6 +530,9 @@ async function completeRegistration() {
     localStorage.setItem('cue_token', data.token);
     localStorage.setItem('cue_user', JSON.stringify(data.user));
     localStorage.setItem('cue_logged_in', 'true');
+    if (regUser.venueType) localStorage.setItem('cue_venue_type', regUser.venueType);
+    if (regUser.orgName) localStorage.setItem('cue_org_name', regUser.orgName);
+    if (regUser.orgSiret) localStorage.setItem('cue_org_siret', regUser.orgSiret);
     sessionStorage.clear();
 
     await fetch('/api/send-email', {

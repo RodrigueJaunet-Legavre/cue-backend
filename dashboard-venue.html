@@ -248,6 +248,9 @@
 
   <div class="nav-section">
     <div class="nav-section-title">Compte</div>
+    <div class="nav-item" onclick="showPage('verification', this)">
+      <span class="nav-icon">🪪</span> Vérification
+    </div>
     <div class="nav-item" onclick="showPage('settings', this)">
       <span class="nav-icon">⚙️</span> Paramètres
     </div>
@@ -761,6 +764,78 @@
     </div>
   </div>
 
+  <!-- VERIFICATION PAGE -->
+  <div id="page-verification" class="page">
+    <div class="page-header"><h1 class="page-title">VÉRIFICATION D'IDENTITÉ</h1></div>
+    <div id="verif-status-banner" style="display:none;margin-bottom:24px;padding:16px 20px;border-radius:12px;font-weight:700;font-size:14px;"></div>
+
+    <!-- Particulier form -->
+    <div id="verif-form-particulier" class="card" style="margin-bottom:20px;">
+      <div style="padding:24px;">
+        <h3 style="font-family:var(--D);font-size:18px;font-weight:900;text-transform:uppercase;margin-bottom:4px;">Particulier</h3>
+        <p style="color:var(--MUTED);font-size:13px;margin-bottom:20px;">Télécharge une pièce d'identité et un selfie pour vérifier ton compte.</p>
+
+        <div style="margin-bottom:16px;">
+          <label class="form-label">Pièce d'identité (recto)</label>
+          <label style="display:flex;align-items:center;gap:12px;background:#111;border:1.5px dashed rgba(255,195,0,.3);border-radius:10px;padding:16px;cursor:pointer;margin-top:6px;">
+            <span style="font-size:24px;">🪪</span>
+            <div>
+              <div style="font-weight:700;font-size:13px;margin-bottom:2px;">Choisir un fichier</div>
+              <div style="color:var(--MUTED);font-size:12px;" id="doc-filename">JPG, PNG — max 5 Mo</div>
+            </div>
+            <input type="file" id="doc-file" accept="image/*" style="display:none" onchange="document.getElementById('doc-filename').textContent = this.files[0]?.name || 'JPG, PNG — max 5 Mo'">
+          </label>
+        </div>
+
+        <div style="margin-bottom:20px;">
+          <label class="form-label">Selfie avec la pièce d'identité</label>
+          <label style="display:flex;align-items:center;gap:12px;background:#111;border:1.5px dashed rgba(255,195,0,.3);border-radius:10px;padding:16px;cursor:pointer;margin-top:6px;">
+            <span style="font-size:24px;">🤳</span>
+            <div>
+              <div style="font-weight:700;font-size:13px;margin-bottom:2px;">Choisir un fichier</div>
+              <div style="color:var(--MUTED);font-size:12px;" id="selfie-filename">JPG, PNG — max 5 Mo</div>
+            </div>
+            <input type="file" id="selfie-file" accept="image/*" style="display:none" onchange="document.getElementById('selfie-filename').textContent = this.files[0]?.name || 'JPG, PNG — max 5 Mo'">
+          </label>
+        </div>
+
+        <button class="btn btn-primary" id="verif-submit-btn" onclick="handleVenueVerifSubmit()">Envoyer pour vérification</button>
+        <div id="verif-upload-progress" style="display:none;margin-top:12px;color:var(--MUTED);font-size:13px;">Upload en cours...</div>
+      </div>
+    </div>
+
+    <!-- Organisation form -->
+    <div id="verif-form-organisation" class="card" style="display:none;margin-bottom:20px;">
+      <div style="padding:24px;">
+        <h3 style="font-family:var(--D);font-size:18px;font-weight:900;text-transform:uppercase;margin-bottom:4px;">Organisation</h3>
+        <p style="color:var(--MUTED);font-size:13px;margin-bottom:20px;">Fournis ton SIRET et un document officiel (Kbis ou statuts) pour vérifier ton organisation.</p>
+
+        <div style="margin-bottom:16px;">
+          <label class="form-label">Nom de l'organisation</label>
+          <input type="text" class="form-input" id="org-name-verif" placeholder="Ex: Noctambule Events" style="margin-top:6px;">
+        </div>
+        <div style="margin-bottom:16px;">
+          <label class="form-label">SIRET</label>
+          <input type="text" class="form-input" id="org-siret-verif" placeholder="Ex: 12345678900012" style="margin-top:6px;">
+        </div>
+        <div style="margin-bottom:20px;">
+          <label class="form-label">Document officiel (Kbis / statuts)</label>
+          <label style="display:flex;align-items:center;gap:12px;background:#111;border:1.5px dashed rgba(255,195,0,.3);border-radius:10px;padding:16px;cursor:pointer;margin-top:6px;">
+            <span style="font-size:24px;">📄</span>
+            <div>
+              <div style="font-weight:700;font-size:13px;margin-bottom:2px;">Choisir un fichier</div>
+              <div style="color:var(--MUTED);font-size:12px;" id="org-doc-filename">JPG, PNG, PDF — max 5 Mo</div>
+            </div>
+            <input type="file" id="org-doc-file" accept="image/*,.pdf" style="display:none" onchange="document.getElementById('org-doc-filename').textContent = this.files[0]?.name || 'JPG, PNG, PDF — max 5 Mo'">
+          </label>
+        </div>
+
+        <button class="btn btn-primary" onclick="submitOrgVerification()">Envoyer pour vérification</button>
+        <div id="org-upload-progress" style="display:none;margin-top:12px;color:var(--MUTED);font-size:13px;">Envoi en cours...</div>
+      </div>
+    </div>
+  </div>
+
   <div id="page-settings" class="page">
     <div class="page-header"><h1 class="page-title">PARAMÈTRES</h1></div>
     <div class="card"><div style="padding:24px;">
@@ -952,6 +1027,7 @@
     if (page === 'favorites') renderFavorites();
     if (page === 'messages') await loadVenueConversations();
     if (page === 'contact') initContactPage();
+    if (page === 'verification') initVerificationPage();
   }
 
   function loadStats() {
@@ -1729,6 +1805,136 @@
     sessionStorage.clear()
     window.location.replace('login.html')
   }
+  function initVerificationPage() {
+    const venueType = localStorage.getItem('cue_venue_type') || 'particulier';
+    const status = user.identity_status || 'none';
+
+    // Show status banner
+    const banner = document.getElementById('verif-status-banner');
+    if (status === 'pending') {
+      banner.style.display = 'block';
+      banner.style.background = 'rgba(255,195,0,.1)';
+      banner.style.border = '1px solid rgba(255,195,0,.3)';
+      banner.style.color = '#FFC300';
+      banner.textContent = '⏳ Vérification en cours — Nos équipes examinent vos documents sous 48h.';
+    } else if (status === 'verified') {
+      banner.style.display = 'block';
+      banner.style.background = 'rgba(0,200,100,.1)';
+      banner.style.border = '1px solid rgba(0,200,100,.3)';
+      banner.style.color = '#00c864';
+      banner.textContent = '✅ Votre identité a été vérifiée avec succès.';
+    } else if (status === 'rejected') {
+      banner.style.display = 'block';
+      banner.style.background = 'rgba(255,68,68,.1)';
+      banner.style.border = '1px solid rgba(255,68,68,.3)';
+      banner.style.color = '#ff4444';
+      banner.textContent = '❌ Vérification refusée. Veuillez renvoyer vos documents.';
+    } else {
+      banner.style.display = 'none';
+    }
+
+    // Show correct form
+    if (venueType === 'organisation') {
+      document.getElementById('verif-form-particulier').style.display = 'none';
+      document.getElementById('verif-form-organisation').style.display = 'block';
+      const orgName = localStorage.getItem('cue_org_name') || '';
+      const orgSiret = localStorage.getItem('cue_org_siret') || '';
+      if (orgName) document.getElementById('org-name-verif').value = orgName;
+      if (orgSiret) document.getElementById('org-siret-verif').value = orgSiret;
+    } else {
+      document.getElementById('verif-form-particulier').style.display = 'block';
+      document.getElementById('verif-form-organisation').style.display = 'none';
+    }
+  }
+
+  async function handleVenueVerifSubmit() {
+    const docFile = document.getElementById('doc-file').files[0];
+    const selfieFile = document.getElementById('selfie-file').files[0];
+
+    if (!docFile || !selfieFile) {
+      alert('Ajoute les deux documents requis.');
+      return;
+    }
+
+    const btn = document.getElementById('verif-submit-btn');
+    const progress = document.getElementById('verif-upload-progress');
+    btn.disabled = true;
+    progress.style.display = 'block';
+
+    try {
+      const userId = user.id || user.user_id;
+      const formData = new FormData();
+      formData.append('userId', userId);
+      formData.append('selfie', selfieFile);
+      formData.append('identity_card', docFile);
+
+      const res = await fetch('/api/upload-identity', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (res.ok) {
+        user.identity_status = 'pending';
+        localStorage.setItem('cue_user', JSON.stringify(user));
+        initVerificationPage();
+        alert('✅ Documents envoyés ! Vérification sous 48h.');
+      } else {
+        const data = await res.json();
+        throw new Error(data.error || 'Erreur serveur');
+      }
+    } catch (err) {
+      alert('Erreur : ' + err.message);
+    } finally {
+      btn.disabled = false;
+      progress.style.display = 'none';
+    }
+  }
+
+  async function submitOrgVerification() {
+    const orgName = document.getElementById('org-name-verif').value.trim();
+    const orgSiret = document.getElementById('org-siret-verif').value.trim();
+    const docFile = document.getElementById('org-doc-file').files[0];
+
+    if (!orgName || !docFile) {
+      alert('Merci de remplir le nom de l\'organisation et de joindre un document.');
+      return;
+    }
+
+    const progress = document.getElementById('org-upload-progress');
+    progress.style.display = 'block';
+
+    try {
+      const userId = user.id || user.user_id;
+      const formData = new FormData();
+      formData.append('userId', userId);
+      formData.append('identity_card', docFile);
+      formData.append('selfie', docFile); // Reuse field — org doc as both
+      formData.append('orgName', orgName);
+      formData.append('orgSiret', orgSiret);
+
+      const res = await fetch('/api/upload-identity', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (res.ok) {
+        user.identity_status = 'pending';
+        localStorage.setItem('cue_user', JSON.stringify(user));
+        localStorage.setItem('cue_org_name', orgName);
+        if (orgSiret) localStorage.setItem('cue_org_siret', orgSiret);
+        initVerificationPage();
+        alert('✅ Documents envoyés ! Vérification sous 48h.');
+      } else {
+        const data = await res.json();
+        throw new Error(data.error || 'Erreur serveur');
+      }
+    } catch (err) {
+      alert('Erreur : ' + err.message);
+    } finally {
+      progress.style.display = 'none';
+    }
+  }
+
   async function confirmDeleteAccount() {
     const c1 = confirm('⚠️ Es-tu sûr de vouloir supprimer ton compte ? Cette action est irréversible.');
     if (!c1) return;

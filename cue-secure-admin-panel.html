@@ -481,7 +481,7 @@
         <td><span class="badge badge-${u.identity_status}">${u.identity_status}</span></td>
         <td>${new Date(u.created_at).toLocaleDateString('fr-FR')}</td>
         <td>
-          <button class="btn btn-reject" onclick="suspendUser('${u.id}')">🚫 Suspendre</button>
+          <button class="btn ${u.suspended ? 'btn-approve' : 'btn-reject'}" onclick="toggleSuspend('${u.id}', ${!!u.suspended})">${u.suspended ? '✅ Réactiver' : '🚫 Suspendre'}</button>
         </td>
       </tr>
     `).join('');
@@ -633,14 +633,15 @@
     loadStats();
   }
 
-  async function suspendUser(userId) {
-    if (!confirm('Suspendre cet utilisateur ?')) return;
+  async function toggleSuspend(userId, isSuspended) {
+    const msg = isSuspended ? 'Réactiver cet utilisateur ?' : 'Suspendre cet utilisateur ?';
+    if (!confirm(msg)) return;
     await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminAction: 'verify_user', userId, action: 'suspend', adminSecret: getSecret() })
+      body: JSON.stringify({ adminAction: 'toggle_suspend', userId, adminSecret: getSecret() })
     });
-    alert('Utilisateur suspendu.');
+    alert(isSuspended ? 'Utilisateur réactivé.' : 'Utilisateur suspendu.');
     loadUsers();
   }
 

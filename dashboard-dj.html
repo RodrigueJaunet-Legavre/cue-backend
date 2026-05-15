@@ -2334,24 +2334,27 @@
         </div>`;
       return;
     }
-    list.innerHTML = conversations.map(conv => `
+    list.innerHTML = conversations.map(conv => {
+      const venueName = conv.venue_name || ((conv.venue_first_name || '') + ' ' + (conv.venue_last_name || '')).trim() || 'Venue';
+      return `
       <div class="message-item ${currentConv?.id === conv.id ? 'active' : ''}" onclick="openConversation('${conv.id}')">
         <div class="message-avatar">🏛️</div>
         <div class="message-content">
-          <div class="message-sender">${conv.venue_name}</div>
+          <div class="message-sender">${venueName}</div>
           <div class="message-preview">${conv.last_message || 'Nouvelle conversation'}</div>
         </div>
         <div class="message-time">${formatTime(conv.last_message_at)}</div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   }
 
   async function openConversation(convId) {
     currentConv = conversations.find(c => c.id === convId);
     if (!currentConv) return;
+    const venueName = currentConv.venue_name || ((currentConv.venue_first_name || '') + ' ' + (currentConv.venue_last_name || '')).trim() || 'Venue';
     document.getElementById('conversation-empty').style.display = 'none';
     document.getElementById('conversation-active').style.display = 'flex';
-    document.getElementById('conv-venue-name').textContent = currentConv.venue_name;
+    document.getElementById('conv-venue-name').textContent = venueName;
     await loadMessages(convId);
     renderConversations();
   }
