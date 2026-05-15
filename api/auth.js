@@ -165,6 +165,16 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'get_confirmed_bookings') {
+    const { userId } = body;
+    try {
+      const bookings = await sql`SELECT * FROM bookings WHERE dj_id = ${userId} AND status = 'confirmed' ORDER BY created_at DESC`;
+      return res.status(200).json({ bookings });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   if (action === 'change_password') {
     const { userId, newPassword } = body;
     try {

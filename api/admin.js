@@ -1,4 +1,5 @@
 const postgres = require('postgres');
+const { Resend } = require('resend');
 const sql = postgres(process.env.NETLIFY_DATABASE_URL, { ssl: 'require' });
 
 async function getSignedUrl(supabaseUrl, supabaseKey, userId, fileType) {
@@ -89,14 +90,63 @@ module.exports = async function handler(req, res) {
   // VERIFY USER
   if (adminAction === 'verify_user') {
     try {
-      const { userId, action } = body;
+      const { userId, action, motif } = body;
       const statusMap = {
         approve: 'verified', reject: 'rejected',
-        request_new: 'incomplete', suspend: 'suspended'
+        request_new: 'pending', suspend: 'suspended'
       };
       const newStatus = statusMap[action];
       if (!newStatus) return res.status(400).json({ error: 'Action inconnue' });
       await sql`UPDATE users SET identity_status = ${newStatus} WHERE id = ${userId}`;
+
+      // Email selon l'action
+      if (action !== 'suspend' && process.env.RESEND_API_KEY) {
+        try {
+          const [userRow] = await sql`SELECT * FROM users WHERE id = ${userId}`;
+          if (userRow?.email) {
+            const resend = new Resend(process.env.RESEND_API_KEY);
+            let subject, html;
+            const firstName = userRow.first_name || 'DJ';
+
+            if (action === 'approve') {
+              subject = '✅ Ton identité a été vérifiée sur CUE';
+              html = `<div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
+                <h2 style="color:#FFC300;">Identité vérifiée ✅</h2>
+                <p>Bonjour ${firstName},</p>
+                <p>Ton identité a été vérifiée avec succès. Tu peux maintenant obtenir le badge vérifié CUE.</p>
+                <a href="https://cuedj.eu/dashboard-dj.html" style="background:#FFC300; color:#000; padding:14px 32px; border-radius:8px; text-decoration:none; font-weight:700; display:inline-block; margin-top:16px;">Accéder à mon dashboard →</a>
+              </div>`;
+            } else if (action === 'request_new') {
+              subject = '📋 Nouveaux documents requis — CUE';
+              html = `<div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
+                <h2 style="color:#FFC300;">Nouveaux documents requis</h2>
+                <p>Bonjour ${firstName},</p>
+                <p>Notre équipe a examiné vos documents et nécessite que vous en soumettez de nouveaux.</p>
+                <div style="background:#1a1a1a; border-left:4px solid #FFC300; padding:16px; margin:20px 0; border-radius:0 8px 8px 0;">
+                  <strong style="color:#FFC300;">Motif :</strong>
+                  <p style="margin-top:8px; color:#ddd;">${motif || ''}</p>
+                </div>
+                <a href="https://cuedj.eu/dashboard-dj.html" style="background:#FFC300; color:#000; padding:14px 32px; border-radius:8px; text-decoration:none; font-weight:700; display:inline-block; margin-top:16px;">Soumettre de nouveaux documents →</a>
+              </div>`;
+            } else if (action === 'reject') {
+              subject = '❌ Vérification d\'identité refusée — CUE';
+              html = `<div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
+                <h2 style="color:#ff4444;">Vérification refusée</h2>
+                <p>Bonjour ${firstName},</p>
+                <p>Nous n'avons pas pu vérifier votre identité. Si vous pensez qu'il s'agit d'une erreur, contactez notre support.</p>
+                <a href="https://cuedj.eu" style="background:#FFC300; color:#000; padding:14px 32px; border-radius:8px; text-decoration:none; font-weight:700; display:inline-block; margin-top:16px;">Retour à CUE</a>
+              </div>`;
+            }
+
+            if (subject && html) {
+              await resend.emails.send({ from: 'CUE DJ <noreply@cuedj.eu>', to: userRow.email, subject, html });
+            }
+          }
+        } catch (emailErr) {
+          console.log('Email non envoyé:', emailErr.message);
+        }
+      }
+
       return res.status(200).json({ success: true, action, userId });
     } catch (err) {
       return res.status(500).json({ error: err.message });

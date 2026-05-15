@@ -601,21 +601,31 @@
   }
 
   async function validateUser(action) {
-    await fetch('/api/admin', {
+    let motif = '';
+
+    if (action === 'request_new') {
+      motif = prompt('📝 Indiquez le motif de la demande (ce message sera envoyé au DJ/Venue) :',
+                     'Vos documents ne sont pas lisibles. Merci de renvoyer des photos plus claires.');
+      if (motif === null) return;
+      if (!motif.trim()) { alert('Le motif est obligatoire.'); return; }
+    }
+
+    const res = await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         adminAction: 'verify_user',
         userId: currentVerifUserId,
         action,
+        motif,
         adminSecret: getSecret()
       })
     });
 
     const messages = {
-      approve: '✅ Compte approuvé !',
-      request_new: '🔄 Nouveaux documents demandés.',
-      reject: '❌ Compte refusé.'
+      approve: '✅ Compte approuvé ! Le DJ/Venue a été notifié.',
+      request_new: '🔄 Demande envoyée avec le motif.',
+      reject: '❌ Compte refusé. Le DJ/Venue a été notifié.'
     };
     alert(messages[action]);
     closeModal();

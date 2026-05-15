@@ -1329,6 +1329,7 @@
     loadProfile()
     updateUnreadBadge()
     checkBadgeConditions()
+    syncConfirmedBookings()
   }
 
   async function showPage(page, el) {
@@ -1962,13 +1963,22 @@
     const mixData = user.mix_url;
     if (mixData) {
       let mixObj = mixData;
-      try { mixObj = JSON.parse(mixData); } catch(e) { mixObj = { name: 'Mix de présentation', url: mixData.startsWith('http') ? mixData : null }; }
+      if (typeof mixData === 'string') {
+        try { mixObj = JSON.parse(mixData); }
+        catch(e) { mixObj = { name: 'Mix de présentation', url: mixData.startsWith('http') ? mixData : null }; }
+      }
 
-      if (mixObj.url) {
-        document.getElementById('mix-current').style.display = 'block';
-        document.getElementById('mix-upload-zone').style.display = 'none';
-        document.getElementById('mix-name').textContent = 'Mix de présentation';
-        profileMix = mixData;
+      if (mixObj?.url) {
+        const mixCurrent = document.getElementById('mix-current');
+        const mixZone = document.getElementById('mix-upload-zone');
+        const mixNameEl = document.getElementById('mix-name');
+        const mixPlayer = document.getElementById('mix-player');
+
+        if (mixCurrent) mixCurrent.style.display = 'block';
+        if (mixZone) mixZone.style.display = 'none';
+        if (mixNameEl) mixNameEl.textContent = 'Mix de présentation';
+        if (mixPlayer) { mixPlayer.src = mixObj.url; mixPlayer.load(); }
+        profileMix = JSON.stringify(mixObj);
       }
     }
 
@@ -2365,26 +2375,31 @@
     container.innerHTML = msgs.map(msg => {
       const isMe = msg.sender_id === user.id;
       if (msg.type === 'offer') {
-        const offer = msg.offer_data;
+        let offer = msg.offer_data;
+        if (typeof offer === 'string') {
+          try { offer = JSON.parse(offer); } catch(e) { offer = {}; }
+        }
+        offer = offer || {};
         const status = msg.offer_status;
         return `
           <div style="background:rgba(255,195,0,.08); border:1px solid var(--BORDER); border-radius:16px; padding:20px; margin:8px 0;">
             <div style="color:var(--Y); font-weight:700; font-size:12px; letter-spacing:1px; margin-bottom:12px;">💼 OFFRE DE BOOKING</div>
-            <div style="color:#fff; font-weight:700; font-size:16px; margin-bottom:4px;">${offer.type}</div>
-            <div style="color:var(--MUTED); font-size:13px; margin-bottom:4px;">📅 ${offer.date} • ${offer.start}→${offer.end}</div>
-            <div style="font-family:'Barlow Condensed'; font-weight:900; font-size:28px; color:var(--Y); margin:12px 0;">${offer.budget}€</div>
-            <p style="color:var(--MUTED); font-size:14px; margin-bottom:16px;">${offer.message}</p>
+            <div style="color:#fff; font-weight:700; font-size:16px; margin-bottom:4px;">${offer.type || 'Type non précisé'}</div>
+            <div style="color:var(--MUTED); font-size:13px; margin-bottom:4px;">📅 ${offer.date || 'Date non précisée'} • ${offer.start || ''}${offer.end ? ' → ' + offer.end : ''}</div>
+            <div style="color:var(--MUTED); font-size:13px; margin-bottom:4px;">📍 ${offer.city || 'Lieu non précisé'}</div>
+            <div style="font-family:Barlow Condensed; font-weight:900; font-size:28px; color:var(--Y); margin:12px 0;">${offer.budget ? offer.budget + '€' : 'Budget non précisé'}</div>
+            <p style="color:var(--MUTED); font-size:14px; margin-bottom:16px;">${offer.message || 'Aucun message'}</p>
             ${!status ? `
               <div style="display:flex; gap:12px;">
-                <button class="btn btn-primary" style="padding:8px 20px; font-size:13px;" onclick="respondOffer('${msg.id}', 'accepted')">✅ Accepter</button>
-                <button class="btn" style="padding:8px 20px; font-size:13px; border:1px solid #ff4444; color:#ff4444; background:transparent;" onclick="respondOffer('${msg.id}', 'declined')">❌ Refuser</button>
+                <button class="btn btn-primary btn-sm" onclick="respondOffer('${msg.id}', 'accepted', ${JSON.stringify(offer).replace(/"/g, '&quot;')})">✅ Je suis disponible</button>
+                <button class="btn btn-sm" style="background:rgba(255,68,68,.15); color:#ff4444; border:none; padding:8px 16px; border-radius:8px; cursor:pointer;" onclick="respondOffer('${msg.id}', 'declined', {})">❌ Non disponible</button>
               </div>
+            ` : status === 'accepted' ? `
+              <div style="padding:8px 16px; border-radius:8px; background:rgba(255,170,0,.15); color:#ffaa00; font-weight:700; font-size:13px;">⏳ En attente de confirmation du venue</div>
+            ` : status === 'confirmed' ? `
+              <div style="padding:8px 16px; border-radius:8px; background:rgba(0,200,100,.15); color:#00c864; font-weight:700; font-size:13px;">🎉 Booking confirmé !</div>
             ` : `
-              <div style="padding:8px 16px; border-radius:8px; display:inline-block; font-weight:700; font-size:13px;
-                          background:${status === 'accepted' ? 'rgba(0,200,100,.15)' : 'rgba(255,68,68,.15)'};
-                          color:${status === 'accepted' ? 'var(--SUCCESS)' : 'var(--ERROR)'};">
-                ${status === 'accepted' ? '✅ Offre acceptée' : '❌ Offre refusée'}
-              </div>
+              <div style="padding:8px 16px; border-radius:8px; background:rgba(255,68,68,.15); color:#ff4444; font-weight:700; font-size:13px;">❌ Non disponible</div>
             `}
           </div>`;
       }
@@ -2433,7 +2448,7 @@
     await loadConversations();
   }
 
-  async function respondOffer(messageId, status) {
+  async function respondOffer(messageId, status, offerData) {
     await fetch('/api/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2441,7 +2456,7 @@
     });
 
     const reply = status === 'accepted'
-      ? '✅ Je suis disponible et intéressé par cette date ! En attente de votre confirmation.'
+      ? '✅ Je suis disponible et intéressé ! En attente de votre confirmation finale.'
       : '❌ Je ne suis malheureusement pas disponible pour cette date.';
 
     await fetch('/api/messages', {
@@ -2464,35 +2479,8 @@
       })
     });
 
+    // PAS d'ajout automatique aux gigs ici — c'est le venue qui confirme
     await loadMessages(currentConv.id);
-
-    if (status === 'accepted') {
-      const res = await fetch('/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get_messages', conversationId: currentConv.id, senderId: user.id })
-      });
-      const data = await res.json();
-      const offerMsg = data.messages.find(m => m.type === 'offer');
-      if (offerMsg?.offer_data) {
-        const offer = offerMsg.offer_data;
-        gigs = JSON.parse(localStorage.getItem('cue_gigs') || '[]');
-        gigs.unshift({
-          id: Date.now().toString(),
-          venue: currentConv.venue_name,
-          city: offer.city || 'À définir',
-          date: offer.date,
-          time: offer.start,
-          fee: parseInt(offer.budget) || 0,
-          status: 'confirmed',
-          source: 'cue',
-          createdAt: new Date().toISOString()
-        });
-        localStorage.setItem('cue_gigs', JSON.stringify(gigs));
-        loadStats();
-        alert('✅ Gig ajouté automatiquement à ton agenda !');
-      }
-    }
   }
 
   async function updateUnreadBadge() {
@@ -2511,6 +2499,42 @@
         badge.style.display = 'none';
       }
     } catch (err) {}
+  }
+
+  async function syncConfirmedBookings() {
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_confirmed_bookings', userId: user.id })
+      });
+      const data = await res.json();
+      if (!data.bookings) return;
+
+      data.bookings.forEach(booking => {
+        const exists = gigs.find(g => g.bookingId === booking.id);
+        if (!exists) {
+          gigs.push({
+            id: Date.now().toString(),
+            bookingId: booking.id,
+            venue: booking.venue_name || 'Venue',
+            city: booking.city || 'À définir',
+            date: booking.event_date,
+            time: booking.start_time || '',
+            fee: booking.amount || 0,
+            status: 'confirmed',
+            source: 'cue',
+            type: booking.event_type || 'Soirée',
+            createdAt: booking.created_at
+          });
+        }
+      });
+      localStorage.setItem('cue_gigs', JSON.stringify(gigs));
+      renderUpcomingGigs();
+      loadStats();
+    } catch(err) {
+      console.log('Erreur sync bookings:', err);
+    }
   }
 
   function startPolling() {

@@ -848,6 +848,9 @@
   let currentDJ = null;
   let allDJs = [];
   let currentVenueConv = null;
+  let pendingOfferData = {};
+  let pendingMessageId = null;
+  const offerDataMap = new Map();
 
   function getName(obj) {
     if (!obj) return '—';
@@ -1224,20 +1227,24 @@
       const isOffer = msg.type === 'offer';
 
       if (isOffer) {
-        const offer = typeof msg.offer_data === 'string' ? JSON.parse(msg.offer_data) : msg.offer_data;
+        let offer = msg.offer_data;
+        if (typeof offer === 'string') { try { offer = JSON.parse(offer); } catch(e) { offer = {}; } }
+        offer = offer || {};
+        offerDataMap.set(msg.id, offer);
         const status = msg.offer_status;
         return `
           <div style="background:rgba(255,195,0,.08); border:1px solid var(--BORDER); border-radius:16px; padding:20px; margin:8px 0;">
             <div style="color:var(--Y); font-weight:700; font-size:12px; letter-spacing:1px; margin-bottom:12px;">💼 OFFRE DE BOOKING ENVOYÉE</div>
-            <div style="color:#fff; font-weight:700; font-size:16px; margin-bottom:4px;">${offer?.type || '—'}</div>
-            <div style="color:var(--MUTED); font-size:13px; margin-bottom:4px;">📅 ${offer?.date || '—'} • ${offer?.start || ''}→${offer?.end || ''}</div>
-            <div style="font-family:Barlow Condensed; font-weight:900; font-size:28px; color:var(--Y); margin:12px 0;">${offer?.budget || '—'}€</div>
-            <p style="color:var(--MUTED); font-size:14px; margin-bottom:16px;">${offer?.message || ''}</p>
+            <div style="color:#fff; font-weight:700; font-size:16px; margin-bottom:4px;">${offer.type || '—'}</div>
+            <div style="color:var(--MUTED); font-size:13px; margin-bottom:4px;">📅 ${offer.date || '—'} • ${offer.start || ''}${offer.end ? ' → ' + offer.end : ''}</div>
+            <div style="color:var(--MUTED); font-size:13px; margin-bottom:4px;">📍 ${offer.city || ''}</div>
+            <div style="font-family:Barlow Condensed; font-weight:900; font-size:28px; color:var(--Y); margin:12px 0;">${offer.budget ? offer.budget + '€' : '—'}</div>
+            <p style="color:var(--MUTED); font-size:14px; margin-bottom:16px;">${offer.message || ''}</p>
             ${status === 'accepted' ? `
               <div style="background:rgba(0,200,100,.1); border:1px solid rgba(0,200,100,.3); border-radius:12px; padding:16px; margin-top:12px;">
                 <div style="color:#00c864; font-weight:700; margin-bottom:12px;">✅ Le DJ a accepté votre offre !</div>
                 <div style="display:flex; gap:12px;">
-                  <button class="btn btn-primary btn-sm" onclick="confirmBooking('${msg.id}', ${JSON.stringify(JSON.stringify(offer))})">✅ Confirmer le booking</button>
+                  <button class="btn btn-primary btn-sm" onclick="prepareConfirmBooking('${msg.id}')">✅ Confirmer le booking</button>
                   <button style="background:rgba(255,68,68,.15); color:#ff4444; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:700;" onclick="declineBooking('${msg.id}')">❌ Décliner</button>
                 </div>
               </div>
@@ -1292,11 +1299,19 @@
     await loadVenueMessages(currentVenueConv.id);
   }
 
-  async function confirmBooking(messageId, offerDataStr) {
-    const offer = typeof offerDataStr === 'string' ? JSON.parse(offerDataStr) : offerDataStr;
-    if (!confirm('Confirmer ce booking ?')) return;
+  async function prepareConfirmBooking(messageId) {
+    const offer = offerDataMap.get(messageId);
+    if (!offer) { alert('Erreur : données de l\'offre non trouvées.'); return; }
+    pendingOfferData = offer;
+    pendingMessageId = messageId;
+    await confirmBooking();
+  }
 
-    const djId = currentVenueConv?.dj_id || offer.djId;
+  async function confirmBooking() {
+    if (!pendingMessageId || !pendingOfferData) return;
+    if (!confirm('Confirmer définitivement ce booking ?')) return;
+
+    const djId = currentVenueConv?.dj_id || pendingOfferData.djId;
     const venueId = user.id;
     const djName = currentVenueConv?.dj_name || 'DJ';
     const venueName = getName(user);
@@ -1305,11 +1320,16 @@
       const res = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'confirm_booking', messageId, offerData: offer, djId, venueId, djName, venueName })
+        body: JSON.stringify({ action: 'confirm_booking', messageId: pendingMessageId, offerData: pendingOfferData, djId, venueId, djName, venueName })
       });
       if (res.ok) {
-        alert('🎉 Booking confirmé ! Le DJ sera notifié.');
+        alert('🎉 Booking confirmé ! Le DJ sera notifié et le gig ajouté à son agenda.');
+        pendingMessageId = null;
+        pendingOfferData = {};
         await loadVenueMessages(currentVenueConv.id);
+      } else {
+        const data = await res.json();
+        alert('Erreur : ' + (data.error || 'Réessaie'));
       }
     } catch (err) {
       alert('Erreur. Réessaie.');
