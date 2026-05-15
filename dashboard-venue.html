@@ -959,22 +959,23 @@
 
 <!-- MODAL NOTER UN DJ -->
 <div id="modal-rate-dj" class="modal">
-  <div class="modal-card">
-    <h2 class="modal-title">⭐ NOTER CE DJ</h2>
-    <div class="stars-input">
-      <button class="star-btn" onclick="setRating(1)">★</button>
-      <button class="star-btn" onclick="setRating(2)">★</button>
-      <button class="star-btn" onclick="setRating(3)">★</button>
-      <button class="star-btn" onclick="setRating(4)">★</button>
-      <button class="star-btn" onclick="setRating(5)">★</button>
+  <div class="modal-card" style="max-width:480px;">
+    <h2 class="modal-title">⭐ Laisser un avis</h2>
+    <p style="color:var(--MUTED); margin-bottom:20px;">DJ : <strong id="rate-dj-name" style="color:#fff;"></strong></p>
+    <div class="stars-input" style="display:flex; gap:8px; margin-bottom:24px; justify-content:center;">
+      <button class="star-btn" onclick="setRating(1)">☆</button>
+      <button class="star-btn" onclick="setRating(2)">☆</button>
+      <button class="star-btn" onclick="setRating(3)">☆</button>
+      <button class="star-btn" onclick="setRating(4)">☆</button>
+      <button class="star-btn" onclick="setRating(5)">☆</button>
     </div>
     <div class="form-group">
-      <label class="form-label">Ton avis</label>
-      <textarea id="review-text" class="form-input" rows="4" placeholder="Très professionnel, ponctuel..."></textarea>
+      <label class="form-label">Ton commentaire</label>
+      <textarea id="review-text" class="form-input" rows="4" placeholder="Comment s'est passée la prestation ?" style="resize:vertical;"></textarea>
     </div>
     <div class="modal-actions">
       <button class="btn btn-outline" onclick="closeModal('modal-rate-dj')">Annuler</button>
-      <button class="btn btn-primary" onclick="submitReview()">Publier l'avis ✓</button>
+      <button class="btn btn-primary" onclick="submitReview()">Publier l'avis</button>
     </div>
   </div>
 </div>
@@ -1036,6 +1037,7 @@
   let allReviews = [];
   let calendarDate = new Date();
   let currentRating = 0;
+  let currentRatingDJ = null;
   let currentDJ = null;
   let allDJs = [];
   let currentVenueConv = null;
@@ -1655,19 +1657,37 @@
     return d.toLocaleDateString('fr-FR');
   }
 
+  function openRateDJModal(djId, djName) {
+    currentRatingDJ = { id: djId, name: djName };
+    currentRating = 0;
+    document.querySelectorAll('.star-btn').forEach((s, i) => {
+      s.classList.remove('active');
+      s.textContent = '☆';
+    });
+    const textEl = document.getElementById('review-text');
+    if (textEl) textEl.value = '';
+    const nameEl = document.getElementById('rate-dj-name');
+    if (nameEl) nameEl.textContent = djName;
+    document.getElementById('modal-rate-dj').classList.add('open');
+  }
+
   function setRating(n) {
     currentRating = n;
-    document.querySelectorAll('.star-btn').forEach((btn, i) => btn.classList.toggle('active', i < n));
+    document.querySelectorAll('.star-btn').forEach((btn, i) => {
+      btn.classList.toggle('active', i < n);
+      btn.textContent = i < n ? '★' : '☆';
+    });
   }
 
   async function submitReview() {
     if (!currentRating) { alert('Sélectionne une note.'); return; }
-    if (!currentDJ) { alert('Erreur: DJ non trouvé.'); return; }
+    const target = currentRatingDJ || (currentDJ ? { id: currentDJ.id, name: (currentDJ.first_name || currentDJ.firstName || '') + ' ' + (currentDJ.last_name || currentDJ.lastName || '') } : null);
+    if (!target) { alert('Erreur : DJ non trouvé.'); return; }
 
-    const comment = document.getElementById('review-text').value.trim();
+    const comment = document.getElementById('review-text')?.value?.trim();
     if (!comment) { alert('Écris un commentaire.'); return; }
 
-    const venueUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
+    const venueName = ((user.first_name || user.firstName || '') + ' ' + (user.last_name || user.lastName || '')).trim() || 'Venue';
 
     try {
       const res = await fetch('/api/auth', {
@@ -1675,10 +1695,10 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'add_review',
-          djId: currentDJ.id,
-          venueId: venueUser.id,
-          venueName: (venueUser.first_name || '') + ' ' + (venueUser.last_name || ''),
-          djName: (currentDJ.first_name || currentDJ.firstName || '') + ' ' + (currentDJ.last_name || currentDJ.lastName || ''),
+          djId: target.id,
+          venueId: user.id,
+          venueName,
+          djName: target.name,
           rating: currentRating,
           comment
         })
@@ -1687,10 +1707,12 @@
       const data = await res.json();
       if (data.success) {
         closeModal('modal-rate-dj');
-        alert('⭐ Avis publié ! Moyenne : ' + data.avgRating + '/5');
+        alert('⭐ Avis publié ! Merci.');
         currentRating = 0;
-        document.querySelectorAll('.star-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('review-text').value = '';
+        currentRatingDJ = null;
+        document.querySelectorAll('.star-btn').forEach(b => { b.classList.remove('active'); b.textContent = '☆'; });
+        if (document.getElementById('review-text')) document.getElementById('review-text').value = '';
+        await loadMyReviews();
       } else {
         alert('Erreur : ' + (data.error || 'Réessaie.'));
       }
@@ -1700,18 +1722,23 @@
   }
 
   function renderVenueBookings(filter) {
-    const toDate = d => new Date(d && d.includes('T') ? d : (d || '') + 'T00:00:00');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    let filtered = venueBookings || bookings || [];
+    let filtered = venueBookings || [];
 
     if (filter === 'upcoming') {
-      filtered = filtered.filter(b => toDate(b.date) >= today);
+      filtered = filtered.filter(b => {
+        const d = new Date((b.date || '').split('T')[0] + 'T00:00:00');
+        return d >= today;
+      });
     } else if (filter === 'past') {
-      filtered = filtered.filter(b => toDate(b.date) < today);
+      filtered = filtered.filter(b => {
+        const d = new Date((b.date || '').split('T')[0] + 'T00:00:00');
+        return d < today;
+      });
     }
 
-    filtered = [...filtered].sort((a, b) => toDate(a.date) - toDate(b.date));
+    filtered.sort((a, b) => new Date((a.date || '').split('T')[0] + 'T00:00:00') - new Date((b.date || '').split('T')[0] + 'T00:00:00'));
 
     const container = document.getElementById('bookings-list');
     if (!container) return;
@@ -1722,40 +1749,41 @@
           <div class="empty-emoji">📅</div>
           <div class="empty-title">Aucun booking</div>
           <div class="empty-sub">Vos bookings confirmés apparaîtront ici</div>
-          <button class="btn btn-primary" style="margin-top:16px;" onclick="showPage('find-dj', document.querySelectorAll('.nav-item')[1])">🔍 Trouver un DJ</button>
         </div>`;
       return;
     }
 
     container.innerHTML = filtered.map(b => {
-      const dateObj = formatDateShort(b.date);
+      const rawDate = (b.date || '').split('T')[0];
+      const dateObj = rawDate ? new Date(rawDate + 'T00:00:00') : null;
+      const day = dateObj ? dateObj.toLocaleDateString('fr-FR', { day: '2-digit' }) : '??';
+      const month = dateObj ? dateObj.toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase() : '???';
+      const djId = b.djId || b.dj_id || '';
+      const djName = b.djName || b.dj_name || 'DJ';
       return `
-      <div class="gig-card" style="cursor:pointer; transition:all .2s;"
+      <div class="gig-card" style="cursor:pointer;"
            onclick="openBookingDetail(${JSON.stringify(b).replace(/"/g, '&quot;')})"
            onmouseover="this.style.borderColor='rgba(255,195,0,.4)'"
            onmouseout="this.style.borderColor='var(--BORDER)'">
         <div class="gig-date">
-          <div class="gig-day">${dateObj.day}</div>
-          <div class="gig-month">${dateObj.month}</div>
+          <div class="gig-day">${day}</div>
+          <div class="gig-month">${month}</div>
         </div>
-        <div class="gig-info" style="flex:1;">
-          <div class="gig-venue" style="font-weight:700; color:#fff; font-size:15px; margin-bottom:4px;">
-            🎧 ${b.djName || b.dj_name || 'DJ'}
-          </div>
-          <div class="gig-details" style="display:flex; flex-wrap:wrap; gap:8px; color:var(--MUTED); font-size:13px;">
-            ${b.type ? `<span>🎵 ${b.type}</span>` : ''}
+        <div class="gig-info">
+          <div class="gig-venue">🎧 ${djName}</div>
+          <div class="gig-details">
+            ${b.type ? `<span>${b.type}</span>` : ''}
             ${b.city ? `<span>📍 ${b.city}</span>` : ''}
             ${b.start ? `<span>⏰ ${b.start}${b.end ? ' → ' + b.end : ''}</span>` : ''}
           </div>
         </div>
-        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
-          <div style="font-family:Barlow Condensed; font-weight:900; font-size:24px; color:var(--Y);">
-            ${b.budget || b.amount || 0}€
-          </div>
-          <div style="padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700;
-                      background:rgba(0,200,100,.15); color:#00c864;">
-            ✅ Confirmé
-          </div>
+        <div class="gig-right">
+          <div class="gig-fee">${b.budget || b.amount || 0}€</div>
+          <div class="gig-status status-confirmed">Confirmé</div>
+          <button class="btn btn-sm btn-outline" style="margin-top:8px; font-size:12px;"
+                  onclick="event.stopPropagation(); openRateDJModal('${djId}', '${djName.replace(/'/g, "\\'")}')">
+            ⭐ Laisser un avis
+          </button>
         </div>
       </div>
     `}).join('');

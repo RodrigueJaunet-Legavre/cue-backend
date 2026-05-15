@@ -1774,9 +1774,7 @@
   }
 
   function renderCalendar() {
-    if (!gigs || !gigs.length) {
-      gigs = JSON.parse(localStorage.getItem('cue_gigs') || '[]');
-    }
+    gigs = JSON.parse(localStorage.getItem('cue_gigs') || '[]');
     const year = calendarDate.getFullYear();
     const month = calendarDate.getMonth();
     const months = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
@@ -2667,15 +2665,17 @@
         const exists = gigs.find(g => g.bookingId === booking.id);
         if (!exists) {
           hasNew = true;
+          const rawDate = booking.event_date || booking.date || '';
+          const normalizedDate = rawDate.includes('T') ? rawDate.split('T')[0] : rawDate;
           gigs.push({
             id: Date.now().toString() + Math.random(),
             bookingId: booking.id,
             venue: booking.venue_name || 'Venue',
             city: booking.city || '',
-            date: booking.event_date,
+            date: normalizedDate,
             start: booking.start_time || '',
             end: booking.end_time || '',
-            fee: booking.amount || 0,
+            fee: parseFloat(booking.amount) || 0,
             status: 'confirmed',
             source: 'cue',
             type: booking.event_type || 'Soirée',
