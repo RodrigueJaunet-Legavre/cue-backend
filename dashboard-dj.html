@@ -1271,6 +1271,7 @@
   const user = JSON.parse(localStorage.getItem('cue_user') || '{}');
   let gigs = JSON.parse(localStorage.getItem('cue_gigs') || '[]');
   let reviews = JSON.parse(localStorage.getItem('cue_reviews') || '[]');
+  let allReviews = [];
   let calendarDate = new Date();
   let conversations = [];
   let currentConv = null;
@@ -1360,8 +1361,8 @@
       stopPolling();
     }
     if (page === 'calendar') renderCalendar();
-    if (page === 'gigs') renderGigs('all');
-    if (page === 'reviews') renderReviews();
+    if (page === 'gigs') { await syncConfirmedBookings(); renderGigs(currentGigFilter || 'all'); }
+    if (page === 'reviews') await loadReviews();
     if (page === 'earnings') renderEarnings();
     if (page === 'contact') initContactPage();
     if (page === 'verification') initVerificationPage();
@@ -1644,12 +1645,12 @@
   }
 
   function gigHTML(g) {
-    const d = new Date(g.date);
+    const d = new Date(g.date + 'T12:00:00');
     const months = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
     const statusClass = { confirmed:'status-confirmed', pending:'status-pending', canceled:'status-canceled', past:'status-past', external:'status-external' };
     const statusLabel = { confirmed:'✅ Confirmé', pending:'⏳ En attente', canceled:'❌ Annulé', past:'📁 Passé', external:'🔗 Externe' };
     return `
-      <div class="gig-item">
+      <div class="gig-item" style="cursor:pointer;" onclick="openGigDetail(${JSON.stringify(g).replace(/"/g, '&quot;')})">
         <div class="gig-date">
           <div class="gig-date-day">${d.getDate()}</div>
           <div class="gig-date-month">${months[d.getMonth()]}</div>
@@ -1657,8 +1658,8 @@
         <div class="gig-divider"></div>
         <div class="gig-info">
           <div class="gig-venue">${g.venue}</div>
-          <div class="gig-location">📍 ${g.city}</div>
-          <div class="gig-time">🕐 ${g.time}</div>
+          ${g.city ? `<div class="gig-location">📍 ${g.city}</div>` : ''}
+          ${g.start ? `<div class="gig-time">🕐 ${g.start}${g.end ? ' → ' + g.end : ''}</div>` : ''}
         </div>
         <div style="text-align:right;">
           <div class="gig-amount">${g.fee ? g.fee + '€' : '—'}</div>
@@ -1668,7 +1669,48 @@
     `;
   }
 
+  function openGigDetail(g) {
+    let modal = document.getElementById('modal-event-detail');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'modal-event-detail';
+      modal.className = 'modal';
+      document.body.appendChild(modal);
+    }
+    modal.innerHTML = `
+      <div class="modal-card" style="max-width:500px;">
+        <h2 class="modal-title">📅 Détails du gig</h2>
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          ${g.bookingId ? `<div style="background:rgba(255,195,0,.1); border:1px solid rgba(255,195,0,.3); border-radius:10px; padding:12px 16px; color:var(--Y); font-weight:700; font-size:13px;">✓ Booking confirmé via CUE</div>` : ''}
+          <div>
+            <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">VENUE / CLIENT</div>
+            <div style="font-weight:700; font-size:20px; color:#fff;">${g.venue || '—'}</div>
+          </div>
+          <div>
+            <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">DATE</div>
+            <div style="font-weight:600; color:#fff;">${new Date(g.date + 'T12:00:00').toLocaleDateString('fr-FR', {weekday:'long', year:'numeric', month:'long', day:'numeric'})}</div>
+          </div>
+          ${g.start ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">HORAIRES</div><div style="font-weight:600; color:#fff;">${g.start}${g.end ? ' → ' + g.end : ''}</div></div>` : ''}
+          ${g.city ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">LIEU</div><div style="font-weight:600; color:#fff;">${g.city}</div></div>` : ''}
+          ${g.type ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">TYPE</div><div style="font-weight:600; color:#fff;">${g.type}</div></div>` : ''}
+          <div>
+            <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">CACHET</div>
+            <div style="font-family:Barlow Condensed; font-weight:900; font-size:32px; color:var(--Y);">${g.fee || 0}€</div>
+          </div>
+          ${g.notes ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">NOTES</div><div style="color:var(--MUTED); font-size:14px; line-height:1.6;">${g.notes}</div></div>` : ''}
+        </div>
+        <div class="modal-actions" style="margin-top:24px;">
+          <button class="btn btn-outline" onclick="closeModal('modal-event-detail')">Fermer</button>
+        </div>
+      </div>
+    `;
+    modal.classList.add('open');
+  }
+
+  let currentGigFilter = 'all';
+
   function filterGigs(filter, el) {
+    currentGigFilter = filter;
     document.querySelectorAll('#page-gigs .tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
     renderGigs(filter);
@@ -1702,6 +1744,9 @@
   }
 
   function renderCalendar() {
+    if (!gigs || !gigs.length) {
+      gigs = JSON.parse(localStorage.getItem('cue_gigs') || '[]');
+    }
     const year = calendarDate.getFullYear();
     const month = calendarDate.getMonth();
     const months = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
@@ -1790,19 +1835,58 @@
     return `<span style="color:var(--Y);">${stars}</span><span style="color:#fff; font-weight:700; margin-left:6px;">${r > 0 ? r.toFixed(1) : ''}</span><span style="color:var(--MUTED); font-size:13px; margin-left:4px;">(${avisText})</span>`;
   }
 
-  function renderReviews() {
-    const avg = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : null;
-    const count = reviews.length;
+  async function loadReviews() {
+    if (!user.id) return;
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_reviews', djId: user.id })
+      });
+      const data = await res.json();
+      if (data.reviews) {
+        allReviews = data.reviews;
+        reviews = data.reviews;
+      }
+    } catch (err) {
+      console.log('Erreur loadReviews:', err.message);
+    }
+    renderReviews();
+  }
+
+  function renderReviews(filter) {
+    const list = allReviews.length ? allReviews : reviews;
+    let filtered = list;
+    if (filter === 'recent') {
+      const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      filtered = list.filter(r => new Date(r.created_at || r.date) >= cutoff);
+    } else if (filter === 'positive') {
+      filtered = list.filter(r => parseFloat(r.rating) >= 4);
+    } else if (filter === 'negative') {
+      filtered = list.filter(r => parseFloat(r.rating) <= 2);
+    }
+
+    const avg = list.length ? (list.reduce((s, r) => s + parseFloat(r.rating), 0) / list.length).toFixed(1) : null;
+    const count = list.length;
     document.getElementById('avg-rating').textContent = avg || '—';
     document.getElementById('avg-stars').textContent = avg ? '★'.repeat(Math.round(avg)) + '☆'.repeat(5 - Math.round(avg)) : '☆☆☆☆☆';
     document.getElementById('reviews-count').textContent = count === 0 ? '0 avis' : count === 1 ? '1 avis' : `${count} avis`;
     document.getElementById('sidebar-stars').textContent = avg ? '★'.repeat(Math.round(avg)) + ' ' + avg : '★★★★★';
-    if (!reviews.length) return;
-    document.getElementById('reviews-list').innerHTML = reviews.map(r => `
+
+    if (!filtered.length) {
+      document.getElementById('reviews-list').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-emoji">⭐</div>
+          <div class="empty-title">Aucun avis pour l'instant</div>
+          <div class="empty-sub">Les venues qui t'ont booké pourront te noter ici</div>
+        </div>`;
+      return;
+    }
+    document.getElementById('reviews-list').innerHTML = filtered.map(r => `
       <div class="review-item">
-        <div class="review-header"><span class="review-venue">${r.venue || r.venue_name || '—'}</span><span class="review-date">${new Date(r.date || r.created_at).toLocaleDateString('fr-FR')}</span></div>
-        <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)} <span style="color:var(--MUTED); font-size:12px;">(${r.rating}/5)</span></div>
-        <div class="review-text">${r.comment}</div>
+        <div class="review-header"><span class="review-venue">${r.venue_name || r.venue || '—'}</span><span class="review-date">${new Date(r.created_at || r.date).toLocaleDateString('fr-FR')}</span></div>
+        <div class="review-stars">${'★'.repeat(Math.round(parseFloat(r.rating)))}${'☆'.repeat(5 - Math.round(parseFloat(r.rating)))} <span style="color:var(--MUTED); font-size:12px;">(${r.rating}/5)</span></div>
+        <div class="review-text">${r.comment || ''}</div>
       </div>
     `).join('');
   }
@@ -2532,9 +2616,11 @@
       const data = await res.json();
       if (!data.bookings) return;
 
+      let hasNew = false;
       data.bookings.forEach(booking => {
         const exists = gigs.find(g => g.bookingId === booking.id);
         if (!exists) {
+          hasNew = true;
           gigs.push({
             id: Date.now().toString() + Math.random(),
             bookingId: booking.id,
@@ -2552,10 +2638,14 @@
           });
         }
       });
-      localStorage.setItem('cue_gigs', JSON.stringify(gigs));
-      renderUpcomingGigs();
-      renderCalendar();
-      loadStats();
+
+      if (hasNew) {
+        localStorage.setItem('cue_gigs', JSON.stringify(gigs));
+        renderUpcomingGigs();
+        renderCalendar();
+        renderGigs(currentGigFilter || 'confirmed');
+        loadStats();
+      }
     } catch(err) {
       console.log('Erreur sync bookings:', err);
     }

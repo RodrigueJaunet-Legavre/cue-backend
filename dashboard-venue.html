@@ -625,9 +625,9 @@
       </div>
     </div>
     <div class="tabs">
-      <div class="tab active" onclick="filterBookings('all', this)">Tous</div>
-      <div class="tab" onclick="filterBookings('upcoming', this)">À venir</div>
-      <div class="tab" onclick="filterBookings('past', this)">Passés</div>
+      <div class="tab active" onclick="document.querySelectorAll('#page-bookings .tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');renderVenueBookings('all')">Tous</div>
+      <div class="tab" onclick="document.querySelectorAll('#page-bookings .tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');renderVenueBookings('upcoming')">À venir</div>
+      <div class="tab" onclick="document.querySelectorAll('#page-bookings .tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');renderVenueBookings('past')">Passés</div>
     </div>
     <div class="card">
       <div id="bookings-list">
@@ -1006,6 +1006,7 @@
   let favorites = JSON.parse(localStorage.getItem('cue_favorites') || '[]');
   let bookings = JSON.parse(localStorage.getItem('cue_venue_bookings') || '[]');
   let venueBookings = bookings;
+  let allReviews = [];
   let calendarDate = new Date();
   let currentRating = 0;
   let currentDJ = null;
@@ -1131,6 +1132,8 @@
     if (page === 'messages') await loadVenueConversations();
     if (page === 'contact') initContactPage();
     if (page === 'verification') initVerificationPage();
+    if (page === 'bookings') { await loadVenueBookings(); renderVenueBookings(); }
+    if (page === 'reviews') await loadMyReviews();
   }
 
   function loadStats() {
@@ -1590,8 +1593,7 @@
           bookings = venueBookings;
           localStorage.setItem('venue_bookings', JSON.stringify(venueBookings));
           renderCalendar();
-          if (typeof renderBookings === 'function') renderBookings();
-          if (typeof renderUpcomingBookings === 'function') renderUpcomingBookings();
+          renderVenueBookings();
           loadStats();
         }
         alert('🎉 Booking confirmé ! Le gig est ajouté à votre calendrier.');
@@ -1670,27 +1672,126 @@
     }
   }
 
-  function filterBookings(filter, el) {
-    document.querySelectorAll('#page-bookings .tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-    let filtered = bookings;
-    const now = new Date();
-    if (filter === 'upcoming') filtered = bookings.filter(b => new Date(b.date) >= now);
-    else if (filter === 'past') filtered = bookings.filter(b => new Date(b.date) < now);
-    const list = document.getElementById('bookings-list');
-    if (!filtered.length) { list.innerHTML = '<div class="empty-state"><div class="empty-emoji">🎤</div><div class="empty-title">Aucun booking</div></div>'; return; }
-    list.innerHTML = filtered.map(b => `
-      <div style="padding:20px 24px;border-bottom:1px solid rgba(255,195,0,.06);display:flex;align-items:center;gap:20px;">
-        <div style="font-size:32px;">🎧</div>
-        <div style="flex:1;">
-          <div style="font-weight:700;font-size:15px;color:#fff;">${b.djName}</div>
-          <div style="color:var(--MUTED);font-size:13px;margin-top:2px;">${b.type} • ${b.date} • ${b.start}→${b.end}</div>
+  function renderVenueBookings(filter) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let filtered = venueBookings || bookings || [];
+
+    if (filter === 'upcoming') {
+      filtered = filtered.filter(b => new Date(b.date) >= today);
+    } else if (filter === 'past') {
+      filtered = filtered.filter(b => new Date(b.date) < today);
+    }
+
+    filtered = [...filtered].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    const container = document.getElementById('bookings-list');
+    if (!container) return;
+
+    if (!filtered.length) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-emoji">📅</div>
+          <div class="empty-title">Aucun booking</div>
+          <div class="empty-sub">Vos bookings confirmés apparaîtront ici</div>
+          <button class="btn btn-primary" style="margin-top:16px;" onclick="showPage('find-dj', document.querySelectorAll('.nav-item')[1])">🔍 Trouver un DJ</button>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(b => `
+      <div class="gig-card" style="cursor:pointer;" onclick="openBookingDetail(${JSON.stringify(b).replace(/"/g, '&quot;')})">
+        <div class="gig-date">
+          <div class="gig-day">${new Date(b.date + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit' })}</div>
+          <div class="gig-month">${new Date(b.date + 'T12:00:00').toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase()}</div>
         </div>
-        <div style="text-align:right;">
-          <div style="font-family:'Barlow Condensed';font-weight:900;font-size:24px;color:var(--Y);">${b.budget}€</div>
-          <span style="background:rgba(255,170,0,.15);color:var(--PENDING);padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;">${b.status}</span>
+        <div class="gig-info">
+          <div class="gig-venue">🎧 ${b.djName || 'DJ'}</div>
+          <div class="gig-details">
+            ${b.type ? b.type + (b.city || b.start ? ' • ' : '') : ''}
+            ${b.city ? '📍 ' + b.city + (b.start ? ' • ' : '') : ''}
+            ${b.start ? '⏰ ' + b.start + (b.end ? ' → ' + b.end : '') : ''}
+          </div>
         </div>
-        <button class="btn btn-outline btn-sm" onclick="currentDJ=allDJs.find(d=>d.id==='${b.djId}');document.getElementById('modal-rate-dj').classList.add('open');">⭐ Noter</button>
+        <div class="gig-fee">${b.budget || 0}€</div>
+        <div class="gig-status status-confirmed">✅ Confirmé</div>
+      </div>
+    `).join('');
+  }
+
+  function openBookingDetail(b) {
+    let modal = document.getElementById('modal-event-detail');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'modal-event-detail';
+      modal.className = 'modal';
+      document.body.appendChild(modal);
+    }
+    modal.innerHTML = `
+      <div class="modal-card" style="max-width:500px;">
+        <h2 class="modal-title">📅 Détails du booking</h2>
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div style="background:rgba(255,195,0,.1); border:1px solid rgba(255,195,0,.3); border-radius:10px; padding:12px 16px; color:var(--Y); font-weight:700; font-size:13px;">✓ Booking confirmé via CUE</div>
+          <div>
+            <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">DJ</div>
+            <div style="font-weight:700; font-size:20px; color:#fff;">${b.djName || '—'}</div>
+          </div>
+          <div>
+            <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">DATE</div>
+            <div style="font-weight:600; color:#fff;">${new Date(b.date + 'T12:00:00').toLocaleDateString('fr-FR', {weekday:'long', year:'numeric', month:'long', day:'numeric'})}</div>
+          </div>
+          ${b.start ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">HORAIRES</div><div style="font-weight:600; color:#fff;">${b.start}${b.end ? ' → ' + b.end : ''}</div></div>` : ''}
+          ${b.city ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">LIEU</div><div style="font-weight:600; color:#fff;">${b.city}</div></div>` : ''}
+          ${b.type ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">TYPE</div><div style="font-weight:600; color:#fff;">${b.type}</div></div>` : ''}
+          <div>
+            <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">CACHET</div>
+            <div style="font-family:Barlow Condensed; font-weight:900; font-size:32px; color:var(--Y);">${b.budget || 0}€</div>
+          </div>
+          ${b.notes ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">NOTES</div><div style="color:var(--MUTED); font-size:14px; line-height:1.6;">${b.notes}</div></div>` : ''}
+        </div>
+        <div class="modal-actions" style="margin-top:24px;">
+          <button class="btn btn-outline" onclick="closeModal('modal-event-detail')">Fermer</button>
+        </div>
+      </div>
+    `;
+    modal.classList.add('open');
+  }
+
+  async function loadMyReviews() {
+    if (!user.id) return;
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_venue_reviews', venueId: user.id })
+      });
+      const data = await res.json();
+      if (data.reviews) allReviews = data.reviews;
+    } catch (err) {
+      console.log('Erreur loadMyReviews:', err.message);
+    }
+    renderMyReviews();
+  }
+
+  function renderMyReviews() {
+    const list = allReviews;
+    if (!list.length) {
+      document.getElementById('given-reviews-list').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-emoji">⭐</div>
+          <div class="empty-title">Aucun avis donné</div>
+          <div class="empty-sub">Note un DJ après un booking</div>
+        </div>`;
+      return;
+    }
+    document.getElementById('given-reviews-list').innerHTML = list.map(r => `
+      <div class="review-item">
+        <div class="review-header">
+          <span class="review-venue">${r.dj_name || '—'}</span>
+          <span class="review-date">${new Date(r.created_at || r.date).toLocaleDateString('fr-FR')}</span>
+        </div>
+        <div class="review-stars">${'★'.repeat(Math.round(parseFloat(r.rating)))}${'☆'.repeat(5 - Math.round(parseFloat(r.rating)))} <span style="color:var(--MUTED); font-size:12px;">(${r.rating}/5)</span></div>
+        <div class="review-text">${r.comment || ''}</div>
       </div>
     `).join('');
   }

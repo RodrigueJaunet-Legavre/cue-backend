@@ -278,9 +278,40 @@ module.exports = async function handler(req, res) {
   if (action === 'get_reviews') {
     const { djId } = body;
     try {
-      const reviews = await sql`SELECT * FROM reviews WHERE dj_id = ${djId} ORDER BY created_at DESC`;
-      const avg = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : 0;
-      return res.status(200).json({ reviews, avgRating: avg, totalReviews: reviews.length });
+      const reviews = await sql`
+        SELECT r.*, u.first_name as venue_first_name, u.last_name as venue_last_name, u.picture as venue_picture
+        FROM reviews r
+        LEFT JOIN users u ON r.venue_id = u.id
+        WHERE r.dj_id = ${djId}
+        ORDER BY r.created_at DESC
+      `;
+      const enriched = reviews.map(r => ({
+        ...r,
+        venue_name: r.venue_name || ((r.venue_first_name || '') + ' ' + (r.venue_last_name || '')).trim() || 'Venue'
+      }));
+      const avg = enriched.length ? (enriched.reduce((s, r) => s + parseFloat(r.rating), 0) / enriched.length).toFixed(1) : 0;
+      return res.status(200).json({ reviews: enriched, avgRating: avg, totalReviews: enriched.length });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  if (action === 'get_venue_reviews') {
+    const { venueId } = body;
+    try {
+      const reviews = await sql`
+        SELECT r.*, u.first_name as dj_first_name, u.last_name as dj_last_name, u.picture as dj_picture
+        FROM reviews r
+        LEFT JOIN users u ON r.dj_id = u.id
+        WHERE r.venue_id = ${venueId}
+        ORDER BY r.created_at DESC
+      `;
+      const enriched = reviews.map(r => ({
+        ...r,
+        dj_name: r.dj_name || ((r.dj_first_name || '') + ' ' + (r.dj_last_name || '')).trim() || 'DJ'
+      }));
+      const avg = enriched.length ? (enriched.reduce((s, r) => s + parseFloat(r.rating), 0) / enriched.length).toFixed(1) : 0;
+      return res.status(200).json({ reviews: enriched, avgRating: avg, totalReviews: enriched.length });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
