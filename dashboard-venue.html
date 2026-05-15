@@ -982,7 +982,7 @@
 <!-- MODAL CONTACT DJ -->
 <div id="modal-contact-dj" class="modal">
   <div class="modal-card">
-    <h2 class="modal-title">💬 ENVOYER UNE OFFRE</h2>
+    <h2 class="modal-title">💬 ENVOYER UNE OFFRE À <span id="contact-dj-name" style="color:var(--Y);">DJ</span></h2>
     <div class="form-group"><label class="form-label">Date de l'événement</label><input type="date" id="offer-date" class="form-input"></div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
       <div class="form-group"><label class="form-label">Heure de début</label><input type="time" id="offer-start" class="form-input" value="23:00"></div>
@@ -992,10 +992,11 @@
     <div class="form-group"><label class="form-label">Type d'événement</label>
       <select id="offer-type" class="form-input"><option>Soirée club</option><option>Mariage</option><option>Festival</option><option>Événement privé</option><option>Corporate</option></select>
     </div>
-    <div class="form-group"><label class="form-label">Message</label><textarea id="offer-message" class="form-input" rows="4" placeholder="Bonjour, nous organisons..."></textarea></div>
+    <div class="form-group"><label class="form-label">Ville</label><input type="text" id="offer-city" class="form-input" placeholder="Paris"></div>
+    <div class="form-group"><label class="form-label">Message</label><textarea id="offer-message" class="form-input" rows="3" placeholder="Bonjour, nous organisons..."></textarea></div>
     <div class="modal-actions">
       <button class="btn btn-outline" onclick="closeModal('modal-contact-dj')">Annuler</button>
-      <button class="btn btn-primary" onclick="sendOffer()">Envoyer l'offre ✓</button>
+      <button class="btn btn-primary" id="send-offer-btn" onclick="sendOffer()">Envoyer l'offre ✓</button>
     </div>
   </div>
 </div>
@@ -1299,76 +1300,97 @@
 
   function contactDJFromModal() { closeModal('modal-dj-profile'); openContactModal(currentDJ.id); }
 
+  let currentContactDJ = null;
+
   function openContactModal(djId, djName) {
-    currentDJ = allDJs.find(dj => dj.id === djId) || { id: djId, firstName: djName || 'DJ', lastName: '', first_name: djName || 'DJ', last_name: '' };
+    currentContactDJ = allDJs.find(d => d.id === djId) || {
+      id: djId,
+      firstName: djName?.split(' ')[0] || 'DJ',
+      lastName: djName?.split(' ').slice(1).join(' ') || '',
+      first_name: djName?.split(' ')[0] || 'DJ',
+      last_name: djName?.split(' ').slice(1).join(' ') || ''
+    };
+    // Keep currentDJ in sync for other modal functions
+    currentDJ = currentContactDJ;
+
+    console.log('openContactModal currentContactDJ:', currentContactDJ);
+
+    const name = ((currentContactDJ.first_name || currentContactDJ.firstName || '') + ' ' +
+                  (currentContactDJ.last_name || currentContactDJ.lastName || '')).trim() || djName || 'DJ';
+
+    document.getElementById('contact-dj-name').textContent = name;
     document.getElementById('modal-contact-dj').classList.add('open');
-    // Pre-fill nav to messages page in background
-    showPage('messages', document.querySelector('.nav-item[onclick*="messages"]'));
   }
 
   async function sendOffer() {
-    if (!currentDJ) return;
-
-    const offer = {
-      date: document.getElementById('offer-date').value,
-      start: document.getElementById('offer-start').value,
-      end: document.getElementById('offer-end').value,
-      budget: document.getElementById('offer-budget').value,
-      type: document.getElementById('offer-type').value,
-      message: document.getElementById('offer-message').value,
-      city: user.city || ''
+    const form = {
+      type: document.getElementById('offer-type')?.value || '',
+      date: document.getElementById('offer-date')?.value || '',
+      start: document.getElementById('offer-start')?.value || '',
+      end: document.getElementById('offer-end')?.value || '',
+      budget: document.getElementById('offer-budget')?.value || '',
+      city: document.getElementById('offer-city')?.value || '',
+      message: document.getElementById('offer-message')?.value || ''
     };
 
-    if (!offer.date || !offer.budget) {
-      alert('Remplis la date et le budget.');
+    if (!form.date || !form.budget) {
+      alert('La date et le budget sont obligatoires.');
       return;
     }
 
-    const convId = [user.id, currentDJ.id].sort().join('_');
+    const djId = currentContactDJ?.id || currentContactDJ?.user_id;
+    const djName = currentContactDJ
+      ? ((currentContactDJ.first_name || currentContactDJ.firstName || '') + ' ' +
+         (currentContactDJ.last_name || currentContactDJ.lastName || '')).trim() || 'DJ'
+      : 'DJ';
 
-    const djFirstName = currentDJ.firstName || currentDJ.first_name || 'DJ';
-    const djLastName = currentDJ.lastName || currentDJ.last_name || '';
-    const venueFirstName = user.first_name || user.firstName || '';
-    const venueLastName = user.last_name || user.lastName || '';
+    const venueId = user.id || user.user_id;
+    const venueName = ((user.first_name || user.firstName || '') + ' ' +
+                       (user.last_name || user.lastName || '')).trim() || 'Venue';
+
+    console.log('sendOffer djId:', djId, 'djName:', djName);
+    console.log('sendOffer venueId:', venueId, 'venueName:', venueName);
+
+    if (!djId) { alert('Erreur: DJ non trouvé. Réessaie.'); return; }
+
+    const btn = document.getElementById('send-offer-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Envoi...'; }
 
     try {
-      await fetch('/api/messages', {
+      const convId = [djId, venueId].sort().join('_');
+
+      const res = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'send_message',
           convId,
-          djId: currentDJ.id,
-          venueId: user.id,
-          djName: (djFirstName + ' ' + djLastName).trim(),
-          venueName: (venueFirstName + ' ' + venueLastName).trim(),
+          djId,
+          venueId,
+          djName,
+          venueName,
           senderType: 'venue',
           message: {
-            senderId: user.id,
-            senderName: (venueFirstName + ' ' + venueLastName).trim(),
-            content: `Offre de booking — ${offer.type} le ${offer.date}`,
+            senderId: venueId,
+            senderName: venueName,
+            content: `Offre de booking — ${form.type} le ${form.date}`,
             type: 'offer',
-            offerData: offer
+            offerData: form
           }
         })
       });
+
+      if (res.ok) {
+        closeModal('modal-contact-dj');
+        alert(`✅ Offre envoyée à ${djName} !`);
+        if (btn) { btn.disabled = false; btn.textContent = 'Envoyer l\'offre ✓'; }
+      } else {
+        throw new Error('Erreur serveur');
+      }
     } catch (err) {
-      console.log('Erreur envoi offre:', err);
+      alert('Erreur : ' + err.message);
+      if (btn) { btn.disabled = false; btn.textContent = 'Envoyer l\'offre ✓'; }
     }
-
-    bookings.unshift({
-      id: Date.now().toString(),
-      djId: currentDJ.id,
-      djName: currentDJ.firstName + ' ' + currentDJ.lastName,
-      ...offer,
-      status: 'pending',
-      createdAt: new Date().toISOString()
-    });
-    localStorage.setItem('cue_venue_bookings', JSON.stringify(bookings));
-
-    closeModal('modal-contact-dj');
-    loadStats();
-    alert('✅ Offre envoyée à ' + currentDJ.firstName + ' !');
   }
 
   async function loadVenueConversations() {
@@ -1557,19 +1579,22 @@
       if (res.ok && responseData.success) {
         const b = responseData.booking;
         if (b) {
+          if (!venueBookings) venueBookings = [];
           const newBooking = {
             id: b.id, djId: b.dj_id, djName: b.dj_name,
             date: b.event_date, start: b.start_time, end: b.end_time,
             type: b.event_type, budget: b.amount,
             city: b.city, notes: b.notes, status: 'confirmed'
           };
-          bookings.push(newBooking);
-          venueBookings = bookings;
-          localStorage.setItem('cue_venue_bookings', JSON.stringify(bookings));
+          venueBookings.push(newBooking);
+          bookings = venueBookings;
+          localStorage.setItem('venue_bookings', JSON.stringify(venueBookings));
           renderCalendar();
+          if (typeof renderBookings === 'function') renderBookings();
+          if (typeof renderUpcomingBookings === 'function') renderUpcomingBookings();
           loadStats();
         }
-        alert('🎉 Booking confirmé ! Le gig a été ajouté à votre calendrier.');
+        alert('🎉 Booking confirmé ! Le gig est ajouté à votre calendrier.');
         pendingMessageId = null;
         pendingOfferData = {};
         await loadVenueMessages(currentVenueConv.id);
