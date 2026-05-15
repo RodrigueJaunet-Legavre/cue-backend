@@ -123,6 +123,28 @@
     .tab:hover { border-color:var(--Y); color:var(--Y); }
     .tab.active { background:var(--Y); color:#000; border-color:var(--Y); }
 
+    /* GIGS / BOOKINGS */
+    .gig-item {
+      display:flex; align-items:center; gap:20px; padding:20px 24px;
+      border-bottom:1px solid rgba(255,195,0,.06); transition:background .2s; cursor:pointer;
+    }
+    .gig-item:hover { background:rgba(255,195,0,.03); }
+    .gig-item:last-child { border-bottom:none; }
+    .gig-date { text-align:center; min-width:50px; }
+    .gig-date-day { font-size:28px; font-weight:900; color:#fff; font-family:'Barlow Condensed',sans-serif; line-height:1; }
+    .gig-date-month { font-size:11px; color:var(--Y); font-weight:700; text-transform:uppercase; }
+    .gig-divider { width:1px; height:50px; background:var(--BORDER); }
+    .gig-info { flex:1; }
+    .gig-venue { font-weight:700; font-size:15px; color:#fff; }
+    .gig-location { color:var(--MUTED); font-size:13px; margin-top:2px; }
+    .gig-time { color:var(--MUTED); font-size:13px; margin-top:2px; }
+    .gig-amount { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:24px; color:var(--Y); }
+    .gig-status { padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700; }
+    .status-confirmed { background:rgba(0,200,100,.15); color:var(--SUCCESS); }
+    .status-pending { background:rgba(255,170,0,.15); color:var(--PENDING); }
+    .status-canceled { background:rgba(255,68,68,.15); color:var(--ERROR); }
+    .status-past { background:rgba(255,255,255,.08); color:var(--MUTED); }
+
     /* MESSAGES */
     .message-item {
       display:flex; gap:16px; padding:20px 24px;
@@ -238,6 +260,9 @@
 
   <div class="nav-section">
     <div class="nav-section-title">Gestion</div>
+    <div class="nav-item" onclick="showPage('profile', this)">
+      <span class="nav-icon">👤</span> Mon Profil
+    </div>
     <div class="nav-item" onclick="showPage('bookings', this)">
       <span class="nav-icon">🎤</span> Mes Bookings
     </div>
@@ -764,6 +789,130 @@
     </div>
   </div>
 
+  <!-- PROFIL VENUE -->
+  <div id="page-profile" class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">MON PROFIL</h1>
+        <p class="page-sub">Votre profil visible par les DJs</p>
+      </div>
+    </div>
+    <div style="max-width:680px;">
+
+      <!-- Photo de profil -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header"><span class="card-title">📷 Photo de profil</span></div>
+        <div class="card-body" style="display:flex; align-items:center; gap:24px;">
+          <div id="venue-profile-avatar" style="width:96px; height:96px; border-radius:50%; background:#1a1a1a; border:2px solid var(--BORDER); display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">
+            <span style="font-size:36px;">🏛️</span>
+          </div>
+          <div>
+            <input type="file" id="profile-photo-input" accept="image/*" style="display:none" onchange="handleProfilePhoto(this)">
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('profile-photo-input').click()">Changer la photo</button>
+            <p style="color:var(--MUTED); font-size:12px; margin-top:8px;">JPG ou PNG · Max 5MB</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header"><span class="card-title">ℹ️ Informations</span></div>
+        <div class="card-body" style="display:flex; flex-direction:column; gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea id="venue-description" rows="4" class="form-input"
+                      placeholder="Décrivez votre lieu, votre style d'événements..."
+                      oninput="showSaveBar()"></textarea>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div class="form-group">
+              <label class="form-label">Ville</label>
+              <input type="text" id="venue-city" class="form-input" placeholder="Paris" oninput="showSaveBar()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Site web</label>
+              <input type="url" id="venue-website" class="form-input" placeholder="https://monclub.fr" oninput="showSaveBar()">
+            </div>
+          </div>
+          <div id="org-fields-profile" style="display:none; display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div class="form-group">
+              <label class="form-label">Nom de l'organisation</label>
+              <input type="text" id="org-name-profile" class="form-input" placeholder="Club XYZ" oninput="showSaveBar()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">SIRET / SIREN</label>
+              <input type="text" id="org-siret-profile" class="form-input" placeholder="123 456 789" oninput="showSaveBar()">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Photos du lieu -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header"><span class="card-title">🖼️ Photos du lieu</span></div>
+        <div class="card-body">
+          <p style="color:var(--MUTED); font-size:13px; margin-bottom:16px;">Ajoutez jusqu'à 3 photos de votre lieu pour inspirer confiance aux DJs.</p>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px;">
+            <div style="position:relative;">
+              <div id="photo-zone-0" style="aspect-ratio:4/3; border-radius:12px; border:2px dashed var(--BORDER); display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; background:#0a0a0a; transition:all .2s;"
+                   onclick="document.getElementById('photo-input-0').click()"
+                   onmouseover="this.style.borderColor='var(--Y)'" onmouseout="this.style.borderColor='var(--BORDER)'">
+                <div id="photo-placeholder-0" style="text-align:center; padding:20px;">
+                  <div style="font-size:28px; color:#444;">+</div>
+                  <div style="color:#666; font-size:12px; margin-top:4px;">Photo 1</div>
+                </div>
+                <img id="photo-preview-0" style="display:none; width:100%; height:100%; object-fit:cover;">
+              </div>
+              <input type="file" id="photo-input-0" accept="image/*" style="display:none" onchange="handleVenuePhotoProfile(this,0)">
+              <button id="photo-remove-0" onclick="removeVenuePhoto(0)"
+                      style="display:none; position:absolute; top:8px; right:8px; background:rgba(0,0,0,.7); color:#fff; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:14px; align-items:center; justify-content:center;">✕</button>
+            </div>
+            <div style="position:relative;">
+              <div id="photo-zone-1" style="aspect-ratio:4/3; border-radius:12px; border:2px dashed var(--BORDER); display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; background:#0a0a0a; transition:all .2s;"
+                   onclick="document.getElementById('photo-input-1').click()"
+                   onmouseover="this.style.borderColor='var(--Y)'" onmouseout="this.style.borderColor='var(--BORDER)'">
+                <div id="photo-placeholder-1" style="text-align:center; padding:20px;">
+                  <div style="font-size:28px; color:#444;">+</div>
+                  <div style="color:#666; font-size:12px; margin-top:4px;">Photo 2</div>
+                </div>
+                <img id="photo-preview-1" style="display:none; width:100%; height:100%; object-fit:cover;">
+              </div>
+              <input type="file" id="photo-input-1" accept="image/*" style="display:none" onchange="handleVenuePhotoProfile(this,1)">
+              <button id="photo-remove-1" onclick="removeVenuePhoto(1)"
+                      style="display:none; position:absolute; top:8px; right:8px; background:rgba(0,0,0,.7); color:#fff; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:14px; align-items:center; justify-content:center;">✕</button>
+            </div>
+            <div style="position:relative;">
+              <div id="photo-zone-2" style="aspect-ratio:4/3; border-radius:12px; border:2px dashed var(--BORDER); display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; background:#0a0a0a; transition:all .2s;"
+                   onclick="document.getElementById('photo-input-2').click()"
+                   onmouseover="this.style.borderColor='var(--Y)'" onmouseout="this.style.borderColor='var(--BORDER)'">
+                <div id="photo-placeholder-2" style="text-align:center; padding:20px;">
+                  <div style="font-size:28px; color:#444;">+</div>
+                  <div style="color:#666; font-size:12px; margin-top:4px;">Photo 3</div>
+                </div>
+                <img id="photo-preview-2" style="display:none; width:100%; height:100%; object-fit:cover;">
+              </div>
+              <input type="file" id="photo-input-2" accept="image/*" style="display:none" onchange="handleVenuePhotoProfile(this,2)">
+              <button id="photo-remove-2" onclick="removeVenuePhoto(2)"
+                      style="display:none; position:absolute; top:8px; right:8px; background:rgba(0,0,0,.7); color:#fff; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:14px; align-items:center; justify-content:center;">✕</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barre de sauvegarde -->
+      <div id="save-bar" style="display:none; position:sticky; bottom:20px; background:var(--CARD);
+                                 border:1px solid var(--BORDER); border-radius:16px; padding:16px 24px;
+                                 align-items:center; justify-content:space-between;
+                                 box-shadow:0 8px 32px rgba(0,0,0,.5);">
+        <span style="color:var(--MUTED); font-size:14px;">Modifications non sauvegardées</span>
+        <div style="display:flex; gap:12px;">
+          <button onclick="resetProfileChanges()" class="btn btn-outline">Annuler</button>
+          <button id="save-profile-btn" onclick="saveVenueProfile()" class="btn btn-primary">💾 Sauvegarder</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- VERIFICATION PAGE -->
   <div id="page-verification" class="page">
     <div class="page-header"><h1 class="page-title">VÉRIFICATION D'IDENTITÉ</h1></div>
@@ -1039,6 +1188,9 @@
   let currentRating = 0;
   let currentRatingDJ = null;
   let currentDJ = null;
+  let venueProfilePhotoNew = null;
+  let venuePhotosNew = [null, null, null];
+  let venuePhotosSaved = [null, null, null];
   let allDJs = [];
   let currentVenueConv = null;
   let pendingOfferData = {};
@@ -1150,6 +1302,125 @@
     }
   }
 
+  function loadVenueProfile() {
+    if (user.picture) {
+      document.getElementById('venue-profile-avatar').innerHTML =
+        `<img src="${user.picture}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+    }
+    const descEl = document.getElementById('venue-description');
+    const cityEl = document.getElementById('venue-city');
+    const websiteEl = document.getElementById('venue-website');
+    if (descEl) descEl.value = user.description || '';
+    if (cityEl) cityEl.value = user.venue_city || '';
+    if (websiteEl) websiteEl.value = user.venue_website || '';
+    const orgNameEl = document.getElementById('org-name-profile');
+    const orgSiretEl = document.getElementById('org-siret-profile');
+    if (orgNameEl) orgNameEl.value = user.org_name || '';
+    if (orgSiretEl) orgSiretEl.value = user.org_siret || '';
+    if (user.venue_type === 'organisation') {
+      const orgFields = document.getElementById('org-fields-profile');
+      if (orgFields) orgFields.style.display = 'grid';
+    }
+    const photos = Array.isArray(user.venue_photos) ? user.venue_photos : [];
+    venuePhotosSaved = [photos[0] || null, photos[1] || null, photos[2] || null];
+    venuePhotosNew = [...venuePhotosSaved];
+    photos.forEach((photo, i) => {
+      if (photo && i < 3) {
+        document.getElementById(`photo-preview-${i}`).src = photo;
+        document.getElementById(`photo-preview-${i}`).style.display = 'block';
+        document.getElementById(`photo-placeholder-${i}`).style.display = 'none';
+        document.getElementById(`photo-remove-${i}`).style.display = 'flex';
+      }
+    });
+    hideSaveBar();
+  }
+
+  function handleProfilePhoto(input) {
+    const file = input.files[0];
+    if (!file || file.size > 5 * 1024 * 1024) { alert('Max 5MB.'); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      venueProfilePhotoNew = e.target.result;
+      document.getElementById('venue-profile-avatar').innerHTML =
+        `<img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+      showSaveBar();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleVenuePhotoProfile(input, index) {
+    const file = input.files[0];
+    if (!file || file.size > 5 * 1024 * 1024) { alert('Max 5MB.'); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      venuePhotosNew[index] = e.target.result;
+      document.getElementById(`photo-preview-${index}`).src = e.target.result;
+      document.getElementById(`photo-preview-${index}`).style.display = 'block';
+      document.getElementById(`photo-placeholder-${index}`).style.display = 'none';
+      document.getElementById(`photo-remove-${index}`).style.display = 'flex';
+      showSaveBar();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeVenuePhoto(index) {
+    venuePhotosNew[index] = null;
+    document.getElementById(`photo-preview-${index}`).style.display = 'none';
+    document.getElementById(`photo-placeholder-${index}`).style.display = 'block';
+    document.getElementById(`photo-remove-${index}`).style.display = 'none';
+    showSaveBar();
+  }
+
+  function showSaveBar() {
+    const bar = document.getElementById('save-bar');
+    if (bar) bar.style.display = 'flex';
+  }
+
+  function hideSaveBar() {
+    const bar = document.getElementById('save-bar');
+    if (bar) bar.style.display = 'none';
+  }
+
+  function resetProfileChanges() {
+    hideSaveBar();
+    loadVenueProfile();
+  }
+
+  async function saveVenueProfile() {
+    const btn = document.getElementById('save-profile-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Sauvegarde...'; }
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_venue_profile',
+          userId: user.id,
+          picture: venueProfilePhotoNew || user.picture || '',
+          description: document.getElementById('venue-description')?.value || '',
+          city: document.getElementById('venue-city')?.value || '',
+          website: document.getElementById('venue-website')?.value || '',
+          orgName: document.getElementById('org-name-profile')?.value || '',
+          orgSiret: document.getElementById('org-siret-profile')?.value || '',
+          venuePhotos: venuePhotosNew.filter(Boolean)
+        })
+      });
+      const data = await res.json();
+      if (data.user) {
+        Object.assign(user, data.user);
+        localStorage.setItem('cue_user', JSON.stringify(user));
+        hideSaveBar();
+        if (btn) { btn.textContent = '✅ Sauvegardé !'; setTimeout(() => { btn.disabled = false; btn.textContent = '💾 Sauvegarder'; }, 2000); }
+      } else {
+        alert('Erreur : ' + (data.error || 'Réessaie.'));
+        if (btn) { btn.disabled = false; btn.textContent = '💾 Sauvegarder'; }
+      }
+    } catch (err) {
+      alert('Erreur. Réessaie.');
+      if (btn) { btn.disabled = false; btn.textContent = '💾 Sauvegarder'; }
+    }
+  }
+
   async function showPage(page, el) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -1163,6 +1434,7 @@
     if (page === 'verification') initVerificationPage();
     if (page === 'bookings') { await loadVenueBookings(); renderVenueBookings(); }
     if (page === 'reviews') await loadMyReviews();
+    if (page === 'profile') loadVenueProfile();
   }
 
   function loadStats() {
@@ -1754,36 +2026,36 @@
     }
 
     container.innerHTML = filtered.map(b => {
+      const months = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
       const rawDate = (b.date || '').split('T')[0];
-      const dateObj = rawDate ? new Date(rawDate + 'T00:00:00') : null;
-      const day = dateObj ? dateObj.toLocaleDateString('fr-FR', { day: '2-digit' }) : '??';
-      const month = dateObj ? dateObj.toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase() : '???';
+      const d = rawDate ? new Date(rawDate + 'T00:00:00') : null;
+      const dayNum = d && !isNaN(d) ? d.getDate() : '??';
+      const monthStr = d && !isNaN(d) ? months[d.getMonth()] : '???';
       const djId = b.djId || b.dj_id || '';
       const djName = b.djName || b.dj_name || 'DJ';
+      const safeB = JSON.stringify(b).replace(/"/g, '&quot;');
       return `
-      <div class="gig-card" style="cursor:pointer;"
-           onclick="openBookingDetail(${JSON.stringify(b).replace(/"/g, '&quot;')})"
-           onmouseover="this.style.borderColor='rgba(255,195,0,.4)'"
-           onmouseout="this.style.borderColor='var(--BORDER)'">
+      <div class="gig-item" onclick="openBookingDetail(${safeB})">
         <div class="gig-date">
-          <div class="gig-day">${day}</div>
-          <div class="gig-month">${month}</div>
+          <div class="gig-date-day">${dayNum}</div>
+          <div class="gig-date-month">${monthStr}</div>
         </div>
+        <div class="gig-divider"></div>
         <div class="gig-info">
           <div class="gig-venue">🎧 ${djName}</div>
-          <div class="gig-details">
-            ${b.type ? `<span>${b.type}</span>` : ''}
-            ${b.city ? `<span>📍 ${b.city}</span>` : ''}
-            ${b.start ? `<span>⏰ ${b.start}${b.end ? ' → ' + b.end : ''}</span>` : ''}
-          </div>
+          ${b.city ? `<div class="gig-location">📍 ${b.city}</div>` : ''}
+          ${b.start ? `<div class="gig-time">🕐 ${b.start}${b.end ? ' → ' + b.end : ''}</div>` : ''}
+          ${b.type ? `<div class="gig-time">${b.type}</div>` : ''}
         </div>
-        <div class="gig-right">
-          <div class="gig-fee">${b.budget || b.amount || 0}€</div>
-          <div class="gig-status status-confirmed">Confirmé</div>
-          <button class="btn btn-sm btn-outline" style="margin-top:8px; font-size:12px;"
-                  onclick="event.stopPropagation(); openRateDJModal('${djId}', '${djName.replace(/'/g, "\\'")}')">
-            ⭐ Laisser un avis
-          </button>
+        <div style="text-align:right;">
+          <div class="gig-amount">${b.budget || b.amount || 0}€</div>
+          <span class="gig-status status-confirmed">✅ Confirmé</span>
+          <div style="margin-top:8px;">
+            <button class="btn btn-sm btn-outline" style="font-size:11px; padding:4px 10px;"
+                    onclick="event.stopPropagation(); openRateDJModal('${djId}', '${djName.replace(/'/g, "\\'")}')">
+              ⭐ Avis
+            </button>
+          </div>
         </div>
       </div>
     `}).join('');

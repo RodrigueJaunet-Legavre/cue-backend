@@ -152,6 +152,78 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
         </div>
       </div>
       
+      <!-- Section photos venue -->
+      <div id="venue-photos-section" style="display:none; margin-top:24px;">
+        <div class="form-group">
+          <label class="form-label">Photo de profil</label>
+          <div id="venue-profile-photo-zone"
+               style="width:100px; height:100px; border-radius:50%; border:2px dashed #333;
+                      display:flex; align-items:center; justify-content:center;
+                      cursor:pointer; margin:0 auto 16px; overflow:hidden; transition:all .2s;"
+               onclick="document.getElementById('venue-profile-input').click()"
+               onmouseover="this.style.borderColor='#FFC300'"
+               onmouseout="this.style.borderColor='#333'">
+            <div id="venue-profile-placeholder" style="text-align:center;">
+              <div style="font-size:24px;">📷</div>
+              <div style="color:#888; font-size:11px; margin-top:4px;">Photo</div>
+            </div>
+            <img id="venue-profile-preview" style="display:none; width:100%; height:100%; object-fit:cover;">
+          </div>
+          <input type="file" id="venue-profile-input" accept="image/*" style="display:none"
+                 onchange="handleVenueProfilePhoto(this)">
+        </div>
+        <div class="form-group" style="margin-top:16px;">
+          <label class="form-label">Photos du lieu (max 3)</label>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:8px;">
+            <div id="venue-photo-zone-0"
+                 style="aspect-ratio:1; border-radius:12px; border:2px dashed #333;
+                        display:flex; align-items:center; justify-content:center;
+                        cursor:pointer; overflow:hidden; transition:all .2s; background:#111;"
+                 onclick="document.getElementById('venue-photo-input-0').click()"
+                 onmouseover="this.style.borderColor='#FFC300'"
+                 onmouseout="this.style.borderColor='#333'">
+              <div id="venue-photo-placeholder-0" style="text-align:center;">
+                <div style="font-size:20px;">+</div>
+                <div style="color:#888; font-size:11px; margin-top:4px;">Photo 1</div>
+              </div>
+              <img id="venue-photo-preview-0" style="display:none; width:100%; height:100%; object-fit:cover;">
+              <input type="file" id="venue-photo-input-0" accept="image/*" style="display:none" onchange="handleVenuePhoto(this,0)">
+            </div>
+            <div id="venue-photo-zone-1"
+                 style="aspect-ratio:1; border-radius:12px; border:2px dashed #333;
+                        display:flex; align-items:center; justify-content:center;
+                        cursor:pointer; overflow:hidden; transition:all .2s; background:#111;"
+                 onclick="document.getElementById('venue-photo-input-1').click()"
+                 onmouseover="this.style.borderColor='#FFC300'"
+                 onmouseout="this.style.borderColor='#333'">
+              <div id="venue-photo-placeholder-1" style="text-align:center;">
+                <div style="font-size:20px;">+</div>
+                <div style="color:#888; font-size:11px; margin-top:4px;">Photo 2</div>
+              </div>
+              <img id="venue-photo-preview-1" style="display:none; width:100%; height:100%; object-fit:cover;">
+              <input type="file" id="venue-photo-input-1" accept="image/*" style="display:none" onchange="handleVenuePhoto(this,1)">
+            </div>
+            <div id="venue-photo-zone-2"
+                 style="aspect-ratio:1; border-radius:12px; border:2px dashed #333;
+                        display:flex; align-items:center; justify-content:center;
+                        cursor:pointer; overflow:hidden; transition:all .2s; background:#111;"
+                 onclick="document.getElementById('venue-photo-input-2').click()"
+                 onmouseover="this.style.borderColor='#FFC300'"
+                 onmouseout="this.style.borderColor='#333'">
+              <div id="venue-photo-placeholder-2" style="text-align:center;">
+                <div style="font-size:20px;">+</div>
+                <div style="color:#888; font-size:11px; margin-top:4px;">Photo 3</div>
+              </div>
+              <img id="venue-photo-preview-2" style="display:none; width:100%; height:100%; object-fit:cover;">
+              <input type="file" id="venue-photo-input-2" accept="image/*" style="display:none" onchange="handleVenuePhoto(this,2)">
+            </div>
+          </div>
+          <p style="color:#888; font-size:12px; margin-top:8px; text-align:center;">
+            Ajoute des photos de votre lieu pour inspirer confiance aux DJs
+          </p>
+        </div>
+      </div>
+
       <form id="registerForm" onsubmit="submitStep1(event)">
         <div class="form-row">
           <div class="form-group"><label class="form-label">Prénom</label><input type="text" class="form-input" id="firstName" placeholder="Jean" required><div class="form-error" id="firstNameError">Prénom requis</div></div>
@@ -379,9 +451,40 @@ function selectType(type) {
   document.querySelectorAll('#step1 > .type-selector .type-option')[type === 'dj' ? 0 : 1].classList.add('selected');
   document.getElementById('userType').value = type;
   document.getElementById('venue-type-section').style.display = type === 'venue' ? 'block' : 'none';
+  document.getElementById('venue-photos-section').style.display = type === 'venue' ? 'block' : 'none';
 }
 
 let selectedVenueType = 'particulier';
+let venueProfilePhoto = null;
+let venuePhotos = [null, null, null];
+
+function handleVenueProfilePhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { alert('Max 5MB.'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    venueProfilePhoto = e.target.result;
+    document.getElementById('venue-profile-preview').src = e.target.result;
+    document.getElementById('venue-profile-preview').style.display = 'block';
+    document.getElementById('venue-profile-placeholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleVenuePhoto(input, index) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { alert('Max 5MB.'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    venuePhotos[index] = e.target.result;
+    document.getElementById(`venue-photo-preview-${index}`).src = e.target.result;
+    document.getElementById(`venue-photo-preview-${index}`).style.display = 'block';
+    document.getElementById(`venue-photo-placeholder-${index}`).style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
 
 function selectVenueType(type) {
   selectedVenueType = type;
@@ -424,7 +527,9 @@ async function submitStep1(e) {
     referralCode: document.getElementById('referralCode').value.trim(),
     venueType: uType === 'venue' ? selectedVenueType : null,
     orgName: uType === 'venue' && selectedVenueType === 'organisation' ? (document.getElementById('orgName')?.value?.trim() || null) : null,
-    orgSiret: uType === 'venue' && selectedVenueType === 'organisation' ? (document.getElementById('orgSiret')?.value?.trim() || null) : null
+    orgSiret: uType === 'venue' && selectedVenueType === 'organisation' ? (document.getElementById('orgSiret')?.value?.trim() || null) : null,
+    picture: uType === 'venue' ? (venueProfilePhoto || null) : null,
+    venuePhotos: uType === 'venue' ? venuePhotos.filter(Boolean) : []
   };
   
   let err = false;
@@ -516,7 +621,12 @@ async function completeRegistration() {
         phone: regUser.phone,
         password: regUser.password,
         userType: regUser.userType,
-        referralCode: sessionStorage.getItem('referral_code') || null
+        referralCode: sessionStorage.getItem('referral_code') || null,
+        picture: regUser.picture || null,
+        venuePhotos: regUser.venuePhotos || [],
+        venueType: regUser.venueType || null,
+        orgName: regUser.orgName || null,
+        orgSiret: regUser.orgSiret || null
       })
     });
 

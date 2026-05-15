@@ -28,7 +28,7 @@ module.exports = async function handler(req, res) {
 
   // INSCRIPTION
   if (action === 'register') {
-    const { firstName, lastName, email, phone, password, userType, referralCode } = body;
+    const { firstName, lastName, email, phone, password, userType, referralCode, picture, venuePhotos, venueType, orgName, orgSiret } = body;
     try {
       const existing = await sql`SELECT id FROM users WHERE email = ${email}`;
       if (existing.length) return res.status(400).json({ error: 'Cet email est déjà utilisé.' });
@@ -38,8 +38,15 @@ module.exports = async function handler(req, res) {
       const ownReferralCode = 'REF' + firstName.charAt(0).toUpperCase() + lastName.charAt(0).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
 
       await sql`
-        INSERT INTO users (id, first_name, last_name, email, phone, password_hash, user_type, referral_code, referred_by)
-        VALUES (${userId}, ${firstName}, ${lastName}, ${email}, ${phone || ''}, ${passwordHash}, ${userType}, ${ownReferralCode}, ${referralCode || null})
+        INSERT INTO users (
+          id, first_name, last_name, email, phone, password_hash,
+          user_type, referral_code, referred_by, picture,
+          venue_photos, venue_type, org_name, org_siret
+        ) VALUES (
+          ${userId}, ${firstName}, ${lastName}, ${email}, ${phone || ''}, ${passwordHash},
+          ${userType}, ${ownReferralCode}, ${referralCode || null}, ${picture || null},
+          ${venuePhotos || []}, ${venueType || null}, ${orgName || null}, ${orgSiret || null}
+        )
       `;
 
       const token = generateToken();
@@ -198,11 +205,21 @@ module.exports = async function handler(req, res) {
   }
 
   if (action === 'register_supabase') {
-    const { userId, firstName, lastName, email, phone, userType, picture, googleId, referralCode } = body;
+    const { userId, firstName, lastName, email, phone, userType, picture, googleId, referralCode, venuePhotos, venueType, orgName, orgSiret } = body;
     try {
       await sql`
-        INSERT INTO users (id, first_name, last_name, email, phone, user_type, picture, google_id, referral_code, profile_complete, identity_status, plan)
-        VALUES (${userId}, ${firstName}, ${lastName || ''}, ${email}, ${phone || ''}, ${userType || 'pending'}, ${picture || null}, ${googleId || null}, ${referralCode}, false, 'none', 'starter')
+        INSERT INTO users (
+          id, first_name, last_name, email, phone, user_type,
+          picture, google_id, referral_code, profile_complete,
+          identity_status, plan, venue_photos, venue_type,
+          org_name, org_siret
+        ) VALUES (
+          ${userId}, ${firstName}, ${lastName || ''}, ${email},
+          ${phone || ''}, ${userType || 'pending'}, ${picture || null},
+          ${googleId || null}, ${referralCode}, false, 'none', 'starter',
+          ${venuePhotos || []}, ${venueType || null},
+          ${orgName || null}, ${orgSiret || null}
+        )
         ON CONFLICT (id) DO NOTHING
       `;
       const users = await sql`SELECT * FROM users WHERE id = ${userId}`;
@@ -338,6 +355,28 @@ module.exports = async function handler(req, res) {
         await sql`INSERT INTO favorites (id, venue_id, dj_id) VALUES (${Date.now().toString()}, ${venueId}, ${djId})`;
         return res.status(200).json({ added: true });
       }
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  if (action === 'update_venue_profile') {
+    const { userId, picture, description, city, website, orgName, orgSiret, venuePhotos } = body;
+    try {
+      await sql`
+        UPDATE users SET
+          picture = ${picture || null},
+          description = ${description || null},
+          venue_city = ${city || null},
+          venue_website = ${website || null},
+          org_name = ${orgName || null},
+          org_siret = ${orgSiret || null},
+          venue_photos = ${venuePhotos || []},
+          updated_at = NOW()
+        WHERE id = ${userId}
+      `;
+      const users = await sql`SELECT * FROM users WHERE id = ${userId}`;
+      return res.status(200).json({ success: true, user: sanitizeUser(users[0] || null) });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
