@@ -397,6 +397,15 @@
 </div>
 
 <script>
+  function formatDateSafe(dateStr) {
+    if (!dateStr) return '—';
+    try {
+      const date = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T00:00:00');
+      if (isNaN(date.getTime())) return dateStr;
+      return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch(e) { return dateStr; }
+  }
+
   let currentVerifUserId = null;
 
   // LOGIN
@@ -444,17 +453,59 @@
       body: JSON.stringify({ adminAction: 'stats', adminSecret: getSecret() })
     });
     const data = await res.json();
-    document.getElementById('stat-djs').textContent = data.djs || 0;
-    document.getElementById('stat-venues').textContent = data.venues || 0;
-    document.getElementById('stat-bookings-month').textContent = data.bookingsMonth || 0;
-    document.getElementById('stat-bookings-total').textContent = 'Total : ' + (data.bookingsTotal || 0);
-    document.getElementById('stat-revenue-month').textContent = (data.revenueMonth || 0) + '€';
-    document.getElementById('stat-revenue-total').textContent = 'Total : ' + (data.revenueTotal || 0) + '€';
-    document.getElementById('stat-revenue-week').textContent = (data.revenueWeek || 0) + '€';
-    document.getElementById('stat-pending-verif').textContent = data.pendingVerif || 0;
-    document.getElementById('stat-open-reports').textContent = data.openReports || 0;
-    if (data.pendingVerif > 0) document.getElementById('verif-badge').textContent = data.pendingVerif;
-    if (data.openReports > 0) document.getElementById('reports-badge').textContent = data.openReports;
+    const s = data.stats || {};
+    document.getElementById('stat-djs').textContent = s.totalDJs ?? data.djs ?? 0;
+    document.getElementById('stat-venues').textContent = s.totalVenues ?? data.venues ?? 0;
+    document.getElementById('stat-bookings-month').textContent = s.totalBookings ?? data.bookingsMonth ?? 0;
+    document.getElementById('stat-bookings-total').textContent = 'Total : ' + (s.totalBookings ?? data.bookingsTotal ?? 0);
+    document.getElementById('stat-revenue-month').textContent = (s.totalRevenue ?? data.revenueMonth ?? 0) + '€';
+    document.getElementById('stat-revenue-total').textContent = 'Total : ' + (s.totalRevenue ?? data.revenueTotal ?? 0) + '€';
+    const rvw = data.revenueWeek ?? 0;
+    if (document.getElementById('stat-revenue-week')) document.getElementById('stat-revenue-week').textContent = rvw + '€';
+    const pv = s.pendingVerifications ?? data.pendingVerif ?? 0;
+    const or = s.openReports ?? data.openReports ?? 0;
+    document.getElementById('stat-pending-verif').textContent = pv;
+    if (document.getElementById('stat-open-reports')) document.getElementById('stat-open-reports').textContent = or;
+    if (pv > 0 && document.getElementById('verif-badge')) document.getElementById('verif-badge').textContent = pv;
+    if (or > 0 && document.getElementById('reports-badge')) document.getElementById('reports-badge').textContent = or;
+  }
+
+  async function loadBookings() {
+    const res = await fetch('/api/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminAction: 'get_bookings', adminSecret: getSecret() })
+    });
+    const data = await res.json();
+    const bookings = data.bookings || [];
+
+    const tbody = document.getElementById('bookings-table-body');
+    if (!tbody) return;
+
+    if (!bookings.length) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--MUTED); padding:40px;">Aucun booking</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = bookings.map(b => `
+      <tr>
+        <td style="padding:14px 16px;">
+          <div style="font-weight:700; color:#fff;">${b.dj_name}</div>
+        </td>
+        <td style="padding:14px 16px; color:var(--MUTED);">${b.venue_name}</td>
+        <td style="padding:14px 16px; color:var(--MUTED);">${formatDateSafe(b.event_date)}</td>
+        <td style="padding:14px 16px; font-weight:700; color:var(--Y);">${b.amount || 0}€</td>
+        <td style="padding:14px 16px;">
+          <span style="padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700;
+                       background:rgba(0,200,100,.15); color:#00c864;">
+            ${b.status || 'confirmed'}
+          </span>
+        </td>
+        <td style="padding:14px 16px; color:var(--MUTED); font-size:13px;">
+          ${b.event_type || '—'}
+        </td>
+      </tr>
+    `).join('');
   }
 
   async function loadVerifications(status = 'pending') {

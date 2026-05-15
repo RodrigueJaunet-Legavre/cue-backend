@@ -1002,6 +1002,33 @@
 </div>
 
 <script>
+  function formatDateSafe(dateStr) {
+    if (!dateStr) return '—'
+    try {
+      const date = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T00:00:00')
+      if (isNaN(date.getTime())) return dateStr
+      return date.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+    } catch(e) { return dateStr }
+  }
+  function formatDateShort(dateStr) {
+    if (!dateStr) return { day: '??', month: '???' }
+    try {
+      const date = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T00:00:00')
+      if (isNaN(date.getTime())) return { day: '??', month: '???' }
+      return {
+        day: date.toLocaleDateString('fr-FR', { day: '2-digit' }),
+        month: date.toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase()
+      }
+    } catch(e) { return { day: '??', month: '???' } }
+  }
+  function isDatePast(dateStr) {
+    if (!dateStr) return false
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const date = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T00:00:00')
+    return date < today
+  }
+
   const user = JSON.parse(localStorage.getItem('cue_user') || '{}');
   let favorites = JSON.parse(localStorage.getItem('cue_favorites') || '[]');
   let bookings = JSON.parse(localStorage.getItem('cue_venue_bookings') || '[]');
@@ -1138,7 +1165,7 @@
 
   function loadStats() {
     document.getElementById('stat-favs').textContent = favorites.length;
-    document.getElementById('stat-upcoming').textContent = bookings.filter(b => new Date(b.date) >= new Date()).length;
+    document.getElementById('stat-upcoming').textContent = bookings.filter(b => new Date(b.date && b.date.includes('T') ? b.date : (b.date || '') + 'T00:00:00') >= new Date()).length;
     document.getElementById('stat-bookings-total').textContent = bookings.length;
   }
 
@@ -1673,17 +1700,18 @@
   }
 
   function renderVenueBookings(filter) {
+    const toDate = d => new Date(d && d.includes('T') ? d : (d || '') + 'T00:00:00');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     let filtered = venueBookings || bookings || [];
 
     if (filter === 'upcoming') {
-      filtered = filtered.filter(b => new Date(b.date) >= today);
+      filtered = filtered.filter(b => toDate(b.date) >= today);
     } else if (filter === 'past') {
-      filtered = filtered.filter(b => new Date(b.date) < today);
+      filtered = filtered.filter(b => toDate(b.date) < today);
     }
 
-    filtered = [...filtered].sort((a, b) => new Date(a.date) - new Date(b.date));
+    filtered = [...filtered].sort((a, b) => toDate(a.date) - toDate(b.date));
 
     const container = document.getElementById('bookings-list');
     if (!container) return;
@@ -1699,24 +1727,38 @@
       return;
     }
 
-    container.innerHTML = filtered.map(b => `
-      <div class="gig-card" style="cursor:pointer;" onclick="openBookingDetail(${JSON.stringify(b).replace(/"/g, '&quot;')})">
+    container.innerHTML = filtered.map(b => {
+      const dateObj = formatDateShort(b.date);
+      return `
+      <div class="gig-card" style="cursor:pointer; transition:all .2s;"
+           onclick="openBookingDetail(${JSON.stringify(b).replace(/"/g, '&quot;')})"
+           onmouseover="this.style.borderColor='rgba(255,195,0,.4)'"
+           onmouseout="this.style.borderColor='var(--BORDER)'">
         <div class="gig-date">
-          <div class="gig-day">${new Date(b.date + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit' })}</div>
-          <div class="gig-month">${new Date(b.date + 'T12:00:00').toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase()}</div>
+          <div class="gig-day">${dateObj.day}</div>
+          <div class="gig-month">${dateObj.month}</div>
         </div>
-        <div class="gig-info">
-          <div class="gig-venue">🎧 ${b.djName || 'DJ'}</div>
-          <div class="gig-details">
-            ${b.type ? b.type + (b.city || b.start ? ' • ' : '') : ''}
-            ${b.city ? '📍 ' + b.city + (b.start ? ' • ' : '') : ''}
-            ${b.start ? '⏰ ' + b.start + (b.end ? ' → ' + b.end : '') : ''}
+        <div class="gig-info" style="flex:1;">
+          <div class="gig-venue" style="font-weight:700; color:#fff; font-size:15px; margin-bottom:4px;">
+            🎧 ${b.djName || b.dj_name || 'DJ'}
+          </div>
+          <div class="gig-details" style="display:flex; flex-wrap:wrap; gap:8px; color:var(--MUTED); font-size:13px;">
+            ${b.type ? `<span>🎵 ${b.type}</span>` : ''}
+            ${b.city ? `<span>📍 ${b.city}</span>` : ''}
+            ${b.start ? `<span>⏰ ${b.start}${b.end ? ' → ' + b.end : ''}</span>` : ''}
           </div>
         </div>
-        <div class="gig-fee">${b.budget || 0}€</div>
-        <div class="gig-status status-confirmed">✅ Confirmé</div>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+          <div style="font-family:Barlow Condensed; font-weight:900; font-size:24px; color:var(--Y);">
+            ${b.budget || b.amount || 0}€
+          </div>
+          <div style="padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700;
+                      background:rgba(0,200,100,.15); color:#00c864;">
+            ✅ Confirmé
+          </div>
+        </div>
       </div>
-    `).join('');
+    `}).join('');
   }
 
   function openBookingDetail(b) {
@@ -1738,7 +1780,7 @@
           </div>
           <div>
             <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">DATE</div>
-            <div style="font-weight:600; color:#fff;">${new Date(b.date + 'T12:00:00').toLocaleDateString('fr-FR', {weekday:'long', year:'numeric', month:'long', day:'numeric'})}</div>
+            <div style="font-weight:600; color:#fff;">${formatDateSafe(b.date)}</div>
           </div>
           ${b.start ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">HORAIRES</div><div style="font-weight:600; color:#fff;">${b.start}${b.end ? ' → ' + b.end : ''}</div></div>` : ''}
           ${b.city ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">LIEU</div><div style="font-weight:600; color:#fff;">${b.city}</div></div>` : ''}
@@ -1805,12 +1847,20 @@
     const startDow = (firstDay.getDay() + 6) % 7, today = new Date();
     let html = '';
     for (let i = 0; i < startDow; i++) { const d = new Date(year, month, -startDow+i+1); html += `<div class="calendar-day other-month"><div class="day-num">${d.getDate()}</div></div>`; }
+    const bookingsByDate = {};
+    bookings.forEach(b => {
+      if (!b.date) return;
+      const key = b.date.split('T')[0];
+      if (!bookingsByDate[key]) bookingsByDate[key] = [];
+      bookingsByDate[key].push(b);
+    });
+
     for (let d = 1; d <= lastDay.getDate(); d++) {
-      const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const events = bookings.filter(b => b.date === dateStr);
+      const dateKey = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const events = bookingsByDate[dateKey] || [];
       const isToday = today.getFullYear()===year && today.getMonth()===month && today.getDate()===d;
       html += `
-        <div class="calendar-day ${isToday?'today':''}" onclick="openDayEvents('${dateStr}')">
+        <div class="calendar-day ${isToday?'today':''} ${events.length?'has-event':''}" onclick="openDayEvents('${dateKey}')">
           <div class="day-num">${d}</div>
           ${events.map(e => `<div class="day-event">${e.djName?.split(' ')[0] || ''}</div>`).join('')}
         </div>
@@ -1822,7 +1872,7 @@
   function changeMonth(dir) { calendarDate.setMonth(calendarDate.getMonth()+dir); renderCalendar(); }
 
   function openDayEvents(dateStr) {
-    const dayEvents = bookings.filter(b => b.date === dateStr);
+    const dayEvents = bookings.filter(b => b.date && b.date.split('T')[0] === dateStr);
     if (!dayEvents.length) return;
     const event = dayEvents[0];
 
@@ -1844,7 +1894,7 @@
       </div>
       <div>
         <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">DATE</div>
-        <div style="font-weight:600; color:#fff;">${new Date(event.date).toLocaleDateString('fr-FR', { weekday:'long', year:'numeric', month:'long', day:'numeric' })}</div>
+        <div style="font-weight:600; color:#fff;">${formatDateSafe(event.date)}</div>
       </div>
       ${(event.start || event.end) ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">HORAIRES</div><div style="font-weight:600; color:#fff;">${event.start || ''}${event.end ? ' → ' + event.end : ''}</div></div>` : ''}
       ${event.city ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">LIEU</div><div style="font-weight:600; color:#fff;">${event.city}</div></div>` : ''}

@@ -1268,6 +1268,33 @@
 </div>
 
 <script>
+  function formatDateSafe(dateStr) {
+    if (!dateStr) return '—'
+    try {
+      const date = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T00:00:00')
+      if (isNaN(date.getTime())) return dateStr
+      return date.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+    } catch(e) { return dateStr }
+  }
+  function formatDateShort(dateStr) {
+    if (!dateStr) return { day: '??', month: '???' }
+    try {
+      const date = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T00:00:00')
+      if (isNaN(date.getTime())) return { day: '??', month: '???' }
+      return {
+        day: date.toLocaleDateString('fr-FR', { day: '2-digit' }),
+        month: date.toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase()
+      }
+    } catch(e) { return { day: '??', month: '???' } }
+  }
+  function isDatePast(dateStr) {
+    if (!dateStr) return false
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const date = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T00:00:00')
+    return date < today
+  }
+
   const user = JSON.parse(localStorage.getItem('cue_user') || '{}');
   let gigs = JSON.parse(localStorage.getItem('cue_gigs') || '[]');
   let reviews = JSON.parse(localStorage.getItem('cue_reviews') || '[]');
@@ -1370,10 +1397,11 @@
   }
 
   function loadStats() {
-    const confirmed = gigs.filter(g => g.status === 'confirmed' || new Date(g.date) < new Date());
+    const toDate = d => new Date(d && d.includes('T') ? d : (d || '') + 'T00:00:00');
+    const confirmed = gigs.filter(g => g.status === 'confirmed' || toDate(g.date) < new Date());
     const now = new Date();
-    const monthRevenue = confirmed.filter(g => new Date(g.date).getMonth() === now.getMonth()).reduce((s, g) => s + (g.fee || 0), 0);
-    const yearRevenue = confirmed.filter(g => new Date(g.date).getFullYear() === now.getFullYear()).reduce((s, g) => s + (g.fee || 0), 0);
+    const monthRevenue = confirmed.filter(g => toDate(g.date).getMonth() === now.getMonth()).reduce((s, g) => s + (g.fee || 0), 0);
+    const yearRevenue = confirmed.filter(g => toDate(g.date).getFullYear() === now.getFullYear()).reduce((s, g) => s + (g.fee || 0), 0);
 
     document.getElementById('stat-bookings').textContent = confirmed.length;
     document.getElementById('stat-revenue-month').textContent = monthRevenue + '€';
@@ -1617,9 +1645,10 @@
   function renderUpcomingGigs() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const toDate = d => new Date(d && d.includes('T') ? d : (d || '') + 'T00:00:00');
     const upcoming = gigs
-      .filter(g => new Date(g.date) >= today && g.status !== 'canceled')
-      .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .filter(g => toDate(g.date) >= today && g.status !== 'canceled')
+      .sort((a, b) => toDate(a.date) - toDate(b.date))
       .slice(0, 3);
     const container = document.getElementById('upcoming-gigs-list');
     if (!upcoming.length) return;
@@ -1627,12 +1656,13 @@
   }
 
   function renderGigs(filter) {
+    const toDate = d => new Date(d && d.includes('T') ? d : (d || '') + 'T00:00:00');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     let filtered = gigs;
-    if (filter === 'confirmed') filtered = gigs.filter(g => g.status === 'confirmed' && new Date(g.date) >= today);
+    if (filter === 'confirmed') filtered = gigs.filter(g => g.status === 'confirmed' && toDate(g.date) >= today);
     else if (filter === 'pending') filtered = gigs.filter(g => g.status === 'pending');
-    else if (filter === 'past') filtered = gigs.filter(g => new Date(g.date) < today);
+    else if (filter === 'past') filtered = gigs.filter(g => toDate(g.date) < today);
     else if (filter === 'canceled') filtered = gigs.filter(g => g.status === 'canceled');
     else if (filter === 'external') filtered = gigs.filter(g => g.source === 'external');
 
@@ -1641,7 +1671,7 @@
       container.innerHTML = `<div class="empty-state"><div class="empty-emoji">🎤</div><div class="empty-title">Aucun gig dans cette catégorie</div><button class="btn btn-primary" style="margin-top:16px;" onclick="openAddGig()">+ Ajouter un gig</button></div>`;
       return;
     }
-    container.innerHTML = filtered.sort((a, b) => new Date(b.date) - new Date(a.date)).map(gigHTML).join('');
+    container.innerHTML = filtered.sort((a, b) => toDate(b.date) - toDate(a.date)).map(gigHTML).join('');
   }
 
   function gigHTML(g) {
@@ -1757,18 +1787,27 @@
     const lastDay = new Date(year, month + 1, 0);
     const startDow = (firstDay.getDay() + 6) % 7;
     const today = new Date();
-    let html = '';
 
+    // Normalize all gig dates to YYYY-MM-DD keys
+    const gigsByDate = {};
+    gigs.forEach(g => {
+      if (!g.date || g.status === 'canceled') return;
+      const dateKey = g.date.split('T')[0];
+      if (!gigsByDate[dateKey]) gigsByDate[dateKey] = [];
+      gigsByDate[dateKey].push(g);
+    });
+
+    let html = '';
     for (let i = 0; i < startDow; i++) {
       const d = new Date(year, month, -startDow + i + 1);
       html += `<div class="calendar-day other-month"><div class="day-num">${d.getDate()}</div></div>`;
     }
     for (let d = 1; d <= lastDay.getDate(); d++) {
-      const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const dayGigs = gigs.filter(g => g.date === dateStr && g.status !== 'canceled');
+      const dateKey = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dayGigs = gigsByDate[dateKey] || [];
       const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
       html += `
-        <div class="calendar-day ${isToday ? 'today' : ''}" onclick="openDayEvents('${dateStr}')">
+        <div class="calendar-day ${isToday ? 'today' : ''} ${dayGigs.length ? 'has-event' : ''}" onclick="openDayEvents('${dateKey}')">
           <div class="day-num">${d}</div>
           ${dayGigs.map(g => `<div class="day-event">${g.venue || ''}</div>`).join('')}
         </div>
@@ -1783,7 +1822,13 @@
   }
 
   function openDayEvents(dateStr) {
-    const dayEvents = gigs.filter(g => g.date === dateStr);
+    const dayEvents = gigs.filter(g => g.date && g.date.split('T')[0] === dateStr);
+    if (!dayEvents.length) return;
+    openGigDetail(dayEvents[0]);
+  }
+
+  function _openDayEventsModal(dateStr) {
+    const dayEvents = gigs.filter(g => g.date && g.date.split('T')[0] === dateStr);
     if (!dayEvents.length) return;
     const event = dayEvents[0];
 
@@ -1806,7 +1851,7 @@
       </div>
       <div>
         <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">DATE</div>
-        <div style="font-weight:600; color:#fff;">${new Date(event.date).toLocaleDateString('fr-FR', { weekday:'long', year:'numeric', month:'long', day:'numeric' })}</div>
+        <div style="font-weight:600; color:#fff;">${formatDateSafe(event.date)}</div>
       </div>
       ${(event.start || event.end) ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">HORAIRES</div><div style="font-weight:600; color:#fff;">${event.start || ''}${event.end ? ' → ' + event.end : ''}</div></div>` : ''}
       ${event.city ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">LIEU</div><div style="font-weight:600; color:#fff;">${event.city}</div></div>` : ''}
@@ -1892,12 +1937,13 @@
   }
 
   function renderEarnings() {
+    const toDate = d => new Date(d && d.includes('T') ? d : (d || '') + 'T00:00:00');
     const now = new Date();
     const weekAgo = new Date(now - 7*24*60*60*1000);
-    const confirmed = gigs.filter(g => g.status === 'confirmed' || new Date(g.date) < now);
-    document.getElementById('earn-week').textContent = confirmed.filter(g => new Date(g.date) >= weekAgo).reduce((s, g) => s + (g.fee || 0), 0) + '€';
-    document.getElementById('earn-month').textContent = confirmed.filter(g => new Date(g.date).getMonth() === now.getMonth()).reduce((s, g) => s + (g.fee || 0), 0) + '€';
-    document.getElementById('earn-year').textContent = confirmed.filter(g => new Date(g.date).getFullYear() === now.getFullYear()).reduce((s, g) => s + (g.fee || 0), 0) + '€';
+    const confirmed = gigs.filter(g => g.status === 'confirmed' || toDate(g.date) < now);
+    document.getElementById('earn-week').textContent = confirmed.filter(g => toDate(g.date) >= weekAgo).reduce((s, g) => s + (g.fee || 0), 0) + '€';
+    document.getElementById('earn-month').textContent = confirmed.filter(g => toDate(g.date).getMonth() === now.getMonth()).reduce((s, g) => s + (g.fee || 0), 0) + '€';
+    document.getElementById('earn-year').textContent = confirmed.filter(g => toDate(g.date).getFullYear() === now.getFullYear()).reduce((s, g) => s + (g.fee || 0), 0) + '€';
     document.getElementById('earn-total').textContent = confirmed.reduce((s, g) => s + (g.fee || 0), 0) + '€';
   }
 

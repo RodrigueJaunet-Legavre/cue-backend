@@ -41,21 +41,51 @@ module.exports = async function handler(req, res) {
   // STATS
   if (adminAction === 'stats') {
     try {
-      const [djs] = await sql`SELECT COUNT(*) FROM users WHERE user_type = 'dj'`;
-      const [venues] = await sql`SELECT COUNT(*) FROM users WHERE user_type = 'venue'`;
-      const [bookingsMonth] = await sql`SELECT COUNT(*) FROM bookings WHERE created_at >= date_trunc('month', NOW())`;
-      const [bookingsTotal] = await sql`SELECT COUNT(*) FROM bookings`;
-      const [revenueWeek] = await sql`SELECT COALESCE(SUM(amount),0) as total FROM payouts WHERE created_at >= NOW() - INTERVAL '7 days'`;
-      const [revenueMonth] = await sql`SELECT COALESCE(SUM(amount),0) as total FROM payouts WHERE created_at >= date_trunc('month', NOW())`;
-      const [revenueTotal] = await sql`SELECT COALESCE(SUM(amount),0) as total FROM payouts`;
-      const [pendingVerif] = await sql`SELECT COUNT(*) FROM users WHERE identity_status = 'pending'`;
-      const [openReports] = await sql`SELECT COUNT(*) FROM reports WHERE status = 'open'`;
+      const [usersCount] = await sql`SELECT COUNT(*) as count FROM users`;
+      const [djsCount] = await sql`SELECT COUNT(*) as count FROM users WHERE user_type = 'dj'`;
+      const [venuesCount] = await sql`SELECT COUNT(*) as count FROM users WHERE user_type = 'venue'`;
+      const [bookingsCount] = await sql`SELECT COUNT(*) as count FROM bookings WHERE status = 'confirmed'`;
+      const [revenueResult] = await sql`SELECT COALESCE(SUM(amount), 0) as total FROM bookings WHERE status = 'confirmed'`;
+      const [pendingVerif] = await sql`SELECT COUNT(*) as count FROM users WHERE identity_status = 'pending'`;
+      const [reportsCount] = await sql`SELECT COUNT(*) as count FROM reports WHERE status = 'open'`;
       return res.status(200).json({
-        djs: djs.count, venues: venues.count,
-        bookingsMonth: bookingsMonth.count, bookingsTotal: bookingsTotal.count,
-        revenueWeek: revenueWeek.total, revenueMonth: revenueMonth.total, revenueTotal: revenueTotal.total,
-        pendingVerif: pendingVerif.count, openReports: openReports.count
+        stats: {
+          totalUsers: parseInt(usersCount.count),
+          totalDJs: parseInt(djsCount.count),
+          totalVenues: parseInt(venuesCount.count),
+          totalBookings: parseInt(bookingsCount.count),
+          totalRevenue: parseFloat(revenueResult.total),
+          pendingVerifications: parseInt(pendingVerif.count),
+          openReports: parseInt(reportsCount.count)
+        },
+        // legacy keys for backward compat
+        djs: djsCount.count, venues: venuesCount.count,
+        bookingsTotal: bookingsCount.count, bookingsMonth: bookingsCount.count,
+        pendingVerif: pendingVerif.count, openReports: reportsCount.count
       });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  if (adminAction === 'get_bookings') {
+    try {
+      const bookings = await sql`
+        SELECT b.*,
+               dj.first_name as dj_first, dj.last_name as dj_last,
+               v.first_name as venue_first, v.last_name as venue_last
+        FROM bookings b
+        LEFT JOIN users dj ON b.dj_id = dj.id
+        LEFT JOIN users v ON b.venue_id = v.id
+        ORDER BY b.created_at DESC
+        LIMIT 100
+      `;
+      const enriched = bookings.map(b => ({
+        ...b,
+        dj_name: b.dj_name || ((b.dj_first || '') + ' ' + (b.dj_last || '')).trim() || 'DJ',
+        venue_name: b.venue_name || ((b.venue_first || '') + ' ' + (b.venue_last || '')).trim() || 'Venue'
+      }));
+      return res.status(200).json({ bookings: enriched });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
