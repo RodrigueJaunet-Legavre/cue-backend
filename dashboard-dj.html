@@ -2483,11 +2483,20 @@
     }
     list.innerHTML = conversations.map(conv => {
       const venueName = conv.venue_name || ((conv.venue_first_name || '') + ' ' + (conv.venue_last_name || '')).trim() || 'Venue';
+      const venueId = conv.venue_id || '';
       return `
       <div class="message-item ${currentConv?.id === conv.id ? 'active' : ''}" onclick="openConversation('${conv.id}')">
-        <div class="message-avatar">🏛️</div>
+        <div class="message-avatar" style="position:relative; cursor:pointer;" onclick="event.stopPropagation(); openVenueProfile('${venueId}')">
+          🏛️
+        </div>
         <div class="message-content">
-          <div class="message-sender">${venueName}</div>
+          <div class="message-sender" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span>${venueName}</span>
+            ${venueId ? `<span onclick="event.stopPropagation(); openVenueProfile('${venueId}')"
+              style="color:var(--MUTED); font-size:11px; cursor:pointer; text-decoration:underline; white-space:nowrap;">
+              Voir profil →
+            </span>` : ''}
+          </div>
           <div class="message-preview">${conv.last_message || 'Nouvelle conversation'}</div>
         </div>
         <div class="message-time">${formatTime(conv.last_message_at)}</div>
@@ -2504,6 +2513,82 @@
     document.getElementById('conv-venue-name').textContent = venueName;
     await loadMessages(convId);
     renderConversations();
+  }
+
+  async function openVenueProfile(venueId) {
+    if (!venueId) return;
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_user', userId: venueId })
+      });
+      const data = await res.json();
+      const venue = data.user;
+      if (!venue) { alert('Profil introuvable.'); return; }
+
+      const name = ((venue.first_name || '') + ' ' + (venue.last_name || '')).trim();
+      const photos = Array.isArray(venue.venue_photos) ? venue.venue_photos : [];
+
+      let modal = document.getElementById('modal-venue-profile');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modal-venue-profile';
+        modal.className = 'modal';
+        document.body.appendChild(modal);
+      }
+
+      modal.innerHTML = `
+        <div class="modal-card" style="max-width:560px;">
+          <div style="display:flex; align-items:center; gap:20px; margin-bottom:24px; padding-bottom:24px; border-bottom:1px solid var(--BORDER);">
+            <div style="width:72px; height:72px; border-radius:50%; overflow:hidden; background:#1a1a1a;
+                        display:flex; align-items:center; justify-content:center; flex-shrink:0; border:2px solid var(--BORDER);">
+              ${venue.picture
+                ? `<img src="${venue.picture}" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='<span style=font-size:32px>🏛️</span>'">`
+                : `<span style="font-size:32px;">🏛️</span>`}
+            </div>
+            <div>
+              <h2 style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px; color:#fff; margin:0;">${name || 'Venue'}</h2>
+              ${venue.org_name ? `<div style="color:var(--Y); font-weight:700; font-size:14px; margin-top:4px;">🏢 ${venue.org_name}</div>` : ''}
+              ${venue.venue_city ? `<div style="color:var(--MUTED); font-size:13px; margin-top:4px;">📍 ${venue.venue_city}</div>` : ''}
+              <div style="margin-top:6px;">
+                <span style="padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700;
+                             background:${venue.identity_status === 'verified' ? 'rgba(0,200,100,.15)' : 'rgba(255,170,0,.15)'};
+                             color:${venue.identity_status === 'verified' ? '#00c864' : '#ffaa00'};">
+                  ${venue.identity_status === 'verified' ? '✅ Vérifié' : '⏳ En cours de vérification'}
+                </span>
+              </div>
+            </div>
+          </div>
+          ${venue.description ? `
+            <div style="margin-bottom:20px;">
+              <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">À PROPOS</div>
+              <p style="color:#ddd; font-size:14px; line-height:1.7; margin:0;">${venue.description}</p>
+            </div>
+          ` : ''}
+          ${venue.venue_website ? `
+            <div style="margin-bottom:20px;">
+              <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">SITE WEB</div>
+              <a href="${venue.venue_website}" target="_blank" rel="noopener" style="color:var(--Y); font-size:14px;">${venue.venue_website}</a>
+            </div>
+          ` : ''}
+          ${photos.length ? `
+            <div style="margin-bottom:20px;">
+              <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:12px;">PHOTOS DU LIEU</div>
+              <div style="display:grid; grid-template-columns:repeat(${Math.min(photos.length, 3)}, 1fr); gap:10px;">
+                ${photos.map(p => `<img src="${p}" style="width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:10px; border:1px solid var(--BORDER);">`).join('')}
+              </div>
+            </div>
+          ` : ''}
+          <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal('modal-venue-profile')">Fermer</button>
+          </div>
+        </div>
+      `;
+      modal.classList.add('open');
+    } catch(err) {
+      alert('Erreur. Réessaie.');
+    }
   }
 
   async function loadMessages(convId) {

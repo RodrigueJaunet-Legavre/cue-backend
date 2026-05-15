@@ -194,7 +194,19 @@
     .form-label { display:block; color:var(--MUTED); font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
     .form-input { width:100%; background:#1a1a1a; border:1px solid var(--BORDER); color:var(--TEXT); padding:14px 16px; border-radius:10px; font-size:15px; font-family:Barlow,sans-serif; transition:border-color .2s; }
     .form-input:focus { outline:none; border-color:var(--Y); }
+    select.form-input { cursor:pointer; }
+    textarea.form-input { resize:vertical; min-height:100px; }
     .modal-actions { display:flex; gap:12px; margin-top:24px; }
+
+    /* REVIEWS */
+    .review-item { padding:20px 24px; border-bottom:1px solid rgba(255,195,0,.06); }
+    .review-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+    .review-venue { font-weight:700; font-size:14px; }
+    .review-date { color:var(--MUTED); font-size:12px; }
+    .review-stars { color:var(--Y); font-size:16px; margin-bottom:8px; }
+    .review-text { color:var(--MUTED); font-size:14px; line-height:1.6; margin:0; }
+    .review-card { background:var(--CARD); border:1px solid var(--BORDER); border-radius:14px; padding:20px 24px; margin-bottom:12px; transition:border-color .2s; }
+    .review-card:hover { border-color:rgba(255,195,0,.2); }
 
     /* CONTRACT */
     .contract-form { background:var(--CARD); border:1px solid var(--BORDER); border-radius:16px; padding:32px; }
@@ -668,16 +680,31 @@
 
   <!-- AVIS -->
   <div id="page-reviews" class="page">
-    <div class="page-header"><div><h1 class="page-title">MES AVIS</h1><p class="page-sub">Avis que tu as laissés sur des DJs</p></div></div>
-    <div class="card">
-      <div id="given-reviews-list">
-        <div class="empty-state">
-          <div class="empty-emoji">⭐</div>
-          <div class="empty-title">Aucun avis donné</div>
-          <div class="empty-sub">Note un DJ après un booking</div>
-        </div>
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">AVIS &amp; NOTES</h1>
+        <p class="page-sub">Les avis que vous avez laissés aux DJs</p>
       </div>
     </div>
+
+    <div class="stats-grid" style="margin-bottom:24px;">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-reviews-given">0</div>
+        <div class="stat-label">Avis donnés</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-avg-given">—</div>
+        <div class="stat-label">Note moyenne donnée</div>
+      </div>
+    </div>
+
+    <div class="tabs" style="margin-bottom:20px;">
+      <div class="tab active" onclick="switchReviewTab('all', this)">Tous</div>
+      <div class="tab" onclick="switchReviewTab('positive', this)">Positifs (4-5 ⭐)</div>
+      <div class="tab" onclick="switchReviewTab('negative', this)">Négatifs (1-3 ⭐)</div>
+    </div>
+
+    <div id="reviews-list"></div>
   </div>
 
   <!-- SETTINGS -->
@@ -1001,7 +1028,11 @@
   </div>
 
   <div id="page-settings" class="page">
-    <div class="page-header"><h1 class="page-title">PARAMÈTRES</h1></div>
+    <div class="page-header">
+      <h1 class="page-title">PARAMÈTRES</h1>
+      <p class="page-sub">Gérez votre compte et vos préférences</p>
+    </div>
+    <div style="max-width:640px; display:flex; flex-direction:column; gap:20px;">
 
     <!-- Notifications -->
     <div class="card" style="margin-bottom:20px;">
@@ -1082,6 +1113,8 @@
         </button>
       </div>
     </div>
+
+    </div><!-- end max-width wrapper -->
   </div>
 
 </div>
@@ -1183,7 +1216,7 @@
   let favorites = JSON.parse(localStorage.getItem('cue_favorites') || '[]');
   let bookings = JSON.parse(localStorage.getItem('cue_venue_bookings') || '[]');
   let venueBookings = bookings;
-  let allReviews = [];
+  let allVenueReviews = [];
   let calendarDate = new Date();
   let currentRating = 0;
   let currentRatingDJ = null;
@@ -1275,11 +1308,7 @@
     const planEl = document.getElementById('settings-plan-name');
     if (planEl) planEl.textContent = plan.toUpperCase();
 
-    const photo = user.picture || user.profile?.photo
-    if (photo) {
-      document.getElementById('sidebar-avatar').innerHTML =
-        `<img src="${photo}" style="width:64px; height:64px; border-radius:50%; object-fit:cover;">`
-    }
+    updateSidebarAvatar()
 
     allDJs = demoDJs
     await loadVenueBookings()
@@ -1299,6 +1328,15 @@
         localStorage.removeItem('contact_dj_name');
         setTimeout(() => openContactModal(contactDjId, contactDjName), 500);
       }
+    }
+  }
+
+  function updateSidebarAvatar() {
+    const photo = user.picture;
+    const avatarEl = document.getElementById('sidebar-avatar');
+    if (avatarEl && photo) {
+      avatarEl.innerHTML = `<img src="${photo}" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid var(--Y);"
+        onerror="this.parentElement.innerHTML='<span style=font-size:36px>🏛️</span>'">`;
     }
   }
 
@@ -1410,6 +1448,7 @@
         Object.assign(user, data.user);
         localStorage.setItem('cue_user', JSON.stringify(user));
         hideSaveBar();
+        updateSidebarAvatar();
         if (btn) { btn.textContent = '✅ Sauvegardé !'; setTimeout(() => { btn.disabled = false; btn.textContent = '💾 Sauvegarder'; }, 2000); }
       } else {
         alert('Erreur : ' + (data.error || 'Réessaie.'));
@@ -2099,6 +2138,12 @@
     modal.classList.add('open');
   }
 
+  function switchReviewTab(filter, el) {
+    document.querySelectorAll('#page-reviews .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderMyReviews(filter);
+  }
+
   async function loadMyReviews() {
     if (!user.id) return;
     try {
@@ -2108,32 +2153,57 @@
         body: JSON.stringify({ action: 'get_venue_reviews', venueId: user.id })
       });
       const data = await res.json();
-      if (data.reviews) allReviews = data.reviews;
+      allVenueReviews = data.reviews || [];
     } catch (err) {
       console.log('Erreur loadMyReviews:', err.message);
+      allVenueReviews = [];
     }
-    renderMyReviews();
+    const avg = allVenueReviews.length
+      ? (allVenueReviews.reduce((s, r) => s + parseFloat(r.rating), 0) / allVenueReviews.length).toFixed(1)
+      : '—';
+    const givenEl = document.getElementById('stat-reviews-given');
+    const avgEl = document.getElementById('stat-avg-given');
+    if (givenEl) givenEl.textContent = allVenueReviews.length;
+    if (avgEl) avgEl.textContent = avg;
+    renderMyReviews('all');
   }
 
-  function renderMyReviews() {
-    const list = allReviews;
-    if (!list.length) {
-      document.getElementById('given-reviews-list').innerHTML = `
+  function renderMyReviews(filter) {
+    let filtered = allVenueReviews;
+    if (filter === 'positive') filtered = allVenueReviews.filter(r => parseFloat(r.rating) >= 4);
+    if (filter === 'negative') filtered = allVenueReviews.filter(r => parseFloat(r.rating) < 4);
+
+    const container = document.getElementById('reviews-list');
+    if (!container) return;
+
+    if (!filtered.length) {
+      container.innerHTML = `
         <div class="empty-state">
           <div class="empty-emoji">⭐</div>
-          <div class="empty-title">Aucun avis donné</div>
-          <div class="empty-sub">Note un DJ après un booking</div>
+          <div class="empty-title">Aucun avis</div>
+          <div class="empty-sub">Notez les DJs après vos bookings</div>
         </div>`;
       return;
     }
-    document.getElementById('given-reviews-list').innerHTML = list.map(r => `
-      <div class="review-item">
+    container.innerHTML = filtered.map(r => `
+      <div class="review-card">
         <div class="review-header">
-          <span class="review-venue">${r.dj_name || '—'}</span>
-          <span class="review-date">${new Date(r.created_at || r.date).toLocaleDateString('fr-FR')}</span>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:40px; height:40px; border-radius:50%; background:#1a1a1a;
+                        display:flex; align-items:center; justify-content:center; font-size:20px; border:1px solid var(--BORDER);">
+              🎧
+            </div>
+            <div>
+              <div style="font-weight:700; color:#fff; font-size:15px;">${r.dj_name || 'DJ'}</div>
+              <div style="color:var(--MUTED); font-size:12px; margin-top:2px;">${new Date(r.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="color:var(--Y); font-size:20px; letter-spacing:2px;">${'★'.repeat(Math.round(parseFloat(r.rating)))}${'☆'.repeat(5 - Math.round(parseFloat(r.rating)))}</div>
+            <div style="color:var(--MUTED); font-size:12px; margin-top:2px;">${r.rating}/5</div>
+          </div>
         </div>
-        <div class="review-stars">${'★'.repeat(Math.round(parseFloat(r.rating)))}${'☆'.repeat(5 - Math.round(parseFloat(r.rating)))} <span style="color:var(--MUTED); font-size:12px;">(${r.rating}/5)</span></div>
-        <div class="review-text">${r.comment || ''}</div>
+        <p class="review-text">${r.comment || ''}</p>
       </div>
     `).join('');
   }
