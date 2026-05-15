@@ -927,6 +927,21 @@
         </div>
       </div>
 
+      <!-- Motif card — shown when docs are requested -->
+      <div id="verif-motif-card" class="card" style="display:none; margin-bottom:24px; border-color:rgba(255,170,0,.3);">
+        <div class="card-header" style="border-color:rgba(255,170,0,.3);">
+          <span class="card-title" style="color:#ffaa00;">📋 Action requise</span>
+        </div>
+        <div class="card-body">
+          <p style="color:var(--MUTED); font-size:14px; margin-bottom:16px;">Notre équipe a besoin de nouveaux documents :</p>
+          <div id="verif-docs-list" style="margin-bottom:16px; display:flex; flex-direction:column; gap:8px;"></div>
+          <div style="background:#1a1a1a; border-left:3px solid #ffaa00; padding:12px 16px; border-radius:0 8px 8px 0;">
+            <div style="color:#ffaa00; font-weight:700; font-size:12px; margin-bottom:4px;">MOTIF</div>
+            <div id="verif-motif-text" style="color:#ddd; font-size:14px; line-height:1.6;"></div>
+          </div>
+        </div>
+      </div>
+
       <div class="card" id="verif-form-card">
         <div class="card-header"><span class="card-title">📤 Envoyer mes documents</span></div>
         <div class="card-body">
@@ -1471,6 +1486,25 @@
       document.getElementById('verif-form-card').style.display = 'none';
     } else {
       document.getElementById('verif-form-card').style.display = 'block';
+    }
+
+    // Show motif card if docs were requested
+    const motif = user.identity_motif;
+    const docsRequired = user.identity_docs_required || [];
+    const motifCard = document.getElementById('verif-motif-card');
+    if (motifCard) {
+      if (motif && docsRequired.length > 0) {
+        motifCard.style.display = 'block';
+        document.getElementById('verif-motif-text').textContent = motif;
+        document.getElementById('verif-docs-list').innerHTML = docsRequired.map(d =>
+          `<div style="display:flex; align-items:center; gap:8px; color:#ffaa00;">
+            <span>${d === 'selfie' ? '🤳 Selfie' : '🪪 Pièce d\'identité'}</span>
+          </div>`
+        ).join('');
+        document.getElementById('verif-form-card').style.display = 'block';
+      } else {
+        motifCard.style.display = 'none';
+      }
     }
 
     const badge = document.getElementById('verif-status-badge');

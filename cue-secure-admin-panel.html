@@ -360,9 +360,38 @@
     </div>
     <div class="modal-actions">
       <button class="btn btn-approve" onclick="validateUser('approve')">✅ Approuver</button>
-      <button class="btn btn-warn" onclick="validateUser('request_new')">🔄 Demander nouveaux docs</button>
+      <button class="btn btn-warn" onclick="openRequestDocsModal()">🔄 Demander nouveaux docs</button>
       <button class="btn btn-reject" onclick="validateUser('reject')">❌ Refuser</button>
       <button class="btn btn-view" onclick="closeModal()" style="margin-left:auto;">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-request-docs" class="modal">
+  <div class="modal-card" style="max-width:500px;">
+    <h2 class="modal-title">📋 Demander nouveaux documents</h2>
+    <div style="margin-bottom:20px;">
+      <label style="display:block; color:#888; font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:12px;">Documents à renvoyer</label>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+          <input type="checkbox" id="req-selfie" checked style="width:18px; height:18px; accent-color:var(--Y);">
+          <span style="color:#fff; font-weight:600;">🤳 Selfie</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+          <input type="checkbox" id="req-document" checked style="width:18px; height:18px; accent-color:var(--Y);">
+          <span style="color:#fff; font-weight:600;">🪪 Pièce d'identité</span>
+        </label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Motif (visible par l'utilisateur)</label>
+      <textarea id="req-motif" rows="4" class="form-input"
+                placeholder="Expliquez ce qui ne va pas avec les documents..."
+                style="resize:vertical; min-height:100px; width:100%; margin-top:6px; background:#111; border:1.5px solid rgba(255,255,255,.1); color:#fff; padding:12px; border-radius:10px; font-family:inherit;"></textarea>
+    </div>
+    <div class="modal-actions" style="margin-top:20px;">
+      <button class="btn btn-view" onclick="document.getElementById('modal-request-docs').classList.remove('open')">Annuler</button>
+      <button class="btn" style="background:#FFC300; color:#000; font-weight:700; border:none; padding:12px 24px; border-radius:10px; cursor:pointer;" onclick="submitRequestDocs()">📤 Envoyer la demande</button>
     </div>
   </div>
 </div>
@@ -596,39 +625,61 @@
     document.getElementById('modal-verif').classList.add('open');
   }
 
-  function closeModal() {
-    document.getElementById('modal-verif').classList.remove('open');
+  function closeModal(id) {
+    const modalId = id || 'modal-verif';
+    document.getElementById(modalId).classList.remove('open');
   }
 
-  async function validateUser(action) {
-    let motif = '';
+  function openRequestDocsModal() {
+    document.getElementById('req-motif').value = '';
+    document.getElementById('req-selfie').checked = true;
+    document.getElementById('req-document').checked = true;
+    document.getElementById('modal-request-docs').classList.add('open');
+  }
 
-    if (action === 'request_new') {
-      motif = prompt('📝 Indiquez le motif de la demande (ce message sera envoyé au DJ/Venue) :',
-                     'Vos documents ne sont pas lisibles. Merci de renvoyer des photos plus claires.');
-      if (motif === null) return;
-      if (!motif.trim()) { alert('Le motif est obligatoire.'); return; }
-    }
+  async function submitRequestDocs() {
+    const motif = document.getElementById('req-motif').value.trim();
+    const reqSelfie = document.getElementById('req-selfie').checked;
+    const reqDocument = document.getElementById('req-document').checked;
+
+    if (!motif) { alert('Le motif est obligatoire.'); return; }
+    if (!reqSelfie && !reqDocument) { alert('Sélectionne au moins un document.'); return; }
+
+    const docs = [];
+    if (reqSelfie) docs.push('selfie');
+    if (reqDocument) docs.push('document');
 
     const res = await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        adminAction: 'verify_user',
-        userId: currentVerifUserId,
-        action,
-        motif,
-        adminSecret: getSecret()
-      })
+      body: JSON.stringify({ adminAction: 'request_new_docs', userId: currentVerifUserId, motif, docs, adminSecret: getSecret() })
+    });
+
+    if (res.ok) {
+      alert('✅ Demande envoyée avec le motif.');
+      document.getElementById('modal-request-docs').classList.remove('open');
+      closeModal('modal-verif');
+      loadVerifications();
+      loadStats();
+    } else {
+      const data = await res.json();
+      alert('Erreur : ' + (data.error || 'Réessaie'));
+    }
+  }
+
+  async function validateUser(action) {
+    const res = await fetch('/api/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminAction: 'verify_user', userId: currentVerifUserId, action, adminSecret: getSecret() })
     });
 
     const messages = {
       approve: '✅ Compte approuvé ! Le DJ/Venue a été notifié.',
-      request_new: '🔄 Demande envoyée avec le motif.',
       reject: '❌ Compte refusé. Le DJ/Venue a été notifié.'
     };
-    alert(messages[action]);
-    closeModal();
+    alert(messages[action] || 'Action effectuée.');
+    closeModal('modal-verif');
     loadVerifications();
     loadStats();
   }

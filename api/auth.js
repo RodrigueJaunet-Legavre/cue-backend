@@ -286,5 +286,31 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'toggle_favorite') {
+    const { venueId, djId } = body;
+    try {
+      const existing = await sql`SELECT id FROM favorites WHERE venue_id = ${venueId} AND dj_id = ${djId}`;
+      if (existing.length) {
+        await sql`DELETE FROM favorites WHERE venue_id = ${venueId} AND dj_id = ${djId}`;
+        return res.status(200).json({ added: false });
+      } else {
+        await sql`INSERT INTO favorites (id, venue_id, dj_id) VALUES (${Date.now().toString()}, ${venueId}, ${djId})`;
+        return res.status(200).json({ added: true });
+      }
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  if (action === 'check_favorite') {
+    const { venueId, djId } = body;
+    try {
+      const existing = await sql`SELECT id FROM favorites WHERE venue_id = ${venueId} AND dj_id = ${djId}`;
+      return res.status(200).json({ isFavorite: existing.length > 0 });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   return res.status(400).json({ error: 'Action inconnue' });
 }

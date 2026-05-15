@@ -331,7 +331,7 @@
   <div class="sidebar-sticky">
 
     <!-- CONTACT CARD -->
-    <div class="contact-card">
+    <div class="contact-card" id="profile-actions">
       <h3>BOOKER CE DJ</h3>
       <p>Envoie une offre directement à ce DJ via la plateforme CUE.</p>
       <button class="btn-contact" onclick="openContactModal()">💬 Envoyer une offre</button>
@@ -662,9 +662,7 @@
       `).join('');
     }
 
-    const favorites = JSON.parse(localStorage.getItem('cue_favorites') || '[]');
-    isFav = favorites.includes(dj.id);
-    updateFavBtn();
+    renderActionButtons(dj.id);
 
     document.getElementById('main-content').style.display = 'grid';
   }
@@ -742,57 +740,91 @@
     }
   }
 
-  function openContactModal() {
-    const isLogged = localStorage.getItem('cue_logged_in') === 'true';
-    const user = JSON.parse(localStorage.getItem('cue_user') || '{}');
-    const isVenue = user.userType === 'venue';
+  const loggedUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
+  const isLogged = localStorage.getItem('cue_logged_in') === 'true';
+  const loggedType = loggedUser.user_type || loggedUser.userType;
 
-    document.getElementById('contact-logged-in').style.display = (isLogged && isVenue) ? 'block' : 'none';
-    document.getElementById('contact-not-logged').style.display = (!isLogged || !isVenue) ? 'block' : 'none';
-    document.getElementById('modal-contact').classList.add('open');
-  }
+  function renderActionButtons(targetDjId) {
+    const actionsDiv = document.getElementById('profile-actions');
+    if (!actionsDiv) return;
 
-  function sendOffer() {
-    const bookings = JSON.parse(localStorage.getItem('cue_venue_bookings') || '[]');
-    bookings.unshift({
-      id: Date.now().toString(),
-      djId: djData.id,
-      djName: getFirstName(djData) + ' ' + getLastName(djData),
-      date: document.getElementById('offer-date').value,
-      start: document.getElementById('offer-start').value,
-      end: document.getElementById('offer-end').value,
-      budget: document.getElementById('offer-budget').value,
-      type: document.getElementById('offer-type').value,
-      message: document.getElementById('offer-message').value,
-      status: 'pending',
-      createdAt: new Date().toISOString()
-    });
-    localStorage.setItem('cue_venue_bookings', JSON.stringify(bookings));
-    closeModal();
-    alert('✅ Offre envoyée !');
-  }
-
-  function toggleFav() {
-    const isLogged = localStorage.getItem('cue_logged_in') === 'true';
-    if (!isLogged) { window.location.href = 'login.html'; return; }
-
-    const favorites = JSON.parse(localStorage.getItem('cue_favorites') || '[]');
-    if (isFav) {
-      const idx = favorites.indexOf(djData.id);
-      if (idx > -1) favorites.splice(idx, 1);
-      isFav = false;
-    } else {
-      favorites.push(djData.id);
-      isFav = true;
+    if (!isLogged) {
+      actionsDiv.innerHTML = `
+        <h3>BOOKER CE DJ</h3>
+        <p>Envoie une offre directement à ce DJ via la plateforme CUE.</p>
+        <a href="login.html?redirect=dj-profile.html?id=${targetDjId}" class="btn-contact" style="display:block; text-align:center; text-decoration:none;">
+          Se connecter pour booker
+        </a>`;
+      return;
     }
-    localStorage.setItem('cue_favorites', JSON.stringify(favorites));
-    updateFavBtn();
+
+    if (loggedType === 'venue') {
+      actionsDiv.innerHTML = `
+        <h3>BOOKER CE DJ</h3>
+        <p>Envoie une offre directement à ce DJ via la plateforme CUE.</p>
+        <button class="btn-contact" onclick="openOfferModal('${targetDjId}')">💬 Envoyer une offre</button>
+        <button class="btn-fav" id="fav-btn" onclick="toggleFav('${targetDjId}', this)">🤍 Ajouter aux favoris</button>`;
+      checkIfFavorite(targetDjId);
+    } else if (loggedType === 'dj' && loggedUser.id === targetDjId) {
+      actionsDiv.innerHTML = `
+        <h3>TON PROFIL</h3>
+        <a href="dashboard-dj.html" class="btn-contact" style="display:block; text-align:center; text-decoration:none;">← Retour à mon dashboard</a>`;
+    } else {
+      actionsDiv.innerHTML = `
+        <h3>BOOKER CE DJ</h3>
+        <p>Envoie une offre directement à ce DJ via la plateforme CUE.</p>
+        <button class="btn-contact" onclick="openContactModal()">💬 Contacter</button>`;
+    }
   }
 
-  function updateFavBtn() {
-    const btn = document.getElementById('fav-btn');
-    btn.textContent = isFav ? '❤️ Dans mes favoris' : '🤍 Ajouter aux favoris';
-    btn.classList.toggle('active', isFav);
+  async function checkIfFavorite(targetDjId) {
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'check_favorite', venueId: loggedUser.id, djId: targetDjId })
+      });
+      const data = await res.json();
+      const btn = document.getElementById('fav-btn');
+      if (btn && data.isFavorite) {
+        btn.textContent = '❤️ Dans mes favoris';
+        btn.style.color = '#ff4444';
+        isFav = true;
+      }
+    } catch(e) {}
+  }
+
+  async function toggleFav(targetDjId, btn) {
+    if (!isLogged || loggedType !== 'venue') { window.location.href = 'login.html'; return; }
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'toggle_favorite', venueId: loggedUser.id, djId: targetDjId })
+      });
+      const data = await res.json();
+      if (data.added) {
+        btn.textContent = '❤️ Dans mes favoris';
+        btn.style.color = '#ff4444';
+        isFav = true;
+      } else {
+        btn.textContent = '🤍 Ajouter aux favoris';
+        btn.style.color = '';
+        isFav = false;
+      }
+    } catch(e) {
+      alert('Erreur. Réessaie.');
+    }
+  }
+
+  function openOfferModal(targetDjId) {
+    localStorage.setItem('contact_dj_id', targetDjId);
+    localStorage.setItem('contact_dj_name', document.getElementById('hero-name')?.textContent || 'DJ');
+    window.location.href = 'dashboard-venue.html?action=contact&djId=' + targetDjId;
+  }
+
+  function openContactModal() {
+    document.getElementById('modal-contact').classList.add('open');
   }
 
   function share(platform) {

@@ -218,5 +218,39 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  // REQUEST NEW DOCS
+  if (adminAction === 'request_new_docs') {
+    try {
+      const { userId, motif, docs } = body;
+      await sql`UPDATE users SET identity_status = 'pending', identity_motif = ${motif}, identity_docs_required = ${docs} WHERE id = ${userId}`;
+      const [userRow] = await sql`SELECT * FROM users WHERE id = ${userId}`;
+      if (userRow?.email && process.env.RESEND_API_KEY) {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const docsText = (docs || []).map(d => d === 'selfie' ? '🤳 Selfie' : '🪪 Pièce d\'identité').join(', ');
+        const firstName = userRow.first_name || 'Utilisateur';
+        await resend.emails.send({
+          from: 'CUE DJ <noreply@cuedj.eu>',
+          to: userRow.email,
+          subject: '📋 Nouveaux documents requis — CUE',
+          html: `<div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
+            <h2 style="color:#FFC300;">Nouveaux documents requis</h2>
+            <p>Bonjour ${firstName},</p>
+            <p>Notre équipe a examiné vos documents et nécessite que vous en soumettez de nouveaux.</p>
+            <div style="background:#1a1a1a; border-left:4px solid #FFC300; padding:16px; margin:20px 0; border-radius:0 8px 8px 0;">
+              <strong style="color:#FFC300;">Documents à renvoyer :</strong>
+              <p style="margin-top:8px;">${docsText}</p>
+              <strong style="color:#FFC300; margin-top:12px; display:block;">Motif :</strong>
+              <p style="margin-top:8px; color:#ddd;">${motif}</p>
+            </div>
+            <a href="https://cuedj.eu/dashboard-dj.html" style="background:#FFC300; color:#000; padding:14px 32px; border-radius:8px; text-decoration:none; font-weight:700; display:inline-block; margin-top:16px;">Renvoyer mes documents →</a>
+          </div>`
+        });
+      }
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   return res.status(400).json({ error: 'adminAction inconnue' });
 }

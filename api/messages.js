@@ -9,20 +9,58 @@ module.exports = async function handler(req, res) {
 
   if (action === 'get_conversations') {
     const { userId, userType } = body;
-    let convs;
-    if (userType === 'dj') {
-      convs = await sql`SELECT c.*, u.first_name as venue_first_name, u.last_name as venue_last_name FROM conversations c LEFT JOIN users u ON c.venue_id = u.id WHERE c.dj_id = ${userId} ORDER BY c.last_message_at DESC`;
-    } else {
-      convs = await sql`SELECT c.*, u.first_name as dj_first_name, u.last_name as dj_last_name FROM conversations c LEFT JOIN users u ON c.dj_id = u.id WHERE c.venue_id = ${userId} ORDER BY c.last_message_at DESC`;
+    try {
+      let convs;
+      if (userType === 'dj') {
+        convs = await sql`
+          SELECT c.*, u.first_name as venue_first_name, u.last_name as venue_last_name, u.picture as venue_picture
+          FROM conversations c
+          LEFT JOIN users u ON c.venue_id = u.id
+          WHERE c.dj_id = ${userId}
+          ORDER BY c.last_message_at DESC NULLS LAST
+        `;
+        convs = convs.map(c => ({
+          ...c,
+          venue_name: c.venue_name || ((c.venue_first_name || '') + ' ' + (c.venue_last_name || '')).trim() || 'Venue'
+        }));
+      } else {
+        convs = await sql`
+          SELECT c.*, u.first_name as dj_first_name, u.last_name as dj_last_name, u.picture as dj_picture
+          FROM conversations c
+          LEFT JOIN users u ON c.dj_id = u.id
+          WHERE c.venue_id = ${userId}
+          ORDER BY c.last_message_at DESC NULLS LAST
+        `;
+        convs = convs.map(c => ({
+          ...c,
+          dj_name: c.dj_name || ((c.dj_first_name || '') + ' ' + (c.dj_last_name || '')).trim() || 'DJ'
+        }));
+      }
+      return res.status(200).json({ conversations: convs });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
     }
-    return res.status(200).json({ conversations: convs });
   }
 
   if (action === 'get_messages') {
     const { conversationId } = body;
-    const msgs = await sql`SELECT * FROM messages WHERE conversation_id = ${conversationId} ORDER BY created_at ASC`;
-    await sql`UPDATE messages SET read = true WHERE conversation_id = ${conversationId} AND sender_id != ${senderId}`;
-    return res.status(200).json({ messages: msgs });
+    try {
+      const messages = await sql`
+        SELECT m.*, u.first_name as sender_first_name, u.last_name as sender_last_name
+        FROM messages m
+        LEFT JOIN users u ON m.sender_id = u.id
+        WHERE m.conversation_id = ${conversationId}
+        ORDER BY m.created_at ASC
+      `;
+      const enriched = messages.map(m => ({
+        ...m,
+        sender_name: m.sender_name || ((m.sender_first_name || '') + ' ' + (m.sender_last_name || '')).trim() || 'Utilisateur'
+      }));
+      await sql`UPDATE messages SET read = true WHERE conversation_id = ${conversationId} AND sender_id != ${senderId}`;
+      return res.status(200).json({ messages: enriched });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
   }
 
   if (action === 'send_message') {

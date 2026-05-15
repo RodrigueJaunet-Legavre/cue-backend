@@ -769,6 +769,21 @@
     <div class="page-header"><h1 class="page-title">VÉRIFICATION D'IDENTITÉ</h1></div>
     <div id="verif-status-banner" style="display:none;margin-bottom:24px;padding:16px 20px;border-radius:12px;font-weight:700;font-size:14px;"></div>
 
+    <!-- Motif card — shown when docs are requested -->
+    <div id="verif-motif-card" class="card" style="display:none; margin-bottom:24px; border-color:rgba(255,170,0,.3);">
+      <div class="card-header" style="border-color:rgba(255,170,0,.3);">
+        <span class="card-title" style="color:#ffaa00;">📋 Action requise</span>
+      </div>
+      <div class="card-body">
+        <p style="color:var(--MUTED); font-size:14px; margin-bottom:16px;">Notre équipe a besoin de nouveaux documents :</p>
+        <div id="verif-docs-list" style="margin-bottom:16px; display:flex; flex-direction:column; gap:8px;"></div>
+        <div style="background:#1a1a1a; border-left:3px solid #ffaa00; padding:12px 16px; border-radius:0 8px 8px 0;">
+          <div style="color:#ffaa00; font-weight:700; font-size:12px; margin-bottom:4px;">MOTIF</div>
+          <div id="verif-motif-text" style="color:#ddd; font-size:14px; line-height:1.6;"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Particulier form -->
     <div id="verif-form-particulier" class="card" style="margin-bottom:20px;">
       <div style="padding:24px;">
@@ -1015,6 +1030,18 @@
     renderFavorites()
     renderCalendar()
     updateFavBadge()
+
+    // Handle redirect from dj-profile.html with contact intent
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'contact') {
+      const contactDjId = urlParams.get('djId');
+      const contactDjName = localStorage.getItem('contact_dj_name') || 'DJ';
+      if (contactDjId) {
+        localStorage.removeItem('contact_dj_id');
+        localStorage.removeItem('contact_dj_name');
+        setTimeout(() => openContactModal(contactDjId, contactDjName), 500);
+      }
+    }
   }
 
   async function showPage(page, el) {
@@ -1165,9 +1192,11 @@
 
   function contactDJFromModal() { closeModal('modal-dj-profile'); openContactModal(currentDJ.id); }
 
-  function openContactModal(djId) {
-    currentDJ = allDJs.find(dj => dj.id === djId);
+  function openContactModal(djId, djName) {
+    currentDJ = allDJs.find(dj => dj.id === djId) || { id: djId, firstName: djName || 'DJ', lastName: '', first_name: djName || 'DJ', last_name: '' };
     document.getElementById('modal-contact-dj').classList.add('open');
+    // Pre-fill nav to messages page in background
+    showPage('messages', document.querySelector('.nav-item[onclick*="messages"]'));
   }
 
   async function sendOffer() {
@@ -1190,6 +1219,11 @@
 
     const convId = [user.id, currentDJ.id].sort().join('_');
 
+    const djFirstName = currentDJ.firstName || currentDJ.first_name || 'DJ';
+    const djLastName = currentDJ.lastName || currentDJ.last_name || '';
+    const venueFirstName = user.first_name || user.firstName || '';
+    const venueLastName = user.last_name || user.lastName || '';
+
     try {
       await fetch('/api/messages', {
         method: 'POST',
@@ -1199,12 +1233,12 @@
           convId,
           djId: currentDJ.id,
           venueId: user.id,
-          djName: currentDJ.firstName + ' ' + currentDJ.lastName,
-          venueName: user.firstName + ' ' + user.lastName,
+          djName: (djFirstName + ' ' + djLastName).trim(),
+          venueName: (venueFirstName + ' ' + venueLastName).trim(),
           senderType: 'venue',
           message: {
             senderId: user.id,
-            senderName: user.firstName + ' ' + user.lastName,
+            senderName: (venueFirstName + ' ' + venueLastName).trim(),
             content: `Offre de booking — ${offer.type} le ${offer.date}`,
             type: 'offer',
             offerData: offer
@@ -1256,20 +1290,22 @@
         </div>`;
       return;
     }
-    list.innerHTML = convs.map(conv => `
-      <div class="message-item" onclick="openVenueConversation('${conv.id}', '${conv.dj_name.replace(/'/g, "\\'")}')">
+    list.innerHTML = convs.map(conv => {
+      const djName = conv.dj_name || 'DJ';
+      return `
+      <div class="message-item" onclick="openVenueConversation('${conv.id}', '${djName.replace(/'/g, "\\'")}', '${conv.dj_id}')">
         <div class="message-avatar">🎧</div>
         <div class="message-content">
-          <div class="message-sender">${conv.dj_name}</div>
+          <div class="message-sender">${djName}</div>
           <div class="message-preview">${conv.last_message || 'Nouvelle conversation'}</div>
         </div>
         <div class="message-time">${formatTime(conv.last_message_at)}</div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   }
 
-  async function openVenueConversation(convId, djName) {
-    currentVenueConv = { id: convId, dj_name: djName };
+  async function openVenueConversation(convId, djName, djId) {
+    currentVenueConv = { id: convId, dj_name: djName, dj_id: djId };
 
     document.getElementById('conversation-empty').style.display = 'none';
     document.getElementById('conversation-active').style.display = 'flex';
@@ -1376,9 +1412,11 @@
   }
 
   async function prepareConfirmBooking(messageId) {
-    const offer = offerDataMap.get(messageId);
-    if (!offer) { alert('Erreur : données de l\'offre non trouvées.'); return; }
-    pendingOfferData = offer;
+    const data = offerDataMap.get(messageId);
+    console.log('currentVenueConv:', currentVenueConv);
+    console.log('offerDataMap data:', data);
+    if (!data) { alert('Erreur: données non trouvées.'); return; }
+    pendingOfferData = data.offer || data;
     pendingMessageId = messageId;
     await confirmBooking();
   }
@@ -1387,10 +1425,19 @@
     if (!pendingMessageId || !pendingOfferData) return;
     if (!confirm('Confirmer définitivement ce booking ?')) return;
 
-    const djId = currentVenueConv?.dj_id || pendingOfferData.djId;
-    const venueId = user.id;
-    const djName = currentVenueConv?.dj_name || 'DJ';
-    const venueName = getName(user);
+    const djId = currentVenueConv?.dj_id || currentVenueConv?.djId;
+    const venueId = user.id || user.user_id;
+    const djName = currentVenueConv?.dj_name || currentVenueConv?.djName || 'DJ';
+    const venueName = (user.first_name || user.firstName || '') + ' ' + (user.last_name || user.lastName || '');
+
+    console.log('confirmBooking djId:', djId);
+    console.log('confirmBooking venueId:', venueId);
+    console.log('confirmBooking offerData:', pendingOfferData);
+
+    if (!djId) {
+      alert('Erreur: impossible de trouver le DJ. Rafraîchis la page.');
+      return;
+    }
 
     try {
       const res = await fetch('/api/messages', {
@@ -1398,17 +1445,18 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'confirm_booking', messageId: pendingMessageId, offerData: pendingOfferData, djId, venueId, djName, venueName })
       });
-      if (res.ok) {
-        alert('🎉 Booking confirmé ! Le DJ sera notifié et le gig ajouté à son agenda.');
+      const responseData = await res.json();
+      console.log('Réponse confirm_booking:', responseData);
+      if (res.ok && responseData.success) {
+        alert('🎉 Booking confirmé !');
         pendingMessageId = null;
         pendingOfferData = {};
         await loadVenueMessages(currentVenueConv.id);
       } else {
-        const data = await res.json();
-        alert('Erreur : ' + (data.error || 'Réessaie'));
+        alert('Erreur : ' + (responseData.error || 'Réessaie'));
       }
     } catch (err) {
-      alert('Erreur. Réessaie.');
+      alert('Erreur réseau. Réessaie.');
     }
   }
 
@@ -1831,6 +1879,24 @@
       banner.textContent = '❌ Vérification refusée. Veuillez renvoyer vos documents.';
     } else {
       banner.style.display = 'none';
+    }
+
+    // Show motif card if docs were requested
+    const motif = user.identity_motif;
+    const docsRequired = user.identity_docs_required || [];
+    const motifCard = document.getElementById('verif-motif-card');
+    if (motifCard) {
+      if (motif && docsRequired.length > 0) {
+        motifCard.style.display = 'block';
+        document.getElementById('verif-motif-text').textContent = motif;
+        document.getElementById('verif-docs-list').innerHTML = docsRequired.map(d =>
+          `<div style="display:flex; align-items:center; gap:8px; color:#ffaa00;">
+            <span>${d === 'selfie' ? '🤳 Selfie' : '🪪 Pièce d\'identité'}</span>
+          </div>`
+        ).join('');
+      } else {
+        motifCard.style.display = 'none';
+      }
     }
 
     // Show correct form
