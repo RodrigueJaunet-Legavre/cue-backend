@@ -169,8 +169,13 @@
     .calendar-day.today { background:rgba(255,195,0,.08); }
     .calendar-day.today .day-num { color:var(--Y); font-weight:900; }
     .calendar-day.other-month .day-num { color:#333; }
+    .calendar-day.has-event { cursor:pointer; }
+    .calendar-day.has-event:hover { background:rgba(255,195,0,.06); }
     .day-num { font-size:14px; font-weight:600; margin-bottom:4px; }
     .day-event { background:var(--Y); color:#000; border-radius:4px; font-size:9px; font-weight:700; padding:2px 4px; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+    /* SIDEBAR AVATAR */
+    .sidebar-avatar { width:64px; height:64px; border-radius:50%; border:2px solid var(--Y); margin-bottom:12px; background:var(--CARD); display:flex; align-items:center; justify-content:center; font-size:28px; overflow:hidden; }
 
     /* RATING MODAL */
     .stars-input { display:flex; gap:8px; justify-content:center; margin:16px 0; }
@@ -240,7 +245,7 @@
 <!-- SIDEBAR -->
 <div class="sidebar">
   <div class="sidebar-profile">
-    <div class="venue-avatar">🏛️</div>
+    <div class="sidebar-avatar" id="sidebar-avatar">🏛️</div>
     <div class="profile-name" id="sidebar-name">Venue</div>
     <div class="profile-type">✦ VENUE</div>
     <div class="profile-plan" id="sidebar-plan">STARTER</div>
@@ -1060,11 +1065,11 @@
         <p style="color:var(--MUTED); font-size:13px; margin-bottom:20px;">Changer votre mot de passe. Vous devrez vous reconnecter ensuite.</p>
         <div class="form-group" style="margin-bottom:14px;">
           <label class="form-label">Nouveau mot de passe</label>
-          <input type="password" class="form-input" id="settings-new-pw" placeholder="Minimum 8 caractères" style="margin-top:6px;">
+          <input type="password" class="form-input" id="new-password" placeholder="Minimum 8 caractères" style="margin-top:6px;">
         </div>
         <div class="form-group" style="margin-bottom:20px;">
           <label class="form-label">Confirmer le mot de passe</label>
-          <input type="password" class="form-input" id="settings-confirm-pw" placeholder="Confirmer" style="margin-top:6px;">
+          <input type="password" class="form-input" id="confirm-password" placeholder="Confirmer" style="margin-top:6px;">
         </div>
         <button class="btn btn-primary" onclick="changePassword()">Changer le mot de passe</button>
       </div>
@@ -1297,18 +1302,7 @@
       Object.assign(user, localUser)
     }
 
-    // Affiche les infos
-    const firstName = user.first_name || user.firstName || 'Venue'
-    const lastName = user.last_name || user.lastName || ''
-    const plan = user.plan || 'starter'
-
-    document.getElementById('sidebar-name').textContent = firstName + ' ' + lastName
-    document.getElementById('header-name').textContent = firstName
-    document.getElementById('sidebar-plan').textContent = plan.toUpperCase()
-    const planEl = document.getElementById('settings-plan-name');
-    if (planEl) planEl.textContent = plan.toUpperCase();
-
-    updateSidebarAvatar()
+    updateUI()
 
     allDJs = demoDJs
     await loadVenueBookings()
@@ -1331,12 +1325,28 @@
     }
   }
 
+  function updateUI() {
+    const firstName = user.first_name || user.firstName || 'Venue'
+    const lastName = user.last_name || user.lastName || ''
+    const plan = user.plan || 'starter'
+    document.getElementById('sidebar-name').textContent = (firstName + ' ' + lastName).trim()
+    const headerEl = document.getElementById('header-name');
+    if (headerEl) headerEl.textContent = firstName;
+    document.getElementById('sidebar-plan').textContent = plan.toUpperCase()
+    const planEl = document.getElementById('settings-plan-name');
+    if (planEl) planEl.textContent = plan.toUpperCase();
+    updateSidebarAvatar()
+  }
+
   function updateSidebarAvatar() {
     const photo = user.picture;
     const avatarEl = document.getElementById('sidebar-avatar');
-    if (avatarEl && photo) {
-      avatarEl.innerHTML = `<img src="${photo}" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid var(--Y);"
-        onerror="this.parentElement.innerHTML='<span style=font-size:36px>🏛️</span>'">`;
+    if (!avatarEl) return;
+    if (photo) {
+      avatarEl.innerHTML = `<img src="${photo}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;"
+        onerror="this.parentElement.innerHTML='<span style=font-size:28px>🏛️</span>'">`;
+    } else {
+      avatarEl.innerHTML = '<span style="font-size:28px;">🏛️</span>';
     }
   }
 
@@ -1448,7 +1458,7 @@
         Object.assign(user, data.user);
         localStorage.setItem('cue_user', JSON.stringify(user));
         hideSaveBar();
-        updateSidebarAvatar();
+        updateUI();
         if (btn) { btn.textContent = '✅ Sauvegardé !'; setTimeout(() => { btn.disabled = false; btn.textContent = '💾 Sauvegarder'; }, 2000); }
       } else {
         alert('Erreur : ' + (data.error || 'Réessaie.'));
@@ -2242,48 +2252,9 @@
   function changeMonth(dir) { calendarDate.setMonth(calendarDate.getMonth()+dir); renderCalendar(); }
 
   function openDayEvents(dateStr) {
-    const dayEvents = bookings.filter(b => b.date && b.date.split('T')[0] === dateStr);
-    if (!dayEvents.length) return;
-    const event = dayEvents[0];
-
-    let modal = document.getElementById('modal-event-detail');
-    if (!modal) {
-      modal = document.createElement('div');
-      modal.id = 'modal-event-detail';
-      modal.className = 'modal';
-      modal.innerHTML = `<div class="modal-card" style="max-width:500px;"><h2 class="modal-title">📅 Détails de l'événement</h2><div style="display:flex; flex-direction:column; gap:16px;" id="event-detail-content"></div><div class="modal-actions" style="margin-top:24px;"><button class="btn btn-outline" onclick="closeModal('modal-event-detail')">Fermer</button></div></div>`;
-      document.body.appendChild(modal);
-    }
-
-    const feeVal = event.budget || event.amount || event.fee || 0;
-    document.getElementById('event-detail-content').innerHTML = `
-      <div style="background:rgba(255,195,0,.1); border:1px solid rgba(255,195,0,.3); border-radius:10px; padding:12px 16px; color:var(--Y); font-weight:700; font-size:13px;">✓ Booking via CUE</div>
-      <div>
-        <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">DJ</div>
-        <div style="font-weight:700; font-size:20px; color:#fff;">${event.djName || '—'}</div>
-      </div>
-      <div>
-        <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">DATE</div>
-        <div style="font-weight:600; color:#fff;">${formatDateSafe(event.date)}</div>
-      </div>
-      ${(event.start || event.end) ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">HORAIRES</div><div style="font-weight:600; color:#fff;">${event.start || ''}${event.end ? ' → ' + event.end : ''}</div></div>` : ''}
-      ${event.city ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">LIEU</div><div style="font-weight:600; color:#fff;">${event.city}</div></div>` : ''}
-      ${event.type ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">TYPE</div><div style="font-weight:600; color:#fff;">${event.type}</div></div>` : ''}
-      <div>
-        <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">BUDGET</div>
-        <div style="font-family:Barlow Condensed; font-weight:900; font-size:32px; color:var(--Y);">${feeVal}€</div>
-      </div>
-      ${event.notes ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">NOTES</div><div style="color:var(--MUTED); font-size:14px; line-height:1.6;">${event.notes}</div></div>` : ''}
-      <div>
-        <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">STATUT</div>
-        <div style="padding:6px 14px; border-radius:20px; font-size:13px; font-weight:700; display:inline-block;
-                    background:${event.status === 'confirmed' ? 'rgba(0,200,100,.15)' : 'rgba(255,170,0,.15)'};
-                    color:${event.status === 'confirmed' ? '#00c864' : '#ffaa00'};">
-          ${event.status === 'confirmed' ? '✅ Confirmé' : '⏳ ' + (event.status || 'En attente')}
-        </div>
-      </div>
-    `;
-    modal.classList.add('open');
+    const dayBookings = bookings.filter(b => b.date && b.date.split('T')[0] === dateStr);
+    if (!dayBookings.length) return;
+    openBookingDetail(dayBookings[0]);
   }
 
   async function generateContract() {
@@ -2652,8 +2623,8 @@
   }
 
   async function changePassword() {
-    const newPw = document.getElementById('settings-new-pw').value;
-    const confirmPw = document.getElementById('settings-confirm-pw').value;
+    const newPw = document.getElementById('new-password').value;
+    const confirmPw = document.getElementById('confirm-password').value;
     if (newPw.length < 8) { alert('Le mot de passe doit faire au moins 8 caractères.'); return; }
     if (newPw !== confirmPw) { alert('Les mots de passe ne correspondent pas.'); return; }
     try {
