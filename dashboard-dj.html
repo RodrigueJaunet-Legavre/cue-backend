@@ -1358,6 +1358,9 @@
   let conversations = [];
   let currentConv = null;
   let messagesInterval = null;
+  let conversationsCache = null;
+  let conversationsCacheTime = 0;
+  const CONV_CACHE_TTL = 30000;
 
   async function init() {
     try {
@@ -2515,7 +2518,32 @@
     }
   }
 
-  async function loadConversations() {
+  function invalidateConversationsCache() {
+    conversationsCache = null;
+    conversationsCacheTime = 0;
+  }
+
+  async function loadConversations(force = false) {
+    const now = Date.now();
+    if (!force && conversationsCache && (now - conversationsCacheTime < CONV_CACHE_TTL)) {
+      conversations = conversationsCache;
+      renderConversations();
+      updateUnreadBadge();
+      return;
+    }
+    // Skeleton
+    const list = document.getElementById('messages-list');
+    if (list && !conversations.length) {
+      list.innerHTML = Array(3).fill(0).map(() => `
+        <div style="display:flex; align-items:center; gap:12px; padding:16px; border-bottom:1px solid var(--BORDER);">
+          <div class="skeleton" style="width:44px; height:44px; border-radius:50%; flex-shrink:0;"></div>
+          <div style="flex:1;">
+            <div class="skeleton" style="height:14px; width:60%; border-radius:6px; margin-bottom:8px;"></div>
+            <div class="skeleton" style="height:11px; width:85%; border-radius:6px;"></div>
+          </div>
+        </div>
+      `).join('');
+    }
     try {
       const res = await fetch('/api/messages', {
         method: 'POST',
@@ -2524,6 +2552,8 @@
       });
       const data = await res.json();
       conversations = data.conversations || [];
+      conversationsCache = conversations;
+      conversationsCacheTime = Date.now();
       renderConversations();
       updateUnreadBadge();
     } catch (err) {
@@ -2781,8 +2811,9 @@
       })
     });
 
+    invalidateConversationsCache();
     await loadMessages(currentConv.id);
-    await loadConversations();
+    await loadConversations(true);
   }
 
   async function respondOffer(messageId, status, offerData) {
@@ -2817,6 +2848,7 @@
     });
 
     // PAS d'ajout automatique aux gigs ici — c'est le venue qui confirme
+    invalidateConversationsCache();
     await loadMessages(currentConv.id);
   }
 
@@ -3075,10 +3107,11 @@
 
   function checkVerificationNotification() {
     const status = user.identity_status;
-    const notifShown = localStorage.getItem('verif_notif_shown_' + user.id);
+    const key = 'verif_notif_v2_' + user.id;
+    const notifShown = localStorage.getItem(key);
     if (status === 'verified' && !notifShown) {
-      localStorage.setItem('verif_notif_shown_' + user.id, 'true');
-      showVerifApprovedNotif();
+      localStorage.setItem(key, 'true');
+      setTimeout(showVerifApprovedNotif, 800);
     }
   }
 
@@ -3094,6 +3127,7 @@
       document.head.appendChild(style);
     }
     const notif = document.createElement('div');
+    notif.className = 'verif-notif-overlay';
     notif.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.85); backdrop-filter:blur(12px); z-index:9999; display:flex; align-items:center; justify-content:center; animation:verif-fadeIn .4s ease;';
     notif.innerHTML = `
       <div style="background:var(--CARD); border:1px solid rgba(0,200,100,.3); border-radius:24px; padding:48px; text-align:center; max-width:480px; width:90%; box-shadow:0 32px 80px rgba(0,200,100,.15); animation:verif-slideUp .4s ease;">
@@ -3108,7 +3142,7 @@
             ${user.mix_url ? '✅' : '⬜'} Mix de présentation
           </div>
         </div>
-        <button onclick="this.closest('[style*=position]').remove()"
+        <button onclick="this.closest('.verif-notif-overlay').remove()"
                 style="background:var(--Y); color:#000; border:none; border-radius:12px; padding:16px 40px; font-weight:700; font-size:18px; cursor:pointer; font-family:'Barlow',sans-serif; width:100%;"
                 onmouseover="this.style.background='#FFD740'"
                 onmouseout="this.style.background='var(--Y)'">

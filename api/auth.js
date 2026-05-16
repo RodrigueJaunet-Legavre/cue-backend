@@ -346,6 +346,16 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'get_favorites') {
+    const { venueId } = body;
+    try {
+      const favs = await sql`SELECT f.dj_id FROM favorites f WHERE f.venue_id = ${venueId}`;
+      return res.status(200).json({ favorites: favs.map(f => f.dj_id) });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   if (action === 'toggle_favorite') {
     const { venueId, djId } = body;
     try {

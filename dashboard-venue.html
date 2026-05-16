@@ -1213,6 +1213,81 @@
   </div>
 </div>
 
+<!-- MODAL DJ PROFILE (immersive) -->
+<div id="dj-profile-modal" onclick="if(event.target===this)closeDJProfileModal()" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,.85); backdrop-filter:blur(8px); overflow-y:auto; padding:20px;">
+  <div style="max-width:760px; margin:0 auto; background:#111; border:1px solid rgba(255,195,0,.15); border-radius:24px; overflow:hidden; position:relative;">
+    <!-- Close -->
+    <button onclick="closeDJProfileModal()" style="position:absolute; top:16px; right:16px; z-index:10; background:rgba(0,0,0,.6); border:none; color:#fff; width:36px; height:36px; border-radius:50%; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+
+    <!-- Hero -->
+    <div id="dj-modal-hero" style="position:relative; height:280px; background:#0a0a0a; overflow:hidden;">
+      <div id="dj-modal-bg" style="position:absolute; inset:0; background-size:cover; background-position:center; filter:blur(20px) brightness(.4); transform:scale(1.1);"></div>
+      <div id="dj-modal-avatar-wrap" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;">
+        <div id="dj-modal-avatar" style="width:120px; height:120px; border-radius:50%; border:3px solid var(--Y); overflow:hidden; background:#1a1a1a; display:flex; align-items:center; justify-content:center; font-size:52px; flex-shrink:0;"></div>
+      </div>
+      <div style="position:absolute; bottom:0; left:0; right:0; height:120px; background:linear-gradient(to top, #111, transparent);"></div>
+    </div>
+
+    <!-- Content -->
+    <div style="padding:28px 32px 32px;">
+      <!-- Name + badges -->
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:12px;">
+        <div>
+          <h2 id="dj-modal-name" style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:36px; color:#fff; line-height:1;"></h2>
+          <div id="dj-modal-verified" style="margin-top:6px;"></div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <button id="dj-modal-fav-btn" onclick="toggleFavFromDJModal()"
+                  style="background:transparent; border:1px solid var(--BORDER); color:var(--MUTED); padding:8px 16px; border-radius:20px; cursor:pointer; font-size:14px; font-weight:600; transition:all .2s;">
+            ♡ Favoris
+          </button>
+          <button onclick="contactFromDJModal()"
+                  style="background:var(--Y); color:#000; border:none; padding:8px 20px; border-radius:20px; cursor:pointer; font-size:14px; font-weight:700;">
+            💬 Envoyer une offre
+          </button>
+        </div>
+      </div>
+
+      <!-- Genres -->
+      <div id="dj-modal-genres" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;"></div>
+
+      <!-- Rating + plan -->
+      <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px; flex-wrap:wrap;">
+        <div id="dj-modal-rating" style="color:var(--Y); font-size:18px; font-weight:700;"></div>
+        <div id="dj-modal-plan" style="font-size:12px; font-weight:700; padding:3px 12px; border-radius:20px;"></div>
+        <div id="dj-modal-bookings" style="color:var(--MUTED); font-size:13px;"></div>
+      </div>
+
+      <!-- Description -->
+      <p id="dj-modal-desc" style="color:var(--MUTED); line-height:1.7; margin-bottom:24px; font-size:15px;"></p>
+
+      <!-- Mix player -->
+      <div id="dj-modal-mix-wrap" style="display:none; margin-bottom:24px;">
+        <div style="font-weight:700; font-size:13px; letter-spacing:1px; color:var(--MUTED); text-transform:uppercase; margin-bottom:10px;">Mix</div>
+        <audio id="dj-modal-mix" controls style="width:100%; border-radius:12px; accent-color:var(--Y); background:transparent;"></audio>
+      </div>
+
+      <!-- Tracks -->
+      <div id="dj-modal-tracks-wrap" style="display:none; margin-bottom:24px;">
+        <div style="font-weight:700; font-size:13px; letter-spacing:1px; color:var(--MUTED); text-transform:uppercase; margin-bottom:10px;">Tracks</div>
+        <div id="dj-modal-tracks" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+
+      <!-- Socials -->
+      <div id="dj-modal-socials-wrap" style="display:none; margin-bottom:24px;">
+        <div style="font-weight:700; font-size:13px; letter-spacing:1px; color:var(--MUTED); text-transform:uppercase; margin-bottom:10px;">Réseaux</div>
+        <div id="dj-modal-socials" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
+      </div>
+
+      <!-- Reviews -->
+      <div id="dj-modal-reviews-wrap" style="display:none;">
+        <div style="font-weight:700; font-size:13px; letter-spacing:1px; color:var(--MUTED); text-transform:uppercase; margin-bottom:10px;">Derniers avis</div>
+        <div id="dj-modal-reviews" style="display:flex; flex-direction:column; gap:12px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL NOTER UN DJ -->
 <div id="modal-rate-dj" class="modal">
   <div class="modal-card" style="max-width:480px;">
@@ -1287,7 +1362,7 @@
   }
 
   const user = JSON.parse(localStorage.getItem('cue_user') || '{}');
-  let favorites = JSON.parse(localStorage.getItem('cue_favorites') || '[]');
+  let favoriteDJIds = new Set(JSON.parse(localStorage.getItem('cue_favorites') || '[]'));
   let bookings = JSON.parse(localStorage.getItem('cue_venue_bookings') || '[]');
   let venueBookings = bookings;
   let allVenueReviews = [];
@@ -1305,6 +1380,9 @@
   const offerDataMap = new Map();
   let conversationsLoaded = false;
   let reviewsLoaded = false;
+  let conversationsCache = null;
+  let conversationsCacheTime = 0;
+  const CONV_CACHE_TTL = 30000;
 
   function getName(obj) {
     if (!obj) return '—';
@@ -1379,7 +1457,8 @@
     await Promise.all([
       loadVenueBookings(),
       filterDJs(),
-      loadMyReviews()
+      loadMyReviews(),
+      loadFavorites()
     ])
     reviewsLoaded = true
     loadStats()
@@ -1428,6 +1507,33 @@
     } else {
       avatarEl.innerHTML = '<span style="font-size:28px;">🏛️</span>';
     }
+  }
+
+  async function loadFavorites() {
+    if (!user.id) return;
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_favorites', venueId: user.id })
+      });
+      const data = await res.json();
+      if (data.favorites) {
+        favoriteDJIds = new Set(data.favorites);
+        localStorage.setItem('cue_favorites', JSON.stringify([...favoriteDJIds]));
+      }
+    } catch (err) {
+      // keep localStorage fallback already loaded
+    }
+    updateFavBadge();
+    checkAllFavorites([...favoriteDJIds]);
+  }
+
+  function updateFavBtn(btn, isFav) {
+    if (!btn) return;
+    btn.textContent = isFav ? '♥' : '♡';
+    btn.style.color = isFav ? 'var(--Y)' : '';
+    btn.classList.toggle('active', isFav);
   }
 
   function loadVenueProfile() {
@@ -1578,7 +1684,7 @@
   }
 
   function loadStats() {
-    document.getElementById('stat-favs').textContent = favorites.length;
+    document.getElementById('stat-favs').textContent = favoriteDJIds.size;
     document.getElementById('stat-upcoming').textContent = bookings.filter(b => new Date(b.date && b.date.includes('T') ? b.date : (b.date || '') + 'T00:00:00') >= new Date()).length;
     document.getElementById('stat-bookings-total').textContent = bookings.length;
   }
@@ -1662,7 +1768,7 @@
       const plan = (dj.plan || 'starter').toLowerCase()
 
       return `
-        <div class="dj-card" onclick="window.open('dj-profile.html?id=${dj.id}', '_blank')"
+        <div class="dj-card" onclick="openDJProfileModal('${dj.id}')"
              style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:18px;
                     overflow:hidden; cursor:pointer; transition:all .25s; position:relative;"
              onmouseover="this.style.borderColor='rgba(255,195,0,.4)'; this.style.transform='translateY(-4px)'"
@@ -1736,33 +1842,40 @@
     checkAllFavorites(djs.map(d => d.id))
   }
 
-  function toggleFavorite(djId, btn) {
-    if (favorites.includes(djId)) {
-      favorites = favorites.filter(id => id !== djId)
-      btn.textContent = '♡'
-    } else {
-      favorites.push(djId)
-      btn.textContent = '♥'
-      btn.style.color = 'var(--Y)'
+  async function toggleFavorite(djId, btn) {
+    const wasFav = favoriteDJIds.has(djId);
+    // Optimistic update
+    if (wasFav) { favoriteDJIds.delete(djId); } else { favoriteDJIds.add(djId); }
+    updateFavBtn(btn, !wasFav);
+    updateFavBadge();
+    localStorage.setItem('cue_favorites', JSON.stringify([...favoriteDJIds]));
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'toggle_favorite', venueId: user.id, djId })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error('toggle failed');
+    } catch (err) {
+      // Revert
+      if (wasFav) { favoriteDJIds.add(djId); } else { favoriteDJIds.delete(djId); }
+      updateFavBtn(btn, wasFav);
+      updateFavBadge();
+      localStorage.setItem('cue_favorites', JSON.stringify([...favoriteDJIds]));
     }
-    localStorage.setItem('cue_favorites', JSON.stringify(favorites))
-    updateFavBadge()
-    loadStats()
+    loadStats();
   }
 
   function checkAllFavorites(ids) {
     ids.forEach(id => {
-      const btn = document.getElementById('fav-' + id)
-      if (!btn) return
-      if (favorites.includes(id)) {
-        btn.textContent = '♥'
-        btn.style.color = 'var(--Y)'
-      }
-    })
+      const btn = document.getElementById('fav-' + id);
+      if (btn) updateFavBtn(btn, favoriteDJIds.has(id));
+    });
   }
 
   function djCardHTML(dj) {
-    const isFav = favorites.includes(dj.id);
+    const isFav = favoriteDJIds.has(dj.id);
     const djName = getName(dj);
     const rating = parseFloat(dj.rating) || 0;
     const stars = '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating));
@@ -1791,34 +1904,25 @@
     `;
   }
 
-  function toggleFav(djId, btn) {
-    if (favorites.includes(djId)) {
-      favorites = favorites.filter(id => id !== djId);
-      btn.textContent = '🤍'; btn.classList.remove('active');
-    } else {
-      favorites.push(djId);
-      btn.textContent = '❤️'; btn.classList.add('active');
-    }
-    localStorage.setItem('cue_favorites', JSON.stringify(favorites));
-    updateFavBadge(); loadStats();
-  }
+  function toggleFav(djId, btn) { toggleFavorite(djId, btn); }
 
-  function toggleFavFromModal() {
+  async function toggleFavFromModal() {
     if (!currentDJ) return;
-    const isFav = favorites.includes(currentDJ.id);
-    if (isFav) { favorites = favorites.filter(id => id !== currentDJ.id); document.getElementById('modal-fav-btn').textContent = '🤍 Ajouter aux favoris'; }
-    else { favorites.push(currentDJ.id); document.getElementById('modal-fav-btn').textContent = '❤️ Retirer des favoris'; }
-    localStorage.setItem('cue_favorites', JSON.stringify(favorites));
-    updateFavBadge(); loadStats();
+    const btn = { textContent: '', style: {}, classList: { toggle: () => {}, add: () => {}, remove: () => {} } };
+    await toggleFavorite(currentDJ.id, btn);
+    const isFav = favoriteDJIds.has(currentDJ.id);
+    const modalBtn = document.getElementById('modal-fav-btn');
+    if (modalBtn) modalBtn.textContent = isFav ? '❤️ Retirer des favoris' : '🤍 Ajouter aux favoris';
   }
 
   function updateFavBadge() {
     const b = document.getElementById('fav-count-badge');
-    b.textContent = favorites.length; b.style.display = favorites.length ? 'block' : 'none';
+    if (!b) return;
+    b.textContent = favoriteDJIds.size; b.style.display = favoriteDJIds.size ? 'block' : 'none';
   }
 
   function renderFavorites() {
-    const favDJs = allDJs.filter(dj => favorites.includes(dj.id));
+    const favDJs = allDJs.filter(dj => favoriteDJIds.has(dj.id));
     const grid = document.getElementById('fav-grid');
     const preview = document.getElementById('fav-preview');
     if (!favDJs.length) {
@@ -1841,7 +1945,7 @@
   function openDJProfile(djId) {
     currentDJ = allDJs.find(dj => dj.id === djId);
     if (!currentDJ) return;
-    const isFav = favorites.includes(djId);
+    const isFav = favoriteDJIds.has(djId);
     const stars = '★'.repeat(Math.round(currentDJ.rating)) + '☆'.repeat(5-Math.round(currentDJ.rating));
     document.getElementById('modal-dj-name').textContent = currentDJ.firstName + ' ' + currentDJ.lastName;
     document.getElementById('modal-dj-genres').textContent = currentDJ.genres.join(' · ');
@@ -1857,6 +1961,162 @@
   }
 
   function contactDJFromModal() { closeModal('modal-dj-profile'); openContactModal(currentDJ.id); }
+
+  async function openDJProfileModal(djId) {
+    const modal = document.getElementById('dj-profile-modal');
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+
+    // Find DJ in local cache first
+    let dj = allDJs.find(d => d.id === djId);
+
+    // Fetch from API for full data
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_user', userId: djId })
+      });
+      const data = await res.json();
+      if (data.user) dj = { ...dj, ...data.user };
+    } catch(e) {}
+
+    if (!dj) { closeDJProfileModal(); return; }
+    currentDJ = dj;
+
+    const name = ((dj.first_name || dj.firstName || '') + ' ' + (dj.last_name || dj.lastName || '')).trim() || 'DJ';
+    const rating = parseFloat(dj.avg_rating || dj.rating) || 0;
+    const reviews = dj.total_reviews || dj.reviews || 0;
+    const stars = rating > 0 ? '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating)) : '☆☆☆☆☆';
+    const genres = dj.genres || [];
+    const isFav = favoriteDJIds.has(djId);
+    const plan = (dj.plan || 'starter').toLowerCase();
+
+    // Hero
+    const bg = document.getElementById('dj-modal-bg');
+    const avatarEl = document.getElementById('dj-modal-avatar');
+    if (dj.picture) {
+      bg.style.backgroundImage = `url(${dj.picture})`;
+      avatarEl.innerHTML = `<img src="${dj.picture}" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='🎧'">`;
+    } else {
+      bg.style.backgroundImage = '';
+      avatarEl.innerHTML = '🎧';
+    }
+
+    document.getElementById('dj-modal-name').textContent = name;
+    document.getElementById('dj-modal-verified').innerHTML = dj.identity_status === 'verified'
+      ? '<span style="background:rgba(0,200,100,.12); border:1px solid rgba(0,200,100,.3); color:#00c864; font-size:12px; font-weight:700; padding:3px 10px; border-radius:20px;">✓ Identité vérifiée CUE</span>'
+      : '';
+
+    // Genres
+    document.getElementById('dj-modal-genres').innerHTML = genres.map(g =>
+      `<span style="background:rgba(255,195,0,.1); border:1px solid rgba(255,195,0,.2); color:var(--Y); font-size:12px; font-weight:700; padding:4px 12px; border-radius:20px;">${g}</span>`
+    ).join('');
+
+    // Rating
+    document.getElementById('dj-modal-rating').textContent = rating > 0 ? `${stars} ${rating} (${reviews} avis)` : `${stars} Aucun avis`;
+
+    // Plan badge
+    const planEl = document.getElementById('dj-modal-plan');
+    if (plan === 'business') { planEl.textContent = '✨ Elite'; planEl.style.cssText = 'background:rgba(255,195,0,.15); color:var(--Y); font-size:12px; font-weight:700; padding:3px 12px; border-radius:20px;'; }
+    else if (plan === 'pro') { planEl.textContent = '⚡ Pro'; planEl.style.cssText = 'background:rgba(255,195,0,.1); color:var(--Y); font-size:12px; font-weight:700; padding:3px 12px; border-radius:20px;'; }
+    else { planEl.textContent = ''; planEl.style.cssText = ''; }
+
+    document.getElementById('dj-modal-bookings').textContent = dj.booking_count > 0 ? `${dj.booking_count} gig${dj.booking_count > 1 ? 's' : ''} confirmé${dj.booking_count > 1 ? 's' : ''}` : '';
+    document.getElementById('dj-modal-desc').textContent = dj.description || '';
+
+    // Fav button
+    const favBtn = document.getElementById('dj-modal-fav-btn');
+    favBtn.textContent = isFav ? '♥ Favoris' : '♡ Favoris';
+    favBtn.style.color = isFav ? 'var(--Y)' : '';
+    favBtn.style.borderColor = isFav ? 'var(--Y)' : '';
+
+    // Mix
+    const mixWrap = document.getElementById('dj-modal-mix-wrap');
+    const mixEl = document.getElementById('dj-modal-mix');
+    if (dj.mix_url) { mixEl.src = dj.mix_url; mixWrap.style.display = 'block'; }
+    else { mixWrap.style.display = 'none'; }
+
+    // Tracks
+    const tracksWrap = document.getElementById('dj-modal-tracks-wrap');
+    const tracksEl = document.getElementById('dj-modal-tracks');
+    const tracks = dj.tracks || [];
+    if (tracks.length) {
+      tracksEl.innerHTML = tracks.map((t, i) => `
+        <div style="background:#1a1a1a; border-radius:10px; padding:10px 14px; display:flex; align-items:center; gap:12px;">
+          <span style="color:var(--MUTED); font-size:12px; width:20px;">${i+1}</span>
+          <div style="flex:1; font-weight:600; font-size:14px;">${t.title || t.name || t}</div>
+          ${t.url ? `<audio controls style="height:30px; accent-color:var(--Y);"><source src="${t.url}"></audio>` : ''}
+        </div>
+      `).join('');
+      tracksWrap.style.display = 'block';
+    } else { tracksWrap.style.display = 'none'; }
+
+    // Socials
+    const socialsWrap = document.getElementById('dj-modal-socials-wrap');
+    const socialsEl = document.getElementById('dj-modal-socials');
+    const socialLinks = [];
+    if (dj.instagram) socialLinks.push(`<a href="${dj.instagram.startsWith('http') ? dj.instagram : 'https://instagram.com/' + dj.instagram.replace(/^.*instagram\.com\//, '')}" target="_blank" style="background:#1a1a1a; border:1px solid var(--BORDER); color:#fff; padding:8px 16px; border-radius:20px; font-size:13px; text-decoration:none; display:flex; align-items:center; gap:6px;">📸 Instagram</a>`);
+    if (dj.soundcloud) socialLinks.push(`<a href="${dj.soundcloud.startsWith('http') ? dj.soundcloud : 'https://' + dj.soundcloud}" target="_blank" style="background:#1a1a1a; border:1px solid var(--BORDER); color:#fff; padding:8px 16px; border-radius:20px; font-size:13px; text-decoration:none; display:flex; align-items:center; gap:6px;">🎵 SoundCloud</a>`);
+    if (dj.spotify) socialLinks.push(`<a href="${dj.spotify.startsWith('http') ? dj.spotify : 'https://' + dj.spotify}" target="_blank" style="background:#1a1a1a; border:1px solid var(--BORDER); color:#fff; padding:8px 16px; border-radius:20px; font-size:13px; text-decoration:none; display:flex; align-items:center; gap:6px;">🎶 Spotify</a>`);
+    if (dj.youtube) socialLinks.push(`<a href="${dj.youtube.startsWith('http') ? dj.youtube : 'https://' + dj.youtube}" target="_blank" style="background:#1a1a1a; border:1px solid var(--BORDER); color:#fff; padding:8px 16px; border-radius:20px; font-size:13px; text-decoration:none; display:flex; align-items:center; gap:6px;">▶ YouTube</a>`);
+    if (socialLinks.length) { socialsEl.innerHTML = socialLinks.join(''); socialsWrap.style.display = 'block'; }
+    else { socialsWrap.style.display = 'none'; }
+
+    // Reviews (last 3)
+    const reviewsWrap = document.getElementById('dj-modal-reviews-wrap');
+    const reviewsEl = document.getElementById('dj-modal-reviews');
+    try {
+      const rRes = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_reviews', djId })
+      });
+      const rData = await rRes.json();
+      const rev = (rData.reviews || []).slice(0, 3);
+      if (rev.length) {
+        reviewsEl.innerHTML = rev.map(r => {
+          const rStars = '★'.repeat(Math.round(r.rating)) + '☆'.repeat(5 - Math.round(r.rating));
+          return `
+            <div style="background:#1a1a1a; border-radius:12px; padding:14px 16px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                <span style="font-weight:700; font-size:14px;">${r.venue_name || r.venueName || 'Venue'}</span>
+                <span style="color:var(--Y);">${rStars}</span>
+              </div>
+              <p style="color:var(--MUTED); font-size:13px; margin:0; line-height:1.5;">${r.comment || r.text || ''}</p>
+            </div>
+          `;
+        }).join('');
+        reviewsWrap.style.display = 'block';
+      } else { reviewsWrap.style.display = 'none'; }
+    } catch(e) { reviewsWrap.style.display = 'none'; }
+  }
+
+  function closeDJProfileModal() {
+    document.getElementById('dj-profile-modal').style.display = 'none';
+    document.body.style.overflow = '';
+    const mixEl = document.getElementById('dj-modal-mix');
+    if (mixEl) { mixEl.pause(); mixEl.src = ''; }
+  }
+
+  async function toggleFavFromDJModal() {
+    if (!currentDJ) return;
+    const favBtn = document.getElementById('dj-modal-fav-btn');
+    // Use a proxy btn object since the real btn has complex styling
+    await toggleFavorite(currentDJ.id, { textContent: '', style: {}, classList: { toggle:()=>{}, add:()=>{}, remove:()=>{} } });
+    const isFav = favoriteDJIds.has(currentDJ.id);
+    favBtn.textContent = isFav ? '♥ Favoris' : '♡ Favoris';
+    favBtn.style.color = isFav ? 'var(--Y)' : '';
+    favBtn.style.borderColor = isFav ? 'var(--Y)' : '';
+    // Also update the card fav button if visible
+    const cardBtn = document.getElementById('fav-' + currentDJ.id);
+    if (cardBtn) updateFavBtn(cardBtn, isFav);
+  }
+
+  function contactFromDJModal() {
+    closeDJProfileModal();
+    if (currentDJ) openContactModal(currentDJ.id);
+  }
 
   let currentContactDJ = null;
 
@@ -1951,7 +2211,30 @@
     }
   }
 
-  async function loadVenueConversations() {
+  function invalidateConversationsCache() {
+    conversationsCache = null;
+    conversationsCacheTime = 0;
+  }
+
+  async function loadVenueConversations(force = false) {
+    const now = Date.now();
+    if (!force && conversationsCache && (now - conversationsCacheTime < CONV_CACHE_TTL)) {
+      renderVenueConversations(conversationsCache);
+      return;
+    }
+    // Show skeleton
+    const list = document.getElementById('messages-list');
+    if (list) {
+      list.innerHTML = Array(3).fill(0).map(() => `
+        <div style="display:flex; align-items:center; gap:12px; padding:16px; border-bottom:1px solid var(--BORDER);">
+          <div class="skeleton" style="width:44px; height:44px; border-radius:50%; flex-shrink:0;"></div>
+          <div style="flex:1;">
+            <div class="skeleton" style="height:14px; width:60%; border-radius:6px; margin-bottom:8px;"></div>
+            <div class="skeleton" style="height:11px; width:85%; border-radius:6px;"></div>
+          </div>
+        </div>
+      `).join('');
+    }
     try {
       const res = await fetch('/api/messages', {
         method: 'POST',
@@ -1959,9 +2242,12 @@
         body: JSON.stringify({ action: 'get_conversations', userId: user.id, userType: 'venue' })
       });
       const data = await res.json();
-      renderVenueConversations(data.conversations || []);
+      conversationsCache = data.conversations || [];
+      conversationsCacheTime = Date.now();
+      renderVenueConversations(conversationsCache);
     } catch (err) {
-      console.log('Erreur:', err);
+      console.log('Erreur conversations:', err);
+      if (list) list.innerHTML = '<div class="empty-state"><div class="empty-emoji">⚠️</div><div class="empty-title">Erreur de chargement</div><button class="btn btn-outline btn-sm" onclick="loadVenueConversations(true)" style="margin-top:12px;">Réessayer</button></div>';
     }
   }
 
@@ -2095,6 +2381,7 @@
       })
     });
 
+    invalidateConversationsCache();
     await loadVenueMessages(currentVenueConv.id);
   }
 
@@ -2154,6 +2441,7 @@
         alert('🎉 Booking confirmé ! Le gig est ajouté à votre calendrier.');
         pendingMessageId = null;
         pendingOfferData = {};
+        invalidateConversationsCache();
         await loadVenueMessages(currentVenueConv.id);
       } else {
         alert('Erreur : ' + (responseData.error || 'Réessaie'));
@@ -2805,10 +3093,11 @@
 
   function checkVerificationNotification() {
     const status = user.identity_status;
-    const notifShown = localStorage.getItem('verif_notif_shown_' + user.id);
+    const key = 'verif_notif_v2_' + user.id;
+    const notifShown = localStorage.getItem(key);
     if (status === 'verified' && !notifShown) {
-      localStorage.setItem('verif_notif_shown_' + user.id, 'true');
-      showVerifApprovedNotif();
+      localStorage.setItem(key, 'true');
+      setTimeout(showVerifApprovedNotif, 800);
     }
   }
 
@@ -2824,6 +3113,7 @@
       document.head.appendChild(style);
     }
     const notif = document.createElement('div');
+    notif.className = 'verif-notif-overlay';
     notif.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.85); backdrop-filter:blur(12px); z-index:9999; display:flex; align-items:center; justify-content:center; animation:verif-fadeIn .4s ease;';
     notif.innerHTML = `
       <div style="background:var(--CARD); border:1px solid rgba(0,200,100,.3); border-radius:24px; padding:48px; text-align:center; max-width:480px; width:90%; box-shadow:0 32px 80px rgba(0,200,100,.15); animation:verif-slideUp .4s ease;">
@@ -2831,7 +3121,7 @@
         <h2 style="font-family:Barlow Condensed; font-weight:900; font-size:36px; color:#00c864; margin:0 0 12px;">IDENTITÉ VÉRIFIÉE !</h2>
         <p style="color:#ddd; font-size:16px; line-height:1.6; margin:0 0 8px;">Félicitations ! Votre identité a été vérifiée par notre équipe.</p>
         <p style="color:var(--MUTED); font-size:14px; margin:0 0 32px;">Votre badge CUE vérifié est maintenant actif sur votre profil.</p>
-        <button onclick="this.closest('[style*=position]').remove()"
+        <button onclick="this.closest('.verif-notif-overlay').remove()"
                 style="background:var(--Y); color:#000; border:none; border-radius:12px; padding:16px 40px; font-weight:700; font-size:18px; cursor:pointer; font-family:Barlow,sans-serif; width:100%;"
                 onmouseover="this.style.background='#FFD740'"
                 onmouseout="this.style.background='var(--Y)'">
