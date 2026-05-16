@@ -74,6 +74,7 @@
     .card { background:var(--CARD); border:1px solid var(--BORDER); border-radius:16px; overflow:hidden; margin-bottom:24px; }
     .card-header { padding:20px 24px; border-bottom:1px solid var(--BORDER); display:flex; justify-content:space-between; align-items:center; }
     .card-title { font-weight:700; font-size:16px; }
+    .card-body { padding:24px; }
 
     /* FIND DJ */
     .search-bar { display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap; }
@@ -90,7 +91,13 @@
     }
     .filter-select:focus { outline:none; border-color:var(--Y); }
 
-    /* DJ CARDS */
+    /* DJ CARDS GRID */
+    #djs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+      padding: 4px;
+    }
     .dj-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
     .dj-card {
       background:var(--CARD); border:1px solid var(--BORDER); border-radius:16px;
@@ -290,7 +297,7 @@
 
   <div class="nav-section">
     <div class="nav-section-title">Compte</div>
-    <div class="nav-item" onclick="showPage('verification', this)">
+    <div class="nav-item" id="nav-verif" onclick="showPage('verification', this)">
       <span class="nav-icon">🪪</span> Vérification
     </div>
     <div class="nav-item" onclick="showPage('settings', this)">
@@ -409,7 +416,7 @@
     </div>
 
     <div id="dj-count" style="color:var(--MUTED); font-size:14px; margin-bottom:20px;"></div>
-    <div class="dj-grid" id="dj-grid"></div>
+    <div id="djs-grid"></div>
   </div>
 
   <!-- FAVORIS -->
@@ -1234,6 +1241,8 @@
   let pendingOfferData = {};
   let pendingMessageId = null;
   const offerDataMap = new Map();
+  let conversationsLoaded = false;
+  let reviewsLoaded = false;
 
   function getName(obj) {
     if (!obj) return '—';
@@ -1305,12 +1314,18 @@
     updateUI()
 
     allDJs = demoDJs
-    await loadVenueBookings()
+    await Promise.all([
+      loadVenueBookings(),
+      filterDJs(),
+      loadMyReviews()
+    ])
+    reviewsLoaded = true
     loadStats()
-    await filterDJs()
     renderFavorites()
     renderCalendar()
     updateFavBadge()
+    checkVerificationNotification()
+    updateVerifNavItem()
 
     // Handle redirect from dj-profile.html with contact intent
     const urlParams = new URLSearchParams(window.location.search);
@@ -1475,15 +1490,22 @@
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById('page-' + page).classList.add('active');
     if (el) el.classList.add('active');
-    if (page === 'calendar') renderCalendar();
+
+    if (page === 'messages' && !conversationsLoaded) {
+      await loadVenueConversations();
+      conversationsLoaded = true;
+    }
+    if (page === 'reviews' && !reviewsLoaded) {
+      await loadMyReviews();
+      reviewsLoaded = true;
+    }
     if (page === 'find-dj') filterDJs();
     if (page === 'favorites') renderFavorites();
-    if (page === 'messages') await loadVenueConversations();
-    if (page === 'contact') initContactPage();
-    if (page === 'verification') initVerificationPage();
-    if (page === 'bookings') { await loadVenueBookings(); renderVenueBookings(); }
-    if (page === 'reviews') await loadMyReviews();
+    if (page === 'calendar') renderCalendar();
+    if (page === 'bookings') renderVenueBookings();
     if (page === 'profile') loadVenueProfile();
+    if (page === 'verification') initVerificationPage();
+    if (page === 'contact') initContactPage();
   }
 
   function loadStats() {
@@ -1548,12 +1570,126 @@
   }
 
   function renderDJs(djs) {
-    const grid = document.getElementById('dj-grid');
+    const container = document.getElementById('djs-grid')
+    if (!container) return
+
     if (!djs.length) {
-      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-emoji">🔍</div><div class="empty-title">Aucun DJ trouvé</div></div>';
-      return;
+      container.innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1;">
+          <div class="empty-emoji">🎧</div>
+          <div class="empty-title">Aucun DJ trouvé</div>
+          <div class="empty-sub">Modifie tes filtres de recherche</div>
+        </div>`
+      return
     }
-    grid.innerHTML = djs.map(dj => djCardHTML(dj)).join('');
+
+    container.innerHTML = djs.map(dj => {
+      const name = ((dj.first_name || dj.firstName || '') + ' ' + (dj.last_name || dj.lastName || '')).trim() || 'DJ'
+      const genres = dj.genres || []
+      const rating = parseFloat(dj.avg_rating || dj.rating) || 0
+      const reviews = dj.total_reviews || dj.reviews || 0
+      const stars = rating > 0 ? '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating)) : '☆☆☆☆☆'
+      const isVerified = dj.identity_status === 'verified' && dj.picture && dj.mix_url
+      const plan = (dj.plan || 'starter').toLowerCase()
+
+      return `
+        <div class="dj-card" onclick="window.open('dj-profile.html?id=${dj.id}', '_blank')"
+             style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:18px;
+                    overflow:hidden; cursor:pointer; transition:all .25s; position:relative;"
+             onmouseover="this.style.borderColor='rgba(255,195,0,.4)'; this.style.transform='translateY(-4px)'"
+             onmouseout="this.style.borderColor='var(--BORDER)'; this.style.transform='translateY(0)'">
+
+          <!-- Photo de profil -->
+          <div style="position:relative; height:180px; background:#111; overflow:hidden;">
+            ${dj.picture
+              ? `<img src="${dj.picture}" style="width:100%; height:100%; object-fit:cover;"
+                      onerror="this.style.display='none'">`
+              : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
+                   <span style="font-size:64px; opacity:.3;">🎧</span>
+                 </div>`
+            }
+            ${isVerified ? `
+              <div style="position:absolute; top:12px; right:12px; background:rgba(0,0,0,.8);
+                          backdrop-filter:blur(8px); border:1px solid rgba(255,195,0,.4);
+                          border-radius:20px; padding:4px 10px; font-size:11px; font-weight:700; color:var(--Y);">
+                ✓ Vérifié
+              </div>` : ''}
+            ${plan !== 'starter' ? `
+              <div style="position:absolute; top:12px; left:12px; background:var(--Y);
+                          border-radius:20px; padding:4px 10px; font-size:11px; font-weight:700; color:#000;">
+                ${plan.toUpperCase()}
+              </div>` : ''}
+            <div style="position:absolute; bottom:0; left:0; right:0; height:80px;
+                        background:linear-gradient(to top, rgba(0,0,0,.9), transparent);"></div>
+          </div>
+
+          <!-- Infos -->
+          <div style="padding:16px 18px 18px;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:8px;">
+              <div style="font-family:Barlow Condensed; font-weight:900; font-size:22px; color:#fff; line-height:1.1;">
+                ${name}
+              </div>
+              <div style="text-align:right; flex-shrink:0; margin-left:8px;">
+                <div style="color:var(--Y); font-size:14px;">${stars}</div>
+                <div style="color:var(--MUTED); font-size:11px; margin-top:2px;">
+                  ${reviews === 0 ? '0 avis' : reviews === 1 ? '1 avis' : reviews + ' avis'}
+                </div>
+              </div>
+            </div>
+
+            ${genres.length ? `
+              <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;">
+                ${genres.slice(0, 3).map(g => `
+                  <span style="background:rgba(255,195,0,.1); border:1px solid rgba(255,195,0,.2);
+                               color:var(--Y); font-size:11px; font-weight:700; padding:3px 10px;
+                               border-radius:20px; white-space:nowrap;">
+                    ${g}
+                  </span>`).join('')}
+                ${genres.length > 3 ? `<span style="color:var(--MUTED); font-size:11px; padding:3px 0;">+${genres.length-3}</span>` : ''}
+              </div>` : ''}
+
+            <div style="display:flex; gap:8px; margin-top:4px;">
+              <button class="btn btn-primary btn-sm" style="flex:1; font-size:13px;"
+                      onclick="event.stopPropagation(); openContactModal('${dj.id}', '${name.replace(/'/g, "\\'")}')">
+                💬 Contacter
+              </button>
+              <button class="btn btn-outline btn-sm" style="font-size:13px; padding:8px 12px;"
+                      onclick="event.stopPropagation(); toggleFavorite('${dj.id}', this)"
+                      id="fav-${dj.id}">
+                ♡
+              </button>
+            </div>
+          </div>
+        </div>
+      `
+    }).join('')
+
+    checkAllFavorites(djs.map(d => d.id))
+  }
+
+  function toggleFavorite(djId, btn) {
+    if (favorites.includes(djId)) {
+      favorites = favorites.filter(id => id !== djId)
+      btn.textContent = '♡'
+    } else {
+      favorites.push(djId)
+      btn.textContent = '♥'
+      btn.style.color = 'var(--Y)'
+    }
+    localStorage.setItem('cue_favorites', JSON.stringify(favorites))
+    updateFavBadge()
+    loadStats()
+  }
+
+  function checkAllFavorites(ids) {
+    ids.forEach(id => {
+      const btn = document.getElementById('fav-' + id)
+      if (!btn) return
+      if (favorites.includes(id)) {
+        btn.textContent = '♥'
+        btn.style.color = 'var(--Y)'
+      }
+    })
   }
 
   function djCardHTML(dj) {
@@ -2464,6 +2600,52 @@
     }
   }
 
+  function updateVerifNavItem() {
+    const verifNavItem = document.getElementById('nav-verif');
+    if (verifNavItem) {
+      verifNavItem.style.display = user.identity_status === 'verified' ? 'none' : 'flex';
+    }
+  }
+
+  function checkVerificationNotification() {
+    const status = user.identity_status;
+    const notifShown = localStorage.getItem('verif_notif_shown_' + user.id);
+    if (status === 'verified' && !notifShown) {
+      localStorage.setItem('verif_notif_shown_' + user.id, 'true');
+      showVerifApprovedNotif();
+    }
+  }
+
+  function showVerifApprovedNotif() {
+    if (!document.getElementById('notif-styles')) {
+      const style = document.createElement('style');
+      style.id = 'notif-styles';
+      style.textContent = `
+        @keyframes verif-fadeIn { from { opacity:0 } to { opacity:1 } }
+        @keyframes verif-slideUp { from { opacity:0; transform:translateY(40px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes verif-bounce { 0%,100% { transform:scale(1) } 50% { transform:scale(1.2) } }
+      `;
+      document.head.appendChild(style);
+    }
+    const notif = document.createElement('div');
+    notif.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.85); backdrop-filter:blur(12px); z-index:9999; display:flex; align-items:center; justify-content:center; animation:verif-fadeIn .4s ease;';
+    notif.innerHTML = `
+      <div style="background:var(--CARD); border:1px solid rgba(0,200,100,.3); border-radius:24px; padding:48px; text-align:center; max-width:480px; width:90%; box-shadow:0 32px 80px rgba(0,200,100,.15); animation:verif-slideUp .4s ease;">
+        <div style="font-size:72px; margin-bottom:24px; animation:verif-bounce .6s ease .3s both;">✅</div>
+        <h2 style="font-family:Barlow Condensed; font-weight:900; font-size:36px; color:#00c864; margin:0 0 12px;">IDENTITÉ VÉRIFIÉE !</h2>
+        <p style="color:#ddd; font-size:16px; line-height:1.6; margin:0 0 8px;">Félicitations ! Votre identité a été vérifiée par notre équipe.</p>
+        <p style="color:var(--MUTED); font-size:14px; margin:0 0 32px;">Votre badge CUE vérifié est maintenant actif sur votre profil.</p>
+        <button onclick="this.closest('[style*=position]').remove()"
+                style="background:var(--Y); color:#000; border:none; border-radius:12px; padding:16px 40px; font-weight:700; font-size:18px; cursor:pointer; font-family:Barlow,sans-serif; width:100%;"
+                onmouseover="this.style.background='#FFD740'"
+                onmouseout="this.style.background='var(--Y)'">
+          Super, merci ! 🎉
+        </button>
+      </div>
+    `;
+    document.body.appendChild(notif);
+  }
+
   function closeModal(id) { document.getElementById(id).classList.remove('open'); }
   async function logout() {
     try {
@@ -2623,26 +2805,27 @@
   }
 
   async function changePassword() {
-    const newPw = document.getElementById('new-password').value;
-    const confirmPw = document.getElementById('confirm-password').value;
-    if (newPw.length < 8) { alert('Le mot de passe doit faire au moins 8 caractères.'); return; }
+    const newPw = document.getElementById('new-password')?.value;
+    const confirmPw = document.getElementById('confirm-password')?.value;
+    if (!newPw || newPw.length < 8) { alert('Le mot de passe doit faire au moins 8 caractères.'); return; }
     if (newPw !== confirmPw) { alert('Les mots de passe ne correspondent pas.'); return; }
     try {
+      const userId = user.id || user.user_id;
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'change_password', userId: user.id, newPassword: newPw })
+        body: JSON.stringify({ action: 'change_password', userId, newPassword: newPw })
       });
       const data = await res.json();
       if (data.success) {
-        alert('✅ Mot de passe modifié. Reconnectez-vous.');
-        localStorage.clear();
-        window.location.href = 'login.html';
+        alert('✅ Mot de passe changé !');
+        document.getElementById('new-password').value = '';
+        document.getElementById('confirm-password').value = '';
       } else {
         alert('Erreur : ' + (data.error || 'Réessaie'));
       }
     } catch(err) {
-      alert('Erreur réseau.');
+      alert('Erreur. Réessaie.');
     }
   }
 

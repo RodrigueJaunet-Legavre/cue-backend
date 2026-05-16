@@ -255,7 +255,7 @@
 
   <div class="nav-section">
     <div class="nav-section-title">Compte</div>
-    <div class="nav-item" onclick="showPage('verification', this)">
+    <div class="nav-item" id="nav-verif" onclick="showPage('verification', this)">
       <span class="nav-icon">🪪</span> Vérification ID
       <span id="verif-status-badge" style="margin-left:auto; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; background:rgba(255,170,0,.2); color:#ffaa00;">En attente</span>
     </div>
@@ -1372,6 +1372,8 @@
     loadProfile()
     updateUnreadBadge()
     checkBadgeConditions()
+    checkVerificationNotification()
+    updateVerifNavItem()
     await syncConfirmedBookings()
   }
 
@@ -2517,6 +2519,21 @@
 
   async function openVenueProfile(venueId) {
     if (!venueId) return;
+
+    let modal = document.getElementById('modal-venue-profile');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'modal-venue-profile';
+      modal.className = 'modal';
+      document.body.appendChild(modal);
+    }
+
+    modal.innerHTML = `
+      <div class="modal-card" style="max-width:680px; padding:60px; text-align:center;">
+        <div style="color:var(--MUTED);">⏳ Chargement...</div>
+      </div>`;
+    modal.classList.add('open');
+
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
@@ -2525,70 +2542,96 @@
       });
       const data = await res.json();
       const venue = data.user;
-      if (!venue) { alert('Profil introuvable.'); return; }
+      if (!venue) { modal.classList.remove('open'); alert('Profil introuvable.'); return; }
 
-      const name = ((venue.first_name || '') + ' ' + (venue.last_name || '')).trim();
+      const name = ((venue.first_name || '') + ' ' + (venue.last_name || '')).trim() || 'Venue';
       const photos = Array.isArray(venue.venue_photos) ? venue.venue_photos : [];
-
-      let modal = document.getElementById('modal-venue-profile');
-      if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'modal-venue-profile';
-        modal.className = 'modal';
-        document.body.appendChild(modal);
-      }
+      const cols = photos.length === 1 ? '1fr' : photos.length === 2 ? '1fr 1fr' : '1fr 1fr 1fr';
 
       modal.innerHTML = `
-        <div class="modal-card" style="max-width:560px;">
-          <div style="display:flex; align-items:center; gap:20px; margin-bottom:24px; padding-bottom:24px; border-bottom:1px solid var(--BORDER);">
-            <div style="width:72px; height:72px; border-radius:50%; overflow:hidden; background:#1a1a1a;
-                        display:flex; align-items:center; justify-content:center; flex-shrink:0; border:2px solid var(--BORDER);">
-              ${venue.picture
-                ? `<img src="${venue.picture}" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='<span style=font-size:32px>🏛️</span>'">`
-                : `<span style="font-size:32px;">🏛️</span>`}
-            </div>
-            <div>
-              <h2 style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px; color:#fff; margin:0;">${name || 'Venue'}</h2>
-              ${venue.org_name ? `<div style="color:var(--Y); font-weight:700; font-size:14px; margin-top:4px;">🏢 ${venue.org_name}</div>` : ''}
-              ${venue.venue_city ? `<div style="color:var(--MUTED); font-size:13px; margin-top:4px;">📍 ${venue.venue_city}</div>` : ''}
-              <div style="margin-top:6px;">
-                <span style="padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700;
-                             background:${venue.identity_status === 'verified' ? 'rgba(0,200,100,.15)' : 'rgba(255,170,0,.15)'};
-                             color:${venue.identity_status === 'verified' ? '#00c864' : '#ffaa00'};">
-                  ${venue.identity_status === 'verified' ? '✅ Vérifié' : '⏳ En cours de vérification'}
-                </span>
+        <div class="modal-card" style="max-width:680px; padding:0; overflow:hidden;">
+
+          <!-- Header immersif -->
+          <div style="position:relative; height:200px; background:#111; overflow:hidden;">
+            ${venue.picture
+              ? `<img src="${venue.picture}" style="width:100%; height:100%; object-fit:cover; filter:blur(8px) brightness(.4);">`
+              : `<div style="width:100%; height:100%; background:linear-gradient(135deg, #111, #1a1a1a);"></div>`}
+            <div style="position:absolute; inset:0; display:flex; align-items:center; padding:32px; gap:24px;">
+              <div style="width:88px; height:88px; border-radius:50%; overflow:hidden; border:3px solid var(--Y); flex-shrink:0;">
+                ${venue.picture
+                  ? `<img src="${venue.picture}" style="width:100%; height:100%; object-fit:cover;">`
+                  : `<div style="width:100%; height:100%; background:#1a1a1a; display:flex; align-items:center; justify-content:center; font-size:36px;">🏛️</div>`}
+              </div>
+              <div>
+                <h2 style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:32px; color:#fff; margin:0; line-height:1;">${name}</h2>
+                ${venue.org_name ? `<div style="color:var(--Y); font-weight:700; font-size:14px; margin-top:6px;">🏢 ${venue.org_name}</div>` : ''}
+                ${venue.venue_city ? `<div style="color:#ddd; font-size:13px; margin-top:4px;">📍 ${venue.venue_city}</div>` : ''}
+                <div style="margin-top:8px;">
+                  <span style="padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700;
+                               background:${venue.identity_status === 'verified' ? 'rgba(0,200,100,.2)' : 'rgba(255,170,0,.2)'};
+                               color:${venue.identity_status === 'verified' ? '#00c864' : '#ffaa00'};">
+                    ${venue.identity_status === 'verified' ? '✅ Vérifié' : '⏳ Non vérifié'}
+                  </span>
+                </div>
               </div>
             </div>
+            <button onclick="closeModal('modal-venue-profile')"
+                    style="position:absolute; top:16px; right:16px; background:rgba(0,0,0,.6); border:none; color:#fff; width:36px; height:36px; border-radius:50%; cursor:pointer; font-size:18px; display:flex; align-items:center; justify-content:center;">✕</button>
           </div>
-          ${venue.description ? `
-            <div style="margin-bottom:20px;">
-              <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">À PROPOS</div>
-              <p style="color:#ddd; font-size:14px; line-height:1.7; margin:0;">${venue.description}</p>
+
+          <!-- Contenu -->
+          <div style="padding:28px 32px; max-height:60vh; overflow-y:auto;">
+            ${venue.venue_description || venue.description ? `
+              <div style="margin-bottom:24px;">
+                <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">À PROPOS</div>
+                <p style="color:#ddd; font-size:15px; line-height:1.7; margin:0;">${venue.venue_description || venue.description}</p>
+              </div>` : ''}
+            ${venue.venue_website ? `
+              <div style="margin-bottom:24px;">
+                <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">SITE WEB</div>
+                <a href="${venue.venue_website}" target="_blank" rel="noopener" style="color:var(--Y); font-size:14px; font-weight:600; text-decoration:none;">🌐 ${venue.venue_website}</a>
+              </div>` : ''}
+            ${photos.length ? `
+              <div style="margin-bottom:24px;">
+                <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:12px;">PHOTOS DU LIEU</div>
+                <div style="display:grid; grid-template-columns:${cols}; gap:12px;">
+                  ${photos.map(p => `
+                    <div style="border-radius:12px; overflow:hidden; cursor:pointer; aspect-ratio:${photos.length === 1 ? '16/9' : '4/3'};"
+                         onclick="openPhotoFullscreen('${p}')">
+                      <img src="${p}" style="width:100%; height:100%; object-fit:cover; transition:transform .3s;"
+                           onmouseover="this.style.transform='scale(1.05)'"
+                           onmouseout="this.style.transform='scale(1)'">
+                    </div>`).join('')}
+                </div>
+                <div style="color:var(--MUTED); font-size:12px; margin-top:8px; text-align:center;">Cliquez sur une photo pour l'agrandir</div>
+              </div>` : ''}
+            <div class="modal-actions" style="padding-top:20px; border-top:1px solid var(--BORDER);">
+              <button class="btn btn-outline" onclick="closeModal('modal-venue-profile')">Fermer</button>
             </div>
-          ` : ''}
-          ${venue.venue_website ? `
-            <div style="margin-bottom:20px;">
-              <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">SITE WEB</div>
-              <a href="${venue.venue_website}" target="_blank" rel="noopener" style="color:var(--Y); font-size:14px;">${venue.venue_website}</a>
-            </div>
-          ` : ''}
-          ${photos.length ? `
-            <div style="margin-bottom:20px;">
-              <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:12px;">PHOTOS DU LIEU</div>
-              <div style="display:grid; grid-template-columns:repeat(${Math.min(photos.length, 3)}, 1fr); gap:10px;">
-                ${photos.map(p => `<img src="${p}" style="width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:10px; border:1px solid var(--BORDER);">`).join('')}
-              </div>
-            </div>
-          ` : ''}
-          <div class="modal-actions">
-            <button class="btn btn-outline" onclick="closeModal('modal-venue-profile')">Fermer</button>
           </div>
         </div>
       `;
-      modal.classList.add('open');
     } catch(err) {
+      modal.classList.remove('open');
       alert('Erreur. Réessaie.');
     }
+  }
+
+  function openPhotoFullscreen(src) {
+    let overlay = document.getElementById('photo-fullscreen');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'photo-fullscreen';
+      overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,.95); z-index:10000; display:flex; align-items:center; justify-content:center; cursor:zoom-out; backdrop-filter:blur(8px);';
+      overlay.onclick = () => overlay.style.display = 'none';
+      document.body.appendChild(overlay);
+    }
+    overlay.innerHTML = `
+      <img src="${src}" style="max-width:90vw; max-height:90vh; object-fit:contain; border-radius:12px; box-shadow:0 32px 80px rgba(0,0,0,.8);">
+      <button onclick="event.stopPropagation(); document.getElementById('photo-fullscreen').style.display='none'"
+              style="position:fixed; top:20px; right:20px; background:rgba(255,255,255,.1); border:none; color:#fff; width:44px; height:44px; border-radius:50%; cursor:pointer; font-size:20px; backdrop-filter:blur(4px);">✕</button>
+    `;
+    overlay.style.display = 'flex';
   }
 
   async function loadMessages(convId) {
@@ -2899,6 +2942,59 @@
     localStorage.clear()
     sessionStorage.clear()
     window.location.replace('login.html')
+  }
+
+  function updateVerifNavItem() {
+    const verifNavItem = document.getElementById('nav-verif');
+    if (verifNavItem) {
+      verifNavItem.style.display = user.identity_status === 'verified' ? 'none' : 'flex';
+    }
+  }
+
+  function checkVerificationNotification() {
+    const status = user.identity_status;
+    const notifShown = localStorage.getItem('verif_notif_shown_' + user.id);
+    if (status === 'verified' && !notifShown) {
+      localStorage.setItem('verif_notif_shown_' + user.id, 'true');
+      showVerifApprovedNotif();
+    }
+  }
+
+  function showVerifApprovedNotif() {
+    if (!document.getElementById('notif-styles')) {
+      const style = document.createElement('style');
+      style.id = 'notif-styles';
+      style.textContent = `
+        @keyframes verif-fadeIn { from { opacity:0 } to { opacity:1 } }
+        @keyframes verif-slideUp { from { opacity:0; transform:translateY(40px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes verif-bounce { 0%,100% { transform:scale(1) } 50% { transform:scale(1.2) } }
+      `;
+      document.head.appendChild(style);
+    }
+    const notif = document.createElement('div');
+    notif.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.85); backdrop-filter:blur(12px); z-index:9999; display:flex; align-items:center; justify-content:center; animation:verif-fadeIn .4s ease;';
+    notif.innerHTML = `
+      <div style="background:var(--CARD); border:1px solid rgba(0,200,100,.3); border-radius:24px; padding:48px; text-align:center; max-width:480px; width:90%; box-shadow:0 32px 80px rgba(0,200,100,.15); animation:verif-slideUp .4s ease;">
+        <div style="font-size:72px; margin-bottom:24px; animation:verif-bounce .6s ease .3s both;">✅</div>
+        <h2 style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:36px; color:#00c864; margin:0 0 12px;">IDENTITÉ VÉRIFIÉE !</h2>
+        <p style="color:#ddd; font-size:16px; line-height:1.6; margin:0 0 8px;">Félicitations ! Ton identité a été vérifiée par notre équipe.</p>
+        <div style="background:rgba(0,200,100,.08); border:1px solid rgba(0,200,100,.2); border-radius:14px; padding:16px 24px; margin-bottom:28px;">
+          <div style="color:#00c864; font-weight:700; font-size:14px; margin-bottom:8px;">Badge CUE Vérifié — Conditions :</div>
+          <div style="color:var(--MUTED); font-size:13px; line-height:1.8; text-align:left;">
+            ${user.picture ? '✅' : '⬜'} Photo de profil<br>
+            ✅ Identité vérifiée<br>
+            ${user.mix_url ? '✅' : '⬜'} Mix de présentation
+          </div>
+        </div>
+        <button onclick="this.closest('[style*=position]').remove()"
+                style="background:var(--Y); color:#000; border:none; border-radius:12px; padding:16px 40px; font-weight:700; font-size:18px; cursor:pointer; font-family:'Barlow',sans-serif; width:100%;"
+                onmouseover="this.style.background='#FFD740'"
+                onmouseout="this.style.background='var(--Y)'">
+          Super, merci ! 🎉
+        </button>
+      </div>
+    `;
+    document.body.appendChild(notif);
   }
 
   async function confirmDeleteAccount() {
