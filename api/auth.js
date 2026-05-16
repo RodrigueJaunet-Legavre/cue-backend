@@ -306,8 +306,9 @@ module.exports = async function handler(req, res) {
         ...r,
         venue_name: r.venue_name || ((r.venue_first_name || '') + ' ' + (r.venue_last_name || '')).trim() || 'Venue'
       }));
-      const avg = enriched.length ? (enriched.reduce((s, r) => s + parseFloat(r.rating), 0) / enriched.length).toFixed(1) : 0;
-      return res.status(200).json({ reviews: enriched, avgRating: avg, totalReviews: enriched.length });
+      const total = enriched.length;
+      const avg = total > 0 ? (enriched.reduce((s, r) => s + parseFloat(r.rating || 0), 0) / total).toFixed(1) : '0';
+      return res.status(200).json({ reviews: enriched, avgRating: parseFloat(avg), totalReviews: total });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -327,8 +328,9 @@ module.exports = async function handler(req, res) {
         ...r,
         dj_name: r.dj_name || ((r.dj_first_name || '') + ' ' + (r.dj_last_name || '')).trim() || 'DJ'
       }));
-      const avg = enriched.length ? (enriched.reduce((s, r) => s + parseFloat(r.rating), 0) / enriched.length).toFixed(1) : 0;
-      return res.status(200).json({ reviews: enriched, avgRating: avg, totalReviews: enriched.length });
+      const total = enriched.length;
+      const avg = total > 0 ? (enriched.reduce((s, r) => s + parseFloat(r.rating || 0), 0) / total).toFixed(1) : '0';
+      return res.status(200).json({ reviews: enriched, avgRating: parseFloat(avg), totalReviews: total });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }

@@ -245,6 +245,69 @@
 
     @media (max-width:1200px) { .dj-grid { grid-template-columns:repeat(2,1fr); } }
     @media (max-width:768px) { .dj-grid { grid-template-columns:1fr; } .stats-grid { grid-template-columns:repeat(2,1fr); } }
+
+    /* ANIMATIONS GLOBALES */
+    @keyframes slideIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeInUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes shimmer { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.6; } }
+    @keyframes slideUp { from { opacity:0; transform:translateY(40px) scale(.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+    @keyframes badgePop { 0% { transform:scale(0); } 100% { transform:scale(1); } }
+
+    /* CARDS */
+    .card { transition:border-color .25s, box-shadow .25s; }
+    .card:hover { border-color:rgba(255,195,0,.15); box-shadow:0 8px 32px rgba(0,0,0,.3); }
+
+    /* GIG CARDS */
+    .gig-item { transition:background .2s; }
+
+    /* STATS */
+    .stat-card { transition:border-color .25s, box-shadow .25s, transform .2s; overflow:hidden; }
+    .stat-card:hover { border-color:rgba(255,195,0,.25); transform:translateY(-3px); box-shadow:0 12px 32px rgba(0,0,0,.4); }
+
+    /* NAV */
+    .nav-item { transition:background .2s, color .2s; }
+
+    /* BUTTONS */
+    .btn { position:relative; overflow:hidden; transition:all .2s; }
+    .btn::after { content:''; position:absolute; inset:0; background:rgba(255,255,255,.08); opacity:0; transition:opacity .2s; }
+    .btn:hover::after { opacity:1; }
+    .btn:active { transform:scale(.97); }
+    .btn-primary:hover { box-shadow:0 6px 24px rgba(255,195,0,.4); transform:translateY(-1px); }
+
+    /* PAGES */
+    .page.active { animation:fadeInUp .3s ease; }
+
+    /* MODAL */
+    .modal-card { animation:slideUp .3s cubic-bezier(.34,1.56,.64,1); }
+
+    /* REVIEW CARDS */
+    .review-card { transition:border-color .25s, transform .2s; animation:slideIn .3s ease; }
+    .review-card:hover { border-color:rgba(255,195,0,.2) !important; transform:translateX(4px); }
+
+    /* DJ CARDS */
+    .dj-card { transition:border-color .25s, transform .25s, box-shadow .25s; }
+    .dj-card:hover { transform:translateY(-6px) !important; box-shadow:0 20px 48px rgba(0,0,0,.5) !important; }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:rgba(255,195,0,.2); border-radius:3px; }
+    ::-webkit-scrollbar-thumb:hover { background:rgba(255,195,0,.4); }
+
+    /* FORM INPUTS */
+    .form-input { transition:border-color .2s, box-shadow .2s; }
+    .form-input:focus { box-shadow:0 0 0 3px rgba(255,195,0,.1); }
+
+    /* SKELETON */
+    .skeleton { background:linear-gradient(90deg, #1a1a1a 25%, #222 50%, #1a1a1a 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:8px; }
+
+    /* CLICKABLE NAMES */
+    .clickable-name { cursor:pointer; transition:color .2s; }
+    .clickable-name:hover { color:var(--Y); text-decoration:underline; text-underline-offset:3px; }
+
+    /* NAV BADGES */
+    .nav-badge { margin-left:auto; min-width:18px; height:18px; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 5px; font-size:10px; font-weight:700; box-shadow:0 2px 8px rgba(255,68,68,.4); }
   </style>
 </head>
 <body>
@@ -260,53 +323,52 @@
 
   <div class="nav-section">
     <div class="nav-section-title">Principal</div>
-    <div class="nav-item active" onclick="showPage('overview', this)">
+    <div class="nav-item active" data-page="overview" onclick="showPage('overview', this)">
       <span class="nav-icon">📊</span> Overview
     </div>
-    <div class="nav-item" onclick="showPage('find-dj', this)">
+    <div class="nav-item" data-page="find-dj" onclick="showPage('find-dj', this)">
       <span class="nav-icon">🔍</span> Find DJ
     </div>
-    <div class="nav-item" onclick="showPage('favorites', this)">
+    <div class="nav-item" data-page="favorites" onclick="showPage('favorites', this)">
       <span class="nav-icon">❤️</span> Favoris
       <span class="nav-badge" id="fav-count-badge" style="background:var(--Y); color:#000; display:none;"></span>
     </div>
-    <div class="nav-item" onclick="showPage('messages', this)">
+    <div class="nav-item" data-page="messages" onclick="showPage('messages', this)">
       <span class="nav-icon">💬</span> Messages
-      <span class="nav-badge" id="unread-badge" style="display:none;"></span>
     </div>
-    <div class="nav-item" onclick="showPage('calendar', this)">
+    <div class="nav-item" data-page="calendar" onclick="showPage('calendar', this)">
       <span class="nav-icon">📅</span> Calendrier
     </div>
-    <div class="nav-item" onclick="showPage('contracts', this)">
+    <div class="nav-item" data-page="contracts" onclick="showPage('contracts', this)">
       <span class="nav-icon">📄</span> Contrats IA
     </div>
   </div>
 
   <div class="nav-section">
     <div class="nav-section-title">Gestion</div>
-    <div class="nav-item" onclick="showPage('profile', this)">
+    <div class="nav-item" data-page="profile" onclick="showPage('profile', this)">
       <span class="nav-icon">👤</span> Mon Profil
     </div>
-    <div class="nav-item" onclick="showPage('bookings', this)">
+    <div class="nav-item" data-page="bookings" onclick="showPage('bookings', this)">
       <span class="nav-icon">🎤</span> Mes Bookings
     </div>
-    <div class="nav-item" onclick="showPage('reviews', this)">
+    <div class="nav-item" data-page="reviews" onclick="showPage('reviews', this)">
       <span class="nav-icon">⭐</span> Mes Avis
     </div>
   </div>
 
   <div class="nav-section">
     <div class="nav-section-title">Compte</div>
-    <div class="nav-item" id="nav-verif" onclick="showPage('verification', this)">
+    <div class="nav-item" id="nav-verif" data-page="verification" onclick="showPage('verification', this)">
       <span class="nav-icon">🪪</span> Vérification
     </div>
-    <div class="nav-item" onclick="showPage('settings', this)">
+    <div class="nav-item" data-page="settings" onclick="showPage('settings', this)">
       <span class="nav-icon">⚙️</span> Paramètres
     </div>
-    <div class="nav-item" onclick="showPage('contact', this)">
+    <div class="nav-item" data-page="contact" onclick="showPage('contact', this)">
       <span class="nav-icon">💬</span> Nous contacter
     </div>
-    <div class="nav-item" onclick="showPage('report', this)">
+    <div class="nav-item" data-page="report" onclick="showPage('report', this)">
       <span class="nav-icon">🚨</span> Signaler un problème
     </div>
   </div>
@@ -357,7 +419,7 @@
         <span class="card-title">📅 Prochains événements</span>
         <button class="btn btn-outline btn-sm" onclick="showPage('calendar', document.querySelectorAll('.nav-item')[4])">Voir calendrier</button>
       </div>
-      <div id="upcoming-events-list">
+      <div id="upcoming-bookings-list">
         <div class="empty-state">
           <div class="empty-emoji">🎵</div>
           <div class="empty-title">Aucun événement prévu</div>
@@ -1323,9 +1385,12 @@
     loadStats()
     renderFavorites()
     renderCalendar()
+    renderUpcomingBookings()
     updateFavBadge()
     checkVerificationNotification()
     updateVerifNavItem()
+    loadUnreadCounts()
+    setInterval(loadUnreadCounts, 30000)
 
     // Handle redirect from dj-profile.html with contact intent
     const urlParams = new URLSearchParams(window.location.search);
@@ -1491,9 +1556,13 @@
     document.getElementById('page-' + page).classList.add('active');
     if (el) el.classList.add('active');
 
-    if (page === 'messages' && !conversationsLoaded) {
-      await loadVenueConversations();
-      conversationsLoaded = true;
+    if (page === 'messages') {
+      notifCounts.messages = 0;
+      updateNavBadge('messages', 0);
+      if (!conversationsLoaded) {
+        await loadVenueConversations();
+        conversationsLoaded = true;
+      }
     }
     if (page === 'reviews' && !reviewsLoaded) {
       await loadMyReviews();
@@ -2598,6 +2667,133 @@
       btn.textContent = '🚨 Envoyer le signalement';
       alert('Erreur. Réessaie.');
     }
+  }
+
+  // ─── PART 1: Prochains événements ───────────────────────────────────────────
+  function renderUpcomingBookings() {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const upcoming = (venueBookings || [])
+      .filter(b => {
+        const d = new Date((b.date || '').split('T')[0] + 'T00:00:00')
+        return d >= today && b.status !== 'canceled'
+      })
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .slice(0, 3)
+
+    const container = document.getElementById('upcoming-bookings-list')
+    if (!container) return
+
+    if (!upcoming.length) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-emoji">📅</div>
+          <div class="empty-title">Aucun événement à venir</div>
+          <div class="empty-sub">Vos prochains bookings apparaîtront ici</div>
+        </div>`
+      return
+    }
+
+    container.innerHTML = upcoming.map(b => {
+      const rawDate = (b.date || '').split('T')[0]
+      const dateObj = rawDate ? new Date(rawDate + 'T00:00:00') : null
+      const day = dateObj ? dateObj.toLocaleDateString('fr-FR', {day:'2-digit'}) : '??'
+      const month = dateObj ? dateObj.toLocaleDateString('fr-FR', {month:'short'}).toUpperCase() : '???'
+      const daysUntil = dateObj ? Math.ceil((dateObj - today) / (1000*60*60*24)) : 0
+      const djId = b.djId || b.dj_id || ''
+      const djName = b.djName || b.dj_name || 'DJ'
+
+      return `
+        <div class="gig-item" style="cursor:pointer;"
+             onclick="openBookingDetail(${JSON.stringify(b).replace(/"/g, '&quot;')})">
+          <div class="gig-date">
+            <div class="gig-date-day">${day}</div>
+            <div class="gig-date-month">${month}</div>
+          </div>
+          <div class="gig-divider"></div>
+          <div class="gig-info">
+            <div class="gig-venue">
+              <span class="clickable-name" onclick="event.stopPropagation(); openDJPublicProfile('${djId}')">
+                🎧 ${djName}
+              </span>
+            </div>
+            <div class="gig-location">
+              ${b.type ? `<span>${b.type}</span>` : ''}
+              ${b.city ? `<span>📍 ${b.city}</span>` : ''}
+              ${b.start ? `<span>⏰ ${b.start}</span>` : ''}
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div class="gig-amount">${b.budget || b.amount || 0}€</div>
+            <div style="color:${daysUntil <= 7 ? '#ff9500' : 'var(--MUTED)'}; font-size:12px; font-weight:600; margin-top:4px;">
+              ${daysUntil === 0 ? "Aujourd'hui !" : daysUntil === 1 ? 'Demain' : `Dans ${daysUntil}j`}
+            </div>
+          </div>
+        </div>`
+    }).join('')
+  }
+
+  // ─── PART 2: Noms cliquables ──────────────────────────────────────────────
+  function openDJPublicProfile(djId) {
+    if (!djId || djId === 'undefined') return
+    window.open('dj-profile.html?id=' + djId, '_blank')
+  }
+
+  function openVenueProfileById(venueId) {
+    if (!venueId || venueId === 'undefined') return
+    openVenueProfile(venueId)
+  }
+
+  // ─── PART 4: Badge de notifications ──────────────────────────────────────
+  const notifCounts = { messages: 0 }
+
+  function updateNavBadge(page, count) {
+    const navItem = document.querySelector(`.nav-item[data-page="${page}"]`)
+    if (!navItem) return
+    let badge = navItem.querySelector('.nav-count-badge')
+    if (count > 0) {
+      if (!badge) {
+        badge = document.createElement('span')
+        badge.className = 'nav-badge nav-count-badge'
+        badge.style.background = '#ff4444'
+        badge.style.color = '#fff'
+        navItem.appendChild(badge)
+      }
+      badge.textContent = count > 99 ? '99+' : count
+      badge.style.animation = 'badgePop .3s cubic-bezier(.34,1.56,.64,1)'
+    } else {
+      if (badge) badge.remove()
+    }
+  }
+
+  async function loadUnreadCounts() {
+    if (!user.id) return
+    try {
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_unread_count', userId: user.id, userType: 'venue' })
+      })
+      const data = await res.json()
+      notifCounts.messages = data.unread || 0
+      updateNavBadge('messages', notifCounts.messages)
+    } catch(err) {}
+  }
+
+  // ─── PART 5: Compteur animé ───────────────────────────────────────────────
+  function animateStatValue(elementId, targetValue, suffix = '') {
+    const el = document.getElementById(elementId)
+    if (!el || !targetValue) { if (el) el.textContent = targetValue + suffix; return }
+    const duration = 700
+    const startTime = performance.now()
+    function update(currentTime) {
+      const progress = Math.min((currentTime - startTime) / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      el.textContent = Math.floor(targetValue * eased) + suffix
+      if (progress < 1) requestAnimationFrame(update)
+      else el.textContent = targetValue + suffix
+    }
+    requestAnimationFrame(update)
   }
 
   function updateVerifNavItem() {

@@ -205,6 +205,62 @@
       .sidebar { width:220px; }
       .main { margin-left:220px; }
     }
+
+    /* ANIMATIONS GLOBALES */
+    @keyframes slideIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeInUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes shimmer { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.6; } }
+    @keyframes slideUp { from { opacity:0; transform:translateY(40px) scale(.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+    @keyframes badgePop { 0% { transform:scale(0); } 100% { transform:scale(1); } }
+
+    /* CARDS */
+    .card { transition:border-color .25s, box-shadow .25s; }
+    .card:hover { border-color:rgba(255,195,0,.15); box-shadow:0 8px 32px rgba(0,0,0,.3); }
+
+    /* STATS */
+    .stat-card { transition:border-color .25s, box-shadow .25s, transform .2s; overflow:hidden; }
+    .stat-card:hover { border-color:rgba(255,195,0,.25); transform:translateY(-3px); box-shadow:0 12px 32px rgba(0,0,0,.4); }
+
+    /* NAV */
+    .nav-item { transition:background .2s, color .2s; }
+
+    /* BUTTONS */
+    .btn { position:relative; overflow:hidden; transition:all .2s; }
+    .btn::after { content:''; position:absolute; inset:0; background:rgba(255,255,255,.08); opacity:0; transition:opacity .2s; }
+    .btn:hover::after { opacity:1; }
+    .btn:active { transform:scale(.97); }
+    .btn-primary:hover { box-shadow:0 6px 24px rgba(255,195,0,.4); transform:translateY(-1px); }
+
+    /* PAGES */
+    .page.active { animation:fadeInUp .3s ease; }
+
+    /* MODAL */
+    .modal-card { animation:slideUp .3s cubic-bezier(.34,1.56,.64,1); }
+
+    /* REVIEW CARDS */
+    .review-card { transition:border-color .25s, transform .2s; animation:slideIn .3s ease; }
+    .review-card:hover { border-color:rgba(255,195,0,.2) !important; transform:translateX(4px); }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:rgba(255,195,0,.2); border-radius:3px; }
+    ::-webkit-scrollbar-thumb:hover { background:rgba(255,195,0,.4); }
+
+    /* FORM INPUTS */
+    .form-input { transition:border-color .2s, box-shadow .2s; }
+    .form-input:focus { box-shadow:0 0 0 3px rgba(255,195,0,.1); }
+
+    /* SKELETON */
+    .skeleton { background:linear-gradient(90deg, #1a1a1a 25%, #222 50%, #1a1a1a 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:8px; }
+
+    /* CLICKABLE NAMES */
+    .clickable-name { cursor:pointer; transition:color .2s; }
+    .clickable-name:hover { color:var(--Y); text-decoration:underline; text-underline-offset:3px; }
+
+    /* NAV BADGES */
+    .nav-badge { margin-left:auto; min-width:18px; height:18px; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 5px; font-size:10px; font-weight:700; box-shadow:0 2px 8px rgba(255,68,68,.4); }
   </style>
 </head>
 <body>
@@ -221,51 +277,50 @@
 
   <div class="nav-section">
     <div class="nav-section-title">Principal</div>
-    <div class="nav-item active" onclick="showPage('overview', this)">
+    <div class="nav-item active" data-page="overview" onclick="showPage('overview', this)">
       <span class="nav-icon">📊</span> Overview
     </div>
-    <div class="nav-item" onclick="showPage('gigs', this)">
+    <div class="nav-item" data-page="gigs" onclick="showPage('gigs', this)">
       <span class="nav-icon">🎤</span> Mes Gigs
       <span class="nav-badge yellow" id="pending-gigs-badge" style="display:none"></span>
     </div>
-    <div class="nav-item" onclick="showPage('messages', this)">
+    <div class="nav-item" data-page="messages" onclick="showPage('messages', this)">
       <span class="nav-icon">💬</span> Messages
-      <span class="nav-badge" id="unread-badge" style="display:none"></span>
     </div>
-    <div class="nav-item" onclick="showPage('calendar', this)">
+    <div class="nav-item" data-page="calendar" onclick="showPage('calendar', this)">
       <span class="nav-icon">📅</span> Calendrier
     </div>
-    <div class="nav-item" onclick="showPage('contracts', this)">
+    <div class="nav-item" data-page="contracts" onclick="showPage('contracts', this)">
       <span class="nav-icon">📄</span> Contrats IA
     </div>
   </div>
 
   <div class="nav-section">
     <div class="nav-section-title">Profil</div>
-    <div class="nav-item" onclick="showPage('profile', this)">
+    <div class="nav-item" data-page="profile" onclick="showPage('profile', this)">
       <span class="nav-icon">👤</span> Mon Profil
     </div>
-    <div class="nav-item" onclick="showPage('reviews', this)">
+    <div class="nav-item" data-page="reviews" onclick="showPage('reviews', this)">
       <span class="nav-icon">⭐</span> Avis & Notes
     </div>
-    <div class="nav-item" onclick="showPage('earnings', this)">
+    <div class="nav-item" data-page="earnings" onclick="showPage('earnings', this)">
       <span class="nav-icon">💰</span> Revenus
     </div>
   </div>
 
   <div class="nav-section">
     <div class="nav-section-title">Compte</div>
-    <div class="nav-item" id="nav-verif" onclick="showPage('verification', this)">
+    <div class="nav-item" id="nav-verif" data-page="verification" onclick="showPage('verification', this)">
       <span class="nav-icon">🪪</span> Vérification ID
       <span id="verif-status-badge" style="margin-left:auto; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; background:rgba(255,170,0,.2); color:#ffaa00;">En attente</span>
     </div>
-    <div class="nav-item" onclick="showPage('settings', this)">
+    <div class="nav-item" data-page="settings" onclick="showPage('settings', this)">
       <span class="nav-icon">⚙️</span> Paramètres
     </div>
-    <div class="nav-item" onclick="showPage('contact', this)">
+    <div class="nav-item" data-page="contact" onclick="showPage('contact', this)">
       <span class="nav-icon">💬</span> Nous contacter
     </div>
-    <div class="nav-item" onclick="showPage('report', this)">
+    <div class="nav-item" data-page="report" onclick="showPage('report', this)">
       <span class="nav-icon">🚨</span> Signaler un problème
     </div>
   </div>
@@ -1374,6 +1429,8 @@
     checkBadgeConditions()
     checkVerificationNotification()
     updateVerifNavItem()
+    loadUnreadCounts()
+    setInterval(loadUnreadCounts, 30000)
     await syncConfirmedBookings()
   }
 
@@ -1384,6 +1441,8 @@
     if (el) el.classList.add('active');
 
     if (page === 'messages') {
+      notifCounts.messages = 0;
+      updateNavBadge('messages', 0);
       await loadConversations();
       startPolling();
     } else {
@@ -2942,6 +3001,69 @@
     localStorage.clear()
     sessionStorage.clear()
     window.location.replace('login.html')
+  }
+
+  // ─── PART 2: Noms cliquables ──────────────────────────────────────────────
+  function openDJPublicProfile(djId) {
+    if (!djId || djId === 'undefined') return
+    window.open('dj-profile.html?id=' + djId, '_blank')
+  }
+
+  function openVenueProfileById(venueId) {
+    if (!venueId || venueId === 'undefined') return
+    openVenueProfile(venueId)
+  }
+
+  // ─── PART 4: Badge de notifications ──────────────────────────────────────
+  const notifCounts = { messages: 0 }
+
+  function updateNavBadge(page, count) {
+    const navItem = document.querySelector(`.nav-item[data-page="${page}"]`)
+    if (!navItem) return
+    let badge = navItem.querySelector('.nav-count-badge')
+    if (count > 0) {
+      if (!badge) {
+        badge = document.createElement('span')
+        badge.className = 'nav-badge nav-count-badge'
+        badge.style.background = '#ff4444'
+        badge.style.color = '#fff'
+        navItem.appendChild(badge)
+      }
+      badge.textContent = count > 99 ? '99+' : count
+      badge.style.animation = 'badgePop .3s cubic-bezier(.34,1.56,.64,1)'
+    } else {
+      if (badge) badge.remove()
+    }
+  }
+
+  async function loadUnreadCounts() {
+    if (!user.id) return
+    try {
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_unread_count', userId: user.id, userType: 'dj' })
+      })
+      const data = await res.json()
+      notifCounts.messages = data.unread || 0
+      updateNavBadge('messages', notifCounts.messages)
+    } catch(err) {}
+  }
+
+  // ─── PART 5: Compteur animé ───────────────────────────────────────────────
+  function animateStatValue(elementId, targetValue, suffix = '') {
+    const el = document.getElementById(elementId)
+    if (!el || !targetValue) { if (el) el.textContent = targetValue + suffix; return }
+    const duration = 700
+    const startTime = performance.now()
+    function update(currentTime) {
+      const progress = Math.min((currentTime - startTime) / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      el.textContent = Math.floor(targetValue * eased) + suffix
+      if (progress < 1) requestAnimationFrame(update)
+      else el.textContent = targetValue + suffix
+    }
+    requestAnimationFrame(update)
   }
 
   function updateVerifNavItem() {

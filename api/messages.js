@@ -155,5 +155,24 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'get_unread_count') {
+    const { userId, userType } = body;
+    try {
+      const field = userType === 'dj' ? 'dj_id' : 'venue_id';
+      const convs = await sql`SELECT id FROM conversations WHERE ${sql(field)} = ${userId}`;
+      const convIds = convs.map(c => c.id);
+      if (!convIds.length) return res.status(200).json({ unread: 0 });
+      const unread = await sql`
+        SELECT COUNT(*) as count FROM messages
+        WHERE conversation_id = ANY(${convIds})
+          AND sender_id != ${userId}
+          AND (read IS NULL OR read = false)
+      `;
+      return res.status(200).json({ unread: parseInt(unread[0]?.count || 0) });
+    } catch (err) {
+      return res.status(200).json({ unread: 0 });
+    }
+  }
+
   return res.status(400).json({ error: 'Action inconnue' });
 }

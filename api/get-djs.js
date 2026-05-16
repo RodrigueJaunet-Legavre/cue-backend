@@ -14,12 +14,13 @@ module.exports = async function handler(req, res) {
         u.instagram, u.soundcloud, u.spotify, u.youtube,
         u.mix_url, u.tracks, u.picture, u.profile_complete, u.created_at,
         COALESCE(AVG(r.rating), 0) as avg_rating,
-        COUNT(r.id) as review_count,
-        COUNT(b.id) as booking_count
+        COUNT(DISTINCT r.id) as total_reviews,
+        COUNT(DISTINCT r.id) as review_count,
+        COUNT(DISTINCT b.id) as booking_count
       FROM users u
       LEFT JOIN reviews r ON u.id = r.dj_id
       LEFT JOIN bookings b ON u.id = b.dj_id AND b.status = 'confirmed'
-      WHERE u.user_type = 'dj' AND u.suspended = false AND u.profile_complete = true
+      WHERE u.user_type = 'dj' AND (u.suspended IS NULL OR u.suspended = false) AND u.profile_complete = true
       GROUP BY u.id
       ORDER BY avg_rating DESC
     `;
