@@ -1437,27 +1437,83 @@
     await syncConfirmedBookings()
   }
 
-  async function showPage(page, el) {
+  function showSkeleton(containerId, type = 'card', count = 3) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const skeletons = {
+      card: () => `
+        <div style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:14px;
+                    padding:20px; margin-bottom:12px; overflow:hidden;">
+          <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
+            <div class="skeleton" style="width:44px; height:44px; border-radius:50%; flex-shrink:0;"></div>
+            <div style="flex:1;">
+              <div class="skeleton" style="width:55%; height:14px; border-radius:6px; margin-bottom:8px;"></div>
+              <div class="skeleton" style="width:35%; height:12px; border-radius:6px;"></div>
+            </div>
+            <div class="skeleton" style="width:60px; height:24px; border-radius:8px;"></div>
+          </div>
+          <div class="skeleton" style="width:100%; height:12px; border-radius:6px; margin-bottom:6px;"></div>
+          <div class="skeleton" style="width:70%; height:12px; border-radius:6px;"></div>
+        </div>`,
+      gig: () => `
+        <div style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:14px;
+                    padding:16px 20px; margin-bottom:10px; display:flex; align-items:center; gap:16px;">
+          <div style="text-align:center; flex-shrink:0;">
+            <div class="skeleton" style="width:36px; height:20px; border-radius:4px; margin-bottom:4px;"></div>
+            <div class="skeleton" style="width:36px; height:14px; border-radius:4px;"></div>
+          </div>
+          <div style="flex:1;">
+            <div class="skeleton" style="width:50%; height:14px; border-radius:6px; margin-bottom:8px;"></div>
+            <div class="skeleton" style="width:70%; height:12px; border-radius:6px;"></div>
+          </div>
+          <div class="skeleton" style="width:60px; height:28px; border-radius:8px;"></div>
+        </div>`,
+      review: () => `
+        <div style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:14px;
+                    padding:20px 24px; margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+            <div style="flex:1;">
+              <div class="skeleton" style="width:40%; height:14px; border-radius:6px; margin-bottom:8px;"></div>
+              <div class="skeleton" style="width:25%; height:12px; border-radius:6px;"></div>
+            </div>
+            <div class="skeleton" style="width:80px; height:20px; border-radius:6px;"></div>
+          </div>
+          <div class="skeleton" style="width:100%; height:12px; border-radius:6px; margin-bottom:6px;"></div>
+          <div class="skeleton" style="width:80%; height:12px; border-radius:6px;"></div>
+        </div>`
+    };
+    const fn = skeletons[type] || skeletons.card;
+    container.innerHTML = Array(count).fill(0).map(() => fn()).join('');
+  }
+
+  function showPage(page, el) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.getElementById('page-' + page).classList.add('active');
+    document.getElementById('page-' + page)?.classList.add('active');
     if (el) el.classList.add('active');
 
-    if (page === 'messages') {
-      notifCounts.messages = 0;
-      updateNavBadge('messages', 0);
-      await loadConversations();
-      startPolling();
-    } else {
-      stopPolling();
+    switch (page) {
+      case 'messages':
+        notifCounts.messages = 0;
+        updateNavBadge('messages', 0);
+        showSkeleton('messages-list', 'card', 4);
+        loadConversations().then(() => startPolling());
+        break;
+      case 'gigs':
+        showSkeleton('gigs-list', 'gig', 4);
+        syncConfirmedBookings().then(() => renderGigs(currentGigFilter || 'all'));
+        break;
+      case 'reviews':
+        showSkeleton('reviews-list', 'review', 3);
+        loadReviews();
+        break;
+      case 'calendar': renderCalendar(); break;
+      case 'earnings': renderEarnings(); break;
+      case 'contact': initContactPage(); break;
+      case 'verification': initVerificationPage(); break;
+      case 'overview': checkBadgeConditions(); break;
     }
-    if (page === 'calendar') renderCalendar();
-    if (page === 'gigs') { await syncConfirmedBookings(); renderGigs(currentGigFilter || 'all'); }
-    if (page === 'reviews') await loadReviews();
-    if (page === 'earnings') renderEarnings();
-    if (page === 'contact') initContactPage();
-    if (page === 'verification') initVerificationPage();
-    if (page === 'overview') checkBadgeConditions();
+    if (page !== 'messages') stopPolling();
   }
 
   function loadStats() {
@@ -1945,6 +2001,7 @@
 
   async function loadReviews() {
     if (!user.id) return;
+    showSkeleton('reviews-list', 'review', 3);
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
@@ -3026,13 +3083,23 @@
   }
 
   async function logout() {
+    // Sauvegarde les clés de notif avant de clear
+    const keysToKeep = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('cue_verif_notif_shown_')) {
+        keysToKeep[key] = localStorage.getItem(key);
+      }
+    }
     try {
       const { supabase } = await import('./js/supabase-client.js')
       await supabase.auth.signOut({ scope: 'global' })
     } catch(e) {}
-    localStorage.clear()
-    sessionStorage.clear()
-    window.location.replace('login.html')
+    localStorage.clear();
+    sessionStorage.clear();
+    // Restaure les clés de notif
+    Object.entries(keysToKeep).forEach(([k, v]) => localStorage.setItem(k, v));
+    window.location.replace('login.html');
   }
 
   // ─── PART 2: Noms cliquables ──────────────────────────────────────────────
@@ -3107,11 +3174,14 @@
 
   function checkVerificationNotification() {
     const status = user.identity_status;
-    const key = 'verif_notif_v2_' + user.id;
-    const notifShown = localStorage.getItem(key);
-    if (status === 'verified' && !notifShown) {
-      localStorage.setItem(key, 'true');
-      setTimeout(showVerifApprovedNotif, 800);
+    const userId = user.id || user.user_id;
+    if (!userId || status !== 'verified') return;
+
+    const storageKey = 'cue_verif_notif_shown_' + userId;
+    const alreadyShown = localStorage.getItem(storageKey) === '1';
+    if (!alreadyShown) {
+      localStorage.setItem(storageKey, '1');
+      setTimeout(showVerifApprovedNotif, 1000);
     }
   }
 

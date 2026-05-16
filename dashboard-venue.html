@@ -1656,31 +1656,103 @@
     }
   }
 
-  async function showPage(page, el) {
+  function showSkeleton(containerId, type = 'card', count = 3) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const skeletons = {
+      card: () => `
+        <div style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:14px;
+                    padding:20px; margin-bottom:12px; overflow:hidden;">
+          <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
+            <div class="skeleton" style="width:44px; height:44px; border-radius:50%; flex-shrink:0;"></div>
+            <div style="flex:1;">
+              <div class="skeleton" style="width:55%; height:14px; border-radius:6px; margin-bottom:8px;"></div>
+              <div class="skeleton" style="width:35%; height:12px; border-radius:6px;"></div>
+            </div>
+            <div class="skeleton" style="width:60px; height:24px; border-radius:8px;"></div>
+          </div>
+          <div class="skeleton" style="width:100%; height:12px; border-radius:6px; margin-bottom:6px;"></div>
+          <div class="skeleton" style="width:70%; height:12px; border-radius:6px;"></div>
+        </div>`,
+      gig: () => `
+        <div style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:14px;
+                    padding:16px 20px; margin-bottom:10px; display:flex; align-items:center; gap:16px;">
+          <div style="text-align:center; flex-shrink:0;">
+            <div class="skeleton" style="width:36px; height:20px; border-radius:4px; margin-bottom:4px;"></div>
+            <div class="skeleton" style="width:36px; height:14px; border-radius:4px;"></div>
+          </div>
+          <div style="flex:1;">
+            <div class="skeleton" style="width:50%; height:14px; border-radius:6px; margin-bottom:8px;"></div>
+            <div class="skeleton" style="width:70%; height:12px; border-radius:6px;"></div>
+          </div>
+          <div class="skeleton" style="width:60px; height:28px; border-radius:8px;"></div>
+        </div>`,
+      review: () => `
+        <div style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:14px;
+                    padding:20px 24px; margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+            <div style="flex:1;">
+              <div class="skeleton" style="width:40%; height:14px; border-radius:6px; margin-bottom:8px;"></div>
+              <div class="skeleton" style="width:25%; height:12px; border-radius:6px;"></div>
+            </div>
+            <div class="skeleton" style="width:80px; height:20px; border-radius:6px;"></div>
+          </div>
+          <div class="skeleton" style="width:100%; height:12px; border-radius:6px; margin-bottom:6px;"></div>
+          <div class="skeleton" style="width:80%; height:12px; border-radius:6px;"></div>
+        </div>`,
+      dj: () => `
+        <div style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:18px; overflow:hidden;">
+          <div class="skeleton" style="height:180px;"></div>
+          <div style="padding:16px 18px 18px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+              <div class="skeleton" style="width:55%; height:22px; border-radius:6px;"></div>
+              <div class="skeleton" style="width:70px; height:16px; border-radius:6px;"></div>
+            </div>
+            <div style="display:flex; gap:6px; margin-bottom:14px;">
+              <div class="skeleton" style="width:60px; height:24px; border-radius:20px;"></div>
+              <div class="skeleton" style="width:70px; height:24px; border-radius:20px;"></div>
+            </div>
+            <div class="skeleton" style="width:100%; height:36px; border-radius:10px;"></div>
+          </div>
+        </div>`
+    };
+    const fn = skeletons[type] || skeletons.card;
+    container.innerHTML = Array(count).fill(0).map(() => fn()).join('');
+  }
+
+  function showPage(page, el) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.getElementById('page-' + page).classList.add('active');
+    document.getElementById('page-' + page)?.classList.add('active');
     if (el) el.classList.add('active');
 
-    if (page === 'messages') {
-      notifCounts.messages = 0;
-      updateNavBadge('messages', 0);
-      if (!conversationsLoaded) {
-        await loadVenueConversations();
-        conversationsLoaded = true;
-      }
+    switch (page) {
+      case 'messages':
+        notifCounts.messages = 0;
+        updateNavBadge('messages', 0);
+        if (!conversationsLoaded) {
+          showSkeleton('messages-list', 'card', 4);
+          loadVenueConversations().then(() => { conversationsLoaded = true; });
+        }
+        break;
+      case 'reviews':
+        showSkeleton('reviews-list', 'review', 3);
+        loadMyReviews();
+        break;
+      case 'find-dj':
+        showSkeleton('djs-grid', 'dj', 6);
+        filterDJs();
+        break;
+      case 'bookings':
+        showSkeleton('bookings-list', 'gig', 3);
+        loadVenueBookings().then(() => renderVenueBookings());
+        break;
+      case 'favorites': renderFavorites(); break;
+      case 'calendar': renderCalendar(); break;
+      case 'profile': loadVenueProfile(); break;
+      case 'verification': initVerificationPage(); break;
+      case 'contact': initContactPage(); break;
     }
-    if (page === 'reviews' && !reviewsLoaded) {
-      await loadMyReviews();
-      reviewsLoaded = true;
-    }
-    if (page === 'find-dj') filterDJs();
-    if (page === 'favorites') renderFavorites();
-    if (page === 'calendar') renderCalendar();
-    if (page === 'bookings') renderVenueBookings();
-    if (page === 'profile') loadVenueProfile();
-    if (page === 'verification') initVerificationPage();
-    if (page === 'contact') initContactPage();
   }
 
   function loadStats() {
@@ -1690,6 +1762,7 @@
   }
 
   async function loadVenueBookings() {
+    showSkeleton('bookings-list', 'gig', 3);
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
@@ -1727,6 +1800,8 @@
     const minRating = document.getElementById('filter-rating').value;
     const verifiedOnly = document.getElementById('filter-verified').value === 'verified';
     const sort = document.getElementById('filter-sort').value;
+
+    showSkeleton('djs-grid', 'dj', 6);
 
     try {
       const res = await fetch('/api/get-djs', {
@@ -1768,7 +1843,7 @@
       const plan = (dj.plan || 'starter').toLowerCase()
 
       return `
-        <div class="dj-card" onclick="openDJProfileModal('${dj.id}')"
+        <div class="dj-card" onclick="window.open('dj-profile.html?id=${dj.id}', '_blank')"
              style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:18px;
                     overflow:hidden; cursor:pointer; transition:all .25s; position:relative;"
              onmouseover="this.style.borderColor='rgba(255,195,0,.4)'; this.style.transform='translateY(-4px)'"
@@ -1828,6 +1903,10 @@
                       onclick="event.stopPropagation(); openContactModal('${dj.id}', '${name.replace(/'/g, "\\'")}')">
                 💬 Contacter
               </button>
+              <button class="btn btn-outline btn-sm" style="font-size:13px;"
+                      onclick="event.stopPropagation(); window.open('dj-profile.html?id=${dj.id}', '_blank')">
+                Voir →
+              </button>
               <button class="btn btn-outline btn-sm" style="font-size:13px; padding:8px 12px;"
                       onclick="event.stopPropagation(); toggleFavorite('${dj.id}', this)"
                       id="fav-${dj.id}">
@@ -1843,12 +1922,17 @@
   }
 
   async function toggleFavorite(djId, btn) {
-    const wasFav = favoriteDJIds.has(djId);
+    if (!djId || djId === 'undefined') return;
+
+    const isFav = favoriteDJIds.has(djId);
+    const newState = !isFav;
+
     // Optimistic update
-    if (wasFav) { favoriteDJIds.delete(djId); } else { favoriteDJIds.add(djId); }
-    updateFavBtn(btn, !wasFav);
+    if (newState) { favoriteDJIds.add(djId); } else { favoriteDJIds.delete(djId); }
+    updateFavBtn(btn, newState);
     updateFavBadge();
-    localStorage.setItem('cue_favorites', JSON.stringify([...favoriteDJIds]));
+    localStorage.setItem('venue_favorites', JSON.stringify([...favoriteDJIds]));
+
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
@@ -1856,14 +1940,16 @@
         body: JSON.stringify({ action: 'toggle_favorite', venueId: user.id, djId })
       });
       const data = await res.json();
-      if (!data.success) throw new Error('toggle failed');
-    } catch (err) {
-      // Revert
-      if (wasFav) { favoriteDJIds.add(djId); } else { favoriteDJIds.delete(djId); }
-      updateFavBtn(btn, wasFav);
-      updateFavBadge();
-      localStorage.setItem('cue_favorites', JSON.stringify([...favoriteDJIds]));
+      // Sync avec réponse serveur
+      if (data.added) { favoriteDJIds.add(djId); updateFavBtn(btn, true); }
+      else { favoriteDJIds.delete(djId); updateFavBtn(btn, false); }
+      localStorage.setItem('venue_favorites', JSON.stringify([...favoriteDJIds]));
+    } catch(err) {
+      // Revert si erreur réseau
+      if (isFav) { favoriteDJIds.add(djId); updateFavBtn(btn, true); }
+      else { favoriteDJIds.delete(djId); updateFavBtn(btn, false); }
     }
+    updateFavBadge();
     loadStats();
   }
 
@@ -2649,6 +2735,7 @@
 
   async function loadMyReviews() {
     if (!user.id) return;
+    showSkeleton('reviews-list', 'review', 3);
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
@@ -3093,11 +3180,14 @@
 
   function checkVerificationNotification() {
     const status = user.identity_status;
-    const key = 'verif_notif_v2_' + user.id;
-    const notifShown = localStorage.getItem(key);
-    if (status === 'verified' && !notifShown) {
-      localStorage.setItem(key, 'true');
-      setTimeout(showVerifApprovedNotif, 800);
+    const userId = user.id || user.user_id;
+    if (!userId || status !== 'verified') return;
+
+    const storageKey = 'cue_verif_notif_shown_' + userId;
+    const alreadyShown = localStorage.getItem(storageKey) === '1';
+    if (!alreadyShown) {
+      localStorage.setItem(storageKey, '1');
+      setTimeout(showVerifApprovedNotif, 1000);
     }
   }
 
@@ -3134,13 +3224,23 @@
 
   function closeModal(id) { document.getElementById(id).classList.remove('open'); }
   async function logout() {
+    // Sauvegarde les clés de notif avant de clear
+    const keysToKeep = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('cue_verif_notif_shown_')) {
+        keysToKeep[key] = localStorage.getItem(key);
+      }
+    }
     try {
       const { supabase } = await import('./js/supabase-client.js')
       await supabase.auth.signOut({ scope: 'global' })
     } catch(e) {}
-    localStorage.clear()
-    sessionStorage.clear()
-    window.location.replace('login.html')
+    localStorage.clear();
+    sessionStorage.clear();
+    // Restaure les clés de notif
+    Object.entries(keysToKeep).forEach(([k, v]) => localStorage.setItem(k, v));
+    window.location.replace('login.html');
   }
   function initVerificationPage() {
     const venueType = localStorage.getItem('cue_venue_type') || 'particulier';
