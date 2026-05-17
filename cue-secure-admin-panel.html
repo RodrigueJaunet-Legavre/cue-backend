@@ -286,24 +286,17 @@
 
   <!-- PAYOUTS -->
   <div id="page-payouts" class="page">
-    <h1 class="section-title">Payouts</h1>
-    <p class="section-sub">Historique des paiements</p>
+    <h1 class="section-title">Virements DJ</h1>
+    <p class="section-sub">Bookings validés — virements manuels à effectuer</p>
 
-    <div class="table-card">
-      <table>
-        <thead>
-          <tr>
-            <th>Utilisateur</th>
-            <th>Montant</th>
-            <th>Méthode</th>
-            <th>Statut</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody id="payouts-table-body">
-          <tr><td colspan="5" style="text-align:center; color:var(--MUTED);">Aucun payout pour l'instant</td></tr>
-        </tbody>
-      </table>
+    <div class="tabs" style="margin-bottom:20px;">
+      <div class="tab active" onclick="filterPayouts('to_pay', this)">À virer</div>
+      <div class="tab" onclick="filterPayouts('paid', this)">Virés</div>
+      <div class="tab" onclick="filterPayouts('all', this)">Tous</div>
+    </div>
+
+    <div id="payouts-list" style="display:flex; flex-direction:column; gap:12px;">
+      <div style="text-align:center; color:var(--MUTED); padding:40px;">Chargement...</div>
     </div>
   </div>
 
@@ -439,6 +432,7 @@
     if (page === 'users') loadUsers('all');
     if (page === 'reports') loadReports('all');
     if (page === 'bookings') loadBookings && loadBookings();
+    if (page === 'payouts') loadPayouts();
   }
 
   // LOAD DATA
@@ -584,6 +578,92 @@
     document.querySelectorAll('#page-reports .tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
     loadReports(type);
+  }
+
+  let allPayouts = [];
+
+  async function loadPayouts() {
+    document.getElementById('payouts-list').innerHTML = '<div style="text-align:center; color:var(--MUTED); padding:40px;">Chargement...</div>';
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminAction: 'get_payouts', adminSecret: getSecret() })
+      });
+      const data = await res.json();
+      allPayouts = data.payouts || [];
+      filterPayouts('to_pay', document.querySelector('#page-payouts .tab.active'));
+    } catch(err) {
+      document.getElementById('payouts-list').innerHTML = `<div style="color:#ff4444; padding:20px;">Erreur : ${err.message}</div>`;
+    }
+  }
+
+  function filterPayouts(filter, el) {
+    document.querySelectorAll('#page-payouts .tab').forEach(t => t.classList.remove('active'));
+    if (el) el.classList.add('active');
+
+    let filtered = allPayouts;
+    if (filter === 'to_pay') filtered = allPayouts.filter(p => p.payout_status === 'to_pay');
+    if (filter === 'paid') filtered = allPayouts.filter(p => p.payout_status === 'paid');
+
+    const container = document.getElementById('payouts-list');
+    if (!filtered.length) {
+      const labels = { to_pay: 'en attente', paid: 'effectué', all: '' };
+      container.innerHTML = `<div style="text-align:center; color:var(--MUTED); padding:40px;">Aucun virement ${labels[filter] || ''}</div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(p => `
+      <div style="background:var(--CARD); border:1px solid ${p.payout_status === 'to_pay' ? 'rgba(255,195,0,.3)' : 'var(--BORDER)'}; border-radius:12px; padding:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+          <div>
+            <div style="font-weight:700; color:#fff; font-size:16px;">${p.dj_first || ''} ${p.dj_last || ''}</div>
+            <div style="color:var(--MUTED); font-size:12px; margin-top:2px;">${p.dj_email || ''}</div>
+            <div style="color:var(--MUTED); font-size:12px; margin-top:4px;">Booking #${p.id} — ${p.venue_first || ''} ${p.venue_last || ''} — ${p.event_date ? new Date(p.event_date).toLocaleDateString('fr-FR') : '—'}</div>
+          </div>
+          <div style="text-align:right; flex-shrink:0;">
+            <div style="font-family:Barlow Condensed; font-weight:900; font-size:30px; color:var(--Y);">${p.dj_amount || 0}€</div>
+            <div style="color:var(--MUTED); font-size:11px;">comm. ${p.commission_amount || 0}€</div>
+          </div>
+        </div>
+        <div style="background:#0a0a0a; border-radius:8px; padding:12px; margin-top:12px; font-size:13px;">
+          <div style="display:grid; grid-template-columns:80px 1fr; gap:4px 12px; color:var(--MUTED);">
+            <span>IBAN</span><span style="color:#fff; font-family:monospace; word-break:break-all;">${p.iban || '—'}</span>
+            ${p.bic ? `<span>BIC</span><span style="color:#fff;">${p.bic}</span>` : ''}
+            ${p.bank_name ? `<span>Banque</span><span style="color:#fff;">${p.bank_name}</span>` : ''}
+          </div>
+        </div>
+        ${p.payout_status === 'to_pay'
+          ? `<div style="margin-top:12px;"><button class="btn btn-primary btn-sm" onclick="markPayoutDone('${p.id}', this)">✓ Marquer comme viré</button></div>`
+          : `<div style="margin-top:10px; color:var(--SUCCESS); font-size:13px;">✅ Virement effectué</div>`
+        }
+      </div>
+    `).join('');
+  }
+
+  async function markPayoutDone(bookingId, btn) {
+    if (!confirm('Confirmer que le virement a été effectué ?')) return;
+    btn.disabled = true;
+    btn.textContent = 'En cours...';
+    try {
+      const res = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'mark_paid', bookingId, adminSecret: getSecret() })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const p = allPayouts.find(x => x.id === bookingId);
+        if (p) p.payout_status = 'paid';
+        filterPayouts('to_pay', document.querySelector('#page-payouts .tab.active'));
+      } else {
+        alert('Erreur : ' + data.error);
+        btn.disabled = false; btn.textContent = '✓ Marquer comme viré';
+      }
+    } catch(err) {
+      alert('Erreur réseau.');
+      btn.disabled = false; btn.textContent = '✓ Marquer comme viré';
+    }
   }
 
   async function loadReports(type = 'all') {

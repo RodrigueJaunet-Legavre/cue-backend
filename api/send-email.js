@@ -51,6 +51,58 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    if (type === 'payment_validated') {
+      const { amount, iban, bookingDate } = req.body;
+      result = await resend.emails.send({
+        from: 'CUE DJ <noreply@cuedj.eu>',
+        to: email,
+        subject: '💸 Ton paiement est en route !',
+        html: `
+          <div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
+            <h1 style="color:#FFC300; font-size:28px;">Virement en cours</h1>
+            <p>Bonjour ${firstName},</p>
+            <p>La venue a validé la prestation. Ton cachet est en cours de virement.</p>
+            <div style="background:#111; border:1px solid rgba(255,195,0,.3); border-radius:12px; padding:24px; margin:24px 0;">
+              <div style="font-size:12px; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Montant</div>
+              <div style="font-size:36px; font-weight:900; color:#FFC300;">${amount}€</div>
+              <div style="margin-top:16px; font-size:12px; color:#888; text-transform:uppercase; letter-spacing:1px;">IBAN</div>
+              <div style="font-size:14px; color:#ddd; font-family:monospace; margin-top:4px;">${iban}</div>
+              ${bookingDate ? `<div style="margin-top:12px; font-size:12px; color:#888; text-transform:uppercase; letter-spacing:1px;">Prestation du</div><div style="font-size:14px; color:#ddd; margin-top:4px;">${new Date(bookingDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</div>` : ''}
+            </div>
+            <p style="color:#bbb; font-size:13px;">Délai habituel : 1 à 3 jours ouvrés.</p>
+            <hr style="border-color:#222; margin:32px 0;">
+            <p style="color:#555; font-size:12px;">© 2026 CUE DJ Platform — cuedj.eu</p>
+          </div>
+        `
+      });
+    }
+
+    if (type === 'admin_payout') {
+      const { djName, amount, iban, bic, bankName, bookingId } = req.body;
+      result = await resend.emails.send({
+        from: 'CUE DJ <noreply@cuedj.eu>',
+        to: email,
+        subject: `💸 Virement à effectuer — ${djName} — ${amount}€`,
+        html: `
+          <div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
+            <h1 style="color:#FFC300; font-size:24px;">Virement à effectuer</h1>
+            <div style="background:#111; border:1px solid rgba(255,195,0,.3); border-radius:12px; padding:24px; margin:24px 0;">
+              <table style="width:100%; border-collapse:collapse;">
+                <tr><td style="color:#888; font-size:12px; padding:6px 0; width:100px;">BOOKING</td><td style="color:#ddd;">#${bookingId}</td></tr>
+                <tr><td style="color:#888; font-size:12px; padding:6px 0;">DJ</td><td style="color:#ddd;">${djName}</td></tr>
+                <tr><td style="color:#888; font-size:12px; padding:6px 0;">MONTANT NET</td><td style="color:#FFC300; font-weight:700; font-size:18px;">${amount}€</td></tr>
+                <tr><td style="color:#888; font-size:12px; padding:6px 0;">IBAN</td><td style="color:#ddd; font-family:monospace;">${iban}</td></tr>
+                ${bic ? `<tr><td style="color:#888; font-size:12px; padding:6px 0;">BIC</td><td style="color:#ddd;">${bic}</td></tr>` : ''}
+                ${bankName ? `<tr><td style="color:#888; font-size:12px; padding:6px 0;">BANQUE</td><td style="color:#ddd;">${bankName}</td></tr>` : ''}
+              </table>
+            </div>
+            <hr style="border-color:#222; margin:32px 0;">
+            <p style="color:#555; font-size:12px;">© 2026 CUE DJ Platform</p>
+          </div>
+        `
+      });
+    }
+
     return res.status(200).json({ success: true });
   } catch (err) {
     console.log('ERREUR:', err.message);

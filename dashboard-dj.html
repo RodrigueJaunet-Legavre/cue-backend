@@ -1212,6 +1212,31 @@
         </div>
       </div>
 
+      <!-- Informations bancaires -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">🏦 Informations bancaires</span></div>
+        <div class="card-body" style="display:flex; flex-direction:column; gap:16px;">
+          <p style="color:var(--MUTED); font-size:13px; line-height:1.6;">
+            Tes coordonnées bancaires permettent à CUE de virer ton cachet après validation de la prestation. Elles restent strictement confidentielles.
+          </p>
+          <div class="form-group">
+            <label class="form-label">IBAN</label>
+            <input type="text" id="iban-input" class="form-input" placeholder="FR76 3000 6000 0112 3456 7890 189" maxlength="34" oninput="this.value = formatIBAN(this.value)">
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">BIC / SWIFT</label>
+              <input type="text" id="bic-input" class="form-input" placeholder="BNPAFRPP" maxlength="11" oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Banque</label>
+              <input type="text" id="bank-name-input" class="form-input" placeholder="BNP Paribas">
+            </div>
+          </div>
+          <button class="btn btn-primary" style="width:fit-content;" onclick="saveIBAN()">Enregistrer les coordonnées bancaires</button>
+        </div>
+      </div>
+
       <!-- Abonnement -->
       <div class="card">
         <div class="card-header"><span class="card-title">💳 Abonnement</span></div>
@@ -1510,6 +1535,11 @@
       case 'contact': initContactPage(); break;
       case 'verification': initVerificationPage(); break;
       case 'overview': checkBadgeConditions(); break;
+      case 'settings':
+        if (document.getElementById('iban-input')) document.getElementById('iban-input').value = user.iban ? formatIBAN(user.iban) : '';
+        if (document.getElementById('bic-input')) document.getElementById('bic-input').value = user.bic || '';
+        if (document.getElementById('bank-name-input')) document.getElementById('bank-name-input').value = user.bank_name || '';
+        break;
     }
     if (page !== 'messages') stopPolling();
   }
@@ -3243,6 +3273,33 @@
     } catch (err) {
       alert('Erreur. Réessaie.');
     }
+  }
+
+  function formatIBAN(value) {
+    const clean = value.replace(/\s/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    return clean.match(/.{1,4}/g)?.join(' ') || clean;
+  }
+
+  async function saveIBAN() {
+    const iban = document.getElementById('iban-input')?.value.replace(/\s/g, '');
+    const bic = document.getElementById('bic-input')?.value.trim();
+    const bankName = document.getElementById('bank-name-input')?.value.trim();
+    if (!iban || iban.length < 15) { alert('IBAN invalide.'); return; }
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'save_iban', userId: user.id || user.user_id, iban, bic, bankName })
+      });
+      const data = await res.json();
+      if (data.success) {
+        user.iban = iban; user.bic = bic; user.bank_name = bankName;
+        localStorage.setItem('cue_user', JSON.stringify(user));
+        alert('✅ Coordonnées bancaires enregistrées !');
+      } else {
+        alert('Erreur : ' + data.error);
+      }
+    } catch(err) { alert('Erreur réseau.'); }
   }
 
   async function changePassword() {

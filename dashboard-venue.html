@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CUE — Dashboard Venue</title>
+  <meta name="stripe-pk" content="pk_live_YOUR_STRIPE_PUBLIC_KEY">
+  <script src="https://js.stripe.com/v3/"></script>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -1511,8 +1513,19 @@
     loadUnreadCounts()
     setInterval(loadUnreadCounts, 30000)
 
-    // Handle redirect from dj-profile.html with contact intent
+    // Handle redirect after Stripe payment
     const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('paid') === 'success') {
+      const paidBookingId = urlParams.get('bookingId');
+      if (paidBookingId && venueBookings) {
+        const b = venueBookings.find(b => b.id === paidBookingId);
+        if (b) b.payment_status = 'paid';
+      }
+      window.history.replaceState({}, '', window.location.pathname);
+      setTimeout(() => alert('✅ Paiement confirmé ! Le DJ sera payé après validation de la prestation.'), 500);
+    }
+
+    // Handle redirect from dj-profile.html with contact intent
     if (urlParams.get('action') === 'contact') {
       const contactDjId = urlParams.get('djId');
       const contactDjName = localStorage.getItem('contact_dj_name') || 'DJ';
@@ -2629,7 +2642,8 @@
             id: b.id, djId: b.dj_id, djName: b.dj_name,
             date: b.event_date, start: b.start_time, end: b.end_time,
             type: b.event_type, budget: b.amount,
-            city: b.city, notes: b.notes, status: 'confirmed'
+            city: b.city, notes: b.notes, status: 'confirmed',
+            payment_status: b.payment_status || 'unpaid'
           };
           venueBookings.push(newBooking);
           bookings = venueBookings;
@@ -2638,17 +2652,142 @@
           renderVenueBookings();
           loadStats();
         }
-        alert('🎉 Booking confirmé ! Le gig est ajouté à votre calendrier.');
         pendingMessageId = null;
+        const savedOfferData = { ...pendingOfferData };
         pendingOfferData = {};
         invalidateConversationsCache();
         await loadVenueMessages(currentVenueConv.id);
+        // Ouvrir le paiement Stripe
+        const bookingAmount = b?.amount || savedOfferData?.amount || savedOfferData?.budget || 0;
+        if (b?.id && djId && bookingAmount) {
+          setTimeout(() => openPaymentModal(b.id, djId, bookingAmount), 400);
+        } else {
+          alert('🎉 Booking confirmé ! Le gig est ajouté à votre calendrier.');
+        }
       } else {
         alert('Erreur : ' + (responseData.error || 'Réessaie'));
       }
     } catch (err) {
       alert('Erreur réseau. Réessaie.');
     }
+  }
+
+  let stripeInstance = null;
+  let stripeElements = null;
+
+  async function openPaymentModal(bookingId, djId, amount) {
+    let clientSecret;
+    try {
+      const res = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create_payment', bookingId, djId, venueId: user.id || user.user_id, amount })
+      });
+      const data = await res.json();
+      clientSecret = data.clientSecret;
+      if (!clientSecret) throw new Error(data.error || 'Erreur création paiement');
+    } catch(err) {
+      alert('Erreur paiement : ' + err.message);
+      return;
+    }
+
+    const stripePk = document.querySelector('meta[name="stripe-pk"]')?.content;
+    if (!stripePk || stripePk.includes('YOUR_STRIPE')) {
+      alert('Clé Stripe non configurée.\nRemplace pk_live_YOUR_STRIPE_PUBLIC_KEY dans le <head> de dashboard-venue.html.');
+      return;
+    }
+
+    stripeInstance = Stripe(stripePk);
+    stripeElements = stripeInstance.elements({ clientSecret, appearance: { theme: 'night', variables: { colorPrimary: '#FFC300' } } });
+    const paymentElement = stripeElements.create('payment');
+
+    let modal = document.getElementById('modal-stripe-payment');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'modal-stripe-payment';
+      modal.className = 'modal';
+      document.body.appendChild(modal);
+    }
+    modal.innerHTML = `
+      <div class="modal-card" style="max-width:480px;">
+        <h2 class="modal-title">Paiement sécurisé</h2>
+        <p style="color:var(--MUTED); font-size:14px; margin-bottom:20px; line-height:1.6;">Le paiement est conservé en escrow et versé au DJ uniquement après validation de la prestation.</p>
+        <div style="background:rgba(255,195,0,.07); border:1px solid rgba(255,195,0,.25); border-radius:10px; padding:14px 18px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+          <span style="color:var(--MUTED); font-size:14px;">Total à payer</span>
+          <span style="font-family:Barlow Condensed; font-weight:900; font-size:30px; color:var(--Y);">${amount}€</span>
+        </div>
+        <div id="stripe-payment-element" style="margin-bottom:16px;"></div>
+        <div id="stripe-error" style="color:#ff4444; font-size:13px; margin-bottom:12px; display:none;"></div>
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="closeModal('modal-stripe-payment')">Payer plus tard</button>
+          <button class="btn btn-primary" id="stripe-submit-btn" onclick="submitStripePayment('${bookingId}')">Payer ${amount}€</button>
+        </div>
+      </div>
+    `;
+    modal.classList.add('open');
+    paymentElement.mount('#stripe-payment-element');
+  }
+
+  async function submitStripePayment(bookingId) {
+    const btn = document.getElementById('stripe-submit-btn');
+    const errEl = document.getElementById('stripe-error');
+    if (btn) { btn.disabled = true; btn.textContent = 'Traitement...'; }
+    if (errEl) errEl.style.display = 'none';
+
+    const { error, paymentIntent } = await stripeInstance.confirmPayment({
+      elements: stripeElements,
+      confirmParams: {
+        return_url: window.location.origin + window.location.pathname + '?paid=success&bookingId=' + bookingId
+      },
+      redirect: 'if_required'
+    });
+
+    if (error) {
+      if (errEl) { errEl.textContent = error.message; errEl.style.display = 'block'; }
+      if (btn) { btn.disabled = false; btn.textContent = 'Réessayer'; }
+    } else {
+      closeModal('modal-stripe-payment');
+      const b = venueBookings?.find(b => b.id === bookingId);
+      if (b) b.payment_status = 'paid';
+      alert('✅ Paiement effectué ! Le DJ sera payé après validation de la prestation.');
+      renderVenueBookings && renderVenueBookings();
+    }
+  }
+
+  async function validatePrestation(bookingId) {
+    if (!confirm('Confirmer que la prestation s\'est bien déroulée ? Le DJ recevra son paiement.')) return;
+    try {
+      const res = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'validate_prestation', bookingId, venueId: user.id || user.user_id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const b = venueBookings?.find(b => b.id === bookingId);
+        if (b) b.payment_status = 'released';
+        closeModal('modal-event-detail');
+        alert('✅ Prestation validée ! Le DJ sera payé sous 1-3 jours ouvrés.');
+      } else {
+        alert('Erreur : ' + data.error);
+      }
+    } catch(err) { alert('Erreur réseau.'); }
+  }
+
+  async function reportProblem(bookingId) {
+    const reason = prompt('Décris le problème rencontré :');
+    if (!reason?.trim()) return;
+    try {
+      await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'dispute', bookingId, venueId: user.id || user.user_id, reason: reason.trim() })
+      });
+      const b = venueBookings?.find(b => b.id === bookingId);
+      if (b) b.payment_status = 'disputed';
+      closeModal('modal-event-detail');
+      alert('Litige signalé. Notre équipe vous contactera dans les 24h.');
+    } catch(err) { alert('Erreur réseau.'); }
   }
 
   async function declineBooking(messageId) {
@@ -2804,6 +2943,44 @@
   }
 
   function openBookingDetail(b) {
+    const eventDate = new Date((b.date || '') + 'T12:00:00');
+    const isPast = eventDate < new Date();
+    const ps = b.payment_status;
+
+    let paymentBlock = '';
+    if (!ps || ps === 'unpaid') {
+      paymentBlock = `
+        <div style="border-top:1px solid var(--BORDER); padding-top:16px; margin-top:4px;">
+          <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">PAIEMENT</div>
+          <div style="color:#ffaa00; font-size:13px; margin-bottom:12px;">⏳ Paiement non effectué</div>
+          <button class="btn btn-primary btn-sm" onclick="openPaymentModal('${b.id}', '${b.djId}', ${b.budget || 0}); closeModal('modal-event-detail');">
+            Payer maintenant — ${b.budget || 0}€
+          </button>
+        </div>`;
+    } else if (ps === 'pending_payment') {
+      paymentBlock = `<div style="border-top:1px solid var(--BORDER); padding-top:16px;"><div style="color:#ffaa00; font-size:13px;">🔄 Paiement en cours de confirmation</div></div>`;
+    } else if (ps === 'paid' && !isPast) {
+      paymentBlock = `
+        <div style="border-top:1px solid var(--BORDER); padding-top:16px;">
+          <div style="color:var(--SUCCESS); font-size:13px; font-weight:700;">✅ Paiement sécurisé — prestation à venir</div>
+          <div style="color:var(--MUTED); font-size:12px; margin-top:6px;">Le DJ sera payé après validation de la prestation</div>
+        </div>`;
+    } else if (ps === 'paid' && isPast) {
+      paymentBlock = `
+        <div style="border-top:1px solid var(--BORDER); padding-top:16px;">
+          <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">ACTION REQUISE</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-primary btn-sm" onclick="validatePrestation('${b.id}')">Valider la prestation ✓</button>
+            <button class="btn btn-outline btn-sm" style="color:#ff4444; border-color:rgba(255,68,68,.4);" onclick="reportProblem('${b.id}')">Signaler un problème</button>
+          </div>
+          <div style="color:var(--MUTED); font-size:12px; margin-top:10px; line-height:1.5;">En validant, tu libères le paiement au DJ.</div>
+        </div>`;
+    } else if (ps === 'released') {
+      paymentBlock = `<div style="border-top:1px solid var(--BORDER); padding-top:16px;"><div style="color:var(--SUCCESS); font-size:13px; font-weight:700;">✅ Prestation validée — DJ payé</div></div>`;
+    } else if (ps === 'disputed') {
+      paymentBlock = `<div style="border-top:1px solid var(--BORDER); padding-top:16px;"><div style="color:#ff4444; font-size:13px; font-weight:700;">⚠️ Litige en cours — CUE traite la demande</div></div>`;
+    }
+
     let modal = document.getElementById('modal-event-detail');
     if (!modal) {
       modal = document.createElement('div');
@@ -2832,6 +3009,7 @@
             <div style="font-family:Barlow Condensed; font-weight:900; font-size:32px; color:var(--Y);">${b.budget || 0}€</div>
           </div>
           ${b.notes ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">NOTES</div><div style="color:var(--MUTED); font-size:14px; line-height:1.6;">${b.notes}</div></div>` : ''}
+          ${paymentBlock}
         </div>
         <div class="modal-actions" style="margin-top:24px;">
           <button class="btn btn-outline" onclick="closeModal('modal-event-detail')">Fermer</button>

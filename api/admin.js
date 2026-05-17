@@ -282,5 +282,26 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (adminAction === 'get_payouts') {
+    try {
+      const payouts = await sql`
+        SELECT b.id, b.event_date, b.dj_amount, b.commission_amount, b.amount,
+               b.payment_status, b.payout_status, b.released_at,
+               dj.first_name as dj_first, dj.last_name as dj_last,
+               dj.email as dj_email, dj.iban, dj.bic, dj.bank_name,
+               v.first_name as venue_first, v.last_name as venue_last
+        FROM bookings b
+        LEFT JOIN users dj ON b.dj_id = dj.id
+        LEFT JOIN users v ON b.venue_id = v.id
+        WHERE b.payment_status IN ('released', 'paid')
+        ORDER BY b.released_at DESC NULLS LAST, b.event_date DESC
+        LIMIT 100
+      `;
+      return res.status(200).json({ payouts });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   return res.status(400).json({ error: 'adminAction inconnue' });
 }

@@ -275,6 +275,16 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'save_iban') {
+    const { userId, iban, bic, bankName } = body;
+    try {
+      await sql`UPDATE users SET iban = ${iban}, bic = ${bic || null}, bank_name = ${bankName || null} WHERE id = ${userId}`;
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   if (action === 'mark_verif_notif_shown') {
     const { userId } = body;
     try {
