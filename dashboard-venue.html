@@ -2613,6 +2613,16 @@
     if (!confirm('Confirmer définitivement ce booking ?')) return;
 
     const djId = currentVenueConv?.dj_id || currentVenueConv?.djId;
+    const eventDate = pendingOfferData?.date || pendingOfferData?.event_date;
+    if (eventDate) {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const gigDate = new Date(eventDate + 'T00:00:00');
+      const daysUntil = Math.ceil((gigDate - today) / (1000 * 60 * 60 * 24));
+      if (daysUntil < 5) {
+        alert(`⚠️ Le paiement doit être effectué au moins 5 jours avant la prestation.\n\nDate du gig : ${gigDate.toLocaleDateString('fr-FR')}\nJours restants : ${daysUntil}\n\nVeuillez contacter le DJ pour modifier la date ou régler le paiement rapidement.`);
+        return;
+      }
+    }
     const venueId = user.id || user.user_id;
     const djName = currentVenueConv?.dj_name || currentVenueConv?.djName || 'DJ';
     const venueName = (user.first_name || user.firstName || '') + ' ' + (user.last_name || user.lastName || '');
@@ -2947,18 +2957,35 @@
     const isPast = eventDate < new Date();
     const ps = b.payment_status;
 
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const gigDate = new Date(((b.date || '').split('T')[0] || '') + 'T00:00:00');
+    const daysUntil = isNaN(gigDate) ? null : Math.ceil((gigDate - today) / (1000 * 60 * 60 * 24));
+    const payDeadline = isNaN(gigDate) ? null : new Date(gigDate);
+    if (payDeadline) payDeadline.setDate(payDeadline.getDate() - 5);
+    const deadlineStr = payDeadline ? payDeadline.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' }) : '';
+
     let paymentBlock = '';
     if (!ps || ps === 'unpaid') {
+      const urgentLabel = daysUntil !== null && daysUntil <= 5
+        ? `<span style="color:#ff4444; font-weight:700;"> — Plus que ${daysUntil} jour${daysUntil > 1 ? 's' : ''} !</span>`
+        : daysUntil !== null ? ` (dans ${daysUntil - 5} jours)` : '';
       paymentBlock = `
-        <div style="border-top:1px solid var(--BORDER); padding-top:16px; margin-top:4px;">
-          <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">PAIEMENT</div>
-          <div style="color:#ffaa00; font-size:13px; margin-bottom:12px;">⏳ Paiement non effectué</div>
-          <button class="btn btn-primary btn-sm" onclick="openPaymentModal('${b.id}', '${b.djId}', ${b.budget || 0}); closeModal('modal-event-detail');">
-            Payer maintenant — ${b.budget || 0}€
+        <div style="background:rgba(255,170,0,.08); border:1px solid rgba(255,170,0,.2); border-radius:12px; padding:16px; margin-top:4px;">
+          <div style="color:#ffaa00; font-weight:700; margin-bottom:8px;">⏳ Paiement en attente</div>
+          ${deadlineStr ? `<div style="color:var(--MUTED); font-size:13px; margin-bottom:12px; line-height:1.6;">Le paiement doit être effectué avant le <strong style="color:#fff;">${deadlineStr}</strong>${urgentLabel}</div>` : ''}
+          <button class="btn btn-primary btn-sm" onclick="openPaymentModal('${b.id}', '${b.djId || b.dj_id}', ${b.budget || b.amount || 0}); closeModal('modal-event-detail');">
+            💳 Payer maintenant — ${b.budget || b.amount || 0}€
           </button>
         </div>`;
     } else if (ps === 'pending_payment') {
-      paymentBlock = `<div style="border-top:1px solid var(--BORDER); padding-top:16px;"><div style="color:#ffaa00; font-size:13px;">🔄 Paiement en cours de confirmation</div></div>`;
+      const urgentLabel = daysUntil !== null && daysUntil <= 5
+        ? `<span style="color:#ff4444; font-weight:700;"> — Plus que ${daysUntil} jour${daysUntil > 1 ? 's' : ''} !</span>`
+        : '';
+      paymentBlock = `
+        <div style="background:rgba(255,170,0,.08); border:1px solid rgba(255,170,0,.2); border-radius:12px; padding:16px; margin-top:4px;">
+          <div style="color:#ffaa00; font-weight:700; margin-bottom:6px;">🔄 Paiement en cours de confirmation</div>
+          ${deadlineStr ? `<div style="color:var(--MUTED); font-size:13px; line-height:1.6;">Échéance : <strong style="color:#fff;">${deadlineStr}</strong>${urgentLabel}</div>` : ''}
+        </div>`;
     } else if (ps === 'paid' && !isPast) {
       paymentBlock = `
         <div style="border-top:1px solid var(--BORDER); padding-top:16px;">
