@@ -275,6 +275,16 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'mark_verif_notif_shown') {
+    const { userId } = body;
+    try {
+      await sql`UPDATE users SET verif_notif_shown = true WHERE id = ${userId}`;
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   if (action === 'add_review') {
     const { djId, venueId, venueName, djName, rating, comment } = body;
     try {

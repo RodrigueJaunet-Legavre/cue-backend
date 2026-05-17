@@ -46,9 +46,6 @@
     .nav-item.active { color:var(--Y); background:rgba(255,195,0,.08); }
     .nav-item.active::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--Y); border-radius:0 2px 2px 0; }
     .nav-icon { font-size:18px; width:22px; text-align:center; }
-    .nav-badge { margin-left:auto; background:var(--ERROR); color:#fff; border-radius:20px; padding:2px 8px; font-size:10px; font-weight:700; }
-    .nav-badge.yellow { background:var(--Y); color:#000; }
-
     .sidebar-footer { padding:24px; border-top:1px solid var(--BORDER); margin-top:auto; }
     .btn-logout { width:100%; padding:12px; border:1px solid var(--BORDER); border-radius:10px; background:transparent; color:var(--MUTED); cursor:pointer; font-weight:600; font-size:14px; transition:all .2s; }
     .btn-logout:hover { border-color:#ff4444; color:#ff4444; }
@@ -212,8 +209,6 @@
     @keyframes shimmer { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }
     @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.6; } }
     @keyframes slideUp { from { opacity:0; transform:translateY(40px) scale(.97); } to { opacity:1; transform:translateY(0) scale(1); } }
-    @keyframes badgePop { 0% { transform:scale(0); } 100% { transform:scale(1); } }
-
     /* CARDS */
     .card { transition:border-color .25s, box-shadow .25s; }
     .card:hover { border-color:rgba(255,195,0,.15); box-shadow:0 8px 32px rgba(0,0,0,.3); }
@@ -260,7 +255,10 @@
     .clickable-name:hover { color:var(--Y); text-decoration:underline; text-underline-offset:3px; }
 
     /* NAV BADGES */
-    .nav-badge { margin-left:auto; min-width:18px; height:18px; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 5px; font-size:10px; font-weight:700; box-shadow:0 2px 8px rgba(255,68,68,.4); }
+    .nav-item { position:relative; }
+    .nav-badge { position:absolute; right:14px; top:50%; transform:translateY(-50%); background:#ff3b30; color:#fff; font-size:10px; font-weight:800; min-width:18px; height:18px; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 5px; box-shadow:0 2px 8px rgba(255,59,48,.5); pointer-events:none; }
+    .nav-badge.yellow { background:var(--Y); color:#000; }
+    @keyframes badgePop { from { transform:translateY(-50%) scale(0); opacity:0; } to { transform:translateY(-50%) scale(1); opacity:1; } }
   </style>
 </head>
 <body>
@@ -1532,9 +1530,15 @@
     document.getElementById('stat-reviews-count').textContent = reviews.length ? reviews.length + ' avis' : 'Aucun avis';
 
     const pending = gigs.filter(g => g.status === 'pending').length;
-    if (pending > 0) {
-      document.getElementById('pending-gigs-badge').textContent = pending;
-      document.getElementById('pending-gigs-badge').style.display = 'block';
+    const pendingBadge = document.getElementById('pending-gigs-badge');
+    if (pendingBadge) {
+      if (pending > 0) {
+        pendingBadge.textContent = pending;
+        pendingBadge.style.display = 'flex';
+        pendingBadge.style.animation = 'badgePop .3s cubic-bezier(.34,1.56,.64,1) both';
+      } else {
+        pendingBadge.style.display = 'none';
+      }
     }
 
     checkBadgeConditions();
@@ -3083,22 +3087,12 @@
   }
 
   async function logout() {
-    // Sauvegarde les clés de notif avant de clear
-    const keysToKeep = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('cue_verif_notif_shown_')) {
-        keysToKeep[key] = localStorage.getItem(key);
-      }
-    }
     try {
       const { supabase } = await import('./js/supabase-client.js')
       await supabase.auth.signOut({ scope: 'global' })
     } catch(e) {}
     localStorage.clear();
     sessionStorage.clear();
-    // Restaure les clés de notif
-    Object.entries(keysToKeep).forEach(([k, v]) => localStorage.setItem(k, v));
     window.location.replace('login.html');
   }
 
@@ -3117,21 +3111,16 @@
   const notifCounts = { messages: 0 }
 
   function updateNavBadge(page, count) {
-    const navItem = document.querySelector(`.nav-item[data-page="${page}"]`)
-    if (!navItem) return
-    let badge = navItem.querySelector('.nav-count-badge')
+    const navItem = document.querySelector(`.nav-item[data-page="${page}"]`);
+    if (!navItem) return;
+    const existing = navItem.querySelector('.nav-count-badge');
+    if (existing) existing.remove();
     if (count > 0) {
-      if (!badge) {
-        badge = document.createElement('span')
-        badge.className = 'nav-badge nav-count-badge'
-        badge.style.background = '#ff4444'
-        badge.style.color = '#fff'
-        navItem.appendChild(badge)
-      }
-      badge.textContent = count > 99 ? '99+' : count
-      badge.style.animation = 'badgePop .3s cubic-bezier(.34,1.56,.64,1)'
-    } else {
-      if (badge) badge.remove()
+      const badge = document.createElement('span');
+      badge.className = 'nav-badge nav-count-badge';
+      badge.style.animation = 'badgePop .3s cubic-bezier(.34,1.56,.64,1) both';
+      badge.textContent = count > 99 ? '99+' : String(count);
+      navItem.appendChild(badge);
     }
   }
 
@@ -3174,13 +3163,15 @@
 
   function checkVerificationNotification() {
     const status = user.identity_status;
-    const userId = user.id || user.user_id;
-    if (!userId || status !== 'verified') return;
-
-    const storageKey = 'cue_verif_notif_shown_' + userId;
-    const alreadyShown = localStorage.getItem(storageKey) === '1';
-    if (!alreadyShown) {
-      localStorage.setItem(storageKey, '1');
+    const notifShown = user.verif_notif_shown === true || user.verif_notif_shown === 'true';
+    if (status === 'verified' && !notifShown) {
+      fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'mark_verif_notif_shown', userId: user.id || user.user_id })
+      });
+      user.verif_notif_shown = true;
+      localStorage.setItem('cue_user', JSON.stringify(user));
       setTimeout(showVerifApprovedNotif, 1000);
     }
   }
