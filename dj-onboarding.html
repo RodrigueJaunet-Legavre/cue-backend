@@ -314,45 +314,41 @@
 
     <div class="nav-buttons">
       <button class="btn-back" onclick="prevStep()">← Retour</button>
-      <button class="btn-next" onclick="completeProfile()">Terminer ✓</button>
+      <button id="complete-btn" class="btn-next" onclick="handleComplete()">Terminer ✓</button>
     </div>
   </div>
 
-  <!-- ÉTAPE FINALE : PARTAGE -->
+  <!-- ÉTAPE FINALE -->
   <div class="step" id="step-complete">
-    <div class="completion-card">
-      <span class="completion-emoji">🎉</span>
-      <h1 style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:48px; color:#fff; margin-bottom:12px;">
-        TON PROFIL EST PRÊT !
+    <div style="text-align:center; padding:40px 20px;">
+      <div style="font-size:72px; margin-bottom:24px;">🎉</div>
+      <h1 style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:48px; color:#fff; margin-bottom:8px;">
+        TON PROFIL<br>EST PRÊT !
       </h1>
-      <p style="color:var(--MUTED); font-size:16px; margin-bottom:32px;">
-        Partage ton profil DJ pour recevoir des bookings.
+      <p style="color:var(--MUTED); font-size:16px; line-height:1.6; margin-bottom:32px; max-width:400px; margin-left:auto; margin-right:auto;">
+        Bienvenue sur CUE. Les venues peuvent maintenant te trouver et te contacter.
       </p>
 
-      <div class="profile-preview">
-        <img id="preview-avatar" src="" class="preview-avatar" style="display:none">
-        <div class="preview-name" id="preview-name"></div>
-        <div class="preview-genres" id="preview-genres"></div>
-        <div class="preview-stars">★★★★★ <span style="color:var(--MUTED); font-size:14px;">Nouveau profil</span></div>
-        <span class="preview-badge">✦ DJ Vérifié CUE</span>
+      <div style="display:inline-flex; flex-direction:column; align-items:center; gap:12px; background:#111; border:1px solid rgba(255,195,0,.2); border-radius:20px; padding:28px 40px; margin-bottom:32px;">
+        <div id="preview-avatar-wrap" style="width:80px; height:80px; border-radius:50%; overflow:hidden; border:3px solid var(--Y); background:#1a1a1a; display:flex; align-items:center; justify-content:center; font-size:32px;">
+          <img id="preview-avatar" src="" style="display:none; width:100%; height:100%; object-fit:cover;">
+          <span id="preview-avatar-placeholder">🎧</span>
+        </div>
+        <div id="preview-name" style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px; color:#fff;"></div>
+        <div id="preview-genres" style="color:var(--Y); font-size:14px; font-weight:600;"></div>
       </div>
 
-      <div class="share-grid">
-        <button class="share-btn whatsapp" onclick="shareProfile('whatsapp')">
-          <span>💬</span> WhatsApp
-        </button>
-        <button class="share-btn instagram" onclick="shareProfile('instagram')">
-          <span>📸</span> Instagram
-        </button>
-        <button class="share-btn" onclick="shareProfile('messages')">
-          <span>✉️</span> Messages
-        </button>
-        <button class="share-btn copy" onclick="shareProfile('copy')">
-          <span>🔗</span> Copier le lien
-        </button>
+      <div id="badge-checklist" style="background:#0a0a0a; border:1px solid var(--BORDER); border-radius:14px; padding:16px 20px; margin-bottom:32px; text-align:left; max-width:420px; margin-left:auto; margin-right:auto;">
+        <div style="font-weight:700; color:#fff; margin-bottom:10px; font-size:14px;">🎯 Prochaine étape — Badge Vérifié CUE</div>
+        <div style="color:var(--MUTED); font-size:13px; line-height:2;">
+          <div id="check-photo">⬜ Photo de profil</div>
+          <div>⬜ Vérification d'identité</div>
+          <div id="check-mix">⬜ Mix de présentation</div>
+          <div>⬜ Coordonnées bancaires</div>
+        </div>
       </div>
 
-      <button class="btn-next" style="margin-top:24px; width:100%;" onclick="goToDashboard()">
+      <button onclick="goToDashboard()" class="btn-next" style="width:100%; max-width:400px; margin:0 auto; display:block;">
         Accéder à mon dashboard →
       </button>
     </div>
@@ -703,15 +699,24 @@
     const skipBtn = document.querySelector('.skip-btn');
     if (skipBtn) skipBtn.style.display = 'none';
 
+    // Avatar preview
     if (profilePhoto) {
       const avatar = document.getElementById('preview-avatar');
+      const placeholder = document.getElementById('preview-avatar-placeholder');
       if (avatar) { avatar.src = profilePhoto; avatar.style.display = 'block'; }
+      if (placeholder) placeholder.style.display = 'none';
     }
     const finalUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
     const nameEl = document.getElementById('preview-name');
     const genresEl = document.getElementById('preview-genres');
     if (nameEl) nameEl.textContent = (finalUser.first_name || finalUser.firstName || '') + ' ' + (finalUser.last_name || finalUser.lastName || '');
     if (genresEl) genresEl.textContent = selectedGenres.join(' · ');
+
+    // Checklist badge
+    const checkPhoto = document.getElementById('check-photo');
+    const checkMix = document.getElementById('check-mix');
+    if (checkPhoto) checkPhoto.textContent = profilePhotoFile ? '✅ Photo de profil' : '⬜ Photo de profil';
+    if (checkMix) checkMix.textContent = mixFile ? '✅ Mix de présentation' : '⬜ Mix de présentation';
   }
 
   // SHARE
@@ -737,56 +742,65 @@
     }
   }
 
+  let isCompleting = false;
+
+  async function handleComplete() {
+    if (isCompleting) return;
+    isCompleting = true;
+    const btn = document.getElementById('complete-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Sauvegarde...'; }
+    await completeProfile();
+    isCompleting = false;
+  }
+
   function goToDashboard() {
-    window.location.href = 'dashboard-dj.html';
+    const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
+    savedUser.profile_complete = true;
+    savedUser.profileComplete = true;
+    localStorage.setItem('cue_user', JSON.stringify(savedUser));
+    window.location.replace('dashboard-dj.html');
   }
 
   async function init() {
     try {
-      const { supabase } = await import('./js/supabase-client.js')
-      const { data: { session } } = await supabase.auth.getSession()
+      const { supabase } = await import('./js/supabase-client.js');
+      const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
-        // Fallback localStorage
-        const localUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
-        const isLogged = localStorage.getItem('cue_logged_in') === 'true'
-        if (!isLogged && !localUser.id) {
-          window.location.href = 'login.html'
-          return
+        const localUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
+        const isLogged = localStorage.getItem('cue_logged_in') === 'true';
+        if (!isLogged || !localUser.id) {
+          window.location.replace('login.html');
+          return;
         }
-
-        // Vérifie si profil déjà complet
-        if (localUser.profile_complete === true || localUser.profileComplete === true) {
-          window.location.href = 'dashboard-dj.html'
-          return
-        }
-        return
+        // Pas de session Supabase — laisse l'onboarding continuer sans rediriger
+        return;
       }
 
-      // Vérifie si profil déjà complet en DB
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get_user', userId: session.user.id })
-      })
-      const data = await res.json()
+        body: JSON.stringify({ action: 'get_user', userId: session.user.id, email: session.user.email })
+      });
+      const data = await res.json();
 
+      // Redirige SEULEMENT si profile_complete = true en DB (source de vérité)
       if (data.user?.profile_complete === true) {
-        window.location.href = 'dashboard-dj.html'
-        return
+        window.location.replace('dashboard-dj.html');
+        return;
       }
 
-      // Stocke les infos en localStorage
       if (data.user) {
-        localStorage.setItem('cue_user', JSON.stringify(data.user))
-        localStorage.setItem('cue_logged_in', 'true')
+        localStorage.setItem('cue_user', JSON.stringify(data.user));
+        localStorage.setItem('cue_logged_in', 'true');
       }
     } catch (err) {
-      console.log('Erreur init onboarding:', err.message)
+      console.log('Erreur init onboarding:', err.message);
+      // Ne redirige pas en cas d'erreur
     }
   }
 
-  init()
+  init();
 </script>
 
 </body>
