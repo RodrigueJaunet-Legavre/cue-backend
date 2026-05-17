@@ -366,10 +366,36 @@
   let selectedGenres = [];
   let profileData = {};
   let tracks = [];
-  let profilePhoto = null;
+  let profilePhoto = null;      // base64 pour preview
+  let profilePhotoFile = null;  // fichier original
+  let mixFile = null;           // fichier mix original
+  let trackFiles = [];          // [{ file, name }]
   let trackURLs = [];
   let mixURL = null;
   let profileMix = null;
+
+  const SUPABASE_URL = 'https://orjhkfdvihuvqcjxhjwe.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yamhrZmR2aWh1dnFjanhoandlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MzU2ODEsImV4cCI6MjA5NDAxMTY4MX0.Ti7anM1O3KqbZYLxRkl1rWbcghJF5FgmRxNqOTV6JL0';
+
+  async function uploadToStorage(file, bucket, path) {
+    const res = await fetch(
+      `${SUPABASE_URL}/storage/v1/object/${bucket}/${path}`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': file.type || 'application/octet-stream',
+          'x-upsert': 'true'
+        },
+        body: file
+      }
+    );
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error('Upload échoué: ' + err);
+    }
+    return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
+  }
 
   const user = JSON.parse(localStorage.getItem('cue_user') || '{}');
 
@@ -474,11 +500,16 @@
   function handlePhotoUpload(input) {
     const file = input.files[0];
     if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert('Max 5MB.'); return; }
+
+    profilePhotoFile = file;
+
     const reader = new FileReader();
     reader.onload = (e) => {
+      profilePhoto = e.target.result;
       profileData.photo = e.target.result;
       const zone = document.getElementById('photo-upload');
-      zone.innerHTML = `<img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+      if (zone) zone.innerHTML = `<img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
     };
     reader.readAsDataURL(file);
   }
@@ -525,133 +556,162 @@
   function handleMixUpload(input) {
     const file = input.files[0];
     if (!file) return;
+    if (file.size > 100 * 1024 * 1024) { alert('Max 100MB.'); return; }
+
+    mixFile = file;
+    mixURL = URL.createObjectURL(file);
     profileData.mix = file.name;
+
     const zone = document.getElementById('mix-zone');
-    zone.classList.add('has-file');
-    document.getElementById('mix-file-name').textContent = '✅ ' + file.name;
+    if (zone) zone.classList.add('has-file');
+    const nameEl = document.getElementById('mix-file-name');
+    if (nameEl) nameEl.textContent = '✅ ' + file.name;
   }
 
   // TRACKS
   function handleTracksUpload(input) {
     const files = Array.from(input.files);
     files.forEach(file => {
-      if (tracks.length >= 10) return;
-      tracks.push(file);
-      addTrackToList(file);
+      if (tracks.length >= 10) { alert('Maximum 10 tracks.'); return; }
+      if (file.size > 50 * 1024 * 1024) { alert(`${file.name} dépasse 50MB.`); return; }
+
+      const defaultName = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+      const trackName = prompt('Nom de ce track :', defaultName);
+      if (trackName === null) return;
+      const name = trackName.trim() || defaultName;
+
+      trackFiles.push({ file, name });
+      tracks.push({ name, url: null });
+      addTrackToList(file, name);
     });
+    input.value = '';
   }
 
-  function addTrackToList(file) {
+  function addTrackToList(file, name) {
     const list = document.getElementById('tracks-list');
     const item = document.createElement('div');
     item.className = 'track-item';
     item.innerHTML = `
       <span class="track-icon">🎵</span>
       <div class="track-info">
-        <div class="track-name">${file.name.replace('.mp3', '')}</div>
+        <div class="track-name">${name || file.name.replace(/\.[^.]+$/, '')}</div>
         <div class="track-size">${(file.size / 1024 / 1024).toFixed(1)} MB</div>
       </div>
-      <span class="track-remove" onclick="this.parentElement.remove(); tracks.splice(tracks.indexOf(file),1);">×</span>
+      <span class="track-remove" onclick="this.parentElement.remove(); trackFiles.splice(trackFiles.findIndex(t=>t.file===file),1); tracks.splice(tracks.findIndex(t=>t.name===${JSON.stringify(name)}),1);">×</span>
     `;
     list.appendChild(item);
   }
 
   // COMPLETE
   async function completeProfile() {
-    saveCurrentStep()
+    saveCurrentStep();
 
-    const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
-    savedUser.profile_complete = true
-    savedUser.profileComplete = true
-    localStorage.setItem('cue_user', JSON.stringify(savedUser))
+    const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
+    let userId = savedUser.id || savedUser.user_id;
 
-    // Récupère l'ID utilisateur
-    const userId = savedUser.id || savedUser.user_id
-    console.log('userId pour update:', userId)
-
-    if (userId) {
+    // Fallback Supabase session si pas d'userId local
+    if (!userId) {
       try {
-        const res = await fetch('/api/auth', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'update_profile_by_id',
-            userId,
-            description: profileData.description || '',
-            genres: selectedGenres,
-            instagram: profileData.instagram || '',
-            tiktok: profileData.tiktok || '',
-            soundcloud: profileData.soundcloud || '',
-            spotify: profileData.spotify || '',
-            youtube: profileData.youtube || '',
-            mixUrl: profileData.mix || '',
-            tracks: tracks.map(t => t.name || t),
-            photo: profilePhoto || savedUser.picture || ''
-          })
+        const { supabase } = await import('./js/supabase-client.js');
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) userId = session.user.id;
+      } catch(e) { console.log('Supabase session:', e.message); }
+    }
+
+    const completeBtn = document.getElementById('complete-btn');
+    if (completeBtn) { completeBtn.disabled = true; completeBtn.textContent = '⏳ Sauvegarde en cours...'; }
+
+    try {
+      // 1. Upload photo
+      let photoUrl = savedUser.picture || '';
+      if (profilePhotoFile) {
+        if (completeBtn) completeBtn.textContent = '⏳ Upload de la photo...';
+        try {
+          const ext = profilePhotoFile.name.split('.').pop();
+          photoUrl = await uploadToStorage(profilePhotoFile, 'avatars', `${userId}/profile.${ext}`);
+        } catch(e) {
+          console.log('Erreur upload photo:', e.message);
+          photoUrl = profilePhoto || savedUser.picture || '';
+        }
+      }
+
+      // 2. Upload mix
+      let mixUrl = '';
+      if (mixFile) {
+        if (completeBtn) completeBtn.textContent = '⏳ Upload du mix...';
+        try {
+          const ext = mixFile.name.split('.').pop();
+          const url = await uploadToStorage(mixFile, 'dj-mixes', `${userId}/${Date.now()}.${ext}`);
+          mixUrl = JSON.stringify({ name: 'Mix de présentation', url });
+        } catch(e) {
+          console.log('Erreur upload mix:', e.message);
+        }
+      }
+
+      // 3. Upload tracks
+      const uploadedTracks = [];
+      if (trackFiles.length > 0) {
+        if (completeBtn) completeBtn.textContent = '⏳ Upload des tracks...';
+        for (const { file, name } of trackFiles) {
+          try {
+            const ext = file.name.split('.').pop();
+            const url = await uploadToStorage(file, 'dj-tracks', `${userId}/${Date.now()}_${Math.random().toString(36).substr(2,6)}.${ext}`);
+            uploadedTracks.push(JSON.stringify({ name, url }));
+          } catch(e) {
+            console.log('Erreur upload track:', e.message);
+            uploadedTracks.push(JSON.stringify({ name, url: null }));
+          }
+        }
+      }
+
+      // 4. Sauvegarde en DB
+      if (completeBtn) completeBtn.textContent = '⏳ Finalisation...';
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_profile_by_id',
+          userId,
+          description: profileData.description || '',
+          genres: selectedGenres,
+          instagram: profileData.instagram || '',
+          tiktok: profileData.tiktok || '',
+          soundcloud: profileData.soundcloud || '',
+          spotify: profileData.spotify || '',
+          youtube: profileData.youtube || '',
+          mixUrl: mixUrl || '',
+          tracks: uploadedTracks,
+          photo: photoUrl
         })
-
-        const data = await res.json()
-        console.log('Résultat update:', data)
-
-        if (data.user) {
-          localStorage.setItem('cue_user', JSON.stringify({
-            ...savedUser,
-            ...data.user,
-            profile_complete: true,
-            profileComplete: true
-          }))
-        }
-      } catch (err) {
-        console.log('Erreur update profil:', err.message)
+      });
+      const data = await res.json();
+      if (data.user) {
+        localStorage.setItem('cue_user', JSON.stringify({
+          ...savedUser, ...data.user,
+          profile_complete: true, profileComplete: true
+        }));
       }
-    } else {
-      // Fallback Supabase session
-      try {
-        const { supabase } = await import('./js/supabase-client.js')
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session) {
-          const res = await fetch('/api/auth', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'update_profile_by_id',
-              userId: session.user.id,
-              description: profileData.description || '',
-              genres: selectedGenres,
-              instagram: profileData.instagram || '',
-              tiktok: profileData.tiktok || '',
-              soundcloud: profileData.soundcloud || '',
-              spotify: profileData.spotify || '',
-              youtube: profileData.youtube || '',
-              mixUrl: profileData.mix || '',
-              tracks: tracks.map(t => t.name || t),
-              photo: profilePhoto || savedUser.picture || ''
-            })
-          })
-          const data = await res.json()
-          console.log('Résultat Supabase update:', data)
-        }
-      } catch (err) {
-        console.log('Erreur Supabase:', err.message)
-      }
+    } catch(err) {
+      console.log('Erreur completeProfile:', err.message);
     }
 
     // Affiche étape finale
-    document.getElementById('step-' + currentStep).classList.remove('active')
-    document.getElementById('step-complete').classList.add('active')
-    document.getElementById('progress-fill').style.width = '100%'
-    document.getElementById('step-indicator').textContent = 'Profil complété ✓'
-    document.querySelector('.skip-btn').style.display = 'none'
+    document.getElementById('step-' + currentStep).classList.remove('active');
+    document.getElementById('step-complete').classList.add('active');
+    document.getElementById('progress-fill').style.width = '100%';
+    document.getElementById('step-indicator').textContent = 'Profil complété ✓';
+    const skipBtn = document.querySelector('.skip-btn');
+    if (skipBtn) skipBtn.style.display = 'none';
 
     if (profilePhoto) {
-      document.getElementById('preview-avatar').src = profilePhoto
-      document.getElementById('preview-avatar').style.display = 'block'
+      const avatar = document.getElementById('preview-avatar');
+      if (avatar) { avatar.src = profilePhoto; avatar.style.display = 'block'; }
     }
-
-    const user = JSON.parse(localStorage.getItem('cue_user') || '{}')
-    document.getElementById('preview-name').textContent =
-      (user.first_name || user.firstName || '') + ' ' + (user.last_name || user.lastName || '')
-    document.getElementById('preview-genres').textContent = selectedGenres.join(' · ')
+    const finalUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
+    const nameEl = document.getElementById('preview-name');
+    const genresEl = document.getElementById('preview-genres');
+    if (nameEl) nameEl.textContent = (finalUser.first_name || finalUser.firstName || '') + ' ' + (finalUser.last_name || finalUser.lastName || '');
+    if (genresEl) genresEl.textContent = selectedGenres.join(' · ');
   }
 
   // SHARE
