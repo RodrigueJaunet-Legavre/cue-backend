@@ -260,17 +260,46 @@ module.exports = async function handler(req, res) {
   if (action === 'get_user') {
     const { userId, email } = body;
     try {
+      // Cherche par ID d'abord
       let users = await sql`SELECT * FROM users WHERE id = ${userId}`;
+
+      // Si pas trouvé par ID, cherche par email
       if (!users.length && email) {
         users = await sql`SELECT * FROM users WHERE email = ${email}`;
+
         if (users.length) {
-          await sql`UPDATE users SET id = ${userId} WHERE email = ${email}`;
+          const oldId = users[0].id;
+          console.log('Migration ID:', oldId, '→', userId);
+
+          try {
+            // Met à jour les tables liées d'abord
+            await sql`UPDATE sessions SET user_id = ${userId} WHERE user_id = ${oldId}`;
+            await sql`UPDATE bookings SET dj_id = ${userId} WHERE dj_id = ${oldId}`;
+            await sql`UPDATE bookings SET venue_id = ${userId} WHERE venue_id = ${oldId}`;
+            await sql`UPDATE reviews SET dj_id = ${userId} WHERE dj_id = ${oldId}`;
+            await sql`UPDATE reviews SET venue_id = ${userId} WHERE venue_id = ${oldId}`;
+            await sql`UPDATE favorites SET dj_id = ${userId} WHERE dj_id = ${oldId}`;
+            await sql`UPDATE favorites SET venue_id = ${userId} WHERE venue_id = ${oldId}`;
+            await sql`UPDATE conversations SET dj_id = ${userId} WHERE dj_id = ${oldId}`;
+            await sql`UPDATE conversations SET venue_id = ${userId} WHERE venue_id = ${oldId}`;
+            await sql`UPDATE messages SET sender_id = ${userId} WHERE sender_id = ${oldId}`;
+            await sql`UPDATE identity_documents SET user_id = ${userId} WHERE user_id = ${oldId}`;
+
+            // Finalement met à jour l'ID principal
+            await sql`UPDATE users SET id = ${userId} WHERE email = ${email}`;
+            console.log('✅ Migration ID réussie');
+          } catch (migErr) {
+            console.log('Erreur migration ID:', migErr.message);
+          }
+
           users = await sql`SELECT * FROM users WHERE id = ${userId}`;
-          console.log('✅ ID migré vers UUID Supabase');
         }
       }
-      return res.status(200).json({ user: sanitizeUser(users[0] || null) });
+
+      const user = users[0] || null;
+      return res.status(200).json({ user: sanitizeUser(user) });
     } catch (err) {
+      console.log('Erreur get_user:', err.message);
       return res.status(500).json({ error: err.message });
     }
   }

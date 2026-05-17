@@ -19,16 +19,11 @@ import { supabase } from './js/supabase-client.js'
 
 async function handleCallback() {
   const { data: { session }, error } = await supabase.auth.getSession()
-
-  if (error || !session) {
-    console.log('Pas de session:', error)
-    window.location.href = 'login.html'
-    return
-  }
+  if (error || !session) { window.location.href = 'login.html'; return }
 
   const user = session.user
 
-  // Récupère ou crée l'user en DB
+  // Cherche en DB par ID ET par email
   const res = await fetch('/api/auth', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -40,46 +35,47 @@ async function handleCallback() {
   })
   const data = await res.json()
 
-  if (!data.user) {
-    // Nouvel utilisateur → crée en DB
-    const meta = user.user_metadata
-    await fetch('/api/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'register_supabase',
-        userId: user.id,
-        firstName: meta.full_name?.split(' ')[0] || meta.name?.split(' ')[0] || '',
-        lastName: meta.full_name?.split(' ').slice(1).join(' ') || '',
-        email: user.email,
-        phone: '',
-        userType: 'pending',
-        picture: meta.avatar_url || meta.picture || '',
-        googleId: user.id,
-        referralCode: 'REF' + Math.floor(10000 + Math.random() * 90000)
-      })
+  if (data.user) {
+    // Compte trouvé → met à jour l'ID si nécessaire
+    const dbUser = data.user
+    localStorage.setItem('cue_user', JSON.stringify(dbUser))
+    localStorage.setItem('cue_logged_in', 'true')
+
+    const userType = dbUser.user_type
+    const profileComplete = dbUser.profile_complete === true
+
+    if (!userType || userType === 'pending') {
+      window.location.href = 'google-setup.html'
+      return
+    }
+
+    if (userType === 'dj') {
+      window.location.href = profileComplete ? 'dashboard-dj.html' : 'dj-onboarding.html'
+    } else {
+      window.location.href = 'dashboard-venue.html'
+    }
+    return
+  }
+
+  // Vraiment nouvel utilisateur → google-setup
+  const meta = user.user_metadata
+  await fetch('/api/auth', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'register_supabase',
+      userId: user.id,
+      firstName: meta.full_name?.split(' ')[0] || meta.name?.split(' ')[0] || '',
+      lastName: meta.full_name?.split(' ').slice(1).join(' ') || '',
+      email: user.email,
+      phone: '',
+      userType: 'pending',
+      picture: meta.avatar_url || meta.picture || '',
+      googleId: user.id,
+      referralCode: 'REF' + Math.floor(10000 + Math.random() * 90000)
     })
-    window.location.href = 'google-setup.html'
-    return
-  }
-
-  const dbUser = data.user
-  localStorage.setItem('cue_user', JSON.stringify(dbUser))
-  localStorage.setItem('cue_logged_in', 'true')
-
-  const userType = dbUser.user_type
-  const profileComplete = dbUser.profile_complete === true
-
-  if (!userType || userType === 'pending') {
-    window.location.href = 'google-setup.html'
-    return
-  }
-
-  if (userType === 'dj') {
-    window.location.href = profileComplete ? 'dashboard-dj.html' : 'dj-onboarding.html'
-  } else {
-    window.location.href = 'dashboard-venue.html'
-  }
+  })
+  window.location.href = 'google-setup.html'
 }
 
 handleCallback()
