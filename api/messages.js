@@ -129,6 +129,13 @@ module.exports = async function handler(req, res) {
           'text'
         )
       `;
+      // Crée le contrat automatiquement
+      fetch('/api/contracts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create_from_booking', bookingId })
+      }).catch(e => console.log('Erreur création contrat:', e.message));
+
       return res.status(200).json({
         success: true,
         booking: {

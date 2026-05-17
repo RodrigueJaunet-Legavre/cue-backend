@@ -863,6 +863,14 @@
   }
 
   async function handlePlanSelection() {
+    const btn = document.getElementById('plan-btn');
+
+    // Feedback immédiat
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = '⏳ Chargement...';
+    }
+
     const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
     const userId = savedUser.id || savedUser.user_id;
 
@@ -871,18 +879,19 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'update_plan', userId, plan: 'starter' })
-      }).catch(() => {});
+      });
       savedUser.plan = 'starter';
       localStorage.setItem('cue_user', JSON.stringify(savedUser));
-      await handleComplete();
+      showStep(totalSteps + 1); // step-complete
       return;
     }
 
-    const btn = document.getElementById('plan-btn');
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ Redirection...'; }
-
+    // Pro ou Business → Stripe
     try {
-      const priceIds = { pro: 'price_1TVEcMRwFuYQb4HD2nNHQvP2', business: 'price_1TVEdhRwFuYQb4HDvq7lrKfb' };
+      const priceIds = {
+        pro: 'price_1TVEcMRwFuYQb4HD2nNHQvP2',
+        business: 'price_1TVEdhRwFuYQb4HDvq7lrKfb'
+      };
       const res = await fetch('/api/stripe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -891,16 +900,20 @@
           priceId: priceIds[selectedPlan],
           userId,
           email: savedUser.email,
-          successUrl: 'https://cuedj.eu/dj-onboarding.html?plan_success=true&plan=' + selectedPlan,
+          successUrl: 'https://cuedj.eu/dj-onboarding.html?plan_success=true',
           cancelUrl: 'https://cuedj.eu/dj-onboarding.html?step=7'
         })
       });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
-      else throw new Error(data.error || 'Erreur Stripe');
+      else throw new Error(data.error);
     } catch(err) {
       alert('Erreur : ' + err.message);
-      if (btn) { btn.disabled = false; btn.textContent = selectedPlan === 'pro' ? 'Souscrire Pro 24€/mois →' : 'Souscrire Business 79€/mois →'; }
+      if (btn) {
+        btn.disabled = false;
+        const labels = { pro: 'Souscrire Pro 24€/mois →', business: 'Souscrire Business 79€/mois →' };
+        btn.textContent = labels[selectedPlan];
+      }
     }
   }
 
