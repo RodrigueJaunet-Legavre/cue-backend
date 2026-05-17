@@ -202,10 +202,10 @@
     <h1 class="step-title">AJOUTE TA<br>PHOTO.</h1>
     <p class="step-sub">Ta photo de profil est la première chose que voient les venues. Choisis une photo professionnelle.</p>
 
-    <div class="photo-upload" id="photo-upload" onclick="if(event.detail===1) document.getElementById('photo-input').click()">
+    <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)">
+    <div class="photo-upload" id="photo-upload" onclick="document.getElementById('photo-input').click()">
       <div class="photo-upload-icon">📸</div>
       <div class="photo-upload-text">Cliquer pour ajouter</div>
-      <input type="file" id="photo-input" accept="image/*" onchange="handlePhotoUpload(this)">
     </div>
     <p style="text-align:center; color:var(--MUTED); font-size:12px; margin-top:12px;">
       JPG ou PNG • Max 5MB • Carré recommandé (400x400px minimum)
