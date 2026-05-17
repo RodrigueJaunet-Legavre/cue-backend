@@ -275,6 +275,16 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'update_plan') {
+    const { userId, plan } = body;
+    try {
+      await sql`UPDATE users SET plan = ${plan} WHERE id = ${userId}`;
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   if (action === 'save_iban') {
     const { userId, iban, bic, bankName } = body;
     try {

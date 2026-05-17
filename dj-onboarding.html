@@ -314,7 +314,100 @@
 
     <div class="nav-buttons">
       <button class="btn-back" onclick="prevStep()">← Retour</button>
-      <button id="complete-btn" class="btn-next" onclick="handleComplete()">Terminer ✓</button>
+      <button class="btn-next" onclick="nextStep()">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 7 : ABONNEMENT -->
+  <div class="step" id="step-7">
+    <div class="step-tag">✦ Étape 7 sur 7</div>
+    <h1 class="step-title">CHOISIS<br>TON PLAN.</h1>
+    <p class="step-sub">Tu peux changer à tout moment depuis ton dashboard.</p>
+
+    <div style="display:flex; flex-direction:column; gap:16px; margin-top:32px;">
+
+      <!-- Starter -->
+      <div class="plan-card" id="plan-starter" onclick="selectPlan('starter', this)"
+           style="border:2px solid var(--Y); background:rgba(255,195,0,.04); border-radius:16px; padding:20px 24px; cursor:pointer; transition:all .25s;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+              <span style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; color:#fff;">STARTER</span>
+              <span style="background:rgba(255,195,0,.2); color:var(--Y); font-size:11px; font-weight:700; padding:2px 10px; border-radius:20px;">GRATUIT</span>
+              <span id="check-starter" style="color:var(--Y); font-size:18px;">✓</span>
+            </div>
+            <div style="color:var(--MUTED); font-size:13px; line-height:1.8;">
+              ✅ Profil public<br>
+              ✅ Messagerie avec les venues<br>
+              ✅ Jusqu'à 3 tracks<br>
+              ❌ Mix de présentation<br>
+              ❌ Mise en avant dans les recherches<br>
+              <span style="color:#ff9500; font-weight:600;">15% de commission par booking</span>
+            </div>
+          </div>
+          <div style="text-align:right; flex-shrink:0; margin-left:16px;">
+            <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:36px; color:#fff;">0€</div>
+            <div style="color:var(--MUTED); font-size:12px;">/mois</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pro -->
+      <div class="plan-card" id="plan-pro" onclick="selectPlan('pro', this)"
+           style="border:2px solid var(--BORDER); background:#0a0a0a; border-radius:16px; padding:20px 24px; cursor:pointer; transition:all .25s; position:relative; overflow:hidden;">
+        <div style="position:absolute; top:0; right:0; background:var(--Y); color:#000; font-size:11px; font-weight:700; padding:4px 14px; border-radius:0 14px 0 12px;">POPULAIRE</div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+              <span style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; color:#fff;">PRO</span>
+              <span id="check-pro" style="color:var(--Y); font-size:18px; display:none;">✓</span>
+            </div>
+            <div style="color:var(--MUTED); font-size:13px; line-height:1.8;">
+              ✅ Tout du Starter<br>
+              ✅ Mix de présentation<br>
+              ✅ Tracks illimitées<br>
+              ✅ Priorité dans les recherches<br>
+              ✅ Badge Pro visible<br>
+              <span style="color:#00c864; font-weight:600;">8% de commission par booking</span>
+            </div>
+          </div>
+          <div style="text-align:right; flex-shrink:0; margin-left:16px;">
+            <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:36px; color:var(--Y);">24€</div>
+            <div style="color:var(--MUTED); font-size:12px;">/mois</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Business -->
+      <div class="plan-card" id="plan-business" onclick="selectPlan('business', this)"
+           style="border:2px solid var(--BORDER); background:#0a0a0a; border-radius:16px; padding:20px 24px; cursor:pointer; transition:all .25s;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+              <span style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; color:#fff;">BUSINESS</span>
+              <span id="check-business" style="color:var(--Y); font-size:18px; display:none;">✓</span>
+            </div>
+            <div style="color:var(--MUTED); font-size:13px; line-height:1.8;">
+              ✅ Tout du Pro<br>
+              ✅ Profil mis en avant en premier<br>
+              ✅ Support prioritaire<br>
+              ✅ Statistiques avancées<br>
+              ✅ Contrats personnalisés<br>
+              <span style="color:#00c864; font-weight:600;">4% de commission par booking</span>
+            </div>
+          </div>
+          <div style="text-align:right; flex-shrink:0; margin-left:16px;">
+            <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:36px; color:var(--Y);">79€</div>
+            <div style="color:var(--MUTED); font-size:12px;">/mois</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="nav-buttons" style="margin-top:32px;">
+      <button class="btn-back" onclick="prevStep()">← Retour</button>
+      <button id="plan-btn" class="btn-next" onclick="handlePlanSelection()">Continuer avec Starter →</button>
     </div>
   </div>
 
@@ -358,7 +451,7 @@
 
 <script>
   let currentStep = 1;
-  const totalSteps = 6;
+  const totalSteps = 7;
   let selectedGenres = [];
   let profileData = {};
   let tracks = [];
@@ -461,8 +554,15 @@
   }
 
   function showStep(n) {
-    document.getElementById('step-' + currentStep).classList.remove('active');
+    const currentEl = document.getElementById('step-' + currentStep) || document.getElementById('step-complete');
+    if (currentEl) currentEl.classList.remove('active');
     currentStep = n;
+    if (n > totalSteps) {
+      document.getElementById('step-complete').classList.add('active');
+      document.getElementById('progress-fill').style.width = '100%';
+      document.getElementById('step-indicator').textContent = 'Profil complété ✓';
+      return;
+    }
     document.getElementById('step-' + currentStep).classList.add('active');
     document.getElementById('step-indicator').textContent = `Étape ${n} sur ${totalSteps}`;
     document.getElementById('progress-fill').style.width = ((n / totalSteps) * 100) + '%';
@@ -742,6 +842,65 @@
     }
   }
 
+  let selectedPlan = 'starter';
+
+  function selectPlan(plan, el) {
+    selectedPlan = plan;
+    document.querySelectorAll('.plan-card').forEach(c => {
+      c.style.borderColor = 'var(--BORDER)';
+      c.style.background = '#0a0a0a';
+    });
+    document.querySelectorAll('[id^="check-"]').forEach(c => c.style.display = 'none');
+    el.style.borderColor = 'var(--Y)';
+    el.style.background = 'rgba(255,195,0,.04)';
+    document.getElementById('check-' + plan).style.display = 'inline';
+    const btn = document.getElementById('plan-btn');
+    const labels = { starter: 'Continuer avec Starter →', pro: 'Souscrire Pro 24€/mois →', business: 'Souscrire Business 79€/mois →' };
+    if (btn) btn.textContent = labels[plan];
+  }
+
+  async function handlePlanSelection() {
+    const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
+    const userId = savedUser.id || savedUser.user_id;
+
+    if (selectedPlan === 'starter') {
+      await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update_plan', userId, plan: 'starter' })
+      }).catch(() => {});
+      savedUser.plan = 'starter';
+      localStorage.setItem('cue_user', JSON.stringify(savedUser));
+      await handleComplete();
+      return;
+    }
+
+    const btn = document.getElementById('plan-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Redirection...'; }
+
+    try {
+      const priceIds = { pro: 'price_1TVEcMRwFuYQb4HD2nNHQvP2', business: 'price_1TVEdhRwFuYQb4HDvq7lrKfb' };
+      const res = await fetch('/api/stripe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create_checkout',
+          priceId: priceIds[selectedPlan],
+          userId,
+          email: savedUser.email,
+          successUrl: 'https://cuedj.eu/dj-onboarding.html?plan_success=true&plan=' + selectedPlan,
+          cancelUrl: 'https://cuedj.eu/dj-onboarding.html?step=7'
+        })
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else throw new Error(data.error || 'Erreur Stripe');
+    } catch(err) {
+      alert('Erreur : ' + err.message);
+      if (btn) { btn.disabled = false; btn.textContent = selectedPlan === 'pro' ? 'Souscrire Pro 24€/mois →' : 'Souscrire Business 79€/mois →'; }
+    }
+  }
+
   let isCompleting = false;
 
   async function handleComplete() {
@@ -762,6 +921,30 @@
   }
 
   async function init() {
+    // Retour depuis Stripe après paiement abonnement
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('plan_success') === 'true') {
+      history.replaceState({}, '', window.location.pathname);
+      const planPaid = params.get('plan') || 'pro';
+      const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
+      savedUser.plan = planPaid;
+      localStorage.setItem('cue_user', JSON.stringify(savedUser));
+      await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update_plan', userId: savedUser.id || savedUser.user_id, plan: planPaid })
+      }).catch(() => {});
+      showStep(totalSteps + 1); // montre step-complete
+      return;
+    }
+
+    // Retour depuis Stripe après annulation → reprend à étape 7
+    if (params.get('step') === '7') {
+      history.replaceState({}, '', window.location.pathname);
+      showStep(7);
+      return;
+    }
+
     try {
       const { supabase } = await import('./js/supabase-client.js');
       const { data: { session } } = await supabase.auth.getSession();
@@ -773,7 +956,6 @@
           window.location.replace('login.html');
           return;
         }
-        // Pas de session Supabase — laisse l'onboarding continuer sans rediriger
         return;
       }
 
@@ -784,7 +966,6 @@
       });
       const data = await res.json();
 
-      // Redirige SEULEMENT si profile_complete = true en DB (source de vérité)
       if (data.user?.profile_complete === true) {
         window.location.replace('dashboard-dj.html');
         return;
@@ -796,7 +977,6 @@
       }
     } catch (err) {
       console.log('Erreur init onboarding:', err.message);
-      // Ne redirige pas en cas d'erreur
     }
   }
 

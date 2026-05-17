@@ -312,6 +312,9 @@
       <span class="nav-icon">🪪</span> Vérification ID
       <span id="verif-status-badge" style="margin-left:auto; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; background:rgba(255,170,0,.2); color:#ffaa00;">En attente</span>
     </div>
+    <div class="nav-item" data-page="subscription" onclick="showPage('subscription', this)">
+      <span class="nav-icon">💳</span> Abonnement
+    </div>
     <div class="nav-item" data-page="settings" onclick="showPage('settings', this)">
       <span class="nav-icon">⚙️</span> Paramètres
     </div>
@@ -1169,6 +1172,99 @@
     </div>
   </div>
 
+  <!-- PAGE ABONNEMENT -->
+  <div id="page-subscription" class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">ABONNEMENT</h1>
+        <p class="page-sub">Gérez votre plan CUE</p>
+      </div>
+    </div>
+    <div style="max-width:720px;">
+
+      <!-- Plan actuel -->
+      <div class="card" style="margin-bottom:24px; border-color:rgba(255,195,0,.3);">
+        <div class="card-body" style="padding:28px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+            <div>
+              <div style="color:var(--MUTED); font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">PLAN ACTUEL</div>
+              <div style="display:flex; align-items:center; gap:12px;">
+                <span id="sub-current-plan-name" style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:36px; color:#fff;"></span>
+                <span id="sub-current-plan-badge" style="padding:4px 14px; border-radius:20px; font-size:13px; font-weight:700;"></span>
+              </div>
+              <div id="sub-current-plan-commission" style="color:var(--MUTED); font-size:14px; margin-top:6px;"></div>
+            </div>
+            <div id="sub-current-plan-price" style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:48px; color:var(--Y); line-height:1;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comparaison des plans -->
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px;">
+
+        <div id="sub-starter" style="background:var(--CARD); border:2px solid var(--BORDER); border-radius:16px; padding:20px; transition:all .25s;">
+          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; color:#fff; margin-bottom:4px;">STARTER</div>
+          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px; color:#fff; margin-bottom:16px;">Gratuit</div>
+          <div style="display:flex; flex-direction:column; gap:8px; font-size:13px; color:var(--MUTED); margin-bottom:20px;">
+            <div>✅ Profil public</div>
+            <div>✅ Messagerie</div>
+            <div>✅ 3 tracks max</div>
+            <div style="opacity:.4;">❌ Mix de présentation</div>
+            <div style="opacity:.4;">❌ Mise en avant</div>
+            <div style="color:#ff9500; font-weight:600; margin-top:8px;">15% commission</div>
+          </div>
+          <button id="btn-starter" onclick="changePlan('starter')" class="btn" style="width:100%; padding:10px; border-radius:10px; font-weight:700; font-size:13px; font-family:Barlow,sans-serif;"></button>
+        </div>
+
+        <div id="sub-pro" style="background:var(--CARD); border:2px solid var(--BORDER); border-radius:16px; padding:20px; transition:all .25s; position:relative; overflow:hidden;">
+          <div style="position:absolute; top:0; right:0; background:var(--Y); color:#000; font-size:10px; font-weight:700; padding:4px 12px; border-radius:0 14px 0 12px;">POPULAIRE</div>
+          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; color:#fff; margin-bottom:4px;">PRO</div>
+          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px; color:var(--Y); margin-bottom:16px;">24€<span style="font-size:16px; color:var(--MUTED);">/mois</span></div>
+          <div style="display:flex; flex-direction:column; gap:8px; font-size:13px; color:var(--MUTED); margin-bottom:20px;">
+            <div>✅ Tout du Starter</div>
+            <div>✅ Mix de présentation</div>
+            <div>✅ Tracks illimitées</div>
+            <div>✅ Priorité recherches</div>
+            <div>✅ Badge Pro</div>
+            <div style="color:#00c864; font-weight:600; margin-top:8px;">8% commission</div>
+          </div>
+          <button id="btn-pro" onclick="changePlan('pro')" class="btn" style="width:100%; padding:10px; border-radius:10px; font-weight:700; font-size:13px; font-family:Barlow,sans-serif;"></button>
+        </div>
+
+        <div id="sub-business" style="background:var(--CARD); border:2px solid var(--BORDER); border-radius:16px; padding:20px; transition:all .25s;">
+          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; color:#fff; margin-bottom:4px;">BUSINESS</div>
+          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px; color:var(--Y); margin-bottom:16px;">79€<span style="font-size:16px; color:var(--MUTED);">/mois</span></div>
+          <div style="display:flex; flex-direction:column; gap:8px; font-size:13px; color:var(--MUTED); margin-bottom:20px;">
+            <div>✅ Tout du Pro</div>
+            <div>✅ Mis en avant en 1er</div>
+            <div>✅ Support prioritaire</div>
+            <div>✅ Stats avancées</div>
+            <div>✅ Contrats perso</div>
+            <div style="color:#00c864; font-weight:600; margin-top:8px;">4% commission</div>
+          </div>
+          <button id="btn-business" onclick="changePlan('business')" class="btn" style="width:100%; padding:10px; border-radius:10px; font-weight:700; font-size:13px; font-family:Barlow,sans-serif;"></button>
+        </div>
+
+      </div>
+
+      <!-- Annuler -->
+      <div id="cancel-sub-section" class="card" style="display:none; border-color:rgba(255,68,68,.2);">
+        <div class="card-body">
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+            <div>
+              <div style="font-weight:700; color:#fff; margin-bottom:4px;">Annuler mon abonnement</div>
+              <div style="color:var(--MUTED); font-size:13px;">Vous reviendrez au plan Starter à la fin de la période.</div>
+            </div>
+            <button onclick="cancelSubscription()" style="background:transparent; color:#ff4444; border:1px solid rgba(255,68,68,.3); padding:10px 20px; border-radius:10px; cursor:pointer; font-weight:700; font-family:Barlow,sans-serif; font-size:13px; white-space:nowrap; transition:all .2s;" onmouseover="this.style.background='rgba(255,68,68,.1)'" onmouseout="this.style.background='transparent'">
+              Annuler l'abonnement
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <div id="page-settings" class="page">
     <div class="page-header">
       <h1 class="page-title">PARAMÈTRES</h1>
@@ -1243,21 +1339,6 @@
             </div>
           </div>
           <button class="btn btn-primary" style="width:fit-content;" onclick="saveIBAN()">Enregistrer les coordonnées bancaires</button>
-        </div>
-      </div>
-
-      <!-- Abonnement -->
-      <div class="card">
-        <div class="card-header"><span class="card-title">💳 Abonnement</span></div>
-        <div class="card-body">
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
-            <div>
-              <div style="font-weight:700; color:#fff; font-size:18px;" id="current-plan-name">Plan Starter</div>
-              <div style="color:var(--MUTED); font-size:13px; margin-top:4px;" id="current-plan-desc">Gratuit — 15% de commission</div>
-            </div>
-            <span id="current-plan-badge" class="profile-plan">STARTER</span>
-          </div>
-          <a href="pricing.html" class="btn btn-outline" style="text-decoration:none; display:inline-block;">Changer de plan →</a>
         </div>
       </div>
 
@@ -1467,6 +1548,25 @@
     loadUnreadCounts()
     setInterval(loadUnreadCounts, 30000)
     await syncConfirmedBookings()
+
+    // Retour depuis Stripe après paiement abonnement
+    const params = new URLSearchParams(window.location.search);
+    const subSuccess = params.get('sub_success');
+    if (subSuccess) {
+      history.replaceState({}, '', window.location.pathname);
+      user.plan = subSuccess;
+      localStorage.setItem('cue_user', JSON.stringify(user));
+      await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update_plan', userId: user.id || user.user_id, plan: subSuccess })
+      }).catch(() => {});
+      document.getElementById('sidebar-plan').textContent = subSuccess.toUpperCase();
+      setTimeout(() => {
+        showPage('subscription', document.querySelector('[data-page=subscription]'));
+        alert(`🎉 Bienvenue sur le plan ${subSuccess.toUpperCase()} !`);
+      }, 500);
+    }
   }
 
   function showSkeleton(containerId, type = 'card', count = 3) {
@@ -1544,6 +1644,7 @@
       case 'contact': initContactPage(); break;
       case 'verification': initVerificationPage(); break;
       case 'overview': checkBadgeConditions(); break;
+      case 'subscription': initSubscriptionPage(); break;
       case 'settings':
         if (document.getElementById('iban-input')) document.getElementById('iban-input').value = user.iban ? formatIBAN(user.iban) : '';
         if (document.getElementById('bic-input')) document.getElementById('bic-input').value = user.bic || '';
@@ -3273,6 +3374,102 @@
     } catch (err) {
       alert('Erreur. Réessaie.');
     }
+  }
+
+  function initSubscriptionPage() {
+    const plan = user.plan || 'starter';
+    const plans = {
+      starter: { name: 'STARTER', price: 'Gratuit', commission: '15% de commission par booking', badgeBg: 'rgba(255,255,255,.1)', badgeColor: '#ddd' },
+      pro:     { name: 'PRO',     price: '24€/mois', commission: '8% de commission par booking',  badgeBg: 'rgba(255,195,0,.2)',  badgeColor: '#FFC300' },
+      business:{ name: 'BUSINESS',price: '79€/mois', commission: '4% de commission par booking',  badgeBg: 'rgba(255,195,0,.2)',  badgeColor: '#FFC300' }
+    };
+    const current = plans[plan] || plans.starter;
+    document.getElementById('sub-current-plan-name').textContent = current.name;
+    document.getElementById('sub-current-plan-price').textContent = current.price;
+    document.getElementById('sub-current-plan-commission').textContent = current.commission;
+    const badge = document.getElementById('sub-current-plan-badge');
+    badge.textContent = plan.toUpperCase();
+    badge.style.background = current.badgeBg;
+    badge.style.color = current.badgeColor;
+
+    ;['starter', 'pro', 'business'].forEach(p => {
+      const card = document.getElementById('sub-' + p);
+      const btn = document.getElementById('btn-' + p);
+      if (!card || !btn) return;
+      if (p === plan) {
+        card.style.borderColor = 'var(--Y)';
+        card.style.background = 'rgba(255,195,0,.04)';
+        btn.textContent = '✓ Plan actuel';
+        btn.style.cssText = 'width:100%; padding:10px; border-radius:10px; font-weight:700; font-size:13px; font-family:Barlow,sans-serif; background:rgba(255,195,0,.15); color:var(--Y); border:1px solid rgba(255,195,0,.3); cursor:default;';
+        btn.disabled = true;
+      } else {
+        card.style.borderColor = 'var(--BORDER)';
+        card.style.background = 'var(--CARD)';
+        const labels = { starter: 'Passer au Starter', pro: 'Passer au Pro →', business: 'Passer au Business →' };
+        btn.textContent = labels[p];
+        btn.style.cssText = `width:100%; padding:10px; border-radius:10px; font-weight:700; font-size:13px; font-family:Barlow,sans-serif; cursor:pointer; background:${p === 'starter' ? 'transparent' : 'var(--Y)'}; color:${p === 'starter' ? 'var(--MUTED)' : '#000'}; border:${p === 'starter' ? '1px solid var(--BORDER)' : 'none'};`;
+        btn.disabled = false;
+      }
+    });
+
+    const cancelSection = document.getElementById('cancel-sub-section');
+    if (cancelSection) cancelSection.style.display = plan !== 'starter' ? 'block' : 'none';
+  }
+
+  async function changePlan(newPlan) {
+    const currentPlan = user.plan || 'starter';
+    if (newPlan === currentPlan) return;
+    if (newPlan === 'starter') { cancelSubscription(); return; }
+
+    const btn = document.getElementById('btn-' + newPlan);
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Redirection...'; }
+
+    try {
+      const priceIds = { pro: 'price_1TVEcMRwFuYQb4HD2nNHQvP2', business: 'price_1TVEdhRwFuYQb4HDvq7lrKfb' };
+      const res = await fetch('/api/stripe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create_checkout',
+          priceId: priceIds[newPlan],
+          userId: user.id || user.user_id,
+          email: user.email,
+          successUrl: 'https://cuedj.eu/dashboard-dj.html?sub_success=' + newPlan,
+          cancelUrl: 'https://cuedj.eu/dashboard-dj.html'
+        })
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else throw new Error(data.error || 'Erreur Stripe');
+    } catch(err) {
+      alert('Erreur : ' + err.message);
+      if (btn) { btn.disabled = false; btn.textContent = 'Passer au ' + newPlan; }
+    }
+  }
+
+  async function cancelSubscription() {
+    if (!confirm('Annuler votre abonnement ? Vous reviendrez au plan Starter à la fin de la période de facturation.')) return;
+    try {
+      const res = await fetch('/api/stripe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'cancel_subscription', userId: user.id || user.user_id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        user.plan = 'starter';
+        localStorage.setItem('cue_user', JSON.stringify(user));
+        await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'update_plan', userId: user.id || user.user_id, plan: 'starter' })
+        });
+        initSubscriptionPage();
+        alert('✅ Abonnement annulé. Vous gardez l\'accès jusqu\'à la fin de la période.');
+      } else {
+        alert('Erreur : ' + (data.error || 'Réessaie'));
+      }
+    } catch(err) { alert('Erreur. Réessaie.'); }
   }
 
   function formatIBAN(value) {
