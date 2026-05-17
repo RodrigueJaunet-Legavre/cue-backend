@@ -418,6 +418,15 @@
       </div>
     </div>
 
+    <!-- Bloc rappels paiements -->
+    <div id="payment-reminders-card" class="card" style="display:none; margin-bottom:20px; border-color:rgba(255,170,0,.3);">
+      <div class="card-header" style="border-color:rgba(255,170,0,.2);">
+        <span class="card-title" style="color:#ffaa00;">⚠️ Paiements à effectuer</span>
+        <span id="payment-reminders-count" style="background:rgba(255,170,0,.2); color:#ffaa00; font-size:12px; font-weight:700; padding:3px 10px; border-radius:20px;"></span>
+      </div>
+      <div class="card-body" id="payment-reminders-list"></div>
+    </div>
+
     <div class="card">
       <div class="card-header">
         <span class="card-title">📅 Prochains événements</span>
@@ -1802,6 +1811,72 @@
     document.getElementById('stat-bookings-total').textContent = bookings.length;
     updateQuickActions();
     loadRecentActivity();
+    checkPaymentReminders();
+  }
+
+  function checkPaymentReminders() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const unpaid = (venueBookings || []).filter(b => {
+      const payStatus = b.payment_status || 'unpaid';
+      if (payStatus !== 'unpaid' && payStatus !== 'pending_payment') return false;
+      const gigDate = new Date((b.date || '').split('T')[0] + 'T00:00:00');
+      return gigDate >= today;
+    });
+
+    const card  = document.getElementById('payment-reminders-card');
+    const list  = document.getElementById('payment-reminders-list');
+    const count = document.getElementById('payment-reminders-count');
+
+    if (!unpaid.length) {
+      if (card) card.style.display = 'none';
+      return;
+    }
+
+    if (card)  card.style.display  = 'block';
+    if (count) count.textContent   = unpaid.length + ' booking' + (unpaid.length > 1 ? 's' : '');
+
+    if (!list) return;
+
+    list.innerHTML = unpaid.map(b => {
+      const gigDate   = new Date((b.date || '').split('T')[0] + 'T00:00:00');
+      const daysUntil = Math.ceil((gigDate - today) / (1000 * 60 * 60 * 24));
+      const deadline  = new Date(gigDate);
+      deadline.setDate(deadline.getDate() - 7);
+      const deadlineStr = deadline.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' });
+      const isUrgent  = daysUntil <= 7;
+
+      return `
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;
+                    padding:14px 0; border-bottom:1px solid var(--BORDER);">
+          <div style="flex:1;">
+            <div style="font-weight:700; color:#fff; font-size:14px; margin-bottom:2px;">
+              🎧 ${b.djName || b.dj_name || 'DJ'}
+            </div>
+            <div style="color:var(--MUTED); font-size:12px;">
+              📅 ${new Date((b.date || '').split('T')[0] + 'T00:00:00').toLocaleDateString('fr-FR', {day:'2-digit', month:'long'})}
+              • Payer avant le <strong style="color:${isUrgent ? '#ff4444' : '#ffaa00'};">${deadlineStr}</strong>
+              ${isUrgent ? `<span style="color:#ff4444; font-weight:700;"> — ${daysUntil}j restants !</span>` : ''}
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px; flex-shrink:0;">
+            <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; color:var(--Y);">
+              ${b.budget || b.amount || 0}€
+            </div>
+            <button class="btn btn-primary btn-sm"
+                    onclick="openPaymentModal('${b.id}', '${b.djId || b.dj_id}', '${user.id}', ${b.budget || b.amount || 0})"
+                    style="white-space:nowrap;">
+              💳 Payer
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Enlève le border-bottom du dernier élément
+    const items = list.querySelectorAll('[style*="border-bottom"]');
+    if (items.length) items[items.length - 1].style.borderBottom = 'none';
   }
 
   function updateQuickActions() {
@@ -1885,6 +1960,7 @@
       bookings = JSON.parse(localStorage.getItem('cue_venue_bookings') || '[]');
       venueBookings = bookings;
     }
+    checkPaymentReminders();
   }
 
   async function filterDJs() {
@@ -2606,8 +2682,8 @@
       const today = new Date(); today.setHours(0, 0, 0, 0);
       const gigDate = new Date(eventDate + 'T00:00:00');
       const daysUntil = Math.ceil((gigDate - today) / (1000 * 60 * 60 * 24));
-      if (daysUntil < 5) {
-        alert(`⚠️ Le paiement doit être effectué au moins 5 jours avant la prestation.\n\nDate du gig : ${gigDate.toLocaleDateString('fr-FR')}\nJours restants : ${daysUntil}\n\nVeuillez contacter le DJ pour modifier la date ou régler le paiement rapidement.`);
+      if (daysUntil < 7) {
+        alert(`⚠️ Le paiement doit être effectué au moins 7 jours avant la prestation.\n\nDate du gig : ${gigDate.toLocaleDateString('fr-FR')}\nJours restants : ${daysUntil}\n\nVeuillez contacter le DJ pour modifier la date ou régler le paiement rapidement.`);
         return;
       }
     }
@@ -2949,7 +3025,7 @@
     const gigDate = new Date(((b.date || '').split('T')[0] || '') + 'T00:00:00');
     const daysUntil = isNaN(gigDate) ? null : Math.ceil((gigDate - today) / (1000 * 60 * 60 * 24));
     const payDeadline = isNaN(gigDate) ? null : new Date(gigDate);
-    if (payDeadline) payDeadline.setDate(payDeadline.getDate() - 5);
+    if (payDeadline) payDeadline.setDate(payDeadline.getDate() - 7);
     const deadlineStr = payDeadline ? payDeadline.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' }) : '';
 
     let paymentBlock = '';
