@@ -202,7 +202,7 @@
     <h1 class="step-title">AJOUTE TA<br>PHOTO.</h1>
     <p class="step-sub">Ta photo de profil est la première chose que voient les venues. Choisis une photo professionnelle.</p>
 
-    <div class="photo-upload" id="photo-upload" onclick="document.getElementById('photo-input').click()">
+    <div class="photo-upload" id="photo-upload" onclick="if(event.detail===1) document.getElementById('photo-input').click()">
       <div class="photo-upload-icon">📸</div>
       <div class="photo-upload-text">Cliquer pour ajouter</div>
       <input type="file" id="photo-input" accept="image/*" onchange="handlePhotoUpload(this)">
@@ -338,10 +338,11 @@
             </div>
             <div style="color:var(--MUTED); font-size:13px; line-height:1.8;">
               ✅ Profil public<br>
-              ✅ Messagerie avec les venues<br>
-              ✅ Jusqu'à 3 tracks<br>
-              ❌ Mix de présentation<br>
-              ❌ Mise en avant dans les recherches<br>
+              ✅ Messagerie<br>
+              ✅ Mix + 3 tracks<br>
+              ❌ Tracks illimitées<br>
+              ❌ Priorité recherche<br>
+              ❌ Presskit<br>
               <span style="color:#ff9500; font-weight:600;">15% de commission par booking</span>
             </div>
           </div>
@@ -363,11 +364,12 @@
               <span id="check-pro" style="color:var(--Y); font-size:18px; display:none;">✓</span>
             </div>
             <div style="color:var(--MUTED); font-size:13px; line-height:1.8;">
-              ✅ Tout du Starter<br>
-              ✅ Mix de présentation<br>
+              ✅ Profil public<br>
+              ✅ Messagerie<br>
               ✅ Tracks illimitées<br>
-              ✅ Priorité dans les recherches<br>
-              ✅ Badge Pro visible<br>
+              ✅ Priorité recherche<br>
+              ❌ Presskit<br>
+              ❌ Mis en avant N°1<br>
               <span style="color:#00c864; font-weight:600;">8% de commission par booking</span>
             </div>
           </div>
@@ -388,11 +390,12 @@
               <span id="check-business" style="color:var(--Y); font-size:18px; display:none;">✓</span>
             </div>
             <div style="color:var(--MUTED); font-size:13px; line-height:1.8;">
-              ✅ Tout du Pro<br>
-              ✅ Profil mis en avant en premier<br>
-              ✅ Support prioritaire<br>
-              ✅ Statistiques avancées<br>
-              ✅ Contrats personnalisés<br>
+              ✅ Profil public<br>
+              ✅ Messagerie<br>
+              ✅ Tracks illimitées<br>
+              ✅ Priorité recherche<br>
+              ✅ Mis en avant N°1<br>
+              ✅ Presskit<br>
               <span style="color:#00c864; font-weight:600;">4% de commission par booking</span>
             </div>
           </div>
