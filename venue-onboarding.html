@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>CUE — Bienvenue</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=Barlow:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#080808; color:#ddd; font-family:Barlow,sans-serif; min-height:100vh; }
+    .header { display:flex; align-items:center; justify-content:space-between; padding:20px 32px; border-bottom:1px solid #1a1a1a; }
+    .logo { color:#FFC300; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px; }
+    .step-indicator { color:#888; font-size:14px; font-weight:700; }
+    .progress-bar { height:3px; background:#1a1a1a; }
+    .progress-fill { height:100%; background:#FFC300; transition:width .4s ease; }
+    .step { display:none; max-width:600px; margin:0 auto; padding:48px 24px; }
+    .step.active { display:block; animation:fadeIn .3s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+    .step-tag { color:#FFC300; font-size:13px; font-weight:700; letter-spacing:2px; text-transform:uppercase; margin-bottom:16px; }
+    .step-title { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:52px; color:#fff; line-height:1; margin-bottom:16px; text-transform:uppercase; }
+    .step-sub { color:#888; font-size:16px; line-height:1.6; margin-bottom:36px; }
+    .form-group { margin-bottom:20px; }
+    .form-label { display:block; color:#888; font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+    .form-input { width:100%; background:#111; border:1px solid #333; color:#ddd; padding:14px 16px; border-radius:10px; font-size:15px; font-family:Barlow,sans-serif; transition:border-color .2s; }
+    .form-input:focus { outline:none; border-color:#FFC300; }
+    textarea.form-input { resize:vertical; min-height:100px; }
+    .btn-next { background:#FFC300; color:#000; border:none; border-radius:12px; padding:16px 32px; font-weight:700; font-size:16px; cursor:pointer; font-family:Barlow,sans-serif; width:100%; transition:all .2s; }
+    .btn-next:hover { background:#FFD740; }
+    .btn-back { background:transparent; color:#888; border:1px solid #333; border-radius:12px; padding:16px 24px; font-weight:700; font-size:15px; cursor:pointer; font-family:Barlow,sans-serif; transition:all .2s; }
+    .nav-buttons { display:flex; gap:12px; margin-top:32px; }
+    .photo-zone { width:120px; height:120px; border-radius:50%; border:2px dashed #333; display:flex; align-items:center; justify-content:center; cursor:pointer; margin:0 auto 24px; overflow:hidden; transition:all .2s; }
+    .photo-zone:hover { border-color:#FFC300; }
+    .venue-type-option { padding:16px 20px; background:#111; border:2px solid #333; border-radius:12px; cursor:pointer; font-weight:600; transition:all .2s; }
+    .venue-type-option:hover { border-color:rgba(255,195,0,.4); }
+    .venue-type-option.selected { border-color:#FFC300; background:rgba(255,195,0,.06); color:#FFC300; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">CUE</div>
+  <div class="step-indicator" id="step-indicator">Étape 1 sur 3</div>
+</div>
+<div class="progress-bar">
+  <div class="progress-fill" id="progress-fill" style="width:33%;"></div>
+</div>
+
+<!-- ÉTAPE 1 : Photo de profil -->
+<div class="step active" id="step-1">
+  <div class="step-tag">✦ Étape 1 sur 3</div>
+  <h1 class="step-title">AJOUTE TA<br>PHOTO.</h1>
+  <p class="step-sub">La première chose que voient les DJs. Choisis une photo professionnelle de ton lieu ou de toi.</p>
+
+  <div class="photo-zone" id="photo-zone" onclick="document.getElementById('photo-input').click()">
+    <div id="photo-placeholder" style="text-align:center;">
+      <div style="font-size:32px; margin-bottom:4px;">📷</div>
+      <div style="color:#888; font-size:12px;">Cliquer pour ajouter</div>
+    </div>
+    <img id="photo-preview" style="display:none; width:100%; height:100%; object-fit:cover;">
+  </div>
+  <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="handlePhoto(this)">
+  <p style="color:#666; font-size:12px; text-align:center; margin-bottom:32px;">JPG ou PNG • Max 5MB</p>
+
+  <button class="btn-next" onclick="nextStep()">Continuer →</button>
+  <div style="text-align:center; margin-top:16px;">
+    <button onclick="nextStep()" style="background:none; border:none; color:#666; cursor:pointer; font-size:13px; text-decoration:underline;">Passer</button>
+  </div>
+</div>
+
+<!-- ÉTAPE 2 : Description et infos -->
+<div class="step" id="step-2">
+  <div class="step-tag">✦ Étape 2 sur 3</div>
+  <h1 class="step-title">DÉCRIS<br>TON LIEU.</h1>
+  <p class="step-sub">Aide les DJs à comprendre ton univers et tes besoins.</p>
+
+  <div class="form-group">
+    <label class="form-label">Description <span style="color:#ff4444;">*</span></label>
+    <textarea id="venue-desc" class="form-input" placeholder="Club électronique parisien depuis 2015, capacité 500 personnes..." oninput="updateWordCount()"></textarea>
+    <div id="word-count" style="color:#ff4444; font-size:12px; margin-top:6px;">0 mots (min. 10)</div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Ville</label>
+    <input type="text" id="venue-city-input" class="form-input" placeholder="Paris">
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Site web</label>
+    <input type="url" id="venue-website-input" class="form-input" placeholder="https://monclub.fr">
+  </div>
+
+  <div class="nav-buttons">
+    <button class="btn-back" onclick="prevStep()">← Retour</button>
+    <button class="btn-next" onclick="validateStep2()" style="flex:1;">Continuer →</button>
+  </div>
+</div>
+
+<!-- ÉTAPE 3 : Type de venue -->
+<div class="step" id="step-3">
+  <div class="step-tag">✦ Étape 3 sur 3</div>
+  <h1 class="step-title">TYPE DE<br>VENUE.</h1>
+  <p class="step-sub">Quel type d'événements organisez-vous principalement ?</p>
+
+  <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:32px;">
+    <div class="venue-type-option" onclick="selectVenueCategory('Club / Discothèque', this)">Club / Discothèque</div>
+    <div class="venue-type-option" onclick="selectVenueCategory('Bar / Lounge', this)">Bar / Lounge</div>
+    <div class="venue-type-option" onclick="selectVenueCategory('Festival / Événement', this)">Festival / Événement</div>
+    <div class="venue-type-option" onclick="selectVenueCategory('Mariage / Événement privé', this)">Mariage / Événement privé</div>
+    <div class="venue-type-option" onclick="selectVenueCategory('Restaurant / Hôtel', this)">Restaurant / Hôtel</div>
+    <div class="venue-type-option" onclick="selectVenueCategory('Autre', this)">Autre</div>
+  </div>
+
+  <div class="nav-buttons">
+    <button class="btn-back" onclick="prevStep()">← Retour</button>
+    <button class="btn-next" onclick="completeVenueOnboarding()" style="flex:1;" id="finish-btn">
+      Accéder à mon dashboard →
+    </button>
+  </div>
+</div>
+
+<!-- ÉTAPE FINALE -->
+<div class="step" id="step-4">
+  <div style="text-align:center; padding:40px 0;">
+    <div style="font-size:72px; margin-bottom:24px;">🎉</div>
+    <h1 style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:48px; color:#fff; margin-bottom:16px;">
+      BIENVENUE<br>SUR CUE !
+    </h1>
+    <p style="color:#888; font-size:16px; line-height:1.6; margin-bottom:32px; max-width:400px; margin-left:auto; margin-right:auto;">
+      Votre compte est prêt. Trouvez le DJ parfait pour votre prochain événement.
+    </p>
+    <button onclick="window.location.replace('dashboard-venue.html')" class="btn-next" style="max-width:400px;">
+      Découvrir les DJs →
+    </button>
+  </div>
+</div>
+
+<script type="module">
+import { supabase } from './js/supabase-client.js'
+
+let currentStep = 1
+const totalSteps = 3
+let profilePhotoFile = null
+let profilePhoto = null
+let selectedCategory = null
+
+function showStep(n) {
+  const prev = document.getElementById('step-' + currentStep)
+  if (prev) prev.classList.remove('active')
+  currentStep = n
+  const stepEl = document.getElementById('step-' + currentStep)
+  if (stepEl) stepEl.classList.add('active')
+  document.getElementById('step-indicator').textContent =
+    currentStep <= totalSteps ? `Étape ${currentStep} sur ${totalSteps}` : 'Terminé !'
+  document.getElementById('progress-fill').style.width =
+    (Math.min(currentStep, totalSteps) / totalSteps * 100) + '%'
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+window.nextStep = () => showStep(currentStep + 1)
+window.prevStep = () => showStep(currentStep - 1)
+
+window.handlePhoto = function(input) {
+  const file = input.files[0]
+  if (!file) return
+  if (file.size > 5 * 1024 * 1024) { alert('Max 5MB.'); return }
+  profilePhotoFile = file
+  const reader = new FileReader()
+  reader.onload = e => {
+    profilePhoto = e.target.result
+    document.getElementById('photo-preview').src = e.target.result
+    document.getElementById('photo-preview').style.display = 'block'
+    document.getElementById('photo-placeholder').style.display = 'none'
+  }
+  reader.readAsDataURL(file)
+}
+
+window.updateWordCount = function() {
+  const val = document.getElementById('venue-desc').value.trim()
+  const words = val.split(/\s+/).filter(w => w.length > 0).length
+  const el = document.getElementById('word-count')
+  el.textContent = `${words} mots ${words >= 10 ? '✅' : '(min. 10)'}`
+  el.style.color = words >= 10 ? '#00c864' : '#ff4444'
+}
+
+window.validateStep2 = function() {
+  const desc = document.getElementById('venue-desc').value.trim()
+  const words = desc.split(/\s+/).filter(w => w.length > 0).length
+  if (words < 10) { alert('La description doit contenir au moins 10 mots.'); return }
+  showStep(3)
+}
+
+window.selectVenueCategory = function(type, el) {
+  selectedCategory = type
+  document.querySelectorAll('.venue-type-option').forEach(o => o.classList.remove('selected'))
+  el.classList.add('selected')
+}
+
+window.completeVenueOnboarding = async function() {
+  const btn = document.getElementById('finish-btn')
+  btn.disabled = true
+  btn.textContent = '⏳ Sauvegarde...'
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    const userId = session?.user?.id || JSON.parse(localStorage.getItem('cue_user') || '{}').id
+
+    const desc = document.getElementById('venue-desc').value.trim()
+    const city = document.getElementById('venue-city-input').value.trim()
+    const website = document.getElementById('venue-website-input').value.trim()
+
+    await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'update_venue_profile',
+        userId,
+        picture: profilePhoto || '',
+        description: desc,
+        city,
+        website,
+        venueCategory: selectedCategory || '',
+        venuePhotos: [],
+        orgName: '',
+        orgSiret: ''
+      })
+    })
+
+    await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'update_profile_by_id',
+        userId,
+        description: desc,
+        genres: [],
+        photo: profilePhoto || ''
+      })
+    })
+
+    const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
+    savedUser.profile_complete = true
+    savedUser.venue_description = desc
+    if (profilePhoto) savedUser.picture = profilePhoto
+    localStorage.setItem('cue_user', JSON.stringify(savedUser))
+
+    showStep(4)
+
+  } catch(err) {
+    console.error(err)
+    alert('Erreur. Réessaie.')
+    btn.disabled = false
+    btn.textContent = 'Accéder à mon dashboard →'
+  }
+}
+
+async function init() {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) {
+    const localUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
+    if (!localUser.id) { window.location.replace('login.html'); return }
+  }
+}
+init()
+</script>
+</body>
+</html>

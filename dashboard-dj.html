@@ -758,10 +758,17 @@
         <h1 class="page-title">MON PROFIL</h1>
         <p class="page-sub">Ce que voient les venues sur ta page publique</p>
       </div>
-      <a onclick="openMyPublicProfile()" style="display:inline-flex; align-items:center; gap:8px; background:var(--Y); color:#000; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:15px; letter-spacing:.05em; padding:10px 20px; border-radius:10px; text-decoration:none; cursor:pointer; transition:opacity .2s;" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-        VOIR MON PROFIL PUBLIC
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>
+    </div>
+
+    <div style="margin-bottom:24px;">
+      <a href="#" onclick="openMyPublicProfile(); return false;"
+         style="display:inline-flex; align-items:center; gap:8px; padding:12px 20px;
+                background:rgba(255,195,0,.1); border:1px solid rgba(255,195,0,.3);
+                border-radius:12px; color:var(--Y); font-weight:700; font-size:14px;
+                text-decoration:none; transition:all .2s;"
+         onmouseover="this.style.background='rgba(255,195,0,.2)'"
+         onmouseout="this.style.background='rgba(255,195,0,.1)'">
+        👁 Voir mon profil public →
       </a>
     </div>
 

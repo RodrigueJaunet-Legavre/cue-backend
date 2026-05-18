@@ -427,6 +427,67 @@
       <div class="card-body" id="payment-reminders-list"></div>
     </div>
 
+    <!-- Badge Vérifié CUE -->
+    <div class="card" id="badge-section-overview" style="margin-bottom:24px; background:linear-gradient(135deg, #111 0%, #1a1a1a 100%); border-color:rgba(255,195,0,.3);">
+      <div class="card-header">
+        <span class="card-title">✨ Obtenir le Badge Vérifié CUE</span>
+        <span id="badge-status" style="font-size:13px; font-weight:700;"></span>
+      </div>
+      <div class="card-body">
+        <p style="color:var(--MUTED); font-size:14px; margin-bottom:24px; line-height:1.6;">
+          Le badge vérifié inspire confiance aux DJs. 3 conditions à remplir :
+        </p>
+        <div style="display:flex; flex-direction:column; gap:12px;" id="badge-conditions">
+
+          <div id="cond-photo" style="display:flex; align-items:center; gap:16px; padding:16px 20px; background:#0a0a0a; border-radius:12px; border:1px solid var(--BORDER); transition:border-color .3s;">
+            <span id="cond-photo-icon" style="font-size:24px;">⬜</span>
+            <div style="flex:1;">
+              <div style="font-weight:700; color:#fff; font-size:14px;">Photo de profil</div>
+              <div style="color:var(--MUTED); font-size:12px; margin-top:2px;">Ajoute une photo dans Mon Profil</div>
+            </div>
+            <button id="cond-photo-btn" class="btn btn-outline btn-sm"
+                    onclick="showPage('profile', document.querySelector('[data-page=profile]'))">
+              Ajouter →
+            </button>
+          </div>
+
+          <div id="cond-identity" style="display:flex; align-items:center; gap:16px; padding:16px 20px; background:#0a0a0a; border-radius:12px; border:1px solid var(--BORDER); transition:border-color .3s;">
+            <span id="cond-identity-icon" style="font-size:24px;">⬜</span>
+            <div style="flex:1;">
+              <div style="font-weight:700; color:#fff; font-size:14px;">Vérification d'identité</div>
+              <div style="color:var(--MUTED); font-size:12px; margin-top:2px;">
+                Particulier : selfie + pièce d'identité<br>
+                Organisation : SIREN/SIRET + document officiel (-6 mois)
+              </div>
+            </div>
+            <button id="cond-identity-btn" class="btn btn-outline btn-sm"
+                    onclick="showPage('verification', document.querySelector('[data-page=verification]'))">
+              Vérifier →
+            </button>
+          </div>
+
+          <div id="cond-favorite" style="display:flex; align-items:center; gap:16px; padding:16px 20px; background:#0a0a0a; border-radius:12px; border:1px solid var(--BORDER); transition:border-color .3s;">
+            <span id="cond-favorite-icon" style="font-size:24px;">⬜</span>
+            <div style="flex:1;">
+              <div style="font-weight:700; color:#fff; font-size:14px;">Ajouter un DJ en favori</div>
+              <div style="color:var(--MUTED); font-size:12px; margin-top:2px;">Explore les profils et ajoute ton premier favori</div>
+            </div>
+            <button id="cond-favorite-btn" class="btn btn-outline btn-sm"
+                    onclick="showPage('find-dj', document.querySelector('[data-page=find-dj]'))">
+              Trouver un DJ →
+            </button>
+          </div>
+
+        </div>
+
+        <div id="badge-obtained" style="display:none; text-align:center; padding:32px; margin-top:16px; background:rgba(0,200,100,.08); border:1px solid rgba(0,200,100,.3); border-radius:16px;">
+          <div style="font-size:48px; margin-bottom:12px;">✅</div>
+          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px; color:#00c864;">BADGE VÉRIFIÉ OBTENU !</div>
+          <div style="color:var(--MUTED); margin-top:8px;">Les DJs voient votre badge sur votre profil.</div>
+        </div>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-header">
         <span class="card-title">📅 Prochains événements</span>
@@ -1812,6 +1873,60 @@
     updateQuickActions();
     loadRecentActivity();
     checkPaymentReminders();
+    checkBadgeConditions();
+  }
+
+  function checkBadgeConditions() {
+    const hasPhoto = !!(user.picture)
+    const hasIdentity = user.identity_status === 'verified'
+    const hasFavorite = favoriteDJIds && favoriteDJIds.size > 0
+    const allDone = hasPhoto && hasIdentity && hasFavorite
+
+    // Photo
+    document.getElementById('cond-photo-icon').textContent = hasPhoto ? '✅' : '⬜'
+    document.getElementById('cond-photo').style.borderColor = hasPhoto ? 'rgba(0,200,100,.3)' : 'var(--BORDER)'
+    const photoBtn = document.getElementById('cond-photo-btn')
+    if (photoBtn) photoBtn.style.display = hasPhoto ? 'none' : 'block'
+
+    // Identité
+    const identityIcon = hasIdentity ? '✅' : (user.identity_status === 'pending' ? '⏳' : '⬜')
+    document.getElementById('cond-identity-icon').textContent = identityIcon
+    document.getElementById('cond-identity').style.borderColor = hasIdentity ? 'rgba(0,200,100,.3)' : 'var(--BORDER)'
+    const identityBtn = document.getElementById('cond-identity-btn')
+    if (identityBtn) {
+      if (hasIdentity) {
+        identityBtn.style.display = 'none'
+      } else if (user.identity_status === 'pending') {
+        identityBtn.textContent = '⏳ En attente'
+        identityBtn.disabled = true
+      } else {
+        identityBtn.style.display = 'block'
+        identityBtn.disabled = false
+        identityBtn.textContent = 'Vérifier →'
+      }
+    }
+
+    // Favori
+    document.getElementById('cond-favorite-icon').textContent = hasFavorite ? '✅' : '⬜'
+    document.getElementById('cond-favorite').style.borderColor = hasFavorite ? 'rgba(0,200,100,.3)' : 'var(--BORDER)'
+    const favBtn = document.getElementById('cond-favorite-btn')
+    if (favBtn) favBtn.style.display = hasFavorite ? 'none' : 'block'
+
+    // Badge global
+    const badgeStatus = document.getElementById('badge-status')
+    if (allDone) {
+      document.getElementById('badge-obtained').style.display = 'block'
+      const badgeCard = document.getElementById('badge-section-overview')
+      if (badgeCard) badgeCard.style.display = 'none'
+      if (badgeStatus) { badgeStatus.textContent = '✅ Badge obtenu'; badgeStatus.style.color = '#00c864' }
+    } else {
+      document.getElementById('badge-obtained').style.display = 'none'
+      const count = [hasPhoto, hasIdentity, hasFavorite].filter(Boolean).length
+      if (badgeStatus) {
+        badgeStatus.textContent = `${count}/3 conditions`
+        badgeStatus.style.color = count === 2 ? 'var(--Y)' : 'var(--MUTED)'
+      }
+    }
   }
 
   function checkPaymentReminders() {
