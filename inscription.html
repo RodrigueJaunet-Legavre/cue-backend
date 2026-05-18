@@ -428,7 +428,7 @@ function redirectAfterLogin(userData) {
   if (userType === 'dj') {
     window.location.href = profileComplete ? 'dashboard-dj.html' : 'dj-onboarding.html';
   } else {
-    window.location.href = 'dashboard-venue.html';
+    window.location.href = profileComplete ? 'dashboard-venue.html' : 'venue-onboarding.html';
   }
 }
 
