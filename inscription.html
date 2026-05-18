@@ -606,35 +606,41 @@ function verifyCode(inputCode) {
 }
 
 async function completeRegistration() {
-  const regUser = JSON.parse(sessionStorage.getItem('reg_user') || 'null');
-  if (!regUser || !regUser.email) { window.location.replace('inscription.html'); return; }
+  const regData = JSON.parse(sessionStorage.getItem('reg_user') || '{}')
+  if (!regData.email) { alert('Erreur. Recommence.'); return }
+
+  const btn = document.getElementById('verify-btn') || document.querySelector('button[onclick*="completeRegistration"]')
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Création du compte...' }
 
   try {
-    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
-    const supabaseUrl = 'https://orjhkfdvihuvqcjxhjwe.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yamhrZmR2aWh1dnFjanhoandlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MzU2ODEsImV4cCI6MjA5NDAxMTY4MX0.Ti7anM1O3KqbZYLxRkl1rWbcghJF5FgmRxNqOTV6JL0';
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm')
+    const supabase = createClient(
+      'https://orjhkfdvihuvqcjxhjwe.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yamhrZmR2aWh1dnFjanhoandlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MzU2ODEsImV4cCI6MjA5NDAxMTY4MX0.Ti7anM1O3KqbZYLxRkl1rWbcghJF5FgmRxNqOTV6JL0'
+    )
 
-    // 1. Crée le compte Supabase Auth
+    // Crée le compte Supabase Auth
     const { data, error } = await supabase.auth.signUp({
-      email: regUser.email,
-      password: regUser.password,
+      email: regData.email,
+      password: regData.password,
       options: {
-        data: {
-          first_name: regUser.firstName,
-          last_name: regUser.lastName
-        }
+        emailRedirectTo: 'https://cuedj.eu/auth-callback.html'
       }
-    });
+    })
 
-    if (error) { alert('Erreur : ' + error.message); return; }
+    if (error) {
+      alert('Erreur : ' + error.message)
+      if (btn) { btn.disabled = false; btn.textContent = 'Valider' }
+      return
+    }
 
-    const userId = data.user.id; // UUID Supabase réel
+    const userId = data.user.id
 
-    // 2. Crée le user en DB avec l'UUID Supabase
-    const referralCode = 'REF' + regUser.firstName.charAt(0).toUpperCase() +
-                         regUser.lastName.charAt(0).toUpperCase() +
-                         Math.floor(1000 + Math.random() * 9000);
+    // Crée le user en DB
+    const referralCode = 'REF' +
+      (regData.firstName || '').charAt(0).toUpperCase() +
+      (regData.lastName || '').charAt(0).toUpperCase() +
+      Math.floor(1000 + Math.random() * 9000)
 
     await fetch('/api/auth', {
       method: 'POST',
@@ -642,40 +648,56 @@ async function completeRegistration() {
       body: JSON.stringify({
         action: 'register_supabase',
         userId,
-        firstName: regUser.firstName,
-        lastName: regUser.lastName,
-        email: regUser.email,
-        phone: regUser.phone || '',
-        userType: regUser.userType,
-        venueType: regUser.venueType || null,
-        orgName: regUser.orgName || null,
-        orgSiret: regUser.orgSiret || null,
+        firstName: regData.firstName,
+        lastName: regData.lastName,
+        email: regData.email,
+        phone: regData.phone || '',
+        userType: regData.userType,
+        venueType: regData.venueType || null,
         referralCode
       })
-    });
+    })
 
-    // 3. Email de bienvenue
+    // Email de bienvenue via Resend
     await fetch('/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         type: 'welcome',
-        email: regUser.email,
-        firstName: regUser.firstName
+        email: regData.email,
+        firstName: regData.firstName
       })
-    });
+    })
 
-    sessionStorage.clear();
+    sessionStorage.clear()
 
-    // 4. Redirige vers le bon onboarding
-    if (regUser.userType === 'dj') {
-      window.location.replace('dj-onboarding.html');
+    // Connexion directe sans attendre confirmation
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email: regData.email,
+      password: regData.password
+    })
+
+    if (signInError || !signInData.session) {
+      // Si Supabase demande confirmation email → redirige quand même
+      if (regData.userType === 'dj') {
+        window.location.replace('dj-onboarding.html')
+      } else {
+        window.location.replace('venue-onboarding.html')
+      }
+      return
+    }
+
+    // Connecté → redirige vers onboarding
+    if (regData.userType === 'dj') {
+      window.location.replace('dj-onboarding.html')
     } else {
-      window.location.replace('venue-onboarding.html');
+      window.location.replace('venue-onboarding.html')
     }
 
   } catch(err) {
-    alert('Erreur : ' + err.message);
+    console.log('Erreur:', err)
+    alert('Erreur. Réessaie.')
+    if (btn) { btn.disabled = false; btn.textContent = 'Valider' }
   }
 }
 </script>
