@@ -1452,9 +1452,9 @@
     return date < today
   }
 
-  const user = JSON.parse(localStorage.getItem('cue_user') || '{}');
-  let gigs = JSON.parse(localStorage.getItem('cue_gigs') || '[]');
-  let reviews = JSON.parse(localStorage.getItem('cue_reviews') || '[]');
+  const user = {};
+  let gigs = [];
+  let reviews = [];
   let allReviews = [];
   let calendarDate = new Date();
   let conversations = [];
@@ -1470,44 +1470,36 @@
       const { data: { session } } = await supabase.auth.getSession()
 
       if (!session) {
-        // Fallback localStorage
-        const localUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
-        const isLogged = localStorage.getItem('cue_logged_in') === 'true'
-        if (!isLogged || !localUser.id) {
-          window.location.href = 'login.html'
-          return
-        }
-        Object.assign(user, localUser)
-      } else {
-        // Récupère les données depuis notre DB
-        const res = await fetch('/api/auth', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'get_user', userId: session.user.id })
-        })
-        const data = await res.json()
-
-        if (data.user) {
-          Object.assign(user, data.user)
-          localStorage.setItem('cue_user', JSON.stringify(user))
-          localStorage.setItem('cue_logged_in', 'true')
-        } else {
-          Object.assign(user, JSON.parse(localStorage.getItem('cue_user') || '{}'))
-        }
+        window.location.replace('login.html')
+        return
       }
 
-      // Vérifie le type utilisateur
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_user', userId: session.user.id, email: session.user.email })
+      })
+      const data = await res.json()
+
+      if (!data.user) {
+        await supabase.auth.signOut()
+        localStorage.clear()
+        window.location.replace('login.html')
+        return
+      }
+
+      Object.assign(user, data.user)
+
       const userType = user.user_type || user.userType
       if (!userType || userType !== 'dj') {
-        window.location.href = 'index.html'
+        window.location.replace('index.html')
         return
       }
 
     } catch (err) {
       console.log('Erreur init:', err.message)
-      const localUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
-      if (!localUser.id) { window.location.href = 'login.html'; return }
-      Object.assign(user, localUser)
+      window.location.replace('login.html')
+      return
     }
 
     // Affiche les infos
@@ -1544,7 +1536,6 @@
     if (subSuccess) {
       history.replaceState({}, '', window.location.pathname);
       user.plan = subSuccess;
-      localStorage.setItem('cue_user', JSON.stringify(user));
       await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1872,7 +1863,7 @@
 
       if (res.ok) {
         user.identity_status = 'pending'
-        localStorage.setItem('cue_user', JSON.stringify(user))
+        // user en mémoire — pas de localStorage
         initVerificationPage()
         alert('✅ Documents envoyés !')
       } else {
@@ -2596,8 +2587,7 @@
     'Hip-Hop', 'R&B', 'Reggaeton', 'Commercial', 'Open Format', 'Disco', 'Funk'];
 
   function openMyPublicProfile() {
-    const u = JSON.parse(localStorage.getItem('cue_user') || '{}');
-    const id = u.id || u.user_id;
+    const id = user.id || user.user_id;
     if (id) window.open('dj-profile.html?id=' + id, '_blank');
   }
 
@@ -2938,7 +2928,7 @@
 
       if (data.user) {
         Object.assign(user, data.user)
-        localStorage.setItem('cue_user', JSON.stringify(user))
+        // user en mémoire — pas de localStorage
         btn.textContent = '✅ Sauvegardé !'
         hideSaveBar()
         setTimeout(() => {
@@ -3559,7 +3549,6 @@
         body: JSON.stringify({ action: 'mark_verif_notif_shown', userId: user.id || user.user_id })
       });
       user.verif_notif_shown = true;
-      localStorage.setItem('cue_user', JSON.stringify(user));
       setTimeout(showVerifApprovedNotif, 1000);
     }
   }
@@ -3715,7 +3704,7 @@
       const data = await res.json();
       if (data.success) {
         user.plan = 'starter';
-        localStorage.setItem('cue_user', JSON.stringify(user));
+        // user en mémoire — pas de localStorage;
         await fetch('/api/auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -3748,7 +3737,7 @@
       const data = await res.json();
       if (data.success) {
         user.iban = iban; user.bic = bic; user.bank_name = bankName;
-        localStorage.setItem('cue_user', JSON.stringify(user));
+        // user en mémoire — pas de localStorage;
         alert('✅ Coordonnées bancaires enregistrées !');
       } else {
         alert('Erreur : ' + data.error);

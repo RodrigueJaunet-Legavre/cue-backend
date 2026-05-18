@@ -1460,9 +1460,9 @@
     return date < today
   }
 
-  const user = JSON.parse(localStorage.getItem('cue_user') || '{}');
-  let favoriteDJIds = new Set(JSON.parse(localStorage.getItem('cue_favorites') || '[]'));
-  let bookings = JSON.parse(localStorage.getItem('cue_venue_bookings') || '[]');
+  const user = {};
+  let favoriteDJIds = new Set(JSON.parse(localStorage.getItem('venue_favorites') || '[]'));
+  let bookings = [];
   let venueBookings = bookings;
   let allVenueReviews = [];
   let calendarDate = new Date();
@@ -1510,44 +1510,36 @@
       const { data: { session } } = await supabase.auth.getSession()
 
       if (!session) {
-        // Fallback localStorage
-        const localUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
-        const isLogged = localStorage.getItem('cue_logged_in') === 'true'
-        if (!isLogged || !localUser.id) {
-          window.location.href = 'login.html'
-          return
-        }
-        Object.assign(user, localUser)
-      } else {
-        // Récupère les données depuis notre DB
-        const res = await fetch('/api/auth', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'get_user', userId: session.user.id })
-        })
-        const data = await res.json()
-
-        if (data.user) {
-          Object.assign(user, data.user)
-          localStorage.setItem('cue_user', JSON.stringify(user))
-          localStorage.setItem('cue_logged_in', 'true')
-        } else {
-          Object.assign(user, JSON.parse(localStorage.getItem('cue_user') || '{}'))
-        }
+        window.location.replace('login.html')
+        return
       }
 
-      // Vérifie le type utilisateur
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_user', userId: session.user.id, email: session.user.email })
+      })
+      const data = await res.json()
+
+      if (!data.user) {
+        await supabase.auth.signOut()
+        localStorage.clear()
+        window.location.replace('login.html')
+        return
+      }
+
+      Object.assign(user, data.user)
+
       const userType = user.user_type || user.userType
       if (!userType || userType !== 'venue') {
-        window.location.href = 'index.html'
+        window.location.replace('index.html')
         return
       }
 
     } catch (err) {
       console.log('Erreur init:', err.message)
-      const localUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
-      if (!localUser.id) { window.location.href = 'login.html'; return }
-      Object.assign(user, localUser)
+      window.location.replace('login.html')
+      return
     }
 
     updateUI()
@@ -1752,7 +1744,6 @@
       const data = await res.json();
       if (data.user) {
         Object.assign(user, data.user);
-        localStorage.setItem('cue_user', JSON.stringify(user));
         hideSaveBar();
         updateUI();
         if (btn) { btn.textContent = '✅ Sauvegardé !'; setTimeout(() => { btn.disabled = false; btn.textContent = '💾 Sauvegarder'; }, 2000); }
@@ -2078,12 +2069,9 @@
           status: b.status
         }));
         venueBookings = bookings;
-        localStorage.setItem('cue_venue_bookings', JSON.stringify(bookings));
       }
     } catch(err) {
       console.log('Erreur load bookings:', err);
-      bookings = JSON.parse(localStorage.getItem('cue_venue_bookings') || '[]');
-      venueBookings = bookings;
     }
     checkPaymentReminders();
   }
@@ -4007,7 +3995,6 @@
         body: JSON.stringify({ action: 'mark_verif_notif_shown', userId: user.id || user.user_id })
       });
       user.verif_notif_shown = true;
-      localStorage.setItem('cue_user', JSON.stringify(user));
       setTimeout(showVerifApprovedNotif, 1000);
     }
   }
@@ -4054,7 +4041,7 @@
     window.location.replace('login.html');
   }
   function initVerificationPage() {
-    const venueType = localStorage.getItem('cue_venue_type') || 'particulier';
+    const venueType = user.venue_type || 'particulier';
     const status = user.identity_status || 'none';
 
     // Show status banner
@@ -4103,8 +4090,8 @@
     if (venueType === 'organisation') {
       document.getElementById('verif-form-particulier').style.display = 'none';
       document.getElementById('verif-form-organisation').style.display = 'block';
-      const orgName = localStorage.getItem('cue_org_name') || '';
-      const orgSiret = localStorage.getItem('cue_org_siret') || '';
+      const orgName = user.org_name || '';
+      const orgSiret = user.org_siret || '';
       if (orgName) document.getElementById('org-name-verif').value = orgName;
       if (orgSiret) document.getElementById('org-siret-verif').value = orgSiret;
     } else {
@@ -4141,7 +4128,6 @@
 
       if (res.ok) {
         user.identity_status = 'pending';
-        localStorage.setItem('cue_user', JSON.stringify(user));
         initVerificationPage();
         alert('✅ Documents envoyés ! Vérification sous 48h.');
       } else {
@@ -4185,9 +4171,8 @@
 
       if (res.ok) {
         user.identity_status = 'pending';
-        localStorage.setItem('cue_user', JSON.stringify(user));
-        localStorage.setItem('cue_org_name', orgName);
-        if (orgSiret) localStorage.setItem('cue_org_siret', orgSiret);
+        user.org_name = orgName;
+        if (orgSiret) user.org_siret = orgSiret;
         initVerificationPage();
         alert('✅ Documents envoyés ! Vérification sous 48h.');
       } else {
