@@ -106,6 +106,12 @@ module.exports = async function handler(req, res) {
     const convId = [safeDjId, safeVenueId].sort().join('_');
 
     try {
+      // Récupère les emails pour le contrat
+      const [djUser]    = await sql`SELECT email FROM users WHERE id = ${safeDjId}`;
+      const [venueUser] = await sql`SELECT email FROM users WHERE id = ${safeVenueId}`;
+      const djEmail     = djUser?.email || '';
+      const venueEmail  = venueUser?.email || '';
+
       await sql`UPDATE messages SET offer_status = 'confirmed' WHERE id = ${messageId}`;
       await sql`
         INSERT INTO bookings (
@@ -129,12 +135,30 @@ module.exports = async function handler(req, res) {
           'text'
         )
       `;
-      // Crée le contrat automatiquement
-      fetch('/api/contracts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create_from_booking', bookingId })
-      }).catch(e => console.log('Erreur création contrat:', e.message));
+
+      // Crée le contrat directement en DB
+      const contractId = 'CTR-' + Date.now();
+      try {
+        await sql`
+          INSERT INTO contracts (
+            id, booking_id, dj_id, venue_id,
+            event_date, event_type, amount,
+            dj_name, venue_name,
+            dj_email, venue_email,
+            status
+          ) VALUES (
+            ${contractId}, ${bookingId},
+            ${safeDjId}, ${safeVenueId},
+            ${safeDate}, ${safeType}, ${safeBudget},
+            ${safeDjName}, ${safeVenueName},
+            ${djEmail}, ${venueEmail},
+            'draft'
+          )
+        `;
+        console.log('✅ Contrat créé:', contractId);
+      } catch(err) {
+        console.log('Erreur création contrat:', err.message);
+      }
 
       return res.status(200).json({
         success: true,

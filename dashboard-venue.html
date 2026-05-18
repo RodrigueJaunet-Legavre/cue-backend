@@ -1818,65 +1818,73 @@
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const unpaid = (venueBookings || []).filter(b => {
-      const payStatus = b.payment_status || 'unpaid';
-      if (payStatus !== 'unpaid' && payStatus !== 'pending_payment') return false;
+    const reminders = [];
+
+    ;(venueBookings || []).forEach(b => {
       const gigDate = new Date((b.date || '').split('T')[0] + 'T00:00:00');
-      return gigDate >= today;
+      if (gigDate < today) return;
+      const daysUntil      = Math.ceil((gigDate - today) / (1000 * 60 * 60 * 24));
+      const payStatus      = b.payment_status || 'unpaid';
+      const contractSigned = b.contract_status === 'signed';
+
+      // Rappel contrat (dans les 14 jours)
+      if (!contractSigned && daysUntil <= 14) {
+        reminders.push({
+          type:        'contract',
+          urgent:      daysUntil <= 10,
+          text:        `Contrat à signer avec <strong>${b.djName || 'DJ'}</strong>`,
+          sub:         `Avant le ${new Date(gigDate.getTime() - 10*24*60*60*1000).toLocaleDateString('fr-FR', {day:'2-digit', month:'long'})}`,
+          daysUntil,
+          action:      `openContractFromBooking('${b.id}')`,
+          actionLabel: '📄 Voir le contrat'
+        });
+      }
+
+      // Rappel paiement (dans les 10 jours, seulement si contrat signé)
+      if (contractSigned && (payStatus === 'unpaid' || payStatus === 'pending_payment') && daysUntil <= 10) {
+        reminders.push({
+          type:        'payment',
+          urgent:      daysUntil <= 7,
+          text:        `Paiement dû pour <strong>${b.djName || 'DJ'}</strong>`,
+          sub:         `Avant le ${new Date(gigDate.getTime() - 7*24*60*60*1000).toLocaleDateString('fr-FR', {day:'2-digit', month:'long'})}`,
+          daysUntil,
+          action:      `openPaymentModal('${b.id}', '${b.djId || b.dj_id}', '${user.id}', ${b.budget || b.amount || 0})`,
+          actionLabel: `💳 Payer ${b.budget || b.amount || 0}€`
+        });
+      }
     });
 
     const card  = document.getElementById('payment-reminders-card');
     const list  = document.getElementById('payment-reminders-list');
     const count = document.getElementById('payment-reminders-count');
 
-    if (!unpaid.length) {
+    if (!reminders.length) {
       if (card) card.style.display = 'none';
       return;
     }
 
-    if (card)  card.style.display  = 'block';
-    if (count) count.textContent   = unpaid.length + ' booking' + (unpaid.length > 1 ? 's' : '');
+    if (card)  card.style.display = 'block';
+    if (count) count.textContent  = reminders.length + ' action' + (reminders.length > 1 ? 's' : '') + ' requise' + (reminders.length > 1 ? 's' : '');
 
     if (!list) return;
 
-    list.innerHTML = unpaid.map(b => {
-      const gigDate   = new Date((b.date || '').split('T')[0] + 'T00:00:00');
-      const daysUntil = Math.ceil((gigDate - today) / (1000 * 60 * 60 * 24));
-      const deadline  = new Date(gigDate);
-      deadline.setDate(deadline.getDate() - 7);
-      const deadlineStr = deadline.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' });
-      const isUrgent  = daysUntil <= 7;
-
-      return `
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;
-                    padding:14px 0; border-bottom:1px solid var(--BORDER);">
-          <div style="flex:1;">
-            <div style="font-weight:700; color:#fff; font-size:14px; margin-bottom:2px;">
-              🎧 ${b.djName || b.dj_name || 'DJ'}
-            </div>
-            <div style="color:var(--MUTED); font-size:12px;">
-              📅 ${new Date((b.date || '').split('T')[0] + 'T00:00:00').toLocaleDateString('fr-FR', {day:'2-digit', month:'long'})}
-              • Payer avant le <strong style="color:${isUrgent ? '#ff4444' : '#ffaa00'};">${deadlineStr}</strong>
-              ${isUrgent ? `<span style="color:#ff4444; font-weight:700;"> — ${daysUntil}j restants !</span>` : ''}
-            </div>
+    list.innerHTML = reminders.map((r, i) => `
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;
+                  padding:14px 0; ${i < reminders.length - 1 ? 'border-bottom:1px solid var(--BORDER);' : ''}">
+        <div style="flex:1;">
+          <div style="font-weight:700; color:#fff; font-size:14px; margin-bottom:2px;">
+            ${r.type === 'contract' ? '📄' : '💳'} ${r.text}
           </div>
-          <div style="display:flex; align-items:center; gap:12px; flex-shrink:0;">
-            <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; color:var(--Y);">
-              ${b.budget || b.amount || 0}€
-            </div>
-            <button class="btn btn-primary btn-sm"
-                    onclick="openPaymentModal('${b.id}', '${b.djId || b.dj_id}', '${user.id}', ${b.budget || b.amount || 0})"
-                    style="white-space:nowrap;">
-              💳 Payer
-            </button>
+          <div style="color:${r.urgent ? '#ff4444' : 'var(--MUTED)'}; font-size:12px;">
+            ${r.sub} ${r.urgent ? '⚠️' : ''}
           </div>
         </div>
-      `;
-    }).join('');
-
-    // Enlève le border-bottom du dernier élément
-    const items = list.querySelectorAll('[style*="border-bottom"]');
-    if (items.length) items[items.length - 1].style.borderBottom = 'none';
+        <button class="btn btn-sm ${r.urgent ? 'btn-primary' : 'btn-outline'}"
+                onclick="${r.action}" style="white-space:nowrap; flex-shrink:0;">
+          ${r.actionLabel}
+        </button>
+      </div>
+    `).join('');
   }
 
   function updateQuickActions() {
@@ -3024,32 +3032,67 @@
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const gigDate = new Date(((b.date || '').split('T')[0] || '') + 'T00:00:00');
     const daysUntil = isNaN(gigDate) ? null : Math.ceil((gigDate - today) / (1000 * 60 * 60 * 24));
+
+    // Contrat doit être signé 10 jours avant
+    const contractDeadline = isNaN(gigDate) ? null : new Date(gigDate);
+    if (contractDeadline) contractDeadline.setDate(contractDeadline.getDate() - 10);
+    const contractDeadlineStr = contractDeadline
+      ? contractDeadline.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' }) : '';
+
+    // Paiement doit être fait 7 jours avant
     const payDeadline = isNaN(gigDate) ? null : new Date(gigDate);
     if (payDeadline) payDeadline.setDate(payDeadline.getDate() - 7);
-    const deadlineStr = payDeadline ? payDeadline.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' }) : '';
+    const payDeadlineStr = payDeadline
+      ? payDeadline.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' }) : '';
+
+    const contractSigned = b.contract_status === 'signed';
 
     let paymentBlock = '';
-    if (!ps || ps === 'unpaid') {
-      const urgentLabel = daysUntil !== null && daysUntil <= 5
-        ? `<span style="color:#ff4444; font-weight:700;"> — Plus que ${daysUntil} jour${daysUntil > 1 ? 's' : ''} !</span>`
-        : daysUntil !== null ? ` (dans ${daysUntil - 5} jours)` : '';
-      paymentBlock = `
-        <div style="background:rgba(255,170,0,.08); border:1px solid rgba(255,170,0,.2); border-radius:12px; padding:16px; margin-top:4px;">
-          <div style="color:#ffaa00; font-weight:700; margin-bottom:8px;">⏳ Paiement en attente</div>
-          ${deadlineStr ? `<div style="color:var(--MUTED); font-size:13px; margin-bottom:12px; line-height:1.6;">Le paiement doit être effectué avant le <strong style="color:#fff;">${deadlineStr}</strong>${urgentLabel}</div>` : ''}
-          <button class="btn btn-primary btn-sm" onclick="openPaymentModal('${b.id}', '${b.djId || b.dj_id}', ${b.budget || b.amount || 0}); closeModal('modal-event-detail');">
-            💳 Payer maintenant — ${b.budget || b.amount || 0}€
-          </button>
-        </div>`;
-    } else if (ps === 'pending_payment') {
-      const urgentLabel = daysUntil !== null && daysUntil <= 5
-        ? `<span style="color:#ff4444; font-weight:700;"> — Plus que ${daysUntil} jour${daysUntil > 1 ? 's' : ''} !</span>`
-        : '';
-      paymentBlock = `
-        <div style="background:rgba(255,170,0,.08); border:1px solid rgba(255,170,0,.2); border-radius:12px; padding:16px; margin-top:4px;">
-          <div style="color:#ffaa00; font-weight:700; margin-bottom:6px;">🔄 Paiement en cours de confirmation</div>
-          ${deadlineStr ? `<div style="color:var(--MUTED); font-size:13px; line-height:1.6;">Échéance : <strong style="color:#fff;">${deadlineStr}</strong>${urgentLabel}</div>` : ''}
-        </div>`;
+    if (!ps || ps === 'unpaid' || ps === 'pending_payment') {
+      if (!contractSigned) {
+        paymentBlock = `
+          <div style="background:rgba(255,170,0,.08); border:1px solid rgba(255,170,0,.2);
+                      border-radius:12px; padding:16px; margin-top:4px;">
+            <div style="color:#ffaa00; font-weight:700; margin-bottom:8px;">📄 Contrat requis avant le paiement</div>
+            <div style="color:var(--MUTED); font-size:13px; line-height:1.6; margin-bottom:14px;">
+              Le contrat doit être complété et signé par les deux parties avant le
+              <strong style="color:#fff;">${contractDeadlineStr}</strong>
+              (10 jours avant la prestation).<br>
+              Le paiement pourra ensuite être effectué avant le
+              <strong style="color:#fff;">${payDeadlineStr}</strong>.
+            </div>
+            <button class="btn btn-primary btn-sm"
+                    onclick="openContractFromBooking('${b.id}')">
+              📄 Compléter le contrat
+            </button>
+          </div>`;
+      } else if (daysUntil !== null && daysUntil < 7) {
+        paymentBlock = `
+          <div style="background:rgba(255,68,68,.08); border:1px solid rgba(255,68,68,.2); border-radius:12px; padding:16px; margin-top:4px;">
+            <div style="color:#ff4444; font-weight:700; margin-bottom:8px;">🚨 Paiement en retard !</div>
+            <div style="color:var(--MUTED); font-size:13px; margin-bottom:14px;">
+              Le paiement devait être effectué avant le <strong>${payDeadlineStr}</strong>.
+            </div>
+            <button class="btn btn-primary btn-sm"
+                    onclick="openPaymentModal('${b.id}', '${b.djId || b.dj_id}', '${user.id}', ${b.budget || b.amount || 0}); closeModal('modal-event-detail');">
+              💳 Payer maintenant
+            </button>
+          </div>`;
+      } else {
+        const daysLeft = daysUntil !== null ? daysUntil - 7 : null;
+        paymentBlock = `
+          <div style="background:rgba(255,170,0,.08); border:1px solid rgba(255,170,0,.2); border-radius:12px; padding:16px; margin-top:4px;">
+            <div style="color:#ffaa00; font-weight:700; margin-bottom:8px;">💳 Paiement à effectuer</div>
+            <div style="color:var(--MUTED); font-size:13px; margin-bottom:14px;">
+              ✅ Contrat signé — Payez avant le <strong style="color:#fff;">${payDeadlineStr}</strong>
+              ${daysLeft !== null && daysLeft <= 2 ? `<span style="color:#ff9500;"> — ${daysLeft}j restants</span>` : ''}
+            </div>
+            <button class="btn btn-primary btn-sm"
+                    onclick="openPaymentModal('${b.id}', '${b.djId || b.dj_id}', '${user.id}', ${b.budget || b.amount || 0}); closeModal('modal-event-detail');">
+              💳 Payer ${b.budget || b.amount || 0}€
+            </button>
+          </div>`;
+      }
     } else if (ps === 'paid' && !isPast) {
       paymentBlock = `
         <div style="border-top:1px solid var(--BORDER); padding-top:16px;">
@@ -3601,6 +3644,25 @@
       alert('Erreur. Réessaie.');
       btn.disabled = false;
       btn.textContent = '✍️ Signer le contrat';
+    }
+  }
+
+  async function openContractFromBooking(bookingId) {
+    closeModal('modal-event-detail');
+
+    const res = await fetch('/api/contracts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_contract', bookingId })
+    });
+    const data = await res.json();
+
+    if (data.contract) {
+      currentContract = data.contract;
+      renderContractModalVenue(currentContract);
+      document.getElementById('modal-contract').classList.add('open');
+    } else {
+      alert('Contrat introuvable. Contactez le support.');
     }
   }
 
