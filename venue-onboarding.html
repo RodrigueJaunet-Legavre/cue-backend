@@ -562,7 +562,18 @@ async function completeVenueOnboarding() {
 
 async function init() {
   try {
-    const { data: { session } } = await supabase.auth.getSession()
+    // Attend que Supabase établisse la session (important après OAuth)
+    let session = null
+    let attempts = 0
+
+    while (!session && attempts < 10) {
+      const { data } = await supabase.auth.getSession()
+      session = data.session
+      if (!session) {
+        await new Promise(r => setTimeout(r, 500))
+        attempts++
+      }
+    }
 
     if (!session) {
       window.location.replace('login.html')
@@ -585,13 +596,14 @@ async function init() {
       return
     }
 
-    // Adapte l'onboarding selon le venue_type
     venueType = data.user?.venue_type || 'organisation'
     adaptOnboarding()
 
   } catch(err) {
     console.log('Erreur init:', err)
-    window.location.replace('login.html')
+    // Ne redirige PAS en cas d'erreur réseau
+    // Laisse l'utilisateur voir l'onboarding
+    adaptOnboarding()
   }
 }
 
