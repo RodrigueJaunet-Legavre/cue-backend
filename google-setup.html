@@ -124,7 +124,6 @@ window.continueSetup = async function() {
     return
   }
 
-  const phone = document.getElementById('phone').value.trim()
   const btn = document.getElementById('continue-btn')
   btn.disabled = true
   btn.textContent = '⏳ Chargement...'
@@ -133,17 +132,16 @@ window.continueSetup = async function() {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { window.location.href = 'login.html'; return }
 
-    const userId = session.user.id
-
+    // Sauvegarde type ET venue_type en DB
     const res = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'update_user_type',
-        userId,
+        userId: session.user.id,
         userType: selectedType,
-        venueType: selectedVenueType || null,
-        phone
+        venueType: selectedType === 'venue' ? selectedVenueType : null,
+        phone: document.getElementById('phone').value.trim()
       })
     })
 
@@ -161,6 +159,7 @@ window.continueSetup = async function() {
       })
     })
 
+    // Redirige vers onboarding
     if (selectedType === 'dj') {
       window.location.href = 'dj-onboarding.html'
     } else {

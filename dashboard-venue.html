@@ -4041,62 +4041,50 @@
     window.location.replace('login.html');
   }
   function initVerificationPage() {
-    const venueType = user.venue_type || 'particulier';
-    const status = user.identity_status || 'none';
+    const status = user.identity_status || 'none'
+    const vType = user.venue_type || 'particulier'
 
-    // Show status banner
-    const banner = document.getElementById('verif-status-banner');
-    if (status === 'pending') {
-      banner.style.display = 'block';
-      banner.style.background = 'rgba(255,195,0,.1)';
-      banner.style.border = '1px solid rgba(255,195,0,.3)';
-      banner.style.color = '#FFC300';
-      banner.textContent = '⏳ Vérification en cours — Nos équipes examinent vos documents sous 48h.';
-    } else if (status === 'verified') {
-      banner.style.display = 'block';
-      banner.style.background = 'rgba(0,200,100,.1)';
-      banner.style.border = '1px solid rgba(0,200,100,.3)';
-      banner.style.color = '#00c864';
-      banner.textContent = '✅ Votre identité a été vérifiée avec succès.';
+    // Affiche le statut via la bannière existante
+    const banner = document.getElementById('verif-status-banner')
+    if (status === 'verified') {
+      banner.style.display = 'block'
+      banner.style.background = 'rgba(0,200,100,.1)'
+      banner.style.border = '1px solid rgba(0,200,100,.3)'
+      banner.style.color = '#00c864'
+      banner.textContent = '✅ Votre identité a été vérifiée avec succès.'
+      document.getElementById('verif-form-particulier').style.display = 'none'
+      document.getElementById('verif-form-organisation').style.display = 'none'
+      return
+    } else if (status === 'pending') {
+      banner.style.display = 'block'
+      banner.style.background = 'rgba(255,195,0,.1)'
+      banner.style.border = '1px solid rgba(255,195,0,.3)'
+      banner.style.color = '#FFC300'
+      banner.textContent = '⏳ Vérification en cours — Nos équipes examinent vos documents sous 48h.'
+      document.getElementById('verif-form-particulier').style.display = 'none'
+      document.getElementById('verif-form-organisation').style.display = 'none'
+      return
     } else if (status === 'rejected') {
-      banner.style.display = 'block';
-      banner.style.background = 'rgba(255,68,68,.1)';
-      banner.style.border = '1px solid rgba(255,68,68,.3)';
-      banner.style.color = '#ff4444';
-      banner.textContent = '❌ Vérification refusée. Veuillez renvoyer vos documents.';
+      banner.style.display = 'block'
+      banner.style.background = 'rgba(255,68,68,.1)'
+      banner.style.border = '1px solid rgba(255,68,68,.3)'
+      banner.style.color = '#ff4444'
+      banner.textContent = '❌ Vérification refusée. Veuillez renvoyer vos documents.'
     } else {
-      banner.style.display = 'none';
+      banner.style.display = 'none'
     }
 
-    // Show motif card if docs were requested
-    const motif = user.identity_motif;
-    const docsRequired = user.identity_docs_required || [];
-    const motifCard = document.getElementById('verif-motif-card');
-    if (motifCard) {
-      if (motif && docsRequired.length > 0) {
-        motifCard.style.display = 'block';
-        document.getElementById('verif-motif-text').textContent = motif;
-        document.getElementById('verif-docs-list').innerHTML = docsRequired.map(d =>
-          `<div style="display:flex; align-items:center; gap:8px; color:#ffaa00;">
-            <span>${d === 'selfie' ? '🤳 Selfie' : '🪪 Pièce d\'identité'}</span>
-          </div>`
-        ).join('');
-      } else {
-        motifCard.style.display = 'none';
-      }
-    }
-
-    // Show correct form
-    if (venueType === 'organisation') {
-      document.getElementById('verif-form-particulier').style.display = 'none';
-      document.getElementById('verif-form-organisation').style.display = 'block';
-      const orgName = user.org_name || '';
-      const orgSiret = user.org_siret || '';
-      if (orgName) document.getElementById('org-name-verif').value = orgName;
-      if (orgSiret) document.getElementById('org-siret-verif').value = orgSiret;
+    // Affiche le bon formulaire selon venue_type déjà défini en DB
+    if (vType === 'organisation') {
+      document.getElementById('verif-form-particulier').style.display = 'none'
+      document.getElementById('verif-form-organisation').style.display = 'block'
+      const orgNameEl = document.getElementById('org-name-verif')
+      const orgSiretEl = document.getElementById('org-siret-verif')
+      if (orgNameEl) orgNameEl.value = user.org_name || ''
+      if (orgSiretEl) orgSiretEl.value = user.org_siret || ''
     } else {
-      document.getElementById('verif-form-particulier').style.display = 'block';
-      document.getElementById('verif-form-organisation').style.display = 'none';
+      document.getElementById('verif-form-particulier').style.display = 'block'
+      document.getElementById('verif-form-organisation').style.display = 'none'
     }
   }
 
