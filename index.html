@@ -771,28 +771,27 @@ function doLogin(){
     document.getElementById('venueName').textContent=user.name;
     document.getElementById('venueAvatar').textContent=user.name[0].toUpperCase();
   }
-  localStorage.setItem('cue_logged_in','true');
   initNav();
   window.scrollTo(0,0);
 }
 function goToDashboard() {
-  const u = JSON.parse(localStorage.getItem('cue_user') || '{}');
-  if (u.user_type === 'dj' || u.userType === 'dj') {
+  if (window._cueUserType === 'dj') {
     window.location.href = 'dashboard-dj.html';
   } else {
     window.location.href = 'dashboard-venue.html';
   }
 }
 
-function logout(){
-  currentUser=null;selectedRole=null;
-  localStorage.removeItem('cue_logged_in');
-  localStorage.removeItem('cue_user');
-  document.getElementById('dashDJ').classList.remove('active');
-  document.getElementById('dashVenue').classList.remove('active');
-  document.getElementById('mainSite').style.display='block';
-  initNav();
-  window.scrollTo(0,0);
+async function logout(){
+  const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm')
+  const supabase = createClient(
+    'https://orjhkfdvihuvqcjxhjwe.supabase.co',
+    document.querySelector('meta[name="supabase-key"]').content
+  )
+  await supabase.auth.signOut()
+  window._cueUserType = null
+  initNav()
+  window.scrollTo(0, 0)
 }
 function goHome(){
   document.getElementById('dashDJ').classList.remove('active');
@@ -860,26 +859,54 @@ async function runContract(){
 function copyContract(){navigator.clipboard?.writeText(contractText);const btn=document.getElementById('copyBtn');btn.textContent='✓ Copied!';btn.style.color='#00c864';setTimeout(()=>{btn.textContent='📋 Copy';btn.style.color='';},2000);}
 
 
-function initNav(){
-  const isLogged=localStorage.getItem('cue_logged_in')==='true';
-  const nl=document.getElementById('nav-links');
-  const nc=document.getElementById('nav-cta');
-  nl.innerHTML=`<a href="#features">FEATURES</a><a href="#ai-matching">AI MATCHING</a><a href="#contracts">CONTRACTS</a><a href="#pricing">PRICING</a>`;
-  if(isLogged){
-    nc.innerHTML=`<a href="#" onclick="goToDashboard();return false;" class="btn-outline">DASHBOARD</a><a href="#" onclick="logout();return false;" class="btn-primary">DÉCONNEXION</a>`;
-    document.getElementById('ai-matching-teaser').style.display='none';
-    document.getElementById('contracts-teaser').style.display='none';
-    document.getElementById('ai-matching-real').style.display='block';
-    document.getElementById('contracts-real').style.display='block';
-  }else{
-    nc.innerHTML=`<a href="login.html" class="btn-outline">CONNEXION</a><a href="inscription.html" class="btn-primary">S'INSCRIRE</a>`;
-    document.getElementById('ai-matching-teaser').style.display='';
-    document.getElementById('contracts-teaser').style.display='';
-    document.getElementById('ai-matching-real').style.display='none';
-    document.getElementById('contracts-real').style.display='none';
+function renderNav(isLogged) {
+  const nl = document.getElementById('nav-links')
+  const nc = document.getElementById('nav-cta')
+  nl.innerHTML = `<a href="#features">FEATURES</a><a href="#ai-matching">AI MATCHING</a><a href="#contracts">CONTRACTS</a><a href="#pricing">PRICING</a>`
+  if (isLogged) {
+    nc.innerHTML = `<a href="#" onclick="goToDashboard();return false;" class="btn-outline">DASHBOARD</a><a href="#" onclick="logout();return false;" class="btn-primary">DÉCONNEXION</a>`
+    document.getElementById('ai-matching-teaser').style.display = 'none'
+    document.getElementById('contracts-teaser').style.display = 'none'
+    document.getElementById('ai-matching-real').style.display = 'block'
+    document.getElementById('contracts-real').style.display = 'block'
+  } else {
+    nc.innerHTML = `<a href="login.html" class="btn-outline">CONNEXION</a><a href="inscription.html" class="btn-primary">S'INSCRIRE</a>`
+    document.getElementById('ai-matching-teaser').style.display = ''
+    document.getElementById('contracts-teaser').style.display = ''
+    document.getElementById('ai-matching-real').style.display = 'none'
+    document.getElementById('contracts-real').style.display = 'none'
   }
 }
-initNav();
+
+function initNav() { renderNav(!!window._cueUserType) }
+
+async function initNavAsync() {
+  try {
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm')
+    const supabase = createClient(
+      'https://orjhkfdvihuvqcjxhjwe.supabase.co',
+      document.querySelector('meta[name="supabase-key"]').content
+    )
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+      // Récupère le user_type depuis DB
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_user', userId: session.user.id, email: session.user.email })
+      })
+      const data = await res.json()
+      window._cueUserType = data.user?.user_type || null
+      renderNav(true)
+    } else {
+      renderNav(false)
+    }
+  } catch(e) {
+    renderNav(false)
+  }
+}
+
+initNavAsync();
 
 function showModoLogin(){document.getElementById('modoLoginWrap').classList.remove('hidden');}
 function hideModoLogin(){document.getElementById('modoLoginWrap').classList.add('hidden');}
