@@ -274,20 +274,23 @@ window.onload = function() {
 
 async function signUpWithGoogle() {
   try {
-    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm')
-    const supabase = createClient(
-      'https://orjhkfdvihuvqcjxhjwe.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yamhrZmR2aWh1dnFjanhoandlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MzU2ODEsImV4cCI6MjA5NDAxMTY4MX0.Ti7anM1O3KqbZYLxRkl1rWbcghJF5FgmRxNqOTV6JL0'
-    )
-    const { data, error } = await supabase.auth.signInWithOAuth({
+    const { supabase } = await import('./js/supabase-client.js')
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: 'https://cuedj.eu/auth-callback.html' }
+      options: {
+        redirectTo: 'https://cuedj.eu/auth-callback.html',
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'select_account'
+        }
+      }
     })
-    console.log('data:', data)
-    console.log('error:', error)
-    if (error) alert('Erreur : ' + error.message)
+    if (error) {
+      console.log('Erreur OAuth:', error)
+      alert('Erreur : ' + error.message)
+    }
   } catch(err) {
-    console.log('Erreur catch:', err.message)
+    console.log('Erreur:', err)
     alert('Erreur : ' + err.message)
   }
 }
@@ -563,6 +566,13 @@ async function completeRegistration() {
     if (btn) { btn.disabled = false; btn.textContent = 'Valider' }
   }
 }
+
+// Exposition globale explicite
+window.signUpWithGoogle = signUpWithGoogle
+window.submitStep1 = submitStep1
+window.completeRegistration = completeRegistration
+window.selectType = selectType
+window.selectVenueType = selectVenueType
 </script>
 </body>
 </html>
