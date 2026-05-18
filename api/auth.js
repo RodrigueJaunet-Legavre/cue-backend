@@ -194,9 +194,15 @@ module.exports = async function handler(req, res) {
   }
 
   if (action === 'update_user_type') {
-    const { userId, userType, phone } = body;
+    const { userId, userType, venueType, phone } = body;
     try {
-      await sql`UPDATE users SET user_type = ${userType}, phone = ${phone || ''} WHERE id = ${userId}`;
+      await sql`
+        UPDATE users SET
+          user_type = ${userType},
+          venue_type = ${venueType || null},
+          phone = ${phone || ''}
+        WHERE id = ${userId}
+      `;
       const users = await sql`SELECT * FROM users WHERE id = ${userId}`;
       return res.status(200).json({ success: true, user: sanitizeUser(users[0] || null) });
     } catch (err) {
