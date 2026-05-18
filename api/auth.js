@@ -266,8 +266,6 @@ module.exports = async function handler(req, res) {
   if (action === 'get_user') {
     const { userId, email } = body;
 
-    console.log('get_user appelé avec userId:', userId, 'email:', email);
-
     if (!userId && !email) {
       return res.status(400).json({ error: 'userId ou email requis' });
     }
@@ -279,37 +277,16 @@ module.exports = async function handler(req, res) {
         users = await sql`SELECT * FROM users WHERE id = ${userId}`;
       }
 
-      if (!users.length && email && email !== 'undefined' && email !== 'null') {
+      if (!users.length && email && email !== 'undefined') {
         users = await sql`SELECT * FROM users WHERE email = ${email}`;
-
-        // Migration ID si nécessaire
-        if (users.length && userId && userId !== 'undefined' && users[0].id !== userId) {
-          const oldId = users[0].id;
-          console.log('Migration ID:', oldId, '→', userId);
-
-          try {
-            await sql`UPDATE sessions SET user_id = ${userId} WHERE user_id = ${oldId}`;
-            await sql`UPDATE bookings SET dj_id = ${userId} WHERE dj_id = ${oldId}`;
-            await sql`UPDATE bookings SET venue_id = ${userId} WHERE venue_id = ${oldId}`;
-            await sql`UPDATE reviews SET dj_id = ${userId} WHERE dj_id = ${oldId}`;
-            await sql`UPDATE reviews SET venue_id = ${userId} WHERE venue_id = ${oldId}`;
-            await sql`UPDATE favorites SET dj_id = ${userId} WHERE dj_id = ${oldId}`;
-            await sql`UPDATE favorites SET venue_id = ${userId} WHERE venue_id = ${oldId}`;
-            await sql`UPDATE conversations SET dj_id = ${userId} WHERE dj_id = ${oldId}`;
-            await sql`UPDATE conversations SET venue_id = ${userId} WHERE venue_id = ${oldId}`;
-            await sql`UPDATE messages SET sender_id = ${userId} WHERE sender_id = ${oldId}`;
-            await sql`UPDATE identity_documents SET user_id = ${userId} WHERE user_id = ${oldId}`;
-            await sql`UPDATE users SET id = ${userId} WHERE email = ${email}`;
-            console.log('✅ Migration ID réussie');
-            users = await sql`SELECT * FROM users WHERE id = ${userId}`;
-          } catch (migErr) {
-            console.log('Erreur migration:', migErr.message);
-            // Continue avec l'ancien ID
-          }
-        }
       }
 
       const user = users[0] || null;
+
+      if (user && userId && user.id !== userId) {
+        console.log('IDs différents - user.id:', user.id, 'userId:', userId);
+      }
+
       return res.status(200).json({ user: sanitizeUser(user) });
     } catch (err) {
       console.log('Erreur get_user:', err.message);
