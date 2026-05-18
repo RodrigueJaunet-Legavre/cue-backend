@@ -446,22 +446,20 @@ function updateRecap() {
 
 // ── Finalisation ─────────────────────────────────────────────────────────────
 
-window.completeVenueOnboarding = async function() {
+async function completeVenueOnboarding() {
   const btn = document.getElementById('finish-btn')
   btn.disabled = true
-  btn.textContent = '⏳ Sauvegarde en cours...'
+  btn.textContent = '⏳ Sauvegarde...'
 
   try {
     const { data: { session } } = await supabase.auth.getSession()
+
     if (!session) {
-      alert('Session expirée. Reconnecte-toi.')
       window.location.replace('login.html')
       return
     }
 
     const userId = session.user.id
-    const accessToken = session.access_token
-    const isParticulier = venueType === 'particulier'
 
     // Upload photo de profil
     let pictureUrl = ''
@@ -471,25 +469,45 @@ window.completeVenueOnboarding = async function() {
         const ext = profilePhotoFile.name.split('.').pop()
         const storageRes = await fetch(
           `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/avatars/${userId}/profile.${ext}`,
-          { method: 'POST', headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': profilePhotoFile.type, 'x-upsert': 'true' }, body: profilePhotoFile }
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': profilePhotoFile.type,
+              'x-upsert': 'true'
+            },
+            body: profilePhotoFile
+          }
         )
-        pictureUrl = storageRes.ok
-          ? `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/public/avatars/${userId}/profile.${ext}`
-          : profilePhotoBase64
-      } catch(e) { pictureUrl = profilePhotoBase64 }
+        if (storageRes.ok) {
+          pictureUrl = `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/public/avatars/${userId}/profile.${ext}`
+        } else {
+          pictureUrl = profilePhotoBase64 || ''
+        }
+      } catch(e) {
+        pictureUrl = profilePhotoBase64 || ''
+      }
     }
 
     // Upload document légal (organisation seulement)
     let docUrl = ''
-    if (!isParticulier && docFile) {
+    if (venueType === 'organisation' && docFile) {
       btn.textContent = '⏳ Upload document...'
       try {
         const ext = docFile.name.split('.').pop()
-        const docStorageRes = await fetch(
+        const docRes = await fetch(
           `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/identity-docs/${userId}/legal_doc.${ext}`,
-          { method: 'POST', headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': docFile.type, 'x-upsert': 'true' }, body: docFile }
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': docFile.type,
+              'x-upsert': 'true'
+            },
+            body: docFile
+          }
         )
-        if (docStorageRes.ok) {
+        if (docRes.ok) {
           docUrl = `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/identity-docs/${userId}/legal_doc.${ext}`
         }
       } catch(e) {}
@@ -497,9 +515,7 @@ window.completeVenueOnboarding = async function() {
 
     btn.textContent = '⏳ Finalisation...'
 
-    const orgName = isParticulier ? '' : document.getElementById('org-name').value.trim()
-    const orgSiret = isParticulier ? '' : document.getElementById('org-siret').value.replace(/\s/g, '')
-
+    // Sauvegarde profil
     await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -507,41 +523,35 @@ window.completeVenueOnboarding = async function() {
         action: 'update_venue_profile',
         userId,
         picture: pictureUrl,
-        description: document.getElementById('venue-description').value.trim(),
-        city: document.getElementById('venue-city').value.trim(),
-        website: document.getElementById('venue-website').value.trim(),
+        description: document.getElementById('venue-description')?.value?.trim() || '',
+        city: document.getElementById('venue-city')?.value?.trim() || '',
+        website: document.getElementById('venue-website')?.value?.trim() || '',
         venuePhotos: venuePhotos.filter(Boolean),
-        orgName,
-        orgSiret
+        orgName: document.getElementById('org-name')?.value?.trim() || '',
+        orgSiret: document.getElementById('org-siret')?.value?.replace(/\s/g, '') || ''
       })
     })
 
+    // Marque profile_complete = true
     await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'complete_venue_onboarding',
         userId,
-        orgName,
-        orgSiret,
+        orgName: document.getElementById('org-name')?.value?.trim() || '',
+        orgSiret: document.getElementById('org-siret')?.value?.replace(/\s/g, '') || '',
         docUrl
       })
     })
 
-    // Affiche l'écran de succès directement
-    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'))
-    const successScreen = document.createElement('div')
-    successScreen.style.cssText = 'text-align:center;padding:60px 24px;'
-    successScreen.innerHTML = `
-      <div style="font-size:64px;margin-bottom:24px;">🎉</div>
-      <h2 style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:32px;color:#fff;margin-bottom:12px;">Profil complété !</h2>
-      <p style="color:#888;margin-bottom:32px;">Ton espace venue est prêt.</p>
-      <button onclick="window.location.replace(\'dashboard-venue.html\')" style="background:#FFC300;color:#000;border:none;border-radius:10px;padding:16px 32px;font-weight:700;font-size:16px;cursor:pointer;font-family:Barlow,sans-serif;">Accéder à mon dashboard →</button>
-    `
-    document.querySelector('.onboarding-card').appendChild(successScreen)
+    // Affiche l'écran de succès
+    document.getElementById('step-' + currentStep)?.classList.remove('active')
+    document.getElementById('step-complete').classList.add('active')
+    document.getElementById('progress-fill').style.width = '100%'
 
   } catch(err) {
-    console.error('Erreur:', err)
+    console.log('Erreur:', err)
     alert('Erreur. Réessaie.')
     btn.disabled = false
     btn.textContent = 'Accéder à mon dashboard →'
@@ -553,12 +563,20 @@ window.completeVenueOnboarding = async function() {
 async function init() {
   try {
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { window.location.replace('login.html'); return }
+
+    if (!session) {
+      window.location.replace('login.html')
+      return
+    }
 
     const res = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'get_user', userId: session.user.id, email: session.user.email })
+      body: JSON.stringify({
+        action: 'get_user',
+        userId: session.user.id,
+        email: session.user.email
+      })
     })
     const data = await res.json()
 
@@ -567,10 +585,12 @@ async function init() {
       return
     }
 
+    // Adapte l'onboarding selon le venue_type
     venueType = data.user?.venue_type || 'organisation'
     adaptOnboarding()
+
   } catch(err) {
-    console.error('Init error:', err)
+    console.log('Erreur init:', err)
     window.location.replace('login.html')
   }
 }
