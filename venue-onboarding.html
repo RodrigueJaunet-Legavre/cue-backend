@@ -264,20 +264,19 @@ window.prevStep = function() {
 // ── Adaptation particulier / organisation ───────────────────────────────────
 
 function adaptOnboarding() {
-  const step3 = document.getElementById('step-3')
-
   if (venueType === 'particulier') {
     totalSteps = 3
+    // Cache étape SIRET et photos
+    const step3 = document.getElementById('step-3')
     if (step3) step3.style.display = 'none'
-
-    document.querySelector('#step-1 .step-tag').textContent = '✦ Étape 1 sur 3'
-    document.querySelector('#step-2 .step-tag').textContent = '✦ Étape 2 sur 3'
-    document.querySelector('#step-4 .step-tag').textContent = '✦ Étape 3 sur 3'
-    document.getElementById('step-indicator').textContent = 'Étape 1 sur 3'
-
     const photosSection = document.getElementById('venue-photos-section')
     if (photosSection) photosSection.style.display = 'none'
-
+    // Met à jour labels
+    document.querySelectorAll('.step-tag').forEach((el, i) => {
+      const labels = ['✦ Étape 1 sur 3', '✦ Étape 2 sur 3', '', '✦ Étape 3 sur 3']
+      if (labels[i]) el.textContent = labels[i]
+    })
+    document.getElementById('step-indicator').textContent = 'Étape 1 sur 3'
     const cityInput = document.getElementById('venue-city')
     if (cityInput) {
       cityInput.placeholder = 'Paris, Lyon, Marseille...'
@@ -287,7 +286,11 @@ function adaptOnboarding() {
     }
   } else {
     totalSteps = 4
+    // Affiche tout
+    const step3 = document.getElementById('step-3')
     if (step3) step3.style.display = 'block'
+    const photosSection = document.getElementById('venue-photos-section')
+    if (photosSection) photosSection.style.display = 'block'
     document.querySelector('#step-1 .step-tag').textContent = '✦ Étape 1 sur 4'
     document.querySelector('#step-2 .step-tag').textContent = '✦ Étape 2 sur 4'
     document.querySelector('#step-3 .step-tag').textContent = '✦ Étape 3 sur 4'

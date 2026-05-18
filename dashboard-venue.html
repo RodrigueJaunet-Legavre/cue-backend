@@ -455,10 +455,7 @@
             <span id="cond-identity-icon" style="font-size:24px;">⬜</span>
             <div style="flex:1;">
               <div style="font-weight:700; color:#fff; font-size:14px;">Vérification d'identité</div>
-              <div style="color:var(--MUTED); font-size:12px; margin-top:2px;">
-                Particulier : selfie + pièce d'identité<br>
-                Organisation : SIREN/SIRET + document officiel (-6 mois)
-              </div>
+              <div class="cond-desc" style="color:var(--MUTED); font-size:12px; margin-top:2px;"></div>
             </div>
             <button id="cond-identity-btn" class="btn btn-outline btn-sm"
                     onclick="showPage('verification', document.querySelector('[data-page=verification]'))">
@@ -1882,6 +1879,12 @@
     if (photoBtn) photoBtn.style.display = hasPhoto ? 'none' : 'block'
 
     // Identité
+    const vType = user.venue_type || 'particulier'
+    const identityDesc = vType === 'organisation'
+      ? 'SIREN/SIRET + document officiel (-6 mois)'
+      : 'Selfie + pièce d\'identité'
+    document.querySelector('#cond-identity .cond-desc').textContent = identityDesc
+
     const identityIcon = hasIdentity ? '✅' : (user.identity_status === 'pending' ? '⏳' : '⬜')
     document.getElementById('cond-identity-icon').textContent = identityIcon
     document.getElementById('cond-identity').style.borderColor = hasIdentity ? 'rgba(0,200,100,.3)' : 'var(--BORDER)'
@@ -4044,27 +4047,31 @@
     const status = user.identity_status || 'none'
     const vType = user.venue_type || 'particulier'
 
-    // Affiche le statut via la bannière existante
+    // Cache tout d'abord
+    document.getElementById('verif-form-particulier').style.display = 'none'
+    document.getElementById('verif-form-organisation').style.display = 'none'
+
     const banner = document.getElementById('verif-status-banner')
+
     if (status === 'verified') {
       banner.style.display = 'block'
       banner.style.background = 'rgba(0,200,100,.1)'
       banner.style.border = '1px solid rgba(0,200,100,.3)'
       banner.style.color = '#00c864'
       banner.textContent = '✅ Votre identité a été vérifiée avec succès.'
-      document.getElementById('verif-form-particulier').style.display = 'none'
-      document.getElementById('verif-form-organisation').style.display = 'none'
       return
-    } else if (status === 'pending') {
+    }
+
+    if (status === 'pending') {
       banner.style.display = 'block'
       banner.style.background = 'rgba(255,195,0,.1)'
       banner.style.border = '1px solid rgba(255,195,0,.3)'
       banner.style.color = '#FFC300'
       banner.textContent = '⏳ Vérification en cours — Nos équipes examinent vos documents sous 48h.'
-      document.getElementById('verif-form-particulier').style.display = 'none'
-      document.getElementById('verif-form-organisation').style.display = 'none'
       return
-    } else if (status === 'rejected') {
+    }
+
+    if (status === 'rejected') {
       banner.style.display = 'block'
       banner.style.background = 'rgba(255,68,68,.1)'
       banner.style.border = '1px solid rgba(255,68,68,.3)'
@@ -4074,17 +4081,16 @@
       banner.style.display = 'none'
     }
 
-    // Affiche le bon formulaire selon venue_type déjà défini en DB
+    // Affiche le bon formulaire selon venue_type
     if (vType === 'organisation') {
-      document.getElementById('verif-form-particulier').style.display = 'none'
       document.getElementById('verif-form-organisation').style.display = 'block'
-      const orgNameEl = document.getElementById('org-name-verif')
-      const orgSiretEl = document.getElementById('org-siret-verif')
-      if (orgNameEl) orgNameEl.value = user.org_name || ''
-      if (orgSiretEl) orgSiretEl.value = user.org_siret || ''
+      const orgEl = document.getElementById('org-name-verif')
+      const siretEl = document.getElementById('org-siret-verif')
+      if (orgEl) orgEl.value = user.org_name || ''
+      if (siretEl) siretEl.value = user.org_siret || ''
     } else {
+      // Particulier → selfie + CNI
       document.getElementById('verif-form-particulier').style.display = 'block'
-      document.getElementById('verif-form-organisation').style.display = 'none'
     }
   }
 
