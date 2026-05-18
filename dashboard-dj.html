@@ -116,16 +116,16 @@
 
     /* MESSAGES */
     .message-item {
-      display:flex; gap:16px; padding:20px 24px;
+      display:flex; gap:16px; padding:20px 24px; min-width:0;
       border-bottom:1px solid rgba(255,195,0,.06); cursor:pointer; transition:background .2s;
     }
     .message-item:hover { background:rgba(255,195,0,.03); }
     .message-item.unread { background:rgba(255,195,0,.04); }
     .message-avatar { width:48px; height:48px; border-radius:50%; background:#1a1a1a; border:1px solid var(--BORDER); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
-    .message-content { flex:1; }
-    .message-sender { font-weight:700; font-size:14px; color:#fff; }
-    .message-preview { color:var(--MUTED); font-size:13px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:400px; }
-    .message-time { color:var(--MUTED); font-size:12px; text-align:right; flex-shrink:0; }
+    .message-content { flex:1; min-width:0; }
+    .message-sender { font-weight:700; font-size:14px; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .message-preview { color:var(--MUTED); font-size:13px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .message-time { color:var(--MUTED); font-size:12px; text-align:right; flex-shrink:0; margin-left:8px; }
     .message-unread-dot { width:8px; height:8px; border-radius:50%; background:var(--Y); margin-top:6px; margin-left:auto; }
 
     /* REVIEWS */
@@ -138,19 +138,20 @@
 
     /* CALENDAR */
     .calendar { background:var(--CARD); border:1px solid var(--BORDER); border-radius:16px; overflow:hidden; }
-    .calendar-header { padding:20px 24px; border-bottom:1px solid var(--BORDER); display:flex; justify-content:space-between; align-items:center; }
-    .calendar-nav { background:transparent; border:1px solid var(--BORDER); color:var(--TEXT); padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:700; transition:all .2s; }
-    .calendar-nav:hover { border-color:var(--Y); color:var(--Y); }
-    .calendar-month { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:24px; color:#fff; }
+    .calendar-header { padding:24px 28px; border-bottom:1px solid var(--BORDER); display:flex; justify-content:space-between; align-items:center; background:rgba(255,195,0,.02); }
+    .calendar-nav { background:transparent; border:1px solid var(--BORDER); color:var(--MUTED); width:36px; height:36px; border-radius:8px; cursor:pointer; font-weight:700; transition:all .2s; display:flex; align-items:center; justify-content:center; font-size:16px; }
+    .calendar-nav:hover { border-color:var(--Y); color:var(--Y); background:rgba(255,195,0,.06); }
+    .calendar-month { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px; letter-spacing:.05em; color:#fff; text-transform:uppercase; }
     .calendar-grid { display:grid; grid-template-columns:repeat(7,1fr); }
-    .calendar-day-label { padding:12px; text-align:center; color:var(--MUTED); font-size:12px; font-weight:700; border-bottom:1px solid var(--BORDER); }
-    .calendar-day { padding:10px 6px; text-align:center; min-height:60px; border-right:1px solid rgba(255,195,0,.06); border-bottom:1px solid rgba(255,195,0,.06); cursor:pointer; transition:background .2s; position:relative; }
+    .calendar-day-label { padding:14px 4px; text-align:center; color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; border-bottom:1px solid var(--BORDER); }
+    .calendar-day { padding:10px 8px 8px; text-align:left; min-height:72px; border-right:1px solid rgba(255,195,0,.05); border-bottom:1px solid rgba(255,195,0,.05); cursor:pointer; transition:background .15s; position:relative; }
     .calendar-day:hover { background:rgba(255,195,0,.04); }
-    .calendar-day.today { background:rgba(255,195,0,.08); }
-    .calendar-day.today .day-num { color:var(--Y); font-weight:900; }
-    .calendar-day.other-month .day-num { color:#333; }
-    .day-num { font-size:14px; font-weight:600; margin-bottom:4px; }
-    .day-event { background:var(--Y); color:#000; border-radius:4px; font-size:9px; font-weight:700; padding:2px 4px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .calendar-day.today { background:rgba(255,195,0,.07); }
+    .calendar-day.today .day-num { width:26px; height:26px; background:var(--Y); color:#000; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-weight:900; }
+    .calendar-day.other-month { opacity:.3; cursor:default; }
+    .calendar-day.has-event { background:rgba(255,195,0,.04); }
+    .day-num { font-size:13px; font-weight:600; margin-bottom:6px; display:inline-block; width:26px; height:26px; line-height:26px; text-align:center; }
+    .day-event { background:var(--Y); color:#000; border-radius:4px; font-size:9px; font-weight:800; padding:2px 5px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:.02em; text-transform:uppercase; }
 
     /* BUTTONS */
     .btn { padding:10px 24px; border-radius:10px; border:none; cursor:pointer; font-weight:700; font-size:14px; font-family:Barlow,sans-serif; transition:all .2s; }
@@ -531,9 +532,9 @@
     </div>
     <div class="calendar">
       <div class="calendar-header">
-        <button class="calendar-nav" onclick="changeMonth(-1)">← Précédent</button>
+        <button class="calendar-nav" onclick="prevMonth()" title="Mois précédent">&#8592;</button>
         <span class="calendar-month" id="calendar-month-label"></span>
-        <button class="calendar-nav" onclick="changeMonth(1)">Suivant →</button>
+        <button class="calendar-nav" onclick="nextMonth()" title="Mois suivant">&#8594;</button>
       </div>
       <div class="calendar-grid" id="calendar-days-labels"></div>
       <div class="calendar-grid" id="calendar-grid"></div>
@@ -757,9 +758,11 @@
         <h1 class="page-title">MON PROFIL</h1>
         <p class="page-sub">Ce que voient les venues sur ta page publique</p>
       </div>
-      <div style="display:flex; gap:12px;">
-        <a id="view-public-btn" href="#" target="_blank" class="btn btn-outline">👁 Voir mon profil public</a>
-      </div>
+      <a onclick="openMyPublicProfile()" style="display:inline-flex; align-items:center; gap:8px; background:var(--Y); color:#000; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:15px; letter-spacing:.05em; padding:10px 20px; border-radius:10px; text-decoration:none; cursor:pointer; transition:opacity .2s;" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+        VOIR MON PROFIL PUBLIC
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>
+      </a>
     </div>
 
     <!-- PHOTO DE PROFIL -->
@@ -2050,10 +2053,9 @@
     document.getElementById('calendar-grid').innerHTML = html;
   }
 
-  function changeMonth(dir) {
-    calendarDate.setMonth(calendarDate.getMonth() + dir);
-    renderCalendar();
-  }
+  function prevMonth() { calendarDate.setMonth(calendarDate.getMonth() - 1); renderCalendar(); }
+  function nextMonth() { calendarDate.setMonth(calendarDate.getMonth() + 1); renderCalendar(); }
+  function changeMonth(dir) { calendarDate.setMonth(calendarDate.getMonth() + dir); renderCalendar(); }
 
   function openDayEvents(dateStr) {
     const dayEvents = gigs.filter(g => g.date && g.date.split('T')[0] === dateStr);
@@ -2586,6 +2588,12 @@
     'Afro House', 'Melodic Techno', 'Progressive House', 'Trance', 'Drum & Bass',
     'Hip-Hop', 'R&B', 'Reggaeton', 'Commercial', 'Open Format', 'Disco', 'Funk'];
 
+  function openMyPublicProfile() {
+    const u = JSON.parse(localStorage.getItem('cue_user') || '{}');
+    const id = u.id || u.user_id;
+    if (id) window.open('dj-profile.html?id=' + id, '_blank');
+  }
+
   function loadProfile() {
     const profile = user.profile || {};
     const genres = user.genres || [];
@@ -2638,9 +2646,6 @@
     document.getElementById('social-soundcloud').value = user.soundcloud || profile.soundcloud || '';
     document.getElementById('social-spotify').value = user.spotify || profile.spotify || '';
     document.getElementById('social-youtube').value = user.youtube || profile.youtube || '';
-
-    const pubBtn = document.getElementById('view-public-btn');
-    if (pubBtn) pubBtn.href = `dj-profile.html?id=${user.id}`;
 
     attachProfileListeners();
   }
