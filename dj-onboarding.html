@@ -968,67 +968,60 @@
     window.location.replace('dashboard-dj.html');
   }
 
-  async function init() {
+  document.addEventListener('DOMContentLoaded', async () => {
+    const { supabase } = await import('./js/supabase-client.js')
+
+    // Écoute les changements de session
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        window.location.replace('login.html')
+      }
+    })
+
     // Retour depuis Stripe après paiement abonnement
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(window.location.search)
     if (params.get('plan_success') === 'true') {
-      history.replaceState({}, '', window.location.pathname);
-      const planPaid = params.get('plan') || 'pro';
-      const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
-      savedUser.plan = planPaid;
-      localStorage.setItem('cue_user', JSON.stringify(savedUser));
-      await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'update_plan', userId: savedUser.id || savedUser.user_id, plan: planPaid })
-      }).catch(() => {});
-      showStep(totalSteps + 1); // montre step-complete
-      return;
+      history.replaceState({}, '', window.location.pathname)
+      const planPaid = params.get('plan') || 'pro'
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'update_plan', userId: session.user.id, plan: planPaid })
+        }).catch(() => {})
+      }
+      showStep(totalSteps + 1)
+      return
     }
 
     // Retour depuis Stripe après annulation → reprend à étape 7
     if (params.get('step') === '7') {
-      history.replaceState({}, '', window.location.pathname);
-      showStep(7);
-      return;
+      history.replaceState({}, '', window.location.pathname)
+      showStep(7)
+      return
     }
 
-    try {
-      const { supabase } = await import('./js/supabase-client.js');
-      const { data: { session } } = await supabase.auth.getSession();
+    // Vérifie la session initiale
+    const { data: { session } } = await supabase.auth.getSession()
 
-      if (!session) {
-        const localUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
-        const isLogged = localStorage.getItem('cue_logged_in') === 'true';
-        if (!isLogged || !localUser.id) {
-          window.location.replace('login.html');
-          return;
-        }
-        return;
-      }
-
-      const res = await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get_user', userId: session.user.id, email: session.user.email })
-      });
-      const data = await res.json();
-
-      if (data.user?.profile_complete === true) {
-        window.location.replace('dashboard-dj.html');
-        return;
-      }
-
-      if (data.user) {
-        localStorage.setItem('cue_user', JSON.stringify(data.user));
-        localStorage.setItem('cue_logged_in', 'true');
-      }
-    } catch (err) {
-      console.log('Erreur init onboarding:', err.message);
+    if (!session) {
+      window.location.replace('login.html')
+      return
     }
-  }
 
-  init();
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_user', userId: session.user.id, email: session.user.email })
+    })
+    const data = await res.json()
+
+    if (data.user?.profile_complete === true) {
+      window.location.replace('dashboard-dj.html')
+      return
+    }
+  });
 </script>
 
 </body>
