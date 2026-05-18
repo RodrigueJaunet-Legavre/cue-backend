@@ -453,16 +453,14 @@ window.completeVenueOnboarding = async function() {
 
   try {
     const { data: { session } } = await supabase.auth.getSession()
-    const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
-    const userId = session?.user?.id || savedUser.id || savedUser.user_id
-
-    if (!userId) {
-      alert('Erreur de session.')
-      btn.disabled = false
-      btn.textContent = 'Accéder à mon dashboard →'
+    if (!session) {
+      alert('Session expirée. Reconnecte-toi.')
+      window.location.replace('login.html')
       return
     }
 
+    const userId = session.user.id
+    const accessToken = session.access_token
     const isParticulier = venueType === 'particulier'
 
     // Upload photo de profil
@@ -471,7 +469,6 @@ window.completeVenueOnboarding = async function() {
       btn.textContent = '⏳ Upload photo...'
       try {
         const ext = profilePhotoFile.name.split('.').pop()
-        const accessToken = (await supabase.auth.getSession()).data.session?.access_token
         const storageRes = await fetch(
           `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/avatars/${userId}/profile.${ext}`,
           { method: 'POST', headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': profilePhotoFile.type, 'x-upsert': 'true' }, body: profilePhotoFile }
@@ -488,7 +485,6 @@ window.completeVenueOnboarding = async function() {
       btn.textContent = '⏳ Upload document...'
       try {
         const ext = docFile.name.split('.').pop()
-        const accessToken = (await supabase.auth.getSession()).data.session?.access_token
         const docStorageRes = await fetch(
           `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/identity-docs/${userId}/legal_doc.${ext}`,
           { method: 'POST', headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': docFile.type, 'x-upsert': 'true' }, body: docFile }
@@ -501,6 +497,9 @@ window.completeVenueOnboarding = async function() {
 
     btn.textContent = '⏳ Finalisation...'
 
+    const orgName = isParticulier ? '' : document.getElementById('org-name').value.trim()
+    const orgSiret = isParticulier ? '' : document.getElementById('org-siret').value.replace(/\s/g, '')
+
     await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -512,8 +511,8 @@ window.completeVenueOnboarding = async function() {
         city: document.getElementById('venue-city').value.trim(),
         website: document.getElementById('venue-website').value.trim(),
         venuePhotos: venuePhotos.filter(Boolean),
-        orgName: isParticulier ? '' : document.getElementById('org-name').value.trim(),
-        orgSiret: isParticulier ? '' : document.getElementById('org-siret').value.replace(/\s/g, '')
+        orgName,
+        orgSiret
       })
     })
 
@@ -523,20 +522,23 @@ window.completeVenueOnboarding = async function() {
       body: JSON.stringify({
         action: 'complete_venue_onboarding',
         userId,
-        orgName: isParticulier ? '' : document.getElementById('org-name').value.trim(),
-        orgSiret: isParticulier ? '' : document.getElementById('org-siret').value.replace(/\s/g, ''),
+        orgName,
+        orgSiret,
         docUrl
       })
     })
 
-    savedUser.profile_complete = true
-    savedUser.profileComplete = true
-    savedUser.picture = pictureUrl
-    savedUser.venue_description = document.getElementById('venue-description').value.trim()
-    savedUser.identity_status = isParticulier ? 'none' : 'pending'
-    localStorage.setItem('cue_user', JSON.stringify(savedUser))
-
-    showStep(5)
+    // Affiche l'écran de succès directement
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'))
+    const successScreen = document.createElement('div')
+    successScreen.style.cssText = 'text-align:center;padding:60px 24px;'
+    successScreen.innerHTML = `
+      <div style="font-size:64px;margin-bottom:24px;">🎉</div>
+      <h2 style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:32px;color:#fff;margin-bottom:12px;">Profil complété !</h2>
+      <p style="color:#888;margin-bottom:32px;">Ton espace venue est prêt.</p>
+      <button onclick="window.location.replace(\'dashboard-venue.html\')" style="background:#FFC300;color:#000;border:none;border-radius:10px;padding:16px 32px;font-weight:700;font-size:16px;cursor:pointer;font-family:Barlow,sans-serif;">Accéder à mon dashboard →</button>
+    `
+    document.querySelector('.onboarding-card').appendChild(successScreen)
 
   } catch(err) {
     console.error('Erreur:', err)
@@ -549,32 +551,27 @@ window.completeVenueOnboarding = async function() {
 // ── Init ─────────────────────────────────────────────────────────────────────
 
 async function init() {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
-    const localUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
-    if (!localUser.id) { window.location.replace('login.html'); return }
-    venueType = localUser.venue_type || 'organisation'
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { window.location.replace('login.html'); return }
+
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_user', userId: session.user.id, email: session.user.email })
+    })
+    const data = await res.json()
+
+    if (data.user?.profile_complete === true) {
+      window.location.replace('dashboard-venue.html')
+      return
+    }
+
+    venueType = data.user?.venue_type || 'organisation'
     adaptOnboarding()
-    return
-  }
-
-  const res = await fetch('/api/auth', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'get_user', userId: session.user.id, email: session.user.email })
-  })
-  const data = await res.json()
-
-  if (data.user?.profile_complete === true) {
-    window.location.replace('dashboard-venue.html')
-    return
-  }
-
-  if (data.user) {
-    localStorage.setItem('cue_user', JSON.stringify(data.user))
-    localStorage.setItem('cue_logged_in', 'true')
-    venueType = data.user.venue_type || 'organisation'
-    adaptOnboarding()
+  } catch(err) {
+    console.error('Init error:', err)
+    window.location.replace('login.html')
   }
 }
 
