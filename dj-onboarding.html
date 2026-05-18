@@ -705,16 +705,27 @@
   async function completeProfile() {
     saveCurrentStep();
 
-    const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
-    let userId = savedUser.id || savedUser.user_id;
+    // Récupère l'UUID Supabase réel
+    let userId = null;
+    try {
+      const { supabase } = await import('./js/supabase-client.js');
+      const { data: { session } } = await supabase.auth.getSession();
+      userId = session?.user?.id;
+      console.log('completeProfile userId Supabase:', userId);
+    } catch(e) {
+      console.log('Erreur Supabase session:', e);
+    }
 
-    // Fallback Supabase session si pas d'userId local
+    // Fallback localStorage
     if (!userId) {
-      try {
-        const { supabase } = await import('./js/supabase-client.js');
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) userId = session.user.id;
-      } catch(e) { console.log('Supabase session:', e.message); }
+      const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
+      userId = savedUser.id || savedUser.user_id;
+      console.log('completeProfile userId localStorage:', userId);
+    }
+
+    console.log('userId final:', userId);
+    if (!userId) {
+      console.log('❌ Pas de userId — impossible de sauvegarder');
     }
 
     const completeBtn = document.getElementById('complete-btn');
@@ -864,15 +875,31 @@
 
   async function handlePlanSelection() {
     const btn = document.getElementById('plan-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Chargement...'; }
 
-    // Feedback immédiat
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = '⏳ Chargement...';
+    // Récupère l'UUID Supabase réel — pas le localStorage
+    let userId = null;
+    try {
+      const { supabase } = await import('./js/supabase-client.js');
+      const { data: { session } } = await supabase.auth.getSession();
+      userId = session?.user?.id;
+      console.log('userId Supabase:', userId);
+    } catch(e) {
+      console.log('Erreur Supabase:', e);
     }
 
-    const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
-    const userId = savedUser.id || savedUser.user_id;
+    // Fallback localStorage
+    if (!userId) {
+      const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
+      userId = savedUser.id || savedUser.user_id;
+      console.log('userId localStorage:', userId);
+    }
+
+    if (!userId) {
+      alert('Erreur: session introuvable. Réessaie.');
+      if (btn) { btn.disabled = false; btn.textContent = 'Continuer →'; }
+      return;
+    }
 
     if (selectedPlan === 'starter') {
       await fetch('/api/auth', {
@@ -880,9 +907,13 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'update_plan', userId, plan: 'starter' })
       });
+
+      // Met à jour localStorage
+      const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
       savedUser.plan = 'starter';
       localStorage.setItem('cue_user', JSON.stringify(savedUser));
-      showStep(totalSteps + 1); // step-complete
+
+      showStep(totalSteps + 1);
       return;
     }
 
@@ -892,6 +923,7 @@
         pro: 'price_1TVEcMRwFuYQb4HD2nNHQvP2',
         business: 'price_1TVEdhRwFuYQb4HDvq7lrKfb'
       };
+      const email = JSON.parse(localStorage.getItem('cue_user') || '{}').email;
       const res = await fetch('/api/stripe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -899,7 +931,7 @@
           action: 'create_checkout',
           priceId: priceIds[selectedPlan],
           userId,
-          email: savedUser.email,
+          email,
           successUrl: 'https://cuedj.eu/dj-onboarding.html?plan_success=true',
           cancelUrl: 'https://cuedj.eu/dj-onboarding.html?step=7'
         })
