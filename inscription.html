@@ -7,7 +7,6 @@
 <title>CUE — Inscription</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root{--Y:#FFC300;--Y2:#FFD740;--BG:#080808;--CARD:#111;--BORDER:rgba(255,195,0,.13);--TEXT:#ddd;--MUTED:#bbb;--D:'Barlow Condensed',sans-serif;--B:'Barlow',sans-serif;--SUCCESS:#00c864;--ERROR:#ff4444;--PENDING:#ffaa00}
 *{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
@@ -130,7 +129,10 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
       <h1>Rejoins <span>CUE</span></h1>
       <p class="register-subtitle">Crée ton compte en 2 minutes</p>
       
-      <div id="googleSignUpBtn" style="display:flex;justify-content:center;margin-bottom:16px"></div>
+      <button class="btn-google" onclick="signUpWithGoogle()" style="width:100%;margin-bottom:16px">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/><path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/><path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/></svg>
+        S'inscrire avec Google
+      </button>
       <div class="divider"><span>ou par email</span></div>
       
       <div class="type-selector">
@@ -240,47 +242,6 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
       <p class="auth-link">Déjà inscrit ? <a href="login.html">Se connecter</a></p>
     </div>
     
-    <!-- Google Step 1 — Type + Téléphone -->
-    <div id="google-step-1" class="register-box" style="display:none;text-align:center;padding:40px">
-      <img id="google-avatar" style="width:80px;border-radius:50%;margin-bottom:16px;display:block;margin-left:auto;margin-right:auto">
-      <h2 style="font-family:var(--D);font-size:28px;font-weight:900;text-transform:uppercase;color:#fff;margin-bottom:8px">Bienvenue <span id="google-welcome-name"></span> 👋</h2>
-      <p style="font-size:13px;color:var(--MUTED);margin-bottom:8px">Quelques infos supplémentaires pour finaliser ton compte</p>
-      <p style="font-size:13px;color:var(--MUTED);margin-top:24px">Tu rejoins CUE en tant que :</p>
-      <div style="display:flex;gap:16px;justify-content:center;margin:16px 0;flex-wrap:wrap">
-        <div id="google-type-dj" onclick="selectGoogleType('dj')" style="cursor:pointer;padding:24px;border:2px solid var(--BORDER);background:#0a0a0a;width:140px;transition:all .2s">
-          <div style="font-size:32px">🎧</div>
-          <div style="font-family:var(--D);font-size:16px;font-weight:900;text-transform:uppercase;color:#fff;margin-top:8px">DJ</div>
-          <div style="color:var(--MUTED);font-size:12px;margin-top:4px">Je cherche des bookings</div>
-        </div>
-        <div id="google-type-venue" onclick="selectGoogleType('venue')" style="cursor:pointer;padding:24px;border:2px solid var(--BORDER);background:#0a0a0a;width:140px;transition:all .2s">
-          <div style="font-size:32px">🏛️</div>
-          <div style="font-family:var(--D);font-size:16px;font-weight:900;text-transform:uppercase;color:#fff;margin-top:8px">VENUE</div>
-          <div style="color:var(--MUTED);font-size:12px;margin-top:4px">Je cherche des DJs</div>
-        </div>
-      </div>
-      <div style="margin-top:24px;text-align:left;max-width:400px;margin-left:auto;margin-right:auto">
-        <label class="form-label">Numéro de téléphone</label>
-        <div class="phone-input-wrap" style="margin-top:8px">
-          <div class="phone-prefix">+33</div>
-          <input type="tel" id="google-phone" placeholder="6 12 34 56 78" class="form-input">
-        </div>
-      </div>
-      <button onclick="submitGoogleStep1()" class="btn-primary" style="max-width:400px;margin:24px auto 0">Continuer →</button>
-    </div>
-
-    <!-- Google Step 2 — Vérification email -->
-    <div id="google-step-2" class="register-box" style="display:none;text-align:center;padding:40px">
-      <div class="verify-icon">📧</div>
-      <div class="verify-title" style="color:var(--Y)">Vérifie ton email</div>
-      <div class="verify-desc">Un code a été envoyé à <span id="google-email-display" style="color:var(--Y);font-weight:600"></span></div>
-      <p style="font-size:12px;color:var(--MUTED);margin-top:8px">Même si tu t'es connecté avec Google, on vérifie que tu as bien accès à cet email.</p>
-      <div style="margin:24px auto;max-width:400px">
-        <input type="text" id="google-verif-code" placeholder="000000" maxlength="6"
-               style="width:100%;text-align:center;font-size:32px;font-weight:900;letter-spacing:12px;background:#0a0a0a;border:2px solid var(--Y);color:var(--Y);padding:16px;outline:none;font-family:var(--D)">
-      </div>
-      <button onclick="submitGoogleStep2()" class="btn-primary" style="max-width:400px;margin:0 auto">Vérifier →</button>
-      <p class="resend-link" style="margin-top:16px">Pas reçu ? <button onclick="resendGoogleCode()" style="background:none;border:none;color:var(--Y);cursor:pointer;font-family:var(--B);font-size:12px;text-decoration:underline">Renvoyer</button></p>
-    </div>
 
     <div id="step2" class="register-box" style="display:none">
       <div class="steps"><div class="step done"></div><div class="step active"></div></div>
@@ -301,7 +262,6 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
 </main>
 
 <script>
-const GOOGLE_CLIENT_ID = '1096446567466-b1ia5c4far7j137k0564go80t1r3lf23.apps.googleusercontent.com';
 let formData = {};
 
 function generateCode() { return Math.floor(100000 + Math.random() * 900000).toString(); }
@@ -310,115 +270,24 @@ window.onload = function() {
   const urlParams = new URLSearchParams(window.location.search);
   const typeParam = urlParams.get('type');
   if (typeParam === 'venue' || typeParam === 'dj') selectType(typeParam);
-  
-  // Attendre que Google soit chargé
-  setTimeout(function() {
-    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-      google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleSignIn });
-      google.accounts.id.renderButton(document.getElementById('googleSignUpBtn'), { theme: 'filled_black', size: 'large', width: 300, text: 'signup_with', shape: 'rectangular' });
-    } else {
-      document.getElementById('googleSignUpBtn').innerHTML = '<button class="social-btn" style="width:100%" onclick="alert(\'Chargement Google en cours, réessaie dans quelques secondes\')"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>S\'inscrire avec Google</button>';
-    }
-  }, 500);
 };
 
-async function handleGoogleSignIn(response) {
-  const payload = JSON.parse(atob(response.credential.split('.')[1]));
-  const googleUser = { id: Date.now().toString(), firstName: payload.given_name, lastName: payload.family_name, email: payload.email, picture: payload.picture, googleId: payload.sub, userType: null, verified: true, identityStatus: 'pending', createdAt: new Date().toISOString() };
-  const existingUser = localStorage.getItem('cue_user');
-  if (existingUser) {
-    const parsed = JSON.parse(existingUser);
-    if (parsed.googleId === payload.sub) {
-      localStorage.setItem('cue_logged_in', 'true');
-      smartRedirect();
-      return;
-    }
-  }
-  localStorage.setItem('cue_google_temp', JSON.stringify(googleUser));
-  document.getElementById('step1').style.display = 'none';
-  document.getElementById('google-step-1').style.display = 'block';
-  document.getElementById('google-welcome-name').textContent = googleUser.firstName;
-  if (googleUser.picture) document.getElementById('google-avatar').src = googleUser.picture;
-}
-
-let selectedGoogleType = null;
-
-function selectGoogleType(type) {
-  selectedGoogleType = type;
-  document.getElementById('google-type-dj').style.borderColor = type === 'dj' ? '#FFC300' : 'rgba(255,195,0,.13)';
-  document.getElementById('google-type-venue').style.borderColor = type === 'venue' ? '#FFC300' : 'rgba(255,195,0,.13)';
-}
-
-async function submitGoogleStep1() {
-  const phone = document.getElementById('google-phone').value.trim();
-  if (!selectedGoogleType) { alert('Choisis DJ ou Venue.'); return; }
-  if (!phone || phone.replace(/\s/g,'').length < 9) { alert('Entre un numéro de téléphone valide.'); return; }
-  const googleUser = JSON.parse(localStorage.getItem('cue_google_temp'));
-  googleUser.userType = selectedGoogleType;
-  googleUser.phone = '+33' + phone;
-  localStorage.setItem('cue_google_temp', JSON.stringify(googleUser));
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-  sessionStorage.setItem('verif_code', code);
-  sessionStorage.setItem('verif_code_expiry', Date.now() + 10 * 60 * 1000);
-  await fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'verification', email: googleUser.email, firstName: googleUser.firstName, code }) });
-  document.getElementById('google-email-display').textContent = googleUser.email;
-  document.getElementById('google-step-1').style.display = 'none';
-  document.getElementById('google-step-2').style.display = 'block';
-}
-
-async function submitGoogleStep2() {
-  const inputCode = document.getElementById('google-verif-code').value;
-  const storedCode = sessionStorage.getItem('verif_code');
-  const expiry = sessionStorage.getItem('verif_code_expiry');
-  if (Date.now() > Number(expiry)) { alert('Code expiré. Clique sur Renvoyer.'); return; }
-  if (inputCode !== storedCode) { alert('Code incorrect.'); return; }
-
-  const googleUser = JSON.parse(localStorage.getItem('cue_google_temp'));
-
+async function signUpWithGoogle() {
   try {
-    const res = await fetch('/api/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'google_login',
-        googleId: googleUser.googleId,
-        email: googleUser.email,
-        firstName: googleUser.firstName,
-        lastName: googleUser.lastName,
-        picture: googleUser.picture || '',
-        userType: googleUser.userType,
-        phone: googleUser.phone || ''
-      })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.error || "Erreur lors de la connexion Google.");
-      return;
-    }
-
-    localStorage.setItem('cue_token', data.token);
-    localStorage.setItem('cue_user', JSON.stringify(data.user));
-    localStorage.setItem('cue_logged_in', 'true');
-  } catch (err) {
-    // Fallback local si réseau KO
-    googleUser.verified = true;
-    localStorage.setItem('cue_user', JSON.stringify(googleUser));
-    localStorage.setItem('cue_logged_in', 'true');
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm')
+    const supabase = createClient(
+      'https://orjhkfdvihuvqcjxhjwe.supabase.co',
+      document.querySelector('meta[name="supabase-key"]').content
+    )
+    await supabase.auth.signOut()
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: 'https://cuedj.eu/auth-callback.html' }
+    })
+    if (error) alert('Erreur Google : ' + error.message)
+  } catch(err) {
+    alert('Erreur Google. Réessaie.')
   }
-
-  localStorage.removeItem('cue_google_temp');
-  sessionStorage.removeItem('verif_code');
-  sessionStorage.removeItem('verif_code_expiry');
-
-  await fetch('/api/send-email', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ type: 'welcome', email: googleUser.email, firstName: googleUser.firstName })
-  });
-
-  smartRedirect();
 }
 
 function redirectAfterLogin(userData) {
@@ -437,14 +306,6 @@ function smartRedirect() {
   redirectAfterLogin(u);
 }
 
-async function resendGoogleCode() {
-  const googleUser = JSON.parse(localStorage.getItem('cue_google_temp'));
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-  sessionStorage.setItem('verif_code', code);
-  sessionStorage.setItem('verif_code_expiry', Date.now() + 10 * 60 * 1000);
-  await fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'verification', email: googleUser.email, firstName: googleUser.firstName, code }) });
-  alert('Code renvoyé !');
-}
 
 function selectType(type) {
   document.querySelectorAll('#step1 > .type-selector .type-option').forEach(el => el.classList.remove('selected'));
