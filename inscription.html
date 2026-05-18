@@ -606,33 +606,45 @@ function verifyCode(inputCode) {
 }
 
 async function completeRegistration() {
-  const regUser = JSON.parse(sessionStorage.getItem('reg_user'));
+  console.log('=== completeRegistration ===');
+  const regUser = JSON.parse(sessionStorage.getItem('reg_user') || 'null');
+  console.log('regUser:', regUser);
+
   if (!regUser) { window.location.href = 'inscription.html'; return; }
 
+  const { data: { session } } = await supabase.auth.getSession().catch(() => ({ data: {} }));
+  console.log('session:', session);
+  console.log('userId:', session?.user?.id);
+
   try {
+    const payload = {
+      action: 'register',
+      firstName: regUser.firstName,
+      lastName: regUser.lastName,
+      email: regUser.email,
+      phone: regUser.phone,
+      password: regUser.password,
+      userType: regUser.userType,
+      referralCode: sessionStorage.getItem('referral_code') || null,
+      picture: regUser.picture || null,
+      venuePhotos: regUser.venuePhotos || [],
+      venueType: regUser.venueType || null,
+      orgName: regUser.orgName || null,
+      orgSiret: regUser.orgSiret || null
+    };
+    console.log('Envoi register avec payload:', payload);
+
     const res = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'register',
-        firstName: regUser.firstName,
-        lastName: regUser.lastName,
-        email: regUser.email,
-        phone: regUser.phone,
-        password: regUser.password,
-        userType: regUser.userType,
-        referralCode: sessionStorage.getItem('referral_code') || null,
-        picture: regUser.picture || null,
-        venuePhotos: regUser.venuePhotos || [],
-        venueType: regUser.venueType || null,
-        orgName: regUser.orgName || null,
-        orgSiret: regUser.orgSiret || null
-      })
+      body: JSON.stringify(payload)
     });
 
     const data = await res.json();
+    console.log('Réponse API:', res.status, data);
 
     if (!res.ok) {
+      console.log('❌ Erreur API:', data.error);
       alert(data.error || "Erreur lors de l'inscription.");
       return;
     }

@@ -33,7 +33,7 @@ module.exports = async function handler(req, res) {
       const existing = await sql`SELECT id FROM users WHERE email = ${email}`;
       if (existing.length) return res.status(400).json({ error: 'Cet email est déjà utilisé.' });
 
-      const userId = Date.now().toString();
+      const userId = crypto.randomUUID();
       const passwordHash = hashPassword(password);
       const ownReferralCode = 'REF' + firstName.charAt(0).toUpperCase() + lastName.charAt(0).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
 
@@ -51,7 +51,7 @@ module.exports = async function handler(req, res) {
 
       const token = generateToken();
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-      await sql`INSERT INTO sessions (id, user_id, token, expires_at) VALUES (${Date.now().toString()}, ${userId}, ${token}, ${expiresAt})`;
+      await sql`INSERT INTO sessions (id, user_id, token, expires_at) VALUES (${crypto.randomUUID()}, ${userId}, ${token}, ${expiresAt})`;
 
       const [user] = await sql`SELECT * FROM users WHERE id = ${userId}`;
       return res.status(200).json({ success: true, token, user: sanitizeUser(user) });
@@ -71,7 +71,7 @@ module.exports = async function handler(req, res) {
 
       const token = generateToken();
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-      await sql`INSERT INTO sessions (id, user_id, token, expires_at) VALUES (${Date.now().toString()}, ${user.id}, ${token}, ${expiresAt})`;
+      await sql`INSERT INTO sessions (id, user_id, token, expires_at) VALUES (${crypto.randomUUID()}, ${user.id}, ${token}, ${expiresAt})`;
       return res.status(200).json({ success: true, token, user: sanitizeUser(user) });
     } catch (err) {
       return res.status(500).json({ error: err.message });
@@ -84,7 +84,7 @@ module.exports = async function handler(req, res) {
     try {
       let [user] = await sql`SELECT * FROM users WHERE google_id = ${googleId} OR email = ${email}`;
       if (!user) {
-        const userId = Date.now().toString();
+        const userId = crypto.randomUUID();
         const ownReferralCode = 'REF' + firstName.charAt(0).toUpperCase() + lastName.charAt(0).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
         await sql`INSERT INTO users (id, first_name, last_name, email, phone, google_id, picture, user_type, referral_code) VALUES (${userId}, ${firstName}, ${lastName}, ${email}, ${phone || ''}, ${googleId}, ${picture || ''}, ${userType}, ${ownReferralCode})`;
         [user] = await sql`SELECT * FROM users WHERE id = ${userId}`;
@@ -94,7 +94,7 @@ module.exports = async function handler(req, res) {
       }
       const token = generateToken();
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-      await sql`INSERT INTO sessions (id, user_id, token, expires_at) VALUES (${Date.now().toString()}, ${user.id}, ${token}, ${expiresAt})`;
+      await sql`INSERT INTO sessions (id, user_id, token, expires_at) VALUES (${crypto.randomUUID()}, ${user.id}, ${token}, ${expiresAt})`;
       return res.status(200).json({ success: true, token, user: sanitizeUser(user) });
     } catch (err) {
       return res.status(500).json({ error: err.message });

@@ -18,10 +18,15 @@
 import { supabase } from './js/supabase-client.js'
 
 async function handleCallback() {
+  console.log('=== handleCallback ===')
   const { data: { session }, error } = await supabase.auth.getSession()
+  console.log('session error:', error)
+  console.log('session:', session)
   if (error || !session) { window.location.href = 'login.html'; return }
 
   const user = session.user
+  console.log('session user id:', user?.id)
+  console.log('session user email:', user?.email)
 
   // Cherche en DB par ID ET par email
   const res = await fetch('/api/auth', {
@@ -34,6 +39,7 @@ async function handleCallback() {
     })
   })
   const data = await res.json()
+  console.log('get_user réponse:', data)
 
   if (data.user) {
     // Compte trouvé → met à jour l'ID si nécessaire
