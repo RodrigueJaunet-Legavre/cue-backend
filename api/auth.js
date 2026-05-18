@@ -453,6 +453,35 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'complete_venue_onboarding') {
+    const { userId, orgName, orgSiret, docUrl } = body;
+    try {
+      await sql`
+        UPDATE users SET
+          profile_complete = true,
+          identity_status = 'pending',
+          org_name = ${orgName || null},
+          org_siret = ${orgSiret || null},
+          updated_at = NOW()
+        WHERE id = ${userId}
+      `;
+      if (docUrl) {
+        await sql`
+          INSERT INTO identity_documents (id, user_id, document_url, status, submitted_at)
+          VALUES (${crypto.randomUUID()}, ${userId}, ${docUrl}, 'pending', NOW())
+          ON CONFLICT (user_id) DO UPDATE SET
+            document_url = ${docUrl},
+            status = 'pending',
+            submitted_at = NOW()
+        `;
+      }
+      const [user] = await sql`SELECT * FROM users WHERE id = ${userId}`;
+      return res.status(200).json({ success: true, user: sanitizeUser(user) });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   if (action === 'check_favorite') {
     const { venueId, djId } = body;
     try {

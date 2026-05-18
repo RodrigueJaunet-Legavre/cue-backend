@@ -1877,7 +1877,9 @@
   }
 
   function checkBadgeConditions() {
-    const hasPhoto = !!(user.picture)
+    const hasPhoto = !!(user.picture &&
+      !user.picture.includes('googleusercontent.com') &&
+      !user.picture.includes('google.com'))
     const hasIdentity = user.identity_status === 'verified'
     const hasFavorite = favoriteDJIds && favoriteDJIds.size > 0
     const allDone = hasPhoto && hasIdentity && hasFavorite

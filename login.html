@@ -145,16 +145,16 @@ async function loginWithGoogle() {
 }
 
 function redirectAfterLogin(user) {
-  const type = user.user_type || user.userType
-  const done = user.profile_complete === true
+  const userType = user.user_type || user.userType
+  const profileComplete = user.profile_complete === true
 
   const redirect = new URLSearchParams(window.location.search).get('redirect')
   if (redirect) { window.location.href = redirect; return }
 
-  if (type === 'dj') {
-    window.location.href = done ? 'dashboard-dj.html' : 'dj-onboarding.html'
-  } else if (type === 'venue') {
-    window.location.href = 'dashboard-venue.html'
+  if (userType === 'dj') {
+    window.location.href = profileComplete ? 'dashboard-dj.html' : 'dj-onboarding.html'
+  } else if (userType === 'venue') {
+    window.location.href = profileComplete ? 'dashboard-venue.html' : 'venue-onboarding.html'
   } else {
     window.location.href = 'index.html'
   }

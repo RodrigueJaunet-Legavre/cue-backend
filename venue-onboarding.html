@@ -12,7 +12,7 @@
     .step-indicator { color:#888; font-size:14px; font-weight:700; }
     .progress-bar { height:3px; background:#1a1a1a; }
     .progress-fill { height:100%; background:#FFC300; transition:width .4s ease; }
-    .step { display:none; max-width:600px; margin:0 auto; padding:48px 24px; }
+    .step { display:none; max-width:640px; margin:0 auto; padding:48px 24px; }
     .step.active { display:block; animation:fadeIn .3s ease; }
     @keyframes fadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
     .step-tag { color:#FFC300; font-size:13px; font-weight:700; letter-spacing:2px; text-transform:uppercase; margin-bottom:16px; }
@@ -22,110 +22,200 @@
     .form-label { display:block; color:#888; font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
     .form-input { width:100%; background:#111; border:1px solid #333; color:#ddd; padding:14px 16px; border-radius:10px; font-size:15px; font-family:Barlow,sans-serif; transition:border-color .2s; }
     .form-input:focus { outline:none; border-color:#FFC300; }
-    textarea.form-input { resize:vertical; min-height:100px; }
-    .btn-next { background:#FFC300; color:#000; border:none; border-radius:12px; padding:16px 32px; font-weight:700; font-size:16px; cursor:pointer; font-family:Barlow,sans-serif; width:100%; transition:all .2s; }
-    .btn-next:hover { background:#FFD740; }
-    .btn-back { background:transparent; color:#888; border:1px solid #333; border-radius:12px; padding:16px 24px; font-weight:700; font-size:15px; cursor:pointer; font-family:Barlow,sans-serif; transition:all .2s; }
-    .nav-buttons { display:flex; gap:12px; margin-top:32px; }
-    .photo-zone { width:120px; height:120px; border-radius:50%; border:2px dashed #333; display:flex; align-items:center; justify-content:center; cursor:pointer; margin:0 auto 24px; overflow:hidden; transition:all .2s; }
-    .photo-zone:hover { border-color:#FFC300; }
-    .venue-type-option { padding:16px 20px; background:#111; border:2px solid #333; border-radius:12px; cursor:pointer; font-weight:600; transition:all .2s; }
-    .venue-type-option:hover { border-color:rgba(255,195,0,.4); }
-    .venue-type-option.selected { border-color:#FFC300; background:rgba(255,195,0,.06); color:#FFC300; }
+    textarea.form-input { resize:vertical; min-height:110px; }
+    .btn-next { background:#FFC300; color:#000; border:none; border-radius:12px; padding:16px 32px; font-weight:700; font-size:16px; cursor:pointer; font-family:Barlow,sans-serif; width:100%; transition:all .2s; margin-top:8px; }
+    .btn-next:hover { background:#FFD740; transform:translateY(-1px); }
+    .btn-next:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+    .btn-back { background:transparent; color:#888; border:1px solid #333; border-radius:12px; padding:16px 24px; font-weight:700; font-size:15px; cursor:pointer; font-family:Barlow,sans-serif; }
+    .nav-buttons { display:flex; gap:12px; margin-top:24px; }
+    .upload-zone { border:2px dashed #333; border-radius:16px; padding:32px; text-align:center; cursor:pointer; transition:all .2s; }
+    .upload-zone:hover { border-color:#FFC300; background:rgba(255,195,0,.04); }
+    .upload-zone.filled { border-color:rgba(0,200,100,.4); background:rgba(0,200,100,.04); }
+    .photo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:16px; }
+    .photo-slot { aspect-ratio:4/3; border-radius:12px; border:2px dashed #333; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; background:#0a0a0a; transition:all .2s; }
+    .photo-slot:hover { border-color:#FFC300; }
+    .photo-slot.filled { border-color:rgba(0,200,100,.4); }
+    .photo-slot img { width:100%; height:100%; object-fit:cover; }
+    .required { color:#ff4444; }
   </style>
 </head>
 <body>
 
 <div class="header">
   <div class="logo">CUE</div>
-  <div class="step-indicator" id="step-indicator">Étape 1 sur 3</div>
+  <div class="step-indicator" id="step-indicator">Étape 1 sur 4</div>
 </div>
 <div class="progress-bar">
-  <div class="progress-fill" id="progress-fill" style="width:33%;"></div>
+  <div class="progress-fill" id="progress-fill" style="width:25%;"></div>
 </div>
 
 <!-- ÉTAPE 1 : Photo de profil -->
 <div class="step active" id="step-1">
-  <div class="step-tag">✦ Étape 1 sur 3</div>
+  <div class="step-tag">✦ Étape 1 sur 4</div>
   <h1 class="step-title">AJOUTE TA<br>PHOTO.</h1>
-  <p class="step-sub">La première chose que voient les DJs. Choisis une photo professionnelle de ton lieu ou de toi.</p>
+  <p class="step-sub">La première chose que voient les DJs. Photo professionnelle de ton lieu ou de toi. <span class="required">Obligatoire</span></p>
 
-  <div class="photo-zone" id="photo-zone" onclick="document.getElementById('photo-input').click()">
-    <div id="photo-placeholder" style="text-align:center;">
-      <div style="font-size:32px; margin-bottom:4px;">📷</div>
-      <div style="color:#888; font-size:12px;">Cliquer pour ajouter</div>
+  <div class="upload-zone" id="profile-photo-zone" onclick="document.getElementById('profile-photo-input').click()">
+    <div id="profile-photo-placeholder">
+      <div style="font-size:48px; margin-bottom:12px;">📷</div>
+      <div style="font-weight:700; color:#fff; margin-bottom:4px;">Cliquer pour ajouter</div>
+      <div style="color:#666; font-size:13px;">JPG ou PNG • Max 5MB</div>
     </div>
-    <img id="photo-preview" style="display:none; width:100%; height:100%; object-fit:cover;">
+    <img id="profile-photo-preview" style="display:none; width:160px; height:160px; border-radius:50%; object-fit:cover; margin:auto;">
   </div>
-  <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="handlePhoto(this)">
-  <p style="color:#666; font-size:12px; text-align:center; margin-bottom:32px;">JPG ou PNG • Max 5MB</p>
+  <input type="file" id="profile-photo-input" accept="image/*" style="display:none" onchange="handleProfilePhoto(this)">
 
-  <button class="btn-next" onclick="nextStep()">Continuer →</button>
-  <div style="text-align:center; margin-top:16px;">
-    <button onclick="nextStep()" style="background:none; border:none; color:#666; cursor:pointer; font-size:13px; text-decoration:underline;">Passer</button>
-  </div>
+  <button class="btn-next" id="btn-step1" onclick="validateStep1()" style="margin-top:24px;" disabled>
+    Continuer →
+  </button>
 </div>
 
-<!-- ÉTAPE 2 : Description et infos -->
+<!-- ÉTAPE 2 : Description + 3 photos -->
 <div class="step" id="step-2">
-  <div class="step-tag">✦ Étape 2 sur 3</div>
+  <div class="step-tag">✦ Étape 2 sur 4</div>
   <h1 class="step-title">DÉCRIS<br>TON LIEU.</h1>
-  <p class="step-sub">Aide les DJs à comprendre ton univers et tes besoins.</p>
+  <p class="step-sub">Aide les DJs à comprendre ton univers. <span class="required">Min. 10 mots</span></p>
 
   <div class="form-group">
-    <label class="form-label">Description <span style="color:#ff4444;">*</span></label>
-    <textarea id="venue-desc" class="form-input" placeholder="Club électronique parisien depuis 2015, capacité 500 personnes..." oninput="updateWordCount()"></textarea>
-    <div id="word-count" style="color:#ff4444; font-size:12px; margin-top:6px;">0 mots (min. 10)</div>
+    <label class="form-label">Description <span class="required">*</span></label>
+    <textarea id="venue-description" class="form-input"
+              placeholder="Club électronique parisien depuis 2015, capacité 500 personnes, système son d&b audiotechnik..."
+              oninput="updateDescCount()"></textarea>
+    <div id="desc-count" style="color:#ff4444; font-size:12px; margin-top:6px; font-weight:600;">0 mots (min. 10)</div>
   </div>
 
   <div class="form-group">
     <label class="form-label">Ville</label>
-    <input type="text" id="venue-city-input" class="form-input" placeholder="Paris">
+    <input type="text" id="venue-city" class="form-input" placeholder="Paris">
   </div>
 
   <div class="form-group">
     <label class="form-label">Site web</label>
-    <input type="url" id="venue-website-input" class="form-input" placeholder="https://monclub.fr">
+    <input type="url" id="venue-website" class="form-input" placeholder="https://monclub.fr">
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Photos du lieu (max 3)</label>
+    <div class="photo-grid">
+      <div class="photo-slot" id="photo-slot-0" onclick="document.getElementById('venue-photo-0').click()">
+        <div id="photo-placeholder-0" style="text-align:center; padding:16px;">
+          <div style="font-size:24px; color:#444;">+</div>
+          <div style="color:#666; font-size:11px; margin-top:4px;">Photo 1</div>
+        </div>
+        <img id="venue-photo-preview-0" style="display:none; width:100%; height:100%; object-fit:cover;">
+        <input type="file" id="venue-photo-0" accept="image/*" style="display:none" onchange="handleVenuePhoto(this, 0)">
+      </div>
+      <div class="photo-slot" id="photo-slot-1" onclick="document.getElementById('venue-photo-1').click()">
+        <div id="photo-placeholder-1" style="text-align:center; padding:16px;">
+          <div style="font-size:24px; color:#444;">+</div>
+          <div style="color:#666; font-size:11px; margin-top:4px;">Photo 2</div>
+        </div>
+        <img id="venue-photo-preview-1" style="display:none; width:100%; height:100%; object-fit:cover;">
+        <input type="file" id="venue-photo-1" accept="image/*" style="display:none" onchange="handleVenuePhoto(this, 1)">
+      </div>
+      <div class="photo-slot" id="photo-slot-2" onclick="document.getElementById('venue-photo-2').click()">
+        <div id="photo-placeholder-2" style="text-align:center; padding:16px;">
+          <div style="font-size:24px; color:#444;">+</div>
+          <div style="color:#666; font-size:11px; margin-top:4px;">Photo 3</div>
+        </div>
+        <img id="venue-photo-preview-2" style="display:none; width:100%; height:100%; object-fit:cover;">
+        <input type="file" id="venue-photo-2" accept="image/*" style="display:none" onchange="handleVenuePhoto(this, 2)">
+      </div>
+    </div>
   </div>
 
   <div class="nav-buttons">
     <button class="btn-back" onclick="prevStep()">← Retour</button>
-    <button class="btn-next" onclick="validateStep2()" style="flex:1;">Continuer →</button>
+    <button class="btn-next" onclick="validateStep2()" style="flex:1; margin-top:0;">Continuer →</button>
   </div>
 </div>
 
-<!-- ÉTAPE 3 : Type de venue -->
+<!-- ÉTAPE 3 : SIREN/SIRET + document -->
 <div class="step" id="step-3">
-  <div class="step-tag">✦ Étape 3 sur 3</div>
-  <h1 class="step-title">TYPE DE<br>VENUE.</h1>
-  <p class="step-sub">Quel type d'événements organisez-vous principalement ?</p>
+  <div class="step-tag">✦ Étape 3 sur 4</div>
+  <h1 class="step-title">INFOS<br>LÉGALES.</h1>
+  <p class="step-sub">Pour la vérification de votre organisation. <span class="required">Obligatoire</span></p>
 
-  <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:32px;">
-    <div class="venue-type-option" onclick="selectVenueCategory('Club / Discothèque', this)">Club / Discothèque</div>
-    <div class="venue-type-option" onclick="selectVenueCategory('Bar / Lounge', this)">Bar / Lounge</div>
-    <div class="venue-type-option" onclick="selectVenueCategory('Festival / Événement', this)">Festival / Événement</div>
-    <div class="venue-type-option" onclick="selectVenueCategory('Mariage / Événement privé', this)">Mariage / Événement privé</div>
-    <div class="venue-type-option" onclick="selectVenueCategory('Restaurant / Hôtel', this)">Restaurant / Hôtel</div>
-    <div class="venue-type-option" onclick="selectVenueCategory('Autre', this)">Autre</div>
+  <div class="form-group">
+    <label class="form-label">Nom de l'organisation <span class="required">*</span></label>
+    <input type="text" id="org-name" class="form-input" placeholder="SAS Club XYZ / Association...">
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">SIREN / SIRET <span class="required">*</span></label>
+    <input type="text" id="org-siret" class="form-input" placeholder="123 456 789 00012" maxlength="17"
+           oninput="formatSiret(this)">
+    <div style="color:#666; font-size:12px; margin-top:6px;">9 chiffres (SIREN) ou 14 chiffres (SIRET)</div>
+  </div>
+
+  <div class="form-group" style="margin-top:24px;">
+    <label class="form-label">Document officiel (KBIS, avis de situation, statuts) <span class="required">*</span></label>
+    <p style="color:#666; font-size:13px; margin-bottom:12px; line-height:1.6;">
+      Le document doit dater de moins de <strong style="color:#fff;">6 mois</strong> et faire apparaître le numéro SIREN/SIRET.
+    </p>
+    <div class="upload-zone" id="doc-upload-zone" onclick="document.getElementById('doc-input').click()">
+      <div id="doc-placeholder">
+        <div style="font-size:36px; margin-bottom:8px;">📄</div>
+        <div style="font-weight:700; color:#fff; margin-bottom:4px;">Cliquer pour ajouter</div>
+        <div style="color:#666; font-size:13px;">KBIS, avis INSEE, statuts... • JPG, PNG ou PDF</div>
+      </div>
+      <div id="doc-filled" style="display:none;">
+        <div style="font-size:36px; margin-bottom:8px;">✅</div>
+        <div id="doc-name" style="font-weight:700; color:#00c864;"></div>
+      </div>
+    </div>
+    <input type="file" id="doc-input" accept="image/*,.pdf" style="display:none" onchange="handleDoc(this)">
   </div>
 
   <div class="nav-buttons">
     <button class="btn-back" onclick="prevStep()">← Retour</button>
-    <button class="btn-next" onclick="completeVenueOnboarding()" style="flex:1;" id="finish-btn">
+    <button class="btn-next" onclick="validateStep3()" style="flex:1; margin-top:0;">Continuer →</button>
+  </div>
+</div>
+
+<!-- ÉTAPE 4 : Récap + terminer -->
+<div class="step" id="step-4">
+  <div class="step-tag">✦ Étape 4 sur 4</div>
+  <h1 class="step-title">PRESQUE<br>TERMINÉ !</h1>
+  <p class="step-sub">Vérifiez vos informations avant de finaliser.</p>
+
+  <div style="background:#111; border:1px solid #333; border-radius:16px; padding:24px; margin-bottom:24px;">
+    <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid #222;">
+      <img id="recap-photo" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #FFC300;" src="" alt="">
+      <div>
+        <div id="recap-org-name" style="font-weight:700; color:#fff; font-size:18px;"></div>
+        <div id="recap-city" style="color:#888; font-size:13px; margin-top:2px;"></div>
+      </div>
+    </div>
+    <div style="font-size:14px; color:#888; line-height:2;">
+      <div>✅ Photo de profil ajoutée</div>
+      <div id="recap-desc-check">⬜ Description à compléter</div>
+      <div id="recap-photos-check">⬜ Photos du lieu</div>
+      <div id="recap-siret-check">⬜ SIREN/SIRET à vérifier</div>
+      <div id="recap-doc-check">⬜ Document en attente de vérification</div>
+    </div>
+  </div>
+
+  <div style="background:rgba(255,170,0,.08); border:1px solid rgba(255,170,0,.2); border-radius:12px; padding:16px; margin-bottom:24px;">
+    <div style="color:#ffaa00; font-weight:700; margin-bottom:4px;">⏳ Vérification sous 24h</div>
+    <div style="color:#888; font-size:13px; line-height:1.6;">Notre équipe va vérifier vos documents et activer votre badge vérifié CUE.</div>
+  </div>
+
+  <div class="nav-buttons">
+    <button class="btn-back" onclick="prevStep()">← Retour</button>
+    <button class="btn-next" onclick="completeVenueOnboarding()" style="flex:1; margin-top:0;" id="finish-btn">
       Accéder à mon dashboard →
     </button>
   </div>
 </div>
 
 <!-- ÉTAPE FINALE -->
-<div class="step" id="step-4">
+<div class="step" id="step-complete">
   <div style="text-align:center; padding:40px 0;">
     <div style="font-size:72px; margin-bottom:24px;">🎉</div>
-    <h1 style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:48px; color:#fff; margin-bottom:16px;">
-      BIENVENUE<br>SUR CUE !
-    </h1>
+    <h1 style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:48px; color:#fff; margin-bottom:16px;">BIENVENUE<br>SUR CUE !</h1>
     <p style="color:#888; font-size:16px; line-height:1.6; margin-bottom:32px; max-width:400px; margin-left:auto; margin-right:auto;">
-      Votre compte est prêt. Trouvez le DJ parfait pour votre prochain événement.
+      Votre compte est créé. Trouvez le DJ parfait pour votre prochain événement.
     </p>
     <button onclick="window.location.replace('dashboard-venue.html')" class="btn-next" style="max-width:400px;">
       Découvrir les DJs →
@@ -137,17 +227,22 @@
 import { supabase } from './js/supabase-client.js'
 
 let currentStep = 1
-const totalSteps = 3
+const totalSteps = 4
 let profilePhotoFile = null
-let profilePhoto = null
-let selectedCategory = null
+let profilePhotoBase64 = null
+let venuePhotos = [null, null, null]
+let docFile = null
+let docBase64 = null
 
 function showStep(n) {
-  const prev = document.getElementById('step-' + currentStep)
-  if (prev) prev.classList.remove('active')
+  document.getElementById('step-' + currentStep)?.classList.remove('active')
   currentStep = n
-  const stepEl = document.getElementById('step-' + currentStep)
-  if (stepEl) stepEl.classList.add('active')
+  const el = document.getElementById('step-' + currentStep)
+  if (el) {
+    el.classList.add('active')
+  } else {
+    document.getElementById('step-complete').classList.add('active')
+  }
   document.getElementById('step-indicator').textContent =
     currentStep <= totalSteps ? `Étape ${currentStep} sur ${totalSteps}` : 'Terminé !'
   document.getElementById('progress-fill').style.width =
@@ -155,108 +250,275 @@ function showStep(n) {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-window.nextStep = () => showStep(currentStep + 1)
 window.prevStep = () => showStep(currentStep - 1)
 
-window.handlePhoto = function(input) {
+// ÉTAPE 1 — Photo de profil
+window.handleProfilePhoto = function(input) {
   const file = input.files[0]
   if (!file) return
   if (file.size > 5 * 1024 * 1024) { alert('Max 5MB.'); return }
   profilePhotoFile = file
   const reader = new FileReader()
   reader.onload = e => {
-    profilePhoto = e.target.result
-    document.getElementById('photo-preview').src = e.target.result
-    document.getElementById('photo-preview').style.display = 'block'
-    document.getElementById('photo-placeholder').style.display = 'none'
+    profilePhotoBase64 = e.target.result
+    const preview = document.getElementById('profile-photo-preview')
+    const placeholder = document.getElementById('profile-photo-placeholder')
+    const zone = document.getElementById('profile-photo-zone')
+    preview.src = e.target.result
+    preview.style.display = 'block'
+    placeholder.style.display = 'none'
+    zone.classList.add('filled')
+    document.getElementById('btn-step1').disabled = false
   }
   reader.readAsDataURL(file)
 }
 
-window.updateWordCount = function() {
-  const val = document.getElementById('venue-desc').value.trim()
+window.validateStep1 = function() {
+  if (!profilePhotoBase64) { alert('Ajoute une photo de profil.'); return }
+  showStep(2)
+}
+
+// ÉTAPE 2 — Description + photos
+window.updateDescCount = function() {
+  const val = document.getElementById('venue-description').value.trim()
   const words = val.split(/\s+/).filter(w => w.length > 0).length
-  const el = document.getElementById('word-count')
+  const el = document.getElementById('desc-count')
   el.textContent = `${words} mots ${words >= 10 ? '✅' : '(min. 10)'}`
   el.style.color = words >= 10 ? '#00c864' : '#ff4444'
 }
 
+window.handleVenuePhoto = function(input, index) {
+  const file = input.files[0]
+  if (!file || file.size > 5 * 1024 * 1024) { alert('Max 5MB.'); return }
+  const reader = new FileReader()
+  reader.onload = e => {
+    venuePhotos[index] = e.target.result
+    document.getElementById(`venue-photo-preview-${index}`).src = e.target.result
+    document.getElementById(`venue-photo-preview-${index}`).style.display = 'block'
+    document.getElementById(`photo-placeholder-${index}`).style.display = 'none'
+    document.getElementById(`photo-slot-${index}`).classList.add('filled')
+  }
+  reader.readAsDataURL(file)
+}
+
 window.validateStep2 = function() {
-  const desc = document.getElementById('venue-desc').value.trim()
+  const desc = document.getElementById('venue-description').value.trim()
   const words = desc.split(/\s+/).filter(w => w.length > 0).length
   if (words < 10) { alert('La description doit contenir au moins 10 mots.'); return }
   showStep(3)
 }
 
-window.selectVenueCategory = function(type, el) {
-  selectedCategory = type
-  document.querySelectorAll('.venue-type-option').forEach(o => o.classList.remove('selected'))
-  el.classList.add('selected')
+// ÉTAPE 3 — SIRET + document
+window.formatSiret = function(input) {
+  let val = input.value.replace(/\s/g, '').replace(/\D/g, '')
+  if (val.length > 9) val = val.slice(0, 9) + ' ' + val.slice(9, 14)
+  input.value = val
 }
 
+window.handleDoc = function(input) {
+  const file = input.files[0]
+  if (!file) return
+  if (file.size > 10 * 1024 * 1024) { alert('Max 10MB.'); return }
+  docFile = file
+  const reader = new FileReader()
+  reader.onload = e => {
+    docBase64 = e.target.result.split(',')[1]
+    document.getElementById('doc-placeholder').style.display = 'none'
+    document.getElementById('doc-filled').style.display = 'block'
+    document.getElementById('doc-name').textContent = file.name
+    document.getElementById('doc-upload-zone').classList.add('filled')
+  }
+  reader.readAsDataURL(file)
+}
+
+window.validateStep3 = function() {
+  const siret = document.getElementById('org-siret').value.replace(/\s/g, '')
+  const orgName = document.getElementById('org-name').value.trim()
+  if (!orgName) { alert("Remplis le nom de l'organisation."); return }
+  if (siret.length < 9) { alert('SIREN (9 chiffres) ou SIRET (14 chiffres) requis.'); return }
+  if (!docBase64) { alert('Ajoute le document officiel.'); return }
+  updateRecap()
+  showStep(4)
+}
+
+function updateRecap() {
+  const photo = document.getElementById('recap-photo')
+  if (photo && profilePhotoBase64) photo.src = profilePhotoBase64
+
+  const orgEl = document.getElementById('recap-org-name')
+  if (orgEl) orgEl.textContent = document.getElementById('org-name').value.trim()
+
+  const cityEl = document.getElementById('recap-city')
+  if (cityEl) cityEl.textContent = document.getElementById('venue-city').value.trim()
+
+  const desc = document.getElementById('venue-description').value.trim()
+  const words = desc.split(/\s+/).filter(w => w.length > 0).length
+  const descCheck = document.getElementById('recap-desc-check')
+  if (descCheck) {
+    descCheck.textContent = words >= 10 ? '✅ Description complète' : '⚠️ Description incomplète'
+    descCheck.style.color = words >= 10 ? '#00c864' : '#ffaa00'
+  }
+
+  const photosCount = venuePhotos.filter(Boolean).length
+  const photosCheck = document.getElementById('recap-photos-check')
+  if (photosCheck) photosCheck.textContent = photosCount > 0
+    ? `✅ ${photosCount} photo${photosCount > 1 ? 's' : ''} du lieu`
+    : '⬜ Aucune photo du lieu (optionnel)'
+
+  const siretCheck = document.getElementById('recap-siret-check')
+  if (siretCheck) {
+    siretCheck.textContent = '✅ SIREN/SIRET : ' + document.getElementById('org-siret').value
+    siretCheck.style.color = '#00c864'
+  }
+
+  const docCheck = document.getElementById('recap-doc-check')
+  if (docCheck) {
+    docCheck.textContent = '✅ Document : ' + (docFile?.name || 'ajouté')
+    docCheck.style.color = '#00c864'
+  }
+}
+
+// FINALISATION
 window.completeVenueOnboarding = async function() {
   const btn = document.getElementById('finish-btn')
   btn.disabled = true
-  btn.textContent = '⏳ Sauvegarde...'
+  btn.textContent = '⏳ Sauvegarde en cours...'
 
   try {
     const { data: { session } } = await supabase.auth.getSession()
-    const userId = session?.user?.id || JSON.parse(localStorage.getItem('cue_user') || '{}').id
+    const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
+    const userId = session?.user?.id || savedUser.id || savedUser.user_id
 
-    const desc = document.getElementById('venue-desc').value.trim()
-    const city = document.getElementById('venue-city-input').value.trim()
-    const website = document.getElementById('venue-website-input').value.trim()
+    if (!userId) {
+      alert('Erreur de session.')
+      btn.disabled = false
+      btn.textContent = 'Accéder à mon dashboard →'
+      return
+    }
 
+    // Upload photo de profil vers Supabase Storage
+    let pictureUrl = ''
+    if (profilePhotoFile) {
+      btn.textContent = '⏳ Upload photo...'
+      try {
+        const ext = profilePhotoFile.name.split('.').pop()
+        const accessToken = (await supabase.auth.getSession()).data.session?.access_token
+        const storageRes = await fetch(
+          `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/avatars/${userId}/profile.${ext}`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': profilePhotoFile.type,
+              'x-upsert': 'true'
+            },
+            body: profilePhotoFile
+          }
+        )
+        if (storageRes.ok) {
+          pictureUrl = `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/public/avatars/${userId}/profile.${ext}`
+        } else {
+          pictureUrl = profilePhotoBase64
+        }
+      } catch(e) {
+        pictureUrl = profilePhotoBase64
+      }
+    }
+
+    // Upload document légal
+    btn.textContent = '⏳ Upload document...'
+    let docUrl = ''
+    if (docFile) {
+      try {
+        const ext = docFile.name.split('.').pop()
+        const accessToken = (await supabase.auth.getSession()).data.session?.access_token
+        const docStorageRes = await fetch(
+          `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/identity-docs/${userId}/legal_doc.${ext}`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': docFile.type,
+              'x-upsert': 'true'
+            },
+            body: docFile
+          }
+        )
+        if (docStorageRes.ok) {
+          docUrl = `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/identity-docs/${userId}/legal_doc.${ext}`
+        }
+      } catch(e) {}
+    }
+
+    // Sauvegarde profil venue en DB
+    btn.textContent = '⏳ Finalisation...'
     await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'update_venue_profile',
         userId,
-        picture: profilePhoto || '',
-        description: desc,
-        city,
-        website,
-        venueCategory: selectedCategory || '',
-        venuePhotos: [],
-        orgName: '',
-        orgSiret: ''
+        picture: pictureUrl,
+        description: document.getElementById('venue-description').value.trim(),
+        city: document.getElementById('venue-city').value.trim(),
+        website: document.getElementById('venue-website').value.trim(),
+        venuePhotos: venuePhotos.filter(Boolean),
+        orgName: document.getElementById('org-name').value.trim(),
+        orgSiret: document.getElementById('org-siret').value.replace(/\s/g, '')
       })
     })
 
+    // Marque profile_complete + identity_status pending
     await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        action: 'update_profile_by_id',
+        action: 'complete_venue_onboarding',
         userId,
-        description: desc,
-        genres: [],
-        photo: profilePhoto || ''
+        orgName: document.getElementById('org-name').value.trim(),
+        orgSiret: document.getElementById('org-siret').value.replace(/\s/g, ''),
+        docUrl
       })
     })
 
-    const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
+    // Met à jour localStorage
     savedUser.profile_complete = true
-    savedUser.venue_description = desc
-    if (profilePhoto) savedUser.picture = profilePhoto
+    savedUser.profileComplete = true
+    savedUser.picture = pictureUrl
+    savedUser.venue_description = document.getElementById('venue-description').value.trim()
+    savedUser.identity_status = 'pending'
     localStorage.setItem('cue_user', JSON.stringify(savedUser))
 
-    showStep(4)
+    showStep(5)
 
   } catch(err) {
-    console.error(err)
+    console.error('Erreur:', err)
     alert('Erreur. Réessaie.')
     btn.disabled = false
     btn.textContent = 'Accéder à mon dashboard →'
   }
 }
 
+// Init
 async function init() {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
     const localUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
     if (!localUser.id) { window.location.replace('login.html'); return }
+  }
+  // Si déjà complété → dashboard directement
+  const res = await fetch('/api/auth', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'get_user',
+      userId: session?.user?.id,
+      email: session?.user?.email
+    })
+  })
+  const data = await res.json()
+  if (data.user?.profile_complete === true) {
+    window.location.replace('dashboard-venue.html')
   }
 }
 init()

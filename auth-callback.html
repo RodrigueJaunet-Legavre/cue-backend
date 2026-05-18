@@ -57,8 +57,10 @@ async function handleCallback() {
 
     if (userType === 'dj') {
       window.location.href = profileComplete ? 'dashboard-dj.html' : 'dj-onboarding.html'
+    } else if (userType === 'venue') {
+      window.location.href = profileComplete ? 'dashboard-venue.html' : 'venue-onboarding.html'
     } else {
-      window.location.href = 'dashboard-venue.html'
+      window.location.href = 'google-setup.html'
     }
     return
   }
