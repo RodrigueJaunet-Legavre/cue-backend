@@ -80,10 +80,8 @@ async function handleLogin(e) {
   const email = document.getElementById('email').value.trim()
   const password = document.getElementById('password').value
   const btn = document.getElementById('login-btn')
-
   btn.disabled = true
   btn.textContent = 'Connexion...'
-  document.getElementById('error-msg').style.display = 'none'
 
   try {
     // Check admin
@@ -95,32 +93,48 @@ async function handleLogin(e) {
     if (adminRes.ok) {
       const { secret } = await adminRes.json()
       sessionStorage.setItem('admin_secret', secret)
-      window.location.href = 'cue-secure-admin-panel.html'
+      window.location.replace('cue-secure-admin-panel.html')
       return
     }
 
-    // Connexion normale via notre DB
-    const res = await fetch('/api/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'login', email, password })
-    })
-    const data = await res.json()
-
-    if (!res.ok || data.error) {
-      showError(data.error || 'Email ou mot de passe incorrect.')
+    // Connexion Supabase
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm')
+    const supabase = createClient(
+      'https://orjhkfdvihuvqcjxhjwe.supabase.co',
+      document.querySelector('meta[name="supabase-key"]').content
+    )
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) {
+      document.getElementById('error-msg').textContent = 'Email ou mot de passe incorrect.'
+      document.getElementById('error-msg').style.display = 'block'
       btn.disabled = false
       btn.textContent = 'Se connecter'
       return
     }
 
-    localStorage.setItem('cue_user', JSON.stringify(data.user))
-    localStorage.setItem('cue_logged_in', 'true')
-    localStorage.setItem('cue_token', data.token)
-    redirectAfterLogin(data.user)
+    // Récupère le user depuis DB
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'get_user',
+        userId: data.user.id,
+        email: data.user.email
+      })
+    })
+    const userData = await res.json()
+
+    if (!userData.user) {
+      alert('Compte introuvable. Réessaie.')
+      btn.disabled = false
+      btn.textContent = 'Se connecter'
+      return
+    }
+
+    redirectAfterLogin(userData.user)
 
   } catch(err) {
-    showError('Erreur de connexion. Réessaie.')
+    alert('Erreur. Réessaie.')
     btn.disabled = false
     btn.textContent = 'Se connecter'
   }
@@ -145,18 +159,18 @@ async function loginWithGoogle() {
 }
 
 function redirectAfterLogin(user) {
-  const userType = user.user_type || user.userType
-  const profileComplete = user.profile_complete === true
+  const type = user.user_type
+  const done = user.profile_complete === true
 
   const redirect = new URLSearchParams(window.location.search).get('redirect')
-  if (redirect) { window.location.href = redirect; return }
+  if (redirect) { window.location.replace(redirect); return }
 
-  if (userType === 'dj') {
-    window.location.href = profileComplete ? 'dashboard-dj.html' : 'dj-onboarding.html'
-  } else if (userType === 'venue') {
-    window.location.href = profileComplete ? 'dashboard-venue.html' : 'venue-onboarding.html'
+  if (type === 'dj') {
+    window.location.replace(done ? 'dashboard-dj.html' : 'dj-onboarding.html')
+  } else if (type === 'venue') {
+    window.location.replace(done ? 'dashboard-venue.html' : 'venue-onboarding.html')
   } else {
-    window.location.href = 'index.html'
+    window.location.replace('index.html')
   }
 }
 </script>

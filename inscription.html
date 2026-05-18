@@ -606,74 +606,76 @@ function verifyCode(inputCode) {
 }
 
 async function completeRegistration() {
-  console.log('=== completeRegistration ===');
   const regUser = JSON.parse(sessionStorage.getItem('reg_user') || 'null');
-  console.log('regUser:', regUser);
-
-  if (!regUser) { window.location.href = 'inscription.html'; return; }
-
-  const { data: { session } } = await supabase.auth.getSession().catch(() => ({ data: {} }));
-  console.log('session:', session);
-  console.log('userId:', session?.user?.id);
+  if (!regUser || !regUser.email) { window.location.replace('inscription.html'); return; }
 
   try {
-    const payload = {
-      action: 'register',
-      firstName: regUser.firstName,
-      lastName: regUser.lastName,
-      email: regUser.email,
-      phone: regUser.phone,
-      password: regUser.password,
-      userType: regUser.userType,
-      referralCode: sessionStorage.getItem('referral_code') || null,
-      picture: regUser.picture || null,
-      venuePhotos: regUser.venuePhotos || [],
-      venueType: regUser.venueType || null,
-      orgName: regUser.orgName || null,
-      orgSiret: regUser.orgSiret || null
-    };
-    console.log('Envoi register avec payload:', payload);
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
+    const supabaseUrl = 'https://orjhkfdvihuvqcjxhjwe.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yamhrZmR2aWh1dnFjanhoandlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MzU2ODEsImV4cCI6MjA5NDAxMTY4MX0.Ti7anM1O3KqbZYLxRkl1rWbcghJF5FgmRxNqOTV6JL0';
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const res = await fetch('/api/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+    // 1. Crée le compte Supabase Auth
+    const { data, error } = await supabase.auth.signUp({
+      email: regUser.email,
+      password: regUser.password,
+      options: {
+        data: {
+          first_name: regUser.firstName,
+          last_name: regUser.lastName
+        }
+      }
     });
 
-    const data = await res.json();
-    console.log('Réponse API:', res.status, data);
+    if (error) { alert('Erreur : ' + error.message); return; }
 
-    if (!res.ok) {
-      console.log('❌ Erreur API:', data.error);
-      alert(data.error || "Erreur lors de l'inscription.");
-      return;
-    }
+    const userId = data.user.id; // UUID Supabase réel
 
-    localStorage.setItem('cue_token', data.token);
-    localStorage.setItem('cue_user', JSON.stringify(data.user));
-    localStorage.setItem('cue_logged_in', 'true');
-    if (regUser.venueType) localStorage.setItem('cue_venue_type', regUser.venueType);
-    if (regUser.orgName) localStorage.setItem('cue_org_name', regUser.orgName);
-    if (regUser.orgSiret) localStorage.setItem('cue_org_siret', regUser.orgSiret);
-    sessionStorage.clear();
+    // 2. Crée le user en DB avec l'UUID Supabase
+    const referralCode = 'REF' + regUser.firstName.charAt(0).toUpperCase() +
+                         regUser.lastName.charAt(0).toUpperCase() +
+                         Math.floor(1000 + Math.random() * 9000);
 
+    await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'register_supabase',
+        userId,
+        firstName: regUser.firstName,
+        lastName: regUser.lastName,
+        email: regUser.email,
+        phone: regUser.phone || '',
+        userType: regUser.userType,
+        venueType: regUser.venueType || null,
+        orgName: regUser.orgName || null,
+        orgSiret: regUser.orgSiret || null,
+        referralCode
+      })
+    });
+
+    // 3. Email de bienvenue
     await fetch('/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         type: 'welcome',
-        email: data.user.email,
-        firstName: data.user.first_name
+        email: regUser.email,
+        firstName: regUser.firstName
       })
     });
 
-    if (data.user.user_type === 'dj') {
-      window.location.href = 'dj-onboarding.html';
+    sessionStorage.clear();
+
+    // 4. Redirige vers le bon onboarding
+    if (regUser.userType === 'dj') {
+      window.location.replace('dj-onboarding.html');
     } else {
-      window.location.href = 'venue-onboarding.html';
+      window.location.replace('venue-onboarding.html');
     }
-  } catch (err) {
-    alert('Erreur. Réessaie.');
+
+  } catch(err) {
+    alert('Erreur : ' + err.message);
   }
 }
 </script>
