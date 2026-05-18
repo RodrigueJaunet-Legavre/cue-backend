@@ -227,6 +227,7 @@
 import { supabase } from './js/supabase-client.js'
 
 let currentStep = 1
+let venueType = 'organisation'
 let totalSteps = 4
 let profilePhotoFile = null
 let profilePhotoBase64 = null
@@ -234,29 +235,69 @@ let venuePhotos = [null, null, null]
 let docFile = null
 let docBase64 = null
 
+// ── Navigation ──────────────────────────────────────────────────────────────
+
 function showStep(n) {
   document.getElementById('step-' + currentStep)?.classList.remove('active')
   currentStep = n
-  const el = document.getElementById('step-' + currentStep)
-  if (el) {
-    el.classList.add('active')
-  } else {
+
+  const stepEl = document.getElementById('step-' + currentStep)
+  if (stepEl && stepEl.style.display !== 'none') {
+    stepEl.classList.add('active')
+  } else if (n === 5) {
     document.getElementById('step-complete').classList.add('active')
   }
+
+  const displayStep = venueType === 'particulier' && n >= 4 ? n - 1 : n
   document.getElementById('step-indicator').textContent =
-    currentStep <= totalSteps ? `Étape ${currentStep} sur ${totalSteps}` : 'Terminé !'
+    displayStep <= totalSteps ? `Étape ${displayStep} sur ${totalSteps}` : 'Terminé !'
   document.getElementById('progress-fill').style.width =
-    (Math.min(currentStep, totalSteps) / totalSteps * 100) + '%'
+    (Math.min(displayStep, totalSteps) / totalSteps * 100) + '%'
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-window.prevStep = () => {
-  // Particulier : depuis étape 4, revient à 2 (pas 3)
-  if (window._skipSiret && currentStep === 4) showStep(2)
+window.prevStep = function() {
+  if (venueType === 'particulier' && currentStep === 4) showStep(2)
   else showStep(currentStep - 1)
 }
 
-// ÉTAPE 1 — Photo de profil
+// ── Adaptation particulier / organisation ───────────────────────────────────
+
+function adaptOnboarding() {
+  const step3 = document.getElementById('step-3')
+
+  if (venueType === 'particulier') {
+    totalSteps = 3
+    if (step3) step3.style.display = 'none'
+
+    document.querySelector('#step-1 .step-tag').textContent = '✦ Étape 1 sur 3'
+    document.querySelector('#step-2 .step-tag').textContent = '✦ Étape 2 sur 3'
+    document.querySelector('#step-4 .step-tag').textContent = '✦ Étape 3 sur 3'
+    document.getElementById('step-indicator').textContent = 'Étape 1 sur 3'
+
+    const photosSection = document.getElementById('venue-photos-section')
+    if (photosSection) photosSection.style.display = 'none'
+
+    const cityInput = document.getElementById('venue-city')
+    if (cityInput) {
+      cityInput.placeholder = 'Paris, Lyon, Marseille...'
+      cityInput.setAttribute('required', 'true')
+      const label = cityInput.previousElementSibling
+      if (label) label.innerHTML = 'Localisation <span style="color:#ff4444;">*</span>'
+    }
+  } else {
+    totalSteps = 4
+    if (step3) step3.style.display = 'block'
+    document.querySelector('#step-1 .step-tag').textContent = '✦ Étape 1 sur 4'
+    document.querySelector('#step-2 .step-tag').textContent = '✦ Étape 2 sur 4'
+    document.querySelector('#step-3 .step-tag').textContent = '✦ Étape 3 sur 4'
+    document.querySelector('#step-4 .step-tag').textContent = '✦ Étape 4 sur 4'
+    document.getElementById('step-indicator').textContent = 'Étape 1 sur 4'
+  }
+}
+
+// ── Étape 1 — Photo de profil ────────────────────────────────────────────────
+
 window.handleProfilePhoto = function(input) {
   const file = input.files[0]
   if (!file) return
@@ -265,13 +306,10 @@ window.handleProfilePhoto = function(input) {
   const reader = new FileReader()
   reader.onload = e => {
     profilePhotoBase64 = e.target.result
-    const preview = document.getElementById('profile-photo-preview')
-    const placeholder = document.getElementById('profile-photo-placeholder')
-    const zone = document.getElementById('profile-photo-zone')
-    preview.src = e.target.result
-    preview.style.display = 'block'
-    placeholder.style.display = 'none'
-    zone.classList.add('filled')
+    document.getElementById('profile-photo-preview').src = e.target.result
+    document.getElementById('profile-photo-preview').style.display = 'block'
+    document.getElementById('profile-photo-placeholder').style.display = 'none'
+    document.getElementById('profile-photo-zone').classList.add('filled')
     document.getElementById('btn-step1').disabled = false
   }
   reader.readAsDataURL(file)
@@ -282,7 +320,8 @@ window.validateStep1 = function() {
   showStep(2)
 }
 
-// ÉTAPE 2 — Description + photos
+// ── Étape 2 — Description + photos ──────────────────────────────────────────
+
 window.updateDescCount = function() {
   const val = document.getElementById('venue-description').value.trim()
   const words = val.split(/\s+/).filter(w => w.length > 0).length
@@ -309,11 +348,19 @@ window.validateStep2 = function() {
   const desc = document.getElementById('venue-description').value.trim()
   const words = desc.split(/\s+/).filter(w => w.length > 0).length
   if (words < 10) { alert('La description doit contenir au moins 10 mots.'); return }
-  // Particulier → saute l'étape SIRET
-  showStep(window._skipSiret ? 4 : 3)
+
+  if (venueType === 'particulier') {
+    const city = document.getElementById('venue-city')?.value?.trim()
+    if (!city) { alert('La localisation est requise.'); return }
+    updateRecap()
+    showStep(4)
+  } else {
+    showStep(3)
+  }
 }
 
-// ÉTAPE 3 — SIRET + document
+// ── Étape 3 — SIRET + document ───────────────────────────────────────────────
+
 window.formatSiret = function(input) {
   let val = input.value.replace(/\s/g, '').replace(/\D/g, '')
   if (val.length > 9) val = val.slice(0, 9) + ' ' + val.slice(9, 14)
@@ -346,12 +393,16 @@ window.validateStep3 = function() {
   showStep(4)
 }
 
+// ── Récap ────────────────────────────────────────────────────────────────────
+
 function updateRecap() {
   const photo = document.getElementById('recap-photo')
   if (photo && profilePhotoBase64) photo.src = profilePhotoBase64
 
   const orgEl = document.getElementById('recap-org-name')
-  if (orgEl) orgEl.textContent = document.getElementById('org-name').value.trim()
+  if (orgEl) orgEl.textContent = venueType === 'particulier'
+    ? (document.getElementById('venue-city').value.trim() || 'Particulier')
+    : document.getElementById('org-name').value.trim()
 
   const cityEl = document.getElementById('recap-city')
   if (cityEl) cityEl.textContent = document.getElementById('venue-city').value.trim()
@@ -372,18 +423,29 @@ function updateRecap() {
 
   const siretCheck = document.getElementById('recap-siret-check')
   if (siretCheck) {
-    siretCheck.textContent = '✅ SIREN/SIRET : ' + document.getElementById('org-siret').value
-    siretCheck.style.color = '#00c864'
+    if (venueType === 'particulier') {
+      siretCheck.textContent = '⬜ SIREN/SIRET (non requis)'
+      siretCheck.style.color = '#666'
+    } else {
+      siretCheck.textContent = '✅ SIREN/SIRET : ' + document.getElementById('org-siret').value
+      siretCheck.style.color = '#00c864'
+    }
   }
 
   const docCheck = document.getElementById('recap-doc-check')
   if (docCheck) {
-    docCheck.textContent = '✅ Document : ' + (docFile?.name || 'ajouté')
-    docCheck.style.color = '#00c864'
+    if (venueType === 'particulier') {
+      docCheck.textContent = '⬜ Document (non requis)'
+      docCheck.style.color = '#666'
+    } else {
+      docCheck.textContent = '✅ Document : ' + (docFile?.name || 'ajouté')
+      docCheck.style.color = '#00c864'
+    }
   }
 }
 
-// FINALISATION
+// ── Finalisation ─────────────────────────────────────────────────────────────
+
 window.completeVenueOnboarding = async function() {
   const btn = document.getElementById('finish-btn')
   btn.disabled = true
@@ -401,7 +463,9 @@ window.completeVenueOnboarding = async function() {
       return
     }
 
-    // Upload photo de profil vers Supabase Storage
+    const isParticulier = venueType === 'particulier'
+
+    // Upload photo de profil
     let pictureUrl = ''
     if (profilePhotoFile) {
       btn.textContent = '⏳ Upload photo...'
@@ -410,44 +474,24 @@ window.completeVenueOnboarding = async function() {
         const accessToken = (await supabase.auth.getSession()).data.session?.access_token
         const storageRes = await fetch(
           `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/avatars/${userId}/profile.${ext}`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': profilePhotoFile.type,
-              'x-upsert': 'true'
-            },
-            body: profilePhotoFile
-          }
+          { method: 'POST', headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': profilePhotoFile.type, 'x-upsert': 'true' }, body: profilePhotoFile }
         )
-        if (storageRes.ok) {
-          pictureUrl = `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/public/avatars/${userId}/profile.${ext}`
-        } else {
-          pictureUrl = profilePhotoBase64
-        }
-      } catch(e) {
-        pictureUrl = profilePhotoBase64
-      }
+        pictureUrl = storageRes.ok
+          ? `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/public/avatars/${userId}/profile.${ext}`
+          : profilePhotoBase64
+      } catch(e) { pictureUrl = profilePhotoBase64 }
     }
 
-    // Upload document légal
-    btn.textContent = '⏳ Upload document...'
+    // Upload document légal (organisation seulement)
     let docUrl = ''
-    if (docFile) {
+    if (!isParticulier && docFile) {
+      btn.textContent = '⏳ Upload document...'
       try {
         const ext = docFile.name.split('.').pop()
         const accessToken = (await supabase.auth.getSession()).data.session?.access_token
         const docStorageRes = await fetch(
           `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/identity-docs/${userId}/legal_doc.${ext}`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': docFile.type,
-              'x-upsert': 'true'
-            },
-            body: docFile
-          }
+          { method: 'POST', headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': docFile.type, 'x-upsert': 'true' }, body: docFile }
         )
         if (docStorageRes.ok) {
           docUrl = `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/identity-docs/${userId}/legal_doc.${ext}`
@@ -455,8 +499,8 @@ window.completeVenueOnboarding = async function() {
       } catch(e) {}
     }
 
-    // Sauvegarde profil venue en DB
     btn.textContent = '⏳ Finalisation...'
+
     await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -468,30 +512,28 @@ window.completeVenueOnboarding = async function() {
         city: document.getElementById('venue-city').value.trim(),
         website: document.getElementById('venue-website').value.trim(),
         venuePhotos: venuePhotos.filter(Boolean),
-        orgName: window._skipSiret ? '' : document.getElementById('org-name').value.trim(),
-        orgSiret: window._skipSiret ? '' : document.getElementById('org-siret').value.replace(/\s/g, '')
+        orgName: isParticulier ? '' : document.getElementById('org-name').value.trim(),
+        orgSiret: isParticulier ? '' : document.getElementById('org-siret').value.replace(/\s/g, '')
       })
     })
 
-    // Marque profile_complete + identity_status pending
     await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'complete_venue_onboarding',
         userId,
-        orgName: window._skipSiret ? '' : document.getElementById('org-name').value.trim(),
-        orgSiret: window._skipSiret ? '' : document.getElementById('org-siret').value.replace(/\s/g, ''),
+        orgName: isParticulier ? '' : document.getElementById('org-name').value.trim(),
+        orgSiret: isParticulier ? '' : document.getElementById('org-siret').value.replace(/\s/g, ''),
         docUrl
       })
     })
 
-    // Met à jour localStorage
     savedUser.profile_complete = true
     savedUser.profileComplete = true
     savedUser.picture = pictureUrl
     savedUser.venue_description = document.getElementById('venue-description').value.trim()
-    savedUser.identity_status = 'pending'
+    savedUser.identity_status = isParticulier ? 'none' : 'pending'
     localStorage.setItem('cue_user', JSON.stringify(savedUser))
 
     showStep(5)
@@ -504,12 +546,15 @@ window.completeVenueOnboarding = async function() {
   }
 }
 
-// Init
+// ── Init ─────────────────────────────────────────────────────────────────────
+
 async function init() {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
     const localUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
     if (!localUser.id) { window.location.replace('login.html'); return }
+    venueType = localUser.venue_type || 'organisation'
+    adaptOnboarding()
     return
   }
 
@@ -528,17 +573,11 @@ async function init() {
   if (data.user) {
     localStorage.setItem('cue_user', JSON.stringify(data.user))
     localStorage.setItem('cue_logged_in', 'true')
-
-    // Particulier → cache l'étape SIRET (étape 3), ajuste totalSteps
-    if (data.user.venue_type === 'particulier') {
-      const step3 = document.getElementById('step-3')
-      if (step3) step3.style.display = 'none'
-      totalSteps = 3
-      // Remappe : clics sur "Continuer" de l'étape 2 sautent à l'étape 4
-      window._skipSiret = true
-    }
+    venueType = data.user.venue_type || 'organisation'
+    adaptOnboarding()
   }
 }
+
 init()
 </script>
 </body>
