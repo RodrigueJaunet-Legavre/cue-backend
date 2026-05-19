@@ -475,6 +475,18 @@
             </button>
           </div>
 
+          <div id="cond-venue-photos" style="display:none; align-items:center; gap:16px; padding:16px 20px; background:#0a0a0a; border-radius:12px; border:1px solid var(--BORDER); transition:border-color .3s;">
+            <span id="cond-venue-photos-icon" style="font-size:24px;">⬜</span>
+            <div style="flex:1;">
+              <div style="font-weight:700; color:#fff; font-size:14px;">2 photos du lieu minimum</div>
+              <div id="cond-venue-photos-count" style="color:var(--MUTED); font-size:12px; margin-top:2px;">0/2 photos ajoutées</div>
+            </div>
+            <button id="cond-venue-photos-btn" class="btn btn-outline btn-sm"
+                    onclick="showPage('profile', document.querySelector('[data-page=profile]'))">
+              Ajouter →
+            </button>
+          </div>
+
         </div>
 
         <div id="badge-obtained" style="display:none; text-align:center; padding:32px; margin-top:16px; background:rgba(0,200,100,.08); border:1px solid rgba(0,200,100,.3); border-radius:16px;">
@@ -1870,16 +1882,22 @@
       !user.picture.includes('google.com'))
     const hasIdentity = user.identity_status === 'verified'
     const hasFavorite = favoriteDJIds && favoriteDJIds.size > 0
-    const allDone = hasPhoto && hasIdentity && hasFavorite
+    const vType = user.venue_type || 'particulier'
 
-    // Photo
+    // Pour organisation : 2 photos du lieu requises
+    const venuePhotos = user.venue_photos || []
+    const hasVenuePhotos = vType === 'organisation' ? venuePhotos.length >= 2 : true
+
+    const allDone = hasPhoto && hasIdentity && hasFavorite && hasVenuePhotos
+
+    // Photo profil
     document.getElementById('cond-photo-icon').textContent = hasPhoto ? '✅' : '⬜'
     document.getElementById('cond-photo').style.borderColor = hasPhoto ? 'rgba(0,200,100,.3)' : 'var(--BORDER)'
-    const photoBtn = document.getElementById('cond-photo-btn')
-    if (photoBtn) photoBtn.style.display = hasPhoto ? 'none' : 'block'
+    if (document.getElementById('cond-photo-btn')) {
+      document.getElementById('cond-photo-btn').style.display = hasPhoto ? 'none' : 'block'
+    }
 
     // Identité
-    const vType = user.venue_type || 'particulier'
     const identityDesc = vType === 'organisation'
       ? 'SIREN/SIRET + document officiel (-6 mois)'
       : 'Selfie + pièce d\'identité'
@@ -1890,37 +1908,46 @@
     document.getElementById('cond-identity').style.borderColor = hasIdentity ? 'rgba(0,200,100,.3)' : 'var(--BORDER)'
     const identityBtn = document.getElementById('cond-identity-btn')
     if (identityBtn) {
-      if (hasIdentity) {
-        identityBtn.style.display = 'none'
-      } else if (user.identity_status === 'pending') {
-        identityBtn.textContent = '⏳ En attente'
-        identityBtn.disabled = true
-      } else {
-        identityBtn.style.display = 'block'
-        identityBtn.disabled = false
-        identityBtn.textContent = 'Vérifier →'
-      }
+      if (hasIdentity) identityBtn.style.display = 'none'
+      else if (user.identity_status === 'pending') { identityBtn.textContent = '⏳ En attente'; identityBtn.disabled = true }
+      else { identityBtn.style.display = 'block'; identityBtn.disabled = false; identityBtn.textContent = 'Vérifier →' }
     }
 
     // Favori
     document.getElementById('cond-favorite-icon').textContent = hasFavorite ? '✅' : '⬜'
     document.getElementById('cond-favorite').style.borderColor = hasFavorite ? 'rgba(0,200,100,.3)' : 'var(--BORDER)'
-    const favBtn = document.getElementById('cond-favorite-btn')
-    if (favBtn) favBtn.style.display = hasFavorite ? 'none' : 'block'
+    if (document.getElementById('cond-favorite-btn')) {
+      document.getElementById('cond-favorite-btn').style.display = hasFavorite ? 'none' : 'block'
+    }
 
-    // Badge global
+    // Photos du lieu (organisation seulement)
+    const photosCard = document.getElementById('cond-venue-photos')
+    if (photosCard) {
+      photosCard.style.display = vType === 'organisation' ? 'flex' : 'none'
+      if (vType === 'organisation') {
+        document.getElementById('cond-venue-photos-icon').textContent = hasVenuePhotos ? '✅' : '⬜'
+        photosCard.style.borderColor = hasVenuePhotos ? 'rgba(0,200,100,.3)' : 'var(--BORDER)'
+        const photosBtn = document.getElementById('cond-venue-photos-btn')
+        if (photosBtn) photosBtn.style.display = hasVenuePhotos ? 'none' : 'block'
+        const photosCount = document.getElementById('cond-venue-photos-count')
+        if (photosCount) photosCount.textContent = `${venuePhotos.length}/2 photos ajoutées`
+      }
+    }
+
+    // Badge
     const badgeStatus = document.getElementById('badge-status')
+    const total = vType === 'organisation' ? 4 : 3
+    const done = [hasPhoto, hasIdentity, hasFavorite, vType === 'organisation' ? hasVenuePhotos : true].filter(Boolean).length
+
     if (allDone) {
       document.getElementById('badge-obtained').style.display = 'block'
-      const badgeCard = document.getElementById('badge-section-overview')
-      if (badgeCard) badgeCard.style.display = 'none'
+      document.getElementById('badge-section-overview').style.display = 'none'
       if (badgeStatus) { badgeStatus.textContent = '✅ Badge obtenu'; badgeStatus.style.color = '#00c864' }
     } else {
       document.getElementById('badge-obtained').style.display = 'none'
-      const count = [hasPhoto, hasIdentity, hasFavorite].filter(Boolean).length
       if (badgeStatus) {
-        badgeStatus.textContent = `${count}/3 conditions`
-        badgeStatus.style.color = count === 2 ? 'var(--Y)' : 'var(--MUTED)'
+        badgeStatus.textContent = `${done}/${total} conditions`
+        badgeStatus.style.color = done >= total - 1 ? 'var(--Y)' : 'var(--MUTED)'
       }
     }
   }
@@ -4137,46 +4164,80 @@
   }
 
   async function submitOrgVerification() {
-    const orgName = document.getElementById('org-name-verif').value.trim();
-    const orgSiret = document.getElementById('org-siret-verif').value.trim();
-    const docFile = document.getElementById('org-doc-file').files[0];
+    const orgName = document.getElementById('org-name-verif')?.value?.trim()
+    const orgSiret = document.getElementById('org-siret-verif')?.value?.trim()
+    const docInput = document.getElementById('org-doc-input') || document.getElementById('org-doc-file')
 
-    if (!orgName || !docFile) {
-      alert('Merci de remplir le nom de l\'organisation et de joindre un document.');
-      return;
-    }
+    if (!orgName || !orgSiret) { alert('Remplis le nom et le SIRET/SIREN.'); return }
+    if (!docInput?.files[0]) { alert('Ajoute le document officiel.'); return }
 
-    const progress = document.getElementById('org-upload-progress');
-    progress.style.display = 'block';
+    const btn = document.querySelector('#verif-form-organisation .btn-primary') ||
+                document.querySelector('button[onclick*="submitOrgVerification"]')
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Envoi...' }
 
     try {
-      const userId = user.id || user.user_id;
-      const formData = new FormData();
-      formData.append('userId', userId);
-      formData.append('identity_card', docFile);
-      formData.append('selfie', docFile); // Reuse field — org doc as both
-      formData.append('orgName', orgName);
-      formData.append('orgSiret', orgSiret);
+      const { supabase } = await import('./js/supabase-client.js')
+      const { data: { session } } = await supabase.auth.getSession()
+      const userId = session?.user?.id || user.id || user.user_id
 
-      const res = await fetch('/api/upload-identity', {
+      // Upload document vers Supabase Storage
+      const file = docInput.files[0]
+      const ext = file.name.split('.').pop()
+      const storageRes = await fetch(
+        `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/identity-docs/${userId}/org_doc.${ext}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': file.type,
+            'x-upsert': 'true'
+          },
+          body: file
+        }
+      )
+
+      const docUrl = storageRes.ok
+        ? `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/identity-docs/${userId}/org_doc.${ext}`
+        : null
+
+      // Sauvegarde en DB
+      await fetch('/api/auth', {
         method: 'POST',
-        body: formData
-      });
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'submit_org_verification',
+          userId,
+          orgName,
+          orgSiret,
+          docUrl
+        })
+      })
 
-      if (res.ok) {
-        user.identity_status = 'pending';
-        user.org_name = orgName;
-        if (orgSiret) user.org_siret = orgSiret;
-        initVerificationPage();
-        alert('✅ Documents envoyés ! Vérification sous 48h.');
-      } else {
-        const data = await res.json();
-        throw new Error(data.error || 'Erreur serveur');
-      }
-    } catch (err) {
-      alert('Erreur : ' + err.message);
+      // Email à l'admin
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'admin_org_verification',
+          email: 'admin@cuedj.eu',
+          userName: (user.first_name || '') + ' ' + (user.last_name || ''),
+          userEmail: user.email,
+          orgName,
+          orgSiret,
+          docUrl,
+          userId
+        })
+      })
+
+      user.identity_status = 'pending'
+      user.org_name = orgName
+      user.org_siret = orgSiret
+      initVerificationPage()
+      alert('✅ Documents envoyés ! Validation sous 24h.')
+    } catch(err) {
+      alert('Erreur : ' + err.message)
     } finally {
-      progress.style.display = 'none';
+      if (btn) { btn.disabled = false; btn.textContent = '📤 Envoyer pour vérification' }
     }
   }
 

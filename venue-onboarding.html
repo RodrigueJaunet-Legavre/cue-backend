@@ -134,7 +134,7 @@
 <div class="step" id="step-3">
   <div class="step-tag">✦ Étape 3 sur 4</div>
   <h1 class="step-title">INFOS<br>LÉGALES.</h1>
-  <p class="step-sub">Pour la vérification de votre organisation. <span class="required">Obligatoire</span></p>
+  <p class="step-sub">Optionnel — vous pourrez compléter depuis votre profil après inscription.</p>
 
   <div class="form-group">
     <label class="form-label">Nom de l'organisation <span class="required">*</span></label>
@@ -355,9 +355,10 @@ window.validateStep2 = function() {
   const words = desc.split(/\s+/).filter(w => w.length > 0).length
   if (words < 10) { alert('La description doit contenir au moins 10 mots.'); return }
 
+  const city = document.getElementById('venue-city')?.value?.trim()
+  if (!city) { alert('La ville est obligatoire.'); return }
+
   if (venueType === 'particulier') {
-    const city = document.getElementById('venue-city')?.value?.trim()
-    if (!city) { alert('La localisation est requise.'); return }
     updateRecap()
     showStep(4)
   } else {
@@ -390,11 +391,7 @@ window.handleDoc = function(input) {
 }
 
 window.validateStep3 = function() {
-  const siret = document.getElementById('org-siret').value.replace(/\s/g, '')
-  const orgName = document.getElementById('org-name').value.trim()
-  if (!orgName) { alert("Remplis le nom de l'organisation."); return }
-  if (siret.length < 9) { alert('SIREN (9 chiffres) ou SIRET (14 chiffres) requis.'); return }
-  if (!docBase64) { alert('Ajoute le document officiel.'); return }
+  // Tout est optionnel ici
   updateRecap()
   showStep(4)
 }

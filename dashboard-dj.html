@@ -1214,7 +1214,7 @@
             <div>✅ Priorité recherche</div>
             <div style="opacity:.4;">❌ Presskit</div>
             <div style="opacity:.4;">❌ Mis en avant N°1</div>
-            <div style="color:#00c864; font-weight:600; margin-top:8px;">8% commission</div>
+            <div style="color:#00c864; font-weight:600; margin-top:8px;">5% commission</div>
           </div>
           <button id="btn-pro" onclick="changePlan('pro')" class="btn" style="width:100%; padding:10px; border-radius:10px; font-weight:700; font-size:13px; font-family:Barlow,sans-serif;"></button>
         </div>
@@ -1229,7 +1229,7 @@
             <div>✅ Priorité recherche</div>
             <div>✅ Mis en avant N°1</div>
             <div>✅ Presskit</div>
-            <div style="color:#00c864; font-weight:600; margin-top:8px;">4% commission</div>
+            <div style="color:#00c864; font-weight:600; margin-top:8px;">0% commission</div>
           </div>
           <button id="btn-business" onclick="changePlan('business')" class="btn" style="width:100%; padding:10px; border-radius:10px; font-weight:700; font-size:13px; font-family:Barlow,sans-serif;"></button>
         </div>
@@ -3626,8 +3626,8 @@
     const plan = user.plan || 'starter';
     const plans = {
       starter: { name: 'STARTER', price: 'Gratuit', commission: '15% de commission par booking', badgeBg: 'rgba(255,255,255,.1)', badgeColor: '#ddd' },
-      pro:     { name: 'PRO',     price: '24€/mois', commission: '8% de commission par booking',  badgeBg: 'rgba(255,195,0,.2)',  badgeColor: '#FFC300' },
-      business:{ name: 'BUSINESS',price: '79€/mois', commission: '4% de commission par booking',  badgeBg: 'rgba(255,195,0,.2)',  badgeColor: '#FFC300' }
+      pro:     { name: 'PRO',     price: '24€/mois', commission: '5% de commission par booking',  badgeBg: 'rgba(255,195,0,.2)',  badgeColor: '#FFC300' },
+      business:{ name: 'BUSINESS',price: '79€/mois', commission: '0% de commission par booking',  badgeBg: 'rgba(255,195,0,.2)',  badgeColor: '#FFC300' }
     };
     const current = plans[plan] || plans.starter;
     document.getElementById('sub-current-plan-name').textContent = current.name;

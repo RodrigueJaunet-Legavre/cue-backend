@@ -103,6 +103,30 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    if (type === 'admin_org_verification') {
+      const { userName, userEmail, orgName, orgSiret, docUrl, userId } = req.body;
+      result = await resend.emails.send({
+        from: 'CUE DJ <noreply@cuedj.eu>',
+        to: email,
+        subject: `🏢 Vérification organisation — ${orgName}`,
+        html: `
+          <div style="font-family:Arial; padding:40px; max-width:600px; margin:auto;">
+            <h2 style="color:#FFC300;">Nouvelle demande de vérification organisation</h2>
+            <table style="width:100%; border-collapse:collapse; margin:20px 0;">
+              <tr><td style="padding:10px; border:1px solid #ddd; font-weight:bold;">Utilisateur</td><td style="padding:10px; border:1px solid #ddd;">${userName}</td></tr>
+              <tr><td style="padding:10px; border:1px solid #ddd; font-weight:bold;">Email</td><td style="padding:10px; border:1px solid #ddd;">${userEmail}</td></tr>
+              <tr><td style="padding:10px; border:1px solid #ddd; font-weight:bold;">Organisation</td><td style="padding:10px; border:1px solid #ddd;">${orgName}</td></tr>
+              <tr><td style="padding:10px; border:1px solid #ddd; font-weight:bold;">SIRET/SIREN</td><td style="padding:10px; border:1px solid #ddd; font-family:monospace;">${orgSiret}</td></tr>
+              <tr><td style="padding:10px; border:1px solid #ddd; font-weight:bold;">Document</td><td style="padding:10px; border:1px solid #ddd;">${docUrl ? `<a href="${docUrl}">Voir le document</a>` : '—'}</td></tr>
+            </table>
+            <a href="https://cuedj.eu/cue-secure-admin-panel.html" style="background:#FFC300; color:#000; padding:14px 32px; border-radius:8px; text-decoration:none; font-weight:700; display:inline-block;">
+              Gérer dans l'admin →
+            </a>
+          </div>
+        `
+      });
+    }
+
     return res.status(200).json({ success: true });
   } catch (err) {
     console.log('ERREUR:', err.message);

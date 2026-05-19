@@ -343,11 +343,11 @@
     <div id="modal-user-info" style="margin-bottom:24px;"></div>
     <div class="doc-preview">
       <div style="flex:1;">
-        <p style="color:var(--MUTED); font-size:12px; margin-bottom:8px;">SELFIE</p>
+        <p id="selfie-label" style="color:var(--MUTED); font-size:12px; margin-bottom:8px;">SELFIE</p>
         <img id="modal-selfie" src="" alt="Selfie" style="max-width:100%;">
       </div>
       <div style="flex:1;">
-        <p style="color:var(--MUTED); font-size:12px; margin-bottom:8px;">PIÈCE D'IDENTITÉ</p>
+        <p id="doc-label" style="color:var(--MUTED); font-size:12px; margin-bottom:8px;">PIÈCE D'IDENTITÉ</p>
         <img id="modal-document" src="" alt="Document" style="max-width:100%;">
       </div>
     </div>
@@ -712,45 +712,76 @@
   // MODAL
   async function openVerifModal(userId, name, email, userType) {
     currentVerifUserId = userId;
+
+    // Récupère les infos complètes
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_user', userId })
+    });
+    const data = await res.json();
+    const u = data.user;
+
+    const isOrg = u?.venue_type === 'organisation';
+
     document.getElementById('modal-user-info').innerHTML = `
-      <p><strong>${name}</strong> — ${userType?.toUpperCase()}</p>
+      <p><strong>${name}</strong> — ${userType?.toUpperCase()} ${isOrg ? '(Organisation)' : '(Particulier)'}</p>
       <p style="color:var(--MUTED);">${email}</p>
+      ${isOrg ? `
+        <div style="background:#1a1a1a; border-radius:8px; padding:12px 16px; margin-top:12px;">
+          <div><strong>Organisation :</strong> ${u.org_name || '—'}</div>
+          <div><strong>SIRET :</strong> ${u.org_siret || '—'}</div>
+        </div>
+      ` : ''}
     `;
 
     // Reset images
     document.getElementById('modal-selfie').src = '';
     document.getElementById('modal-document').src = '';
-    document.getElementById('modal-selfie').alt = 'Chargement...';
-    document.getElementById('modal-document').alt = 'Chargement...';
     document.getElementById('modal-selfie').style.display = 'block';
     document.getElementById('modal-document').style.display = 'block';
 
-    // Charge les documents depuis la DB + Supabase Storage
+    // Charge les documents
     try {
-      const res = await fetch('/api/admin', {
+      const docsRes = await fetch('/api/admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminAction: 'get_docs', adminSecret: getSecret(), userId })
+        body: JSON.stringify({ adminAction: 'get_docs', userId, adminSecret: getSecret() })
       });
-      const data = await res.json();
+      const docsData = await docsRes.json();
 
-      if (data.selfieUrl) {
-        document.getElementById('modal-selfie').src = data.selfieUrl;
+      if (isOrg) {
+        // Organisation → document SIRET uniquement
+        document.getElementById('modal-selfie').style.display = 'none';
+        document.getElementById('selfie-label').textContent = '—';
+        document.getElementById('doc-label').textContent = 'DOCUMENT SIRET/KBIS';
+        if (docsData.documentUrl) {
+          document.getElementById('modal-document').src = docsData.documentUrl;
+        } else {
+          document.getElementById('modal-document').alt = 'Aucun document';
+        }
       } else {
-        document.getElementById('modal-selfie').alt = 'Aucun document';
+        // Particulier (DJ ou venue) → selfie + CNI
+        document.getElementById('selfie-label').textContent = 'SELFIE';
+        document.getElementById('doc-label').textContent = 'PIÈCE D\'IDENTITÉ';
+        if (docsData.selfieUrl) {
+          document.getElementById('modal-selfie').src = docsData.selfieUrl;
+        } else {
+          document.getElementById('modal-selfie').alt = 'Aucun document';
+        }
+        if (docsData.documentUrl) {
+          document.getElementById('modal-document').src = docsData.documentUrl;
+        } else {
+          document.getElementById('modal-document').alt = 'Aucun document';
+        }
       }
 
-      if (data.documentUrl) {
-        document.getElementById('modal-document').src = data.documentUrl;
-      } else {
-        document.getElementById('modal-document').alt = 'Aucun document';
-      }
-
-      if (!data.selfieUrl && !data.documentUrl) {
+      if (!docsData.selfieUrl && !docsData.documentUrl) {
         document.getElementById('modal-user-info').innerHTML += '<p style="color:#FFC300; margin-top:12px;">⚠️ Aucun document soumis</p>';
       }
-    } catch (err) {
-      document.getElementById('modal-user-info').innerHTML += `<p style="color:#FFC300; margin-top:12px;">⚠️ Erreur chargement documents</p>`;
+    } catch(err) {
+      console.log('Erreur chargement docs:', err);
+      document.getElementById('modal-user-info').innerHTML += '<p style="color:#FFC300; margin-top:12px;">⚠️ Erreur chargement documents</p>';
     }
 
     document.getElementById('modal-verif').classList.add('open');

@@ -16,8 +16,8 @@ module.exports = async function handler(req, res) {
     try {
       const [dj] = await sql`SELECT plan FROM users WHERE id = ${djId}`;
       const plan = dj?.plan || 'starter';
-      const commissions = { starter: 0.15, pro: 0.08, business: 0.04 };
-      const commission = commissions[plan] || 0.15;
+      const commissions = { starter: 0.15, pro: 0.05, business: 0.00 };
+      const commission = commissions[plan] ?? 0.15;
       const totalCents = Math.round(parseFloat(amount) * 100);
       const commissionCents = Math.round(totalCents * commission);
       const djCents = totalCents - commissionCents;

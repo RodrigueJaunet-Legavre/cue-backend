@@ -482,5 +482,32 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'submit_org_verification') {
+    const { userId, orgName, orgSiret, docUrl } = body;
+    try {
+      await sql`
+        UPDATE users SET
+          org_name = ${orgName},
+          org_siret = ${orgSiret},
+          identity_status = 'pending',
+          updated_at = NOW()
+        WHERE id = ${userId}
+      `;
+      if (docUrl) {
+        await sql`
+          INSERT INTO identity_documents (id, user_id, document_url, status, submitted_at)
+          VALUES (${crypto.randomUUID()}, ${userId}, ${docUrl}, 'pending', NOW())
+          ON CONFLICT (user_id) DO UPDATE SET
+            document_url = ${docUrl},
+            status = 'pending',
+            submitted_at = NOW()
+        `;
+      }
+      return res.status(200).json({ success: true });
+    } catch(err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   return res.status(400).json({ error: 'Action inconnue' });
 }
