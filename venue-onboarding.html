@@ -12,8 +12,8 @@
     .step-indicator { color:#888; font-size:14px; font-weight:700; }
     .progress-bar { height:3px; background:#1a1a1a; }
     .progress-fill { height:100%; background:#FFC300; transition:width .4s ease; }
-    .step { display:none; max-width:640px; margin:0 auto; padding:48px 24px; }
-    .step.active { display:block; animation:fadeIn .3s ease; }
+    .step { display:none !important; max-width:640px; margin:0 auto; padding:48px 24px; }
+    .step.active { display:block !important; animation:fadeIn .3s ease; }
     @keyframes fadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
     .step-tag { color:#FFC300; font-size:13px; font-weight:700; letter-spacing:2px; text-transform:uppercase; margin-bottom:16px; }
     .step-title { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:52px; color:#fff; line-height:1; margin-bottom:16px; text-transform:uppercase; }
@@ -268,7 +268,10 @@ function adaptOnboarding() {
     totalSteps = 3
     // Cache étape SIRET et photos
     const step3 = document.getElementById('step-3')
-    if (step3) step3.style.display = 'none'
+    if (step3) {
+      step3.style.display = 'none'
+      step3.classList.remove('active')
+    }
     const photosSection = document.getElementById('venue-photos-section')
     if (photosSection) photosSection.style.display = 'none'
     // Met à jour labels
