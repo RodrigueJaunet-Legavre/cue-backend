@@ -127,7 +127,12 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    return res.status(200).json({ success: true });
+    console.log('Resend result:', JSON.stringify(result));
+    return res.status(200).json({
+      success: true,
+      resendResult: result,
+      resendError: result?.error || null
+    });
   } catch (err) {
     console.log('ERREUR:', err.message);
     return res.status(500).json({ error: err.message });
