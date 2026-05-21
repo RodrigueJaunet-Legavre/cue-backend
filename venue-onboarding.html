@@ -271,6 +271,9 @@ function adaptOnboarding() {
     }
     const photosSection = document.getElementById('venue-photos-section')
     if (photosSection) photosSection.style.display = 'none'
+    // Cache site web
+    const websiteGroup = document.getElementById('venue-website')?.closest('.form-group')
+    if (websiteGroup) websiteGroup.style.display = 'none'
     // Met à jour labels
     const tag1 = document.querySelector('#step-1 .step-tag')
     const tag2 = document.querySelector('#step-2 .step-tag')
@@ -293,6 +296,8 @@ function adaptOnboarding() {
     if (step3) step3.style.display = 'block'
     const photosSection = document.getElementById('venue-photos-section')
     if (photosSection) photosSection.style.display = 'block'
+    const websiteGroupOrg = document.getElementById('venue-website')?.closest('.form-group')
+    if (websiteGroupOrg) websiteGroupOrg.style.display = 'block'
     document.querySelector('#step-1 .step-tag').textContent = '✦ Étape 1 sur 4'
     document.querySelector('#step-2 .step-tag').textContent = '✦ Étape 2 sur 4'
     document.querySelector('#step-3 .step-tag').textContent = '✦ Étape 3 sur 4'
