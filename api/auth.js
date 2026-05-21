@@ -445,11 +445,12 @@ module.exports = async function handler(req, res) {
 
   if (action === 'complete_venue_onboarding') {
     const { userId, orgName, orgSiret, docUrl } = body;
+    const newStatus = docUrl ? 'pending' : 'none';
     try {
       await sql`
         UPDATE users SET
           profile_complete = true,
-          identity_status = 'pending',
+          identity_status = ${newStatus},
           org_name = ${orgName || null},
           org_siret = ${orgSiret || null},
           updated_at = NOW()

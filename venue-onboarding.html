@@ -272,10 +272,12 @@ function adaptOnboarding() {
     const photosSection = document.getElementById('venue-photos-section')
     if (photosSection) photosSection.style.display = 'none'
     // Met à jour labels
-    document.querySelectorAll('.step-tag').forEach((el, i) => {
-      const labels = ['✦ Étape 1 sur 3', '✦ Étape 2 sur 3', '', '✦ Étape 3 sur 3']
-      if (labels[i]) el.textContent = labels[i]
-    })
+    const tag1 = document.querySelector('#step-1 .step-tag')
+    const tag2 = document.querySelector('#step-2 .step-tag')
+    const tag4 = document.querySelector('#step-4 .step-tag')
+    if (tag1) tag1.textContent = '✦ Étape 1 sur 3'
+    if (tag2) tag2.textContent = '✦ Étape 2 sur 3'
+    if (tag4) tag4.textContent = '✦ Étape 3 sur 3'
     document.getElementById('step-indicator').textContent = 'Étape 1 sur 3'
     const cityInput = document.getElementById('venue-city')
     if (cityInput) {
