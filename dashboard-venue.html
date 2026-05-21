@@ -44,7 +44,7 @@
     .nav-item.active { color:var(--Y); background:rgba(255,195,0,.08); }
     .nav-item.active::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--Y); border-radius:0 2px 2px 0; }
     .nav-icon { font-size:18px; width:22px; text-align:center; }
-    .nav-badge { margin-left:auto; background:var(--ERROR); color:#fff; border-radius:20px; padding:2px 8px; font-size:10px; font-weight:700; }
+    .nav-badge { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:#ff3b30; color:#fff; font-size:10px; font-weight:800; min-width:18px; height:18px; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 5px; box-shadow:0 2px 6px rgba(255,59,48,.5); pointer-events:none; line-height:1; z-index:10; }
 
     .sidebar-footer { padding:24px; border-top:1px solid var(--BORDER); margin-top:auto; }
     .btn-logout { width:100%; padding:12px; border:1px solid var(--BORDER); border-radius:10px; background:transparent; color:var(--MUTED); cursor:pointer; font-weight:600; font-size:14px; transition:all .2s; }
@@ -309,8 +309,7 @@
     .clickable-name:hover { color:var(--Y); text-decoration:underline; text-underline-offset:3px; }
 
     /* NAV BADGES */
-    .nav-item { position:relative; }
-    .nav-badge { position:absolute; right:14px; top:50%; transform:translateY(-50%); background:#ff3b30; color:#fff; font-size:10px; font-weight:800; min-width:18px; height:18px; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 5px; box-shadow:0 2px 8px rgba(255,59,48,.5); pointer-events:none; }
+    .nav-item { position:relative; display:flex; align-items:center; }
     @keyframes badgePop { from { transform:translateY(-50%) scale(0); opacity:0; } to { transform:translateY(-50%) scale(1); opacity:1; } }
   </style>
 </head>
@@ -3963,16 +3962,14 @@
   const notifCounts = { messages: 0 }
 
   function updateNavBadge(page, count) {
-    const navItem = document.querySelector(`.nav-item[data-page="${page}"]`);
-    if (!navItem) return;
-    const existing = navItem.querySelector('.nav-count-badge');
-    if (existing) existing.remove();
+    const navItem = document.querySelector(`.nav-item[data-page="${page}"]`)
+    if (!navItem) return
+    navItem.querySelectorAll('.nav-badge').forEach(b => b.remove())
     if (count > 0) {
-      const badge = document.createElement('span');
-      badge.className = 'nav-badge nav-count-badge';
-      badge.style.animation = 'badgePop .3s cubic-bezier(.34,1.56,.64,1) both';
-      badge.textContent = count > 99 ? '99+' : String(count);
-      navItem.appendChild(badge);
+      const badge = document.createElement('span')
+      badge.className = 'nav-badge'
+      badge.textContent = count > 99 ? '99+' : String(count)
+      navItem.appendChild(badge)
     }
   }
 
