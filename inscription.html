@@ -368,54 +368,65 @@ function checkReferral() {
 }
 
 async function submitStep1(e) {
-  e.preventDefault();
+  if (e) e.preventDefault()
 
-  // Nettoyage complet — repart de zéro
-  localStorage.removeItem('cue_user');
-  localStorage.removeItem('cue_logged_in');
-  sessionStorage.removeItem('reg_user');
-  sessionStorage.removeItem('verif_code');
-  sessionStorage.removeItem('verif_code_expiry');
-  sessionStorage.removeItem('verif_email');
-  sessionStorage.removeItem('google_temp');
+  document.querySelectorAll('.form-error').forEach(el => el.classList.remove('show'))
 
-  document.querySelectorAll('.form-error').forEach(el => el.classList.remove('show'));
-  
-  const uType = document.getElementById('userType').value;
-  const data = {
-    firstName: document.getElementById('firstName').value.trim(),
-    lastName: document.getElementById('lastName').value.trim(),
-    email: document.getElementById('email').value.trim(),
-    phone: document.getElementById('phone').value.trim(),
-    password: document.getElementById('password').value,
-    confirmPassword: document.getElementById('confirmPassword').value,
-    userType: uType,
-    referralCode: document.getElementById('referralCode').value.trim(),
+  const firstName = document.getElementById('firstName')?.value?.trim()
+  const lastName = document.getElementById('lastName')?.value?.trim()
+  const email = document.getElementById('email')?.value?.trim()
+  const phone = document.getElementById('phone')?.value?.trim()
+  const password = document.getElementById('password')?.value
+  const confirmPassword = document.getElementById('confirmPassword')?.value
+  const uType = document.getElementById('userType')?.value
+
+  let err = false
+  if (!firstName) { document.getElementById('firstNameError').classList.add('show'); err = true }
+  if (!lastName) { document.getElementById('lastNameError').classList.add('show'); err = true }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { document.getElementById('emailError').classList.add('show'); err = true }
+  if (!/^[0-9]{9,10}$/.test((phone || '').replace(/\s/g, ''))) { document.getElementById('phoneError').classList.add('show'); err = true }
+  if (!password || password.length < 8) { document.getElementById('passwordError').classList.add('show'); err = true }
+  if (password !== confirmPassword) { document.getElementById('confirmError').classList.add('show'); err = true }
+  if (uType === 'venue' && !selectedVenueType) { alert('Choisis entre Particulier et Organisation.'); return }
+  if (err) return
+
+  const btn = document.getElementById('submitBtn')
+  const spinner = document.getElementById('submitSpinner')
+  if (btn) btn.disabled = true
+  if (spinner) spinner.classList.add('on')
+
+  // Génère et stocke le code de vérification
+  const code = Math.floor(100000 + Math.random() * 900000).toString()
+  sessionStorage.setItem('verif_code', code)
+  sessionStorage.setItem('verif_code_expiry', Date.now() + 10 * 60 * 1000)
+  sessionStorage.setItem('verif_email', email)
+  sessionStorage.setItem('reg_user', JSON.stringify({
+    firstName, lastName, email, phone,
+    password, userType: uType,
     venueType: uType === 'venue' ? selectedVenueType : null,
     orgName: uType === 'venue' && selectedVenueType === 'organisation' ? (document.getElementById('orgName')?.value?.trim() || null) : null,
     orgSiret: uType === 'venue' && selectedVenueType === 'organisation' ? (document.getElementById('orgSiret')?.value?.trim() || null) : null,
+    referralCode: document.getElementById('referralCode')?.value?.trim() || null,
     picture: uType === 'venue' ? (venueProfilePhoto || null) : null,
     venuePhotos: uType === 'venue' ? venuePhotos.filter(Boolean) : []
-  };
-  
-  let err = false;
-  if (!data.firstName) { document.getElementById('firstNameError').classList.add('show'); err = true; }
-  if (!data.lastName) { document.getElementById('lastNameError').classList.add('show'); err = true; }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) { document.getElementById('emailError').classList.add('show'); err = true; }
-  if (!/^[0-9]{9,10}$/.test(data.phone.replace(/\s/g, ''))) { document.getElementById('phoneError').classList.add('show'); err = true; }
-  if (data.password.length < 8) { document.getElementById('passwordError').classList.add('show'); err = true; }
-  if (data.password !== data.confirmPassword) { document.getElementById('confirmError').classList.add('show'); err = true; }
-  if (err) return;
-  
-  formData = data;
-  document.getElementById('submitBtn').disabled = true;
-  document.getElementById('submitSpinner').classList.add('on');
-  await sendVerificationCode(data.email, data.firstName);
-  document.getElementById('displayEmail').textContent = data.email;
-  document.getElementById('step1').style.display = 'none';
-  document.getElementById('step2').style.display = 'block';
-  document.getElementById('submitBtn').disabled = false;
-  document.getElementById('submitSpinner').classList.remove('on');
+  }))
+
+  try {
+    const res = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'verification', email, firstName, code })
+    })
+    if (!res.ok) { alert('Erreur envoi email. Réessaie.'); return }
+    document.getElementById('displayEmail').textContent = email
+    document.getElementById('step1').style.display = 'none'
+    document.getElementById('step2').style.display = 'block'
+  } catch (err) {
+    alert('Erreur réseau. Réessaie.')
+  } finally {
+    if (btn) btn.disabled = false
+    if (spinner) spinner.classList.remove('on')
+  }
 }
 
 function handleCodeInput(input, type) {
