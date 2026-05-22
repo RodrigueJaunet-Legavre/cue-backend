@@ -384,7 +384,7 @@ async function submitStep1(e) {
   if (!firstName) { document.getElementById('firstNameError').classList.add('show'); err = true }
   if (!lastName) { document.getElementById('lastNameError').classList.add('show'); err = true }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { document.getElementById('emailError').classList.add('show'); err = true }
-  if (!/^[0-9]{9,10}$/.test((phone || '').replace(/\s/g, ''))) { document.getElementById('phoneError').classList.add('show'); err = true }
+  if (phone && !/^[0-9]{9,10}$/.test((phone || '').replace(/\s/g, ''))) { document.getElementById('phoneError').classList.add('show'); err = true }
   if (!password || password.length < 8) { document.getElementById('passwordError').classList.add('show'); err = true }
   if (password !== confirmPassword) { document.getElementById('confirmError').classList.add('show'); err = true }
   if (uType === 'venue' && !selectedVenueType) { alert('Choisis entre Particulier et Organisation.'); return }
