@@ -3185,30 +3185,39 @@
 
   async function handleTracksChange(input) {
     const files = Array.from(input.files)
-    input.value = ''
+
+    if (!files.length) {
+      alert('Aucun fichier sélectionné')
+      return
+    }
+
+    alert(`${files.length} fichier(s) sélectionné(s) : ${files[0].name}`)
 
     for (const file of files) {
       if (profileTracks.length >= 10) { alert('Maximum 10 tracks.'); break }
 
       const validTypes = ['audio/mpeg', 'audio/wav', 'audio/wave', 'audio/x-wav']
       if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|wav)$/i)) {
-        alert(`${file.name} : format non supporté.`)
-        continue
+        alert(`Format non supporté : ${file.type}`); continue
       }
-      if (file.size > 50 * 1024 * 1024) { alert(`${file.name} dépasse 50MB.`); continue }
 
-      const defaultName = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ')
-      const trackName = await showTrackNameModal(defaultName)
-      if (!trackName) continue
+      alert(`Fichier valide : ${file.name} (${file.type})`)
 
-      const userId = user.id || user.user_id
-      const url = await uploadAudioToSupabase(file, 'dj-tracks', userId)
+      const trackName = await showTrackNameModal(file.name.replace(/\.[^.]+$/, ''))
+      if (!trackName) { alert('Nom annulé'); continue }
+
+      alert(`Upload en cours : ${trackName}`)
+
+      const url = await uploadAudioToSupabase(file, 'dj-tracks', user.id)
+      alert(`URL obtenue : ${url || 'ECHEC'}`)
+
       if (url) {
         profileTracks.push({ name: trackName, url })
+        renderTracksList()
       }
     }
 
-    renderTracksList()
+    input.value = ''
     showSaveBar()
   }
 
