@@ -108,10 +108,100 @@
     .doc-preview { display:flex; gap:16px; margin-bottom:24px; }
     .doc-preview img { width:100%; border-radius:8px; border:1px solid var(--BORDER); }
     .modal-actions { display:flex; gap:12px; margin-top:24px; }
+
+    /* Mobile header — caché sur desktop */
+    .admin-mobile-header { display: none; }
+
+    /* Overlay admin */
+    #admin-overlay {
+      display: block;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.75);
+      z-index: 299;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s ease;
+    }
+    #admin-overlay.open { opacity: 1; pointer-events: auto; }
+
+    @media (max-width: 768px) {
+      .admin-mobile-header {
+        display: flex !important;
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        height: 56px;
+        background: #080808;
+        border-bottom: 1px solid #1a1a1a;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+        z-index: 350;
+      }
+
+      /* Sidebar drawer */
+      .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: -100% !important;
+        width: 85% !important;
+        max-width: 300px !important;
+        height: 100vh !important;
+        z-index: 300 !important;
+        transition: left .3s ease !important;
+        overflow-y: auto !important;
+        box-shadow: none !important;
+      }
+      .sidebar.drawer-open {
+        left: 0 !important;
+        box-shadow: 8px 0 32px rgba(0,0,0,.8) !important;
+      }
+
+      /* Main */
+      .main {
+        margin-left: 0 !important;
+        padding: 72px 16px 32px !important;
+        width: 100% !important;
+      }
+
+      /* Tables → cards */
+      table { display: none !important; }
+      .admin-card-mobile {
+        display: block !important;
+        background: var(--CARD);
+        border: 1px solid var(--BORDER);
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 12px;
+      }
+
+      /* Stats */
+      .admin-stats-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+      }
+
+      input, textarea, select { font-size: 16px !important; }
+      .btn, button { font-size: 14px !important; }
+    }
   </style>
   <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
+
+<!-- Header mobile admin -->
+<div class="admin-mobile-header">
+  <div style="color:#FFC300; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; letter-spacing:2px;">CUE ADMIN</div>
+  <button onclick="toggleAdminMenu()"
+          style="background:none; border:none; cursor:pointer; padding:8px; display:flex; flex-direction:column; gap:5px; align-items:center;">
+    <span style="display:block; width:22px; height:2px; background:#fff; border-radius:2px;"></span>
+    <span style="display:block; width:22px; height:2px; background:#fff; border-radius:2px;"></span>
+    <span style="display:block; width:22px; height:2px; background:#fff; border-radius:2px;"></span>
+  </button>
+</div>
+<div id="admin-overlay" onclick="toggleAdminMenu()"></div>
 
 <!-- LOGIN -->
 <div id="login-overlay">
@@ -863,6 +953,14 @@
   if (sessionStorage.getItem('admin_secret')) {
     document.getElementById('login-overlay').style.display = 'none';
     loadAllData();
+  }
+
+  function toggleAdminMenu() {
+    const sidebar = document.querySelector('.sidebar')
+    const overlay = document.getElementById('admin-overlay')
+    sidebar.classList.toggle('drawer-open')
+    overlay.classList.toggle('open')
+    document.body.style.overflow = sidebar.classList.contains('drawer-open') ? 'hidden' : ''
   }
 </script>
 </body>
