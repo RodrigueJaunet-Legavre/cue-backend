@@ -511,8 +511,9 @@ async function sendVerificationCode(email, firstName) {
 function verifyCode(inputCode) {
   const storedCode = sessionStorage.getItem('verif_code');
   const expiry = sessionStorage.getItem('verif_code_expiry');
+  if (!storedCode) { alert('Session expirée. Renvoie un nouveau code.'); return false; }
   if (Date.now() > Number(expiry)) { alert('Code expiré. Renvoie un nouveau code.'); return false; }
-  if (inputCode !== storedCode) return false;
+  if (inputCode.trim() !== storedCode.trim()) return false;
   return true;
 }
 
