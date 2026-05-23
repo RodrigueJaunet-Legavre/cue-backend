@@ -931,6 +931,7 @@
             <div id="conv-dj-name" style="font-weight:700; font-size:16px; color:#fff;"></div>
           </div>
           <div id="conv-messages" style="flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:8px;"></div>
+          <div id="chat-actions-bar" style="padding:8px 16px; border-top:1px solid var(--BORDER); background:#0a0a0a; display:none; gap:8px; flex-wrap:wrap;"></div>
           <div style="padding:12px 16px; border-top:1px solid var(--BORDER); background:#0a0a0a; display:flex; gap:12px;">
             <input id="message-input" type="text" placeholder="Ton message..."
                    style="flex:1; background:#111; border:1px solid var(--BORDER); border-radius:8px; padding:10px 14px; color:#fff; font-size:14px; outline:none;"
@@ -964,8 +965,11 @@
   <!-- CONTRATS IA -->
   <div id="page-contracts" class="page">
     <div class="page-header">
-      <h1 class="page-title">CONTRATS</h1>
-      <p class="page-sub">Vos contrats de prestation</p>
+      <div>
+        <h1 class="page-title">CONTRATS</h1>
+        <p class="page-sub">Vos contrats de prestation</p>
+      </div>
+      <button class="btn btn-primary" onclick="openContractGenerator({})">✨ Nouveau contrat IA</button>
     </div>
 
     <!-- Liste des contrats -->
@@ -3027,6 +3031,7 @@
     document.getElementById('conversation-active').style.display = 'flex';
     document.getElementById('conv-dj-name').textContent = djName;
 
+    renderChatActions(currentVenueConv);
     await loadVenueMessages(convId);
   }
 
@@ -4619,6 +4624,183 @@
   }
 
   init();
-</script>
-</body>
-</html>
+
+  // ─── CONTRACT GENERATOR ────────────────────────────────────────────────────
+
+  function renderChatActions(conv) {
+    const bar = document.getElementById('chat-actions-bar');
+    if (!bar) return;
+    bar.style.display = 'flex';
+    const djId = conv.dj_id || conv.djId || null;
+    const venueId = conv.venue_id || conv.venueId || (user && user.id) || null;
+    bar.innerHTML = `
+      <button onclick="proposeContract('${conv.id}','${djId}','${venueId}')"
+              style="background:rgba(255,195,0,.12); border:1px solid rgba(255,195,0,.3); color:#FFC300;
+                     border-radius:8px; padding:7px 14px; font-size:13px; font-weight:700; cursor:pointer;
+                     font-family:Barlow,sans-serif; display:flex; align-items:center; gap:6px;">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Proposer un contrat
+      </button>
+    `;
+  }
+
+  function proposeContract(convId, djId, venueId) {
+    openContractGenerator({ convId, djId, venueId });
+  }
+
+  function openContractGenerator(data) {
+    const existing = document.getElementById('modal-contract-generator');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'modal-contract-generator';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
+
+    modal.dataset.convId = data.convId || '';
+    modal.dataset.djId = data.djId || '';
+    modal.dataset.venueId = data.venueId || '';
+
+    modal.innerHTML = `
+      <div style="background:#111;border-radius:20px 20px 0 0;width:100%;max-width:640px;padding:24px 24px 32px;max-height:90vh;overflow-y:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;color:#fff;">✨ GÉNÉRATEUR DE CONTRAT IA</h2>
+          <button onclick="document.getElementById('modal-contract-generator').remove()"
+                  style="background:none;border:none;color:#888;font-size:24px;cursor:pointer;">✕</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div>
+            <label style="color:#888;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Date de l'événement</label>
+            <input id="cg-date" type="date" style="width:100%;background:#1a1a1a;border:1px solid #333;color:#ddd;padding:10px 12px;border-radius:8px;font-size:14px;font-family:Barlow,sans-serif;" />
+          </div>
+          <div>
+            <label style="color:#888;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Lieu</label>
+            <input id="cg-lieu" type="text" placeholder="Ex: Le Rex Club, Paris" style="width:100%;background:#1a1a1a;border:1px solid #333;color:#ddd;padding:10px 12px;border-radius:8px;font-size:14px;font-family:Barlow,sans-serif;" />
+          </div>
+          <div>
+            <label style="color:#888;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Type d'événement</label>
+            <input id="cg-type" type="text" placeholder="Ex: Soirée privée, Festival..." style="width:100%;background:#1a1a1a;border:1px solid #333;color:#ddd;padding:10px 12px;border-radius:8px;font-size:14px;font-family:Barlow,sans-serif;" />
+          </div>
+          <div>
+            <label style="color:#888;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Horaire</label>
+            <div style="display:flex;gap:8px;">
+              <input id="cg-start" type="time" style="flex:1;background:#1a1a1a;border:1px solid #333;color:#ddd;padding:10px 12px;border-radius:8px;font-size:14px;font-family:Barlow,sans-serif;" />
+              <input id="cg-end" type="time" style="flex:1;background:#1a1a1a;border:1px solid #333;color:#ddd;padding:10px 12px;border-radius:8px;font-size:14px;font-family:Barlow,sans-serif;" />
+            </div>
+          </div>
+          <div>
+            <label style="color:#888;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Cachet (€)</label>
+            <input id="cg-cachet" type="number" placeholder="Ex: 800" style="width:100%;background:#1a1a1a;border:1px solid #333;color:#ddd;padding:10px 12px;border-radius:8px;font-size:14px;font-family:Barlow,sans-serif;" />
+          </div>
+          <div>
+            <label style="color:#888;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Acompte (€)</label>
+            <input id="cg-acompte" type="number" placeholder="Ex: 200" style="width:100%;background:#1a1a1a;border:1px solid #333;color:#ddd;padding:10px 12px;border-radius:8px;font-size:14px;font-family:Barlow,sans-serif;" />
+          </div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="color:#888;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Conditions particulières</label>
+          <textarea id="cg-extra" rows="3" placeholder="Matériel fourni, backline, accès artiste..."
+                    style="width:100%;background:#1a1a1a;border:1px solid #333;color:#ddd;padding:10px 12px;border-radius:8px;font-size:14px;font-family:Barlow,sans-serif;resize:vertical;"></textarea>
+        </div>
+        <button onclick="generateContractAI()" id="cg-gen-btn"
+                style="width:100%;padding:14px;background:#FFC300;color:#000;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;font-family:Barlow,sans-serif;margin-bottom:16px;">
+          ✨ Générer le contrat avec l'IA
+        </button>
+        <div id="cg-result" style="display:none;">
+          <div style="border:1px solid #333;border-radius:10px;padding:16px;background:#0a0a0a;margin-bottom:12px;">
+            <pre id="cg-text" style="white-space:pre-wrap;font-size:13px;color:#ddd;font-family:Barlow,sans-serif;line-height:1.6;"></pre>
+          </div>
+          <div style="display:flex;gap:10px;">
+            ${data.convId ? `<button onclick="sendContractInChat()" style="flex:1;padding:12px;background:#FFC300;color:#000;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;font-family:Barlow,sans-serif;">📨 Envoyer dans le chat</button>` : ''}
+            <button onclick="copyContract()" style="flex:1;padding:12px;background:#1a1a1a;color:#fff;border:1px solid #333;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;font-family:Barlow,sans-serif;">📋 Copier</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  }
+
+  let generatedContractText = '';
+
+  async function generateContractAI() {
+    const btn = document.getElementById('cg-gen-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Génération en cours...';
+
+    const date = document.getElementById('cg-date').value;
+    const lieu = document.getElementById('cg-lieu').value;
+    const type = document.getElementById('cg-type').value;
+    const start = document.getElementById('cg-start').value;
+    const end = document.getElementById('cg-end').value;
+    const cachet = document.getElementById('cg-cachet').value;
+    const acompte = document.getElementById('cg-acompte').value;
+    const extra = document.getElementById('cg-extra').value;
+
+    try {
+      const res = await fetch('/api/generate-contract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date, lieu, type, start, end, cachet, acompte, extra })
+      });
+      const result = await res.json();
+      generatedContractText = result.contract || result.text || '';
+
+      const pre = document.getElementById('cg-text');
+      if (pre) pre.textContent = generatedContractText;
+
+      const resultDiv = document.getElementById('cg-result');
+      if (resultDiv) resultDiv.style.display = 'block';
+    } catch (err) {
+      alert('Erreur lors de la génération. Réessaie.');
+    }
+
+    btn.disabled = false;
+    btn.textContent = '✨ Générer le contrat avec l\'IA';
+  }
+
+  async function sendContractInChat() {
+    const modal = document.getElementById('modal-contract-generator');
+    if (!modal || !generatedContractText) return;
+    const convId = modal.dataset.convId;
+    if (!convId) { alert('Aucune conversation associée.'); return; }
+
+    await fetch('/api/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'send_message',
+        convId,
+        senderType: 'venue',
+        message: {
+          senderId: user.id,
+          senderName: getName(user),
+          content: generatedContractText,
+          type: 'contract_proposal'
+        }
+      })
+    });
+
+    modal.remove();
+    invalidateConversationsCache();
+    if (currentVenueConv && currentVenueConv.id === convId) {
+      await loadVenueMessages(convId);
+    }
+  }
+
+  function copyContract() {
+    if (!generatedContractText) return;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(generatedContractText).then(() => alert('Contrat copié !'));
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = generatedContractText;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      alert('Contrat copié !');
+    }
+  }
+
+
