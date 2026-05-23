@@ -4384,6 +4384,7 @@
       </div>
     `;
     document.body.appendChild(notif);
+    notif.addEventListener('click', e => { if (e.target === notif) notif.remove(); });
   }
 
   function closeModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -4623,6 +4624,18 @@
     }
   }
 
+  // Escape ferme tout overlay dynamique
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    ['modal-contract-generator'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    });
+    document.querySelectorAll('.verif-notif-overlay').forEach(el => el.remove());
+    // Modaux CSS standard
+    document.querySelectorAll('.modal.open').forEach(el => el.classList.remove('open'));
+  });
+
   init();
 
   // ─── CONTRACT GENERATOR ────────────────────────────────────────────────────
@@ -4659,6 +4672,8 @@
     modal.dataset.convId = data.convId || '';
     modal.dataset.djId = data.djId || '';
     modal.dataset.venueId = data.venueId || '';
+
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 
     modal.innerHTML = `
       <div style="background:#111;border-radius:20px 20px 0 0;width:100%;max-width:640px;padding:24px 24px 32px;max-height:90vh;overflow-y:auto;">

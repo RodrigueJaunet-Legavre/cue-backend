@@ -4062,6 +4062,7 @@
       </div>
     `;
     document.body.appendChild(notif);
+    notif.addEventListener('click', e => { if (e.target === notif) notif.remove(); });
   }
 
   async function confirmDeleteAccount() {
@@ -4241,6 +4242,15 @@
       alert('Erreur. Réessaie.');
     }
   }
+
+  // Escape ferme tout overlay dynamique
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll('.verif-notif-overlay').forEach(el => el.remove());
+    document.querySelectorAll('.modal.open').forEach(el => el.classList.remove('open'));
+    const cg = document.getElementById('modal-contract-generator');
+    if (cg) cg.classList.remove('open');
+  });
 
   init();
 
