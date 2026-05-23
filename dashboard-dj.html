@@ -422,24 +422,73 @@
         margin: 0 auto 20px;
       }
 
+      /* Bouton Sauvegarder profil */
+      #page-profile .btn-primary,
+      #page-profile button[onclick*="save"] {
+        position: relative !important;
+        z-index: 1 !important;
+        display: block !important;
+        width: 100% !important;
+        margin-top: 16px !important;
+      }
+
       /* Messages */
+      #page-messages {
+        padding: 0 !important;
+        height: calc(100vh - 56px) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+      }
+
       .messages-layout {
         flex-direction: column !important;
-        height: auto !important;
+        height: 100% !important;
         gap: 0 !important;
       }
 
       .conversations-list {
         width: 100% !important;
-        max-height: 220px !important;
+        height: 180px !important;
+        min-height: 180px !important;
+        max-height: 180px !important;
         border-right: none !important;
         border-bottom: 1px solid var(--BORDER) !important;
         overflow-y: auto !important;
+        flex-shrink: 0 !important;
       }
 
       .chat-area {
-        height: 420px !important;
+        flex: 1 !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
         width: 100% !important;
+      }
+
+      .chat-messages {
+        flex: 1 !important;
+        overflow-y: auto !important;
+        padding: 12px !important;
+      }
+
+      .chat-input-area {
+        flex-shrink: 0 !important;
+        padding: 10px 12px !important;
+        border-top: 1px solid var(--BORDER) !important;
+        background: #0a0a0a !important;
+        display: flex !important;
+        gap: 8px !important;
+        align-items: center !important;
+      }
+
+      .chat-input-area input {
+        flex: 1 !important;
+        font-size: 16px !important;
+        padding: 10px 14px !important;
+        border-radius: 20px !important;
       }
 
       /* Gig cards */
@@ -1136,7 +1185,7 @@
         <button class="btn btn-outline" style="padding:6px 16px; font-size:13px;" onclick="document.getElementById('tracks-input').click()">+ Ajouter</button>
       </div>
       <div class="card-body">
-        <input type="file" id="tracks-input" accept=".mp3,.wav,audio/mpeg,audio/wav,audio/wave" multiple style="display:none" onchange="handleTracksChange(this)">
+        <input type="file" id="tracks-input" accept=".mp3,.wav,audio/*" multiple style="display:none" onchange="handleTracksChange(this)">
         <div id="tracks-list-profile" style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;"></div>
         <p style="color:var(--MUTED); font-size:13px;">MP3 ou WAV • Max 10 tracks • Max 50MB par track</p>
       </div>

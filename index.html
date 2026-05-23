@@ -294,6 +294,32 @@ footer{border-top:1px solid var(--BORDER);padding:60px 52px 30px;display:grid;gr
   .fcard{padding:24px 20px}
 }
 
+@media(max-width:768px){
+  /* Navbar */
+  .nav-links, #nav-links { display: none !important; }
+  nav { padding: 16px 20px !important; }
+
+  /* Hero */
+  .hero { padding: 80px 20px 60px !important; text-align: center !important; }
+  .hero-title, h1 { font-size: 52px !important; line-height: 1 !important; }
+  .hero-sub, .hsub { font-size: 16px !important; margin: 16px auto !important; max-width: 320px !important; }
+  .hero-ctas { flex-direction: column !important; align-items: center !important; gap: 12px !important; }
+  .hero-ctas a, .hero-ctas button { width: 100% !important; max-width: 320px !important; text-align: center !important; }
+
+  /* Sections */
+  section { padding: 48px 20px !important; }
+
+  /* Features grid */
+  .features-grid, .steps-grid, .how-it-works,
+  .fg3, .twoc, .pgrid { grid-template-columns: 1fr !important; gap: 20px !important; }
+
+  /* Section titles */
+  h2 { font-size: 32px !important; }
+
+  /* Footer */
+  footer > div, footer { flex-direction: column !important; gap: 32px !important; }
+}
+
 @media(max-width:480px){
   h1{font-size:clamp(38px,11vw,60px)}
   .hey{font-size:10px;letter-spacing:3px}
