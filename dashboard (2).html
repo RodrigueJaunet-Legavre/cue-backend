@@ -35,7 +35,7 @@ body{background:var(--BG);color:var(--TEXT);font-family:var(--B);min-height:100v
 
 .sidebar-footer{padding:16px;border-top:1px solid var(--BORDER)}
 .user-card{display:flex;align-items:center;gap:12px;padding:12px;background:var(--CARD);border:1px solid var(--BORDER)}
-.user-avatar{width:40px;height:52px;background:var(--Y);display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:18px;font-weight:900;color:#000}
+.user-avatar{width:40px;height:111px;background:var(--Y);display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:18px;font-weight:900;color:#000}
 .user-info{flex:1;min-width:0}
 .user-name{font-size:13px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .user-role{font-size:10px;color:var(--Y);text-transform:uppercase;letter-spacing:1px}
@@ -113,7 +113,7 @@ body{background:var(--BG);color:var(--TEXT);font-family:var(--B);min-height:100v
 
 .message-detail{background:var(--CARD);border:1px solid var(--BORDER);padding:28px;display:flex;flex-direction:column}
 .message-detail-header{display:flex;align-items:flex-start;gap:16px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--BORDER)}
-.message-detail-icon{width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.message-detail-icon{width:52px;height:111px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
 .message-detail-info h3{font-family:var(--D);font-size:20px;font-weight:900;text-transform:uppercase;color:#fff;margin-bottom:4px}
 .message-detail-info p{font-size:11px;color:var(--MUTED)}
 .message-amount{background:rgba(0,200,100,.1);border:1px solid rgba(0,200,100,.25);padding:20px;text-align:center;margin-bottom:20px}
@@ -881,7 +881,7 @@ async function runMatching() {
     const djs = data.djs;
     out.innerHTML = '<div style="display:flex;flex-direction:column;gap:16px">' + djs.map(d => `
       <div style="background:#0a0a0a;border:1px solid var(--BORDER);padding:22px;display:flex;gap:18px;align-items:flex-start">
-        <div style="width:52px;height:52px;background:var(--Y);display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:24px;font-weight:900;color:#000;flex-shrink:0">${d.name.split(' ').map(w => w[0]).join('').slice(0, 2)}</div>
+        <div style="width:52px;height:111px;background:var(--Y);display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:24px;font-weight:900;color:#000;flex-shrink:0">${d.name.split(' ').map(w => w[0]).join('').slice(0, 2)}</div>
         <div style="flex:1">
           <div style="font-family:var(--D);font-size:18px;font-weight:900;text-transform:uppercase;color:#fff;letter-spacing:.5px">${d.name}</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
