@@ -260,8 +260,20 @@
     .nav-badge { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:#ff3b30; color:#fff; font-size:10px; font-weight:800; min-width:18px; height:18px; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 5px; box-shadow:0 2px 6px rgba(255,59,48,.5); pointer-events:none; line-height:1; z-index:10; }
     @keyframes badgePop { from { transform:translateY(-50%) scale(0); opacity:0; } to { transform:translateY(-50%) scale(1); opacity:1; } }
   </style>
+  <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
+
+<!-- Header mobile (caché sur desktop) -->
+<div class="mobile-header">
+  <div class="mobile-logo">CUE</div>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <div id="mobile-notif-btn" onclick="showPage('messages', document.querySelector('[data-page=messages]'))" style="position:relative; cursor:pointer; font-size:20px;">💬
+      <span id="mobile-msg-badge" style="display:none; position:absolute; top:-4px; right:-4px; background:#ff3b30; color:#fff; font-size:9px; font-weight:800; width:16px; height:16px; border-radius:50%; align-items:center; justify-content:center;">0</span>
+    </div>
+    <img id="mobile-avatar" src="https://ui-avatars.com/api/?name=U&background=FFC300&color=000" class="mobile-avatar" onclick="showPage('profile', document.querySelector('[data-page=profile]'))">
+  </div>
+</div>
 
 <!-- SIDEBAR -->
 <div class="sidebar">
@@ -1514,6 +1526,8 @@
     if (photo) {
       document.getElementById('sidebar-avatar').innerHTML =
         `<img src="${photo}" style="width:64px; height:64px; border-radius:50%; object-fit:cover;">`
+      const mobileAvatar = document.getElementById('mobile-avatar')
+      if (mobileAvatar) mobileAvatar.src = photo
     }
 
     loadStats()
@@ -2277,7 +2291,8 @@
           .footer { margin-top:60px; border-top:1px solid #ddd; padding-top:20px; font-size:11px; color:#888; text-align:center; }
           @media print { body { padding:20px 40px; } }
         </style>
-      </head>
+        <link rel="stylesheet" href="css/responsive.css">
+</head>
       <body>
         <div class="header">
           <h1>CONTRAT DE PRESTATION DJ</h1>

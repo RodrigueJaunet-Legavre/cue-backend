@@ -1,0 +1,409 @@
+/* ============================================
+   CUE — RESPONSIVE MOBILE STYLES
+   Breakpoint principal : 768px
+   ============================================ */
+
+/* Base mobile */
+* { box-sizing: border-box; }
+
+img { max-width: 100%; height: auto; }
+
+/* ============================================
+   NAVIGATION / SIDEBAR
+   ============================================ */
+@media (max-width: 768px) {
+  /* Sidebar devient bottom nav sur mobile */
+  .sidebar {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    height: 64px !important;
+    flex-direction: row !important;
+    padding: 0 !important;
+    border-top: 1px solid var(--BORDER) !important;
+    border-right: none !important;
+    z-index: 100 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    background: #0a0a0a !important;
+  }
+
+  .sidebar .logo { display: none !important; }
+  .sidebar .nav-section-title { display: none !important; }
+  .sidebar .sidebar-footer { display: none !important; }
+
+  .nav-item {
+    flex-direction: column !important;
+    gap: 2px !important;
+    padding: 8px 12px !important;
+    min-width: 60px !important;
+    font-size: 10px !important;
+    text-align: center !important;
+    flex-shrink: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .nav-icon {
+    font-size: 20px !important;
+    display: block !important;
+  }
+
+  .nav-badge {
+    top: 4px !important;
+    right: 4px !important;
+    transform: none !important;
+    min-width: 16px !important;
+    height: 16px !important;
+    font-size: 9px !important;
+  }
+
+  /* Main content — padding bottom pour la bottom nav */
+  .main-content {
+    margin-left: 0 !important;
+    padding-bottom: 80px !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    padding-top: 16px !important;
+    width: 100% !important;
+  }
+
+  /* Header mobile */
+  .mobile-header {
+    display: flex !important;
+  }
+}
+
+/* Header mobile fixe en haut */
+.mobile-header {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: #0a0a0a;
+  border-bottom: 1px solid var(--BORDER);
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 99;
+}
+
+.mobile-header .mobile-logo {
+  color: #FFC300;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 24px;
+  letter-spacing: 2px;
+}
+
+.mobile-header .mobile-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--BORDER);
+  object-fit: cover;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  /* Adjust main for fixed mobile header */
+  .main-content {
+    padding-top: 72px !important;
+  }
+}
+
+/* ============================================
+   CARDS & GRIDS
+   ============================================ */
+@media (max-width: 768px) {
+  /* Grilles en colonne unique */
+  .stats-grid,
+  .dj-grid,
+  .cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Cards full width */
+  .card {
+    border-radius: 14px !important;
+    padding: 16px !important;
+  }
+
+  .card-body {
+    padding: 12px 16px !important;
+  }
+
+  /* Stats — 2 colonnes sur mobile */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Stat card compact */
+  .stat-card {
+    padding: 16px !important;
+  }
+
+  .stat-value {
+    font-size: 28px !important;
+  }
+}
+
+/* ============================================
+   PAGE HEADERS
+   ============================================ */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .page-title {
+    font-size: 32px !important;
+    line-height: 1 !important;
+  }
+
+  .page-sub {
+    font-size: 13px !important;
+  }
+}
+
+/* ============================================
+   MESSAGES / CONVERSATIONS
+   ============================================ */
+@media (max-width: 768px) {
+  .messages-layout {
+    flex-direction: column !important;
+    height: auto !important;
+  }
+
+  .conversations-list {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 240px !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--BORDER) !important;
+    overflow-y: auto !important;
+  }
+
+  .chat-area {
+    height: 400px !important;
+    width: 100% !important;
+  }
+
+  .message-input-area {
+    padding: 8px !important;
+  }
+
+  .message-input-area input {
+    font-size: 16px !important; /* évite le zoom iOS */
+  }
+}
+
+/* ============================================
+   MODALS
+   ============================================ */
+@media (max-width: 768px) {
+  .modal-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 92vh !important;
+    overflow-y: auto !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+  }
+
+  .modal {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+}
+
+/* ============================================
+   FORMULAIRES
+   ============================================ */
+@media (max-width: 768px) {
+  .form-input,
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  textarea,
+  select {
+    font-size: 16px !important; /* évite le zoom iOS */
+    padding: 12px 14px !important;
+  }
+
+  .two-col,
+  .form-grid-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .btn,
+  button.btn-primary,
+  button.btn-outline {
+    padding: 14px 20px !important;
+    font-size: 15px !important;
+    width: 100% !important;
+  }
+}
+
+/* ============================================
+   CALENDRIER
+   ============================================ */
+@media (max-width: 768px) {
+  .calendar-day {
+    min-height: 52px !important;
+    padding: 4px !important;
+  }
+
+  .day-num {
+    font-size: 11px !important;
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .day-event-pill {
+    font-size: 8px !important;
+    padding: 2px 4px !important;
+  }
+
+  .calendar-month-title {
+    font-size: 18px !important;
+  }
+}
+
+/* ============================================
+   GIGS / BOOKING CARDS
+   ============================================ */
+@media (max-width: 768px) {
+  .gig-card {
+    padding: 12px !important;
+    gap: 10px !important;
+  }
+
+  .gig-date {
+    min-width: 44px !important;
+  }
+
+  .gig-day {
+    font-size: 24px !important;
+  }
+
+  .gig-venue {
+    font-size: 14px !important;
+  }
+
+  .gig-right {
+    flex-shrink: 0 !important;
+  }
+}
+
+/* ============================================
+   DJ PROFILE CARDS
+   ============================================ */
+@media (max-width: 768px) {
+  .dj-card {
+    padding: 16px !important;
+  }
+
+  .dj-avatar {
+    width: 56px !important;
+    height: 56px !important;
+  }
+}
+
+/* ============================================
+   ABONNEMENTS
+   ============================================ */
+@media (max-width: 768px) {
+  #page-subscription .plan-option-card,
+  .plans-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ============================================
+   INDEX / LANDING PAGE
+   ============================================ */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 52px !important;
+    line-height: 1 !important;
+  }
+
+  .hero-sub {
+    font-size: 16px !important;
+  }
+
+  .hero-ctas {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .hero-ctas a,
+  .hero-ctas button {
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  .nav-desktop {
+    display: none !important;
+  }
+
+  .nav-mobile-menu {
+    display: flex !important;
+  }
+
+  .features-grid,
+  .steps-grid,
+  .testimonials-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+}
+
+/* ============================================
+   ONBOARDING
+   ============================================ */
+@media (max-width: 768px) {
+  .step {
+    padding: 32px 16px !important;
+  }
+
+  .step-title {
+    font-size: 38px !important;
+  }
+
+  .plan-card {
+    padding: 16px !important;
+  }
+
+  .plan-card > div {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+}
+
+/* ============================================
+   UTILITAIRES
+   ============================================ */
+@media (max-width: 768px) {
+  .hide-mobile { display: none !important; }
+  .show-mobile { display: block !important; }
+  .show-mobile-flex { display: flex !important; }
+}
+
+.hide-mobile { display: block; }
+.show-mobile { display: none; }
+.show-mobile-flex { display: none; }
