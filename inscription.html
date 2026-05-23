@@ -474,12 +474,12 @@ function handleCodeInput(input, type) {
 function handleCodeKeydown(e, input) { if (e.key === 'Backspace' && !input.value && input.previousElementSibling?.classList.contains('code-digit')) input.previousElementSibling.focus(); }
 
 async function verifyEmailCode() {
-  const code = Array.from(document.getElementById('emailCodeWrap').querySelectorAll('.code-digit')).map(i => i.value).join('');
   const storedCode = sessionStorage.getItem('verif_code');
   const expiry = sessionStorage.getItem('verif_code_expiry');
-  console.log('Code entré:', code);
-  console.log('Code stocké:', storedCode);
-  console.log('Expiré:', Date.now() > Number(expiry));
+  const code = Array.from(document.getElementById('emailCodeWrap').querySelectorAll('.code-digit')).map(i => i.value).join('').trim();
+
+  alert(`Code entré: "${code}"\nCode stocké: "${storedCode}"\nExpiré: ${Date.now() > parseInt(expiry)}`);
+
   if (!verifyCode(code)) { document.getElementById('emailCodeError').classList.add('show'); return; }
   document.getElementById('verifyEmailBtn').disabled = true;
   document.getElementById('verifyEmailSpinner').classList.add('on');
@@ -518,14 +518,22 @@ function verifyCode(inputCode) {
 }
 
 async function completeRegistration() {
+  alert('completeRegistration() démarrée')
+
   const regData = JSON.parse(sessionStorage.getItem('reg_user') || '{}')
-  if (!regData.email) { alert('Erreur. Recommence.'); return }
+  alert(`regData: ${JSON.stringify(regData).slice(0, 200)}`)
+
+  if (!regData.email) {
+    alert('ERREUR: pas de regData.email')
+    return
+  }
 
   const btn = document.getElementById('verify-btn') || document.querySelector('button[onclick*="completeRegistration"]')
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Création du compte...' }
 
   try {
     const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm')
+    alert('Supabase importé')
     const supabase = createClient(
       'https://orjhkfdvihuvqcjxhjwe.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yamhrZmR2aWh1dnFjanhoandlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MzU2ODEsImV4cCI6MjA5NDAxMTY4MX0.Ti7anM1O3KqbZYLxRkl1rWbcghJF5FgmRxNqOTV6JL0'
@@ -539,6 +547,8 @@ async function completeRegistration() {
         emailRedirectTo: 'https://cuedj.eu/auth-callback.html'
       }
     })
+
+    alert(`signUp result: ${error ? 'ERREUR: ' + error.message : 'OK, userId: ' + data?.user?.id}`)
 
     if (error) {
       alert('Erreur : ' + error.message)
@@ -554,7 +564,7 @@ async function completeRegistration() {
       (regData.lastName || '').charAt(0).toUpperCase() +
       Math.floor(1000 + Math.random() * 9000)
 
-    await fetch('/api/auth', {
+    const authRes = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -569,6 +579,8 @@ async function completeRegistration() {
         referralCode
       })
     })
+    const authJson = await authRes.json()
+    alert(`/api/auth register_supabase: ${JSON.stringify(authJson).slice(0, 200)}`)
 
     // Email de bienvenue via Resend
     await fetch('/api/send-email', {
@@ -589,6 +601,8 @@ async function completeRegistration() {
       password: regData.password
     })
 
+    alert(`signIn result: ${signInError ? 'ERREUR: ' + signInError.message : 'OK, session: ' + !!signInData?.session}`)
+
     if (signInError || !signInData.session) {
       // Si Supabase demande confirmation email → redirige quand même
       if (regData.userType === 'dj') {
@@ -607,8 +621,7 @@ async function completeRegistration() {
     }
 
   } catch(err) {
-    console.log('Erreur:', err)
-    alert('Erreur. Réessaie.')
+    alert('CATCH: ' + err.message)
     if (btn) { btn.disabled = false; btn.textContent = 'Valider' }
   }
 }
