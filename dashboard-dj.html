@@ -574,7 +574,6 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
 
@@ -2676,7 +2675,6 @@
           .footer { margin-top:60px; border-top:1px solid #ddd; padding-top:20px; font-size:11px; color:#888; text-align:center; }
           @media print { body { padding:20px 40px; } }
         </style>
-        <link rel="stylesheet" href="css/responsive.css">
 </head>
       <body>
         <div class="header">
@@ -3103,35 +3101,39 @@
 
   async function uploadAudioToSupabase(file, bucket, userId) {
     try {
+      const { supabase } = await import('./js/supabase-client.js')
       const { data: { session } } = await supabase.auth.getSession()
-      const token = session?.access_token
-      if (!token) throw new Error('Pas de session')
 
-      const ext = file.name.split('.').pop()
-      const fileName = `${userId}/${Date.now()}.${ext}`
-
-      const res = await fetch(
-        `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/${bucket}/${fileName}`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': file.type,
-            'x-upsert': 'true'
-          },
-          body: file
-        }
-      )
-
-      if (!res.ok) {
-        const err = await res.text()
-        console.log('Upload error:', err)
+      if (!session) {
+        alert('Erreur : pas de session Supabase')
         return null
       }
 
+      const token = session.access_token
+      const ext = file.name.split('.').pop()
+      const fileName = `${userId}/${Date.now()}.${ext}`
+      const url = `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/${bucket}/${fileName}`
+
+      alert(`Upload vers : ${bucket}/${fileName}`)
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': file.type || 'audio/mpeg',
+          'x-upsert': 'true'
+        },
+        body: file
+      })
+
+      const responseText = await res.text()
+      alert(`Status: ${res.status}\nRéponse: ${responseText.slice(0, 200)}`)
+
+      if (!res.ok) return null
+
       return `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/public/${bucket}/${fileName}`
     } catch (err) {
-      console.log('Upload error:', err.message)
+      alert('Erreur catch: ' + err.message)
       return null
     }
   }
