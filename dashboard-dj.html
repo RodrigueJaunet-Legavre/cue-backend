@@ -261,154 +261,169 @@
     @keyframes badgePop { from { transform:translateY(-50%) scale(0); opacity:0; } to { transform:translateY(-50%) scale(1); opacity:1; } }
 
     /* ============================================
-       MOBILE — dashboard-dj
+       MOBILE — dashboard-dj (hamburger drawer)
        ============================================ */
+
+    /* Header mobile — caché sur desktop */
+    .mobile-header { display: none; }
+    .hamburger { display: none; }
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 299; backdrop-filter: blur(2px); }
+    .sidebar-overlay.open { display: block; }
+
     @media (max-width: 768px) {
-      /* Bottom navigation */
+      /* Header mobile fixe */
+      .mobile-header {
+        display: flex;
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        height: 56px;
+        background: #080808;
+        border-bottom: 1px solid #1a1a1a;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+        z-index: 200;
+      }
+
+      .mobile-logo {
+        color: #FFC300;
+        font-family: 'Barlow Condensed', sans-serif;
+        font-weight: 900;
+        font-size: 24px;
+        letter-spacing: 2px;
+      }
+
+      .hamburger {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        cursor: pointer;
+        padding: 8px;
+        border: none;
+        background: none;
+      }
+
+      .hamburger span {
+        display: block;
+        width: 24px;
+        height: 2px;
+        background: #fff;
+        border-radius: 2px;
+        transition: all .3s;
+      }
+
+      /* Sidebar — drawer depuis la gauche */
       .sidebar {
         position: fixed !important;
-        bottom: 0 !important; top: auto !important;
-        left: 0 !important; right: 0 !important;
-        width: 100% !important; height: 64px !important;
-        flex-direction: row !important;
-        padding: 0 !important;
-        border-top: 1px solid var(--BORDER) !important;
-        border-right: none !important;
-        overflow-x: auto !important; overflow-y: hidden !important;
-        z-index: 100 !important;
-        /* Masque la scrollbar */
-        scrollbar-width: none !important;
-      }
-      .sidebar::-webkit-scrollbar { display: none; }
-
-      /* Cache les éléments sidebar inutiles sur mobile */
-      .sidebar-profile,
-      .nav-section-title,
-      .sidebar-footer { display: none !important; }
-
-      /* Nav items en colonne icône + label */
-      .nav-item {
+        top: 0 !important;
+        left: -280px !important;
+        width: 280px !important;
+        height: 100vh !important;
+        z-index: 300 !important;
+        transition: left .3s ease !important;
+        overflow-y: auto !important;
+        padding-top: 0 !important;
         flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 2px !important;
-        padding: 6px 10px !important;
-        min-width: 56px !important;
-        flex-shrink: 0 !important;
-        font-size: 9px !important;
-        font-weight: 700 !important;
-        border-radius: 0 !important;
-        height: 64px !important;
-        letter-spacing: 0 !important;
-      }
-      .nav-item.active::before { display: none !important; }
-      .nav-item.active { border-top: 2px solid var(--Y) !important; }
-      .nav-icon { font-size: 18px !important; width: auto !important; }
-      .nav-label { font-size: 9px !important; font-weight: 700 !important; letter-spacing: 0 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; max-width: 52px !important; text-align: center !important; }
-
-      /* Cache le badge de vérification inline (trop long sur mobile) */
-      #verif-status-badge { display: none !important; }
-
-      /* Badge repositionné en haut à droite de l'icône */
-      .nav-badge {
-        right: 6px !important; top: 6px !important;
-        transform: none !important;
-        min-width: 15px !important; height: 15px !important;
-        font-size: 8px !important;
       }
 
-      /* Main — compense sidebar latérale et header mobile */
+      .sidebar.open { left: 0 !important; }
+
+      /* Main content */
       .main {
         margin-left: 0 !important;
-        padding: 72px 16px 80px !important;
+        padding: 72px 16px 24px !important;
         width: 100% !important;
       }
-
-      /* Stats 2 colonnes */
-      .stats-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; margin-bottom: 20px !important; }
-      .stat-card { padding: 16px 14px !important; }
-      .stat-value { font-size: 30px !important; }
-      .stat-label { font-size: 10px !important; }
-
-      /* Page header compact */
-      .page-header { margin-bottom: 20px !important; }
-      .page-title { font-size: 30px !important; }
-      .page-sub { font-size: 13px !important; }
 
       /* Cards */
       .card { border-radius: 14px !important; margin-bottom: 16px !important; }
       .card-header { padding: 14px 16px !important; }
-      .card-body { padding: 16px !important; }
+      .card-body { padding: 14px 16px !important; }
 
-      /* Gig items */
-      .gig-item { padding: 14px 16px !important; gap: 12px !important; }
-      .gig-date-day { font-size: 22px !important; }
-      .gig-amount { font-size: 18px !important; }
+      /* Stats 2 colonnes */
+      .stats-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+      .stat-value { font-size: 26px !important; }
+      .stat-card { padding: 14px !important; }
 
-      /* Messages */
-      .message-item { padding: 14px 16px !important; gap: 12px !important; }
-      .message-avatar { width: 40px !important; height: 40px !important; }
-
-      /* Tabs wrap */
-      .tabs { gap: 6px !important; }
-      .tab { padding: 6px 14px !important; font-size: 12px !important; }
-
-      /* Formulaires — font-size 16px évite le zoom iOS */
-      .form-input,
-      input[type="text"], input[type="email"], input[type="password"],
-      input[type="tel"], input[type="number"], input[type="url"],
-      textarea, select {
-        font-size: 16px !important;
-        padding: 12px 14px !important;
-      }
-
-      /* Boutons full width dans les modals */
-      .modal-actions { flex-direction: column !important; }
-      .modal-actions .btn { width: 100% !important; }
-
-      /* Modal → bottom sheet */
-      .modal {
-        align-items: flex-end !important;
-        padding: 0 !important;
-      }
+      /* Modals → bottom sheet */
+      .modal { align-items: flex-end !important; padding: 0 !important; }
       .modal-card {
-        width: 100% !important;
-        max-width: 100% !important;
-        border-radius: 24px 24px 0 0 !important;
-        padding: 24px 20px !important;
-        margin: 0 !important;
-        max-height: 92vh !important;
-        overflow-y: auto !important;
+        width: 100% !important; max-width: 100% !important;
+        border-radius: 20px 20px 0 0 !important;
+        max-height: 90vh !important; overflow-y: auto !important;
+        margin: 0 !important; padding: 24px 20px !important;
         animation: slideUpSheet .3s cubic-bezier(.32,0,.67,0) !important;
       }
       @keyframes slideUpSheet {
         from { transform: translateY(100%); opacity: 0; }
-        to   { transform: translateY(0);    opacity: 1; }
+        to   { transform: translateY(0); opacity: 1; }
       }
-      .modal-title { font-size: 26px !important; margin-bottom: 16px !important; }
+      .modal-title { font-size: 26px !important; }
+      .modal-actions { flex-direction: column !important; }
+      .modal-actions .btn { width: 100% !important; }
+
+      /* Page header */
+      .page-title { font-size: 28px !important; }
+      .page-header { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; margin-bottom: 16px !important; }
+
+      /* Messages */
+      .messages-layout { flex-direction: column !important; height: auto !important; }
+      .conversations-list { width: 100% !important; max-height: 200px !important; border-right: none !important; border-bottom: 1px solid var(--BORDER) !important; }
+      .chat-area { height: 450px !important; }
+
+      /* Inputs — évite zoom iOS */
+      input, textarea, select { font-size: 16px !important; }
+
+      /* Gig items */
+      .gig-item { padding: 12px 14px !important; gap: 10px !important; }
+      .gig-date-day { font-size: 22px !important; }
+      .gig-amount { font-size: 18px !important; }
 
       /* Calendrier */
-      .calendar-month { font-size: 20px !important; }
       .calendar-day { min-height: 48px !important; padding: 4px !important; }
       .day-num { font-size: 11px !important; width: 20px !important; height: 20px !important; line-height: 20px !important; }
-      .day-event { font-size: 7px !important; padding: 1px 3px !important; }
+      .day-event { font-size: 8px !important; padding: 1px 3px !important; border-radius: 3px !important; }
       .calendar-day-label { padding: 10px 2px !important; font-size: 9px !important; }
+      .calendar-month { font-size: 20px !important; }
+
+      /* Plans */
+      #page-subscription > div > div:nth-child(2) { grid-template-columns: 1fr !important; }
+
+      /* Cache sidebar-profile et section titles dans le drawer */
+      .sidebar-profile { display: none !important; }
+      .nav-section-title { display: none !important; }
+    }
+
+    /* Desktop — masque éléments mobile */
+    @media (min-width: 769px) {
+      .mobile-header { display: none !important; }
+      .hamburger { display: none !important; }
+      .sidebar-overlay { display: none !important; }
     }
   </style>
   <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
 
-<!-- Header mobile (caché sur desktop) -->
+<!-- Header mobile -->
 <div class="mobile-header">
   <div class="mobile-logo">CUE</div>
   <div style="display:flex; align-items:center; gap:12px;">
-    <div id="mobile-notif-btn" onclick="showPage('messages', document.querySelector('[data-page=messages]'))" style="position:relative; cursor:pointer; font-size:20px;">💬
-      <span id="mobile-msg-badge" style="display:none; position:absolute; top:-4px; right:-4px; background:#ff3b30; color:#fff; font-size:9px; font-weight:800; width:16px; height:16px; border-radius:50%; align-items:center; justify-content:center;">0</span>
+    <div style="position:relative; cursor:pointer;" onclick="showPage('messages', document.querySelector('[data-page=messages]'))">
+      <span style="font-size:22px;">💬</span>
+      <span id="mobile-msg-badge" style="display:none; position:absolute; top:-4px; right:-6px; background:#ff3b30; color:#fff; font-size:9px; font-weight:800; min-width:16px; height:16px; border-radius:8px; align-items:center; justify-content:center; padding:0 3px;"></span>
     </div>
-    <img id="mobile-avatar" src="https://ui-avatars.com/api/?name=U&background=FFC300&color=000" class="mobile-avatar" onclick="showPage('profile', document.querySelector('[data-page=profile]'))">
+    <img id="mobile-avatar" src=""
+         style="width:34px; height:34px; border-radius:50%; border:2px solid #333; object-fit:cover; cursor:pointer;"
+         onclick="showPage('profile', document.querySelector('[data-page=profile]'))">
+    <button class="hamburger" onclick="toggleMobileMenu()">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </div>
+
+<!-- Overlay -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeMobileMenu()"></div>
 
 <!-- SIDEBAR -->
 <div class="sidebar">
@@ -1661,10 +1676,9 @@
     if (photo) {
       document.getElementById('sidebar-avatar').innerHTML =
         `<img src="${photo}" style="width:64px; height:64px; border-radius:50%; object-fit:cover;">`
-      const mobileAvatar = document.getElementById('mobile-avatar')
-      if (mobileAvatar) mobileAvatar.src = photo
     }
 
+    updateMobileHeader()
     loadStats()
     renderUpcomingGigs()
     renderCalendar()
@@ -1746,9 +1760,37 @@
     container.innerHTML = Array(count).fill(0).map(() => fn()).join('');
   }
 
+  // ─── MOBILE MENU ──────────────────────────────────────────────────────────
+  function toggleMobileMenu() {
+    const sidebar = document.querySelector('.sidebar')
+    const overlay = document.getElementById('sidebar-overlay')
+    sidebar.classList.toggle('open')
+    overlay.classList.toggle('open')
+    document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : ''
+  }
+
+  function closeMobileMenu() {
+    const sidebar = document.querySelector('.sidebar')
+    const overlay = document.getElementById('sidebar-overlay')
+    sidebar.classList.remove('open')
+    overlay.classList.remove('open')
+    document.body.style.overflow = ''
+  }
+
+  function updateMobileHeader() {
+    const avatarEl = document.getElementById('mobile-avatar')
+    if (avatarEl && user.picture) {
+      avatarEl.src = user.picture
+      avatarEl.onerror = () => {
+        avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.first_name || 'U')}&background=FFC300&color=000`
+      }
+    }
+  }
+
   function showPage(page, el) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (window.innerWidth <= 768) closeMobileMenu();
     document.getElementById('page-' + page)?.classList.add('active');
     if (el) el.classList.add('active');
 
