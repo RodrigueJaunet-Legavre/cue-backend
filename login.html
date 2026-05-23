@@ -8,7 +8,7 @@
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     body { background:#080808; color:#ddd; font-family:Barlow,sans-serif; min-height:100vh; display:flex; align-items:center; justify-content:center; }
-    .card { background:#111; border:1px solid rgba(255,195,0,.13); border-radius:20px; padding:48px; width:440px; }
+    .card { background:#111; border:1px solid rgba(255,195,0,.13); border-radius:20px; padding:48px; width:440px; max-width:100%; }
     .logo { color:#FFC300; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:32px; text-align:center; margin-bottom:8px; }
     h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px; text-align:center; color:#fff; margin-bottom:32px; }
     .form-group { margin-bottom:16px; }
@@ -34,28 +34,25 @@
         align-items: flex-start !important;
         min-height: 100vh !important;
       }
-      .container {
-        max-width: 100% !important;
+      .card {
         width: 100% !important;
-        padding: 0 !important;
+        padding: 32px 20px !important;
+        border-radius: 16px !important;
       }
       h1 {
-        font-size: 32px !important;
+        font-size: 26px !important;
         line-height: 1.1 !important;
       }
-      .form-input {
+      input {
         font-size: 16px !important;
-        padding: 14px !important;
       }
-      .btn {
+      .btn-primary {
         padding: 16px !important;
         font-size: 16px !important;
-        width: 100% !important;
       }
       .btn-google {
         padding: 14px !important;
         font-size: 15px !important;
-        width: 100% !important;
       }
       .form-group {
         margin-bottom: 14px !important;
