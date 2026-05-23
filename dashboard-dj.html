@@ -267,6 +267,18 @@
     /* Header mobile — caché sur desktop */
     .mobile-header { display: none; }
 
+    /* Overlay — caché par défaut (tous viewports) */
+    #sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.7);
+      z-index: 299;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    #sidebar-overlay.overlay-open { display: block; }
+
     @media (max-width: 768px) {
 
       /* Header mobile fixe */
@@ -300,21 +312,6 @@
       .sidebar.drawer-open {
         left: 0 !important;
         box-shadow: 8px 0 32px rgba(0,0,0,.8) !important;
-      }
-
-      /* Overlay */
-      #sidebar-overlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,.7);
-        z-index: 299;
-        backdrop-filter: blur(4px);
-        -webkit-backdrop-filter: blur(4px);
-      }
-
-      #sidebar-overlay.overlay-open {
-        display: block;
       }
 
       /* Main — prend toute la largeur */
