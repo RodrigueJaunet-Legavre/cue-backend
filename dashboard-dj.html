@@ -3104,17 +3104,12 @@
       const { supabase } = await import('./js/supabase-client.js')
       const { data: { session } } = await supabase.auth.getSession()
 
-      if (!session) {
-        alert('Erreur : pas de session Supabase')
-        return null
-      }
+      if (!session) return null
 
       const token = session.access_token
       const ext = file.name.split('.').pop()
       const fileName = `${userId}/${Date.now()}.${ext}`
       const url = `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/${bucket}/${fileName}`
-
-      alert(`Upload vers : ${bucket}/${fileName}`)
 
       const res = await fetch(url, {
         method: 'POST',
@@ -3126,14 +3121,10 @@
         body: file
       })
 
-      const responseText = await res.text()
-      alert(`Status: ${res.status}\nRéponse: ${responseText.slice(0, 200)}`)
-
       if (!res.ok) return null
 
       return `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/public/${bucket}/${fileName}`
     } catch (err) {
-      alert('Erreur catch: ' + err.message)
       return null
     }
   }
@@ -3187,32 +3178,21 @@
 
   async function handleTracksChange(input) {
     const files = Array.from(input.files)
-
-    if (!files.length) {
-      alert('Aucun fichier sélectionné')
-      return
-    }
-
-    alert(`${files.length} fichier(s) sélectionné(s) : ${files[0].name}`)
+    if (!files.length) return
 
     for (const file of files) {
       if (profileTracks.length >= 10) { alert('Maximum 10 tracks.'); break }
 
       const validTypes = ['audio/mpeg', 'audio/wav', 'audio/wave', 'audio/x-wav']
       if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|wav)$/i)) {
-        alert(`Format non supporté : ${file.type}`); continue
+        alert(`${file.name} : format non supporté. MP3 ou WAV uniquement.`); continue
       }
-
-      alert(`Fichier valide : ${file.name} (${file.type})`)
+      if (file.size > 50 * 1024 * 1024) { alert(`${file.name} dépasse 50MB.`); continue }
 
       const trackName = await showTrackNameModal(file.name.replace(/\.[^.]+$/, ''))
-      if (!trackName) { alert('Nom annulé'); continue }
-
-      alert(`Upload en cours : ${trackName}`)
+      if (!trackName) continue
 
       const url = await uploadAudioToSupabase(file, 'dj-tracks', user.id)
-      alert(`URL obtenue : ${url || 'ECHEC'}`)
-
       if (url) {
         profileTracks.push({ name: trackName, url })
         renderTracksList()
