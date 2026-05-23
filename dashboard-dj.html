@@ -267,33 +267,67 @@
     /* Header mobile — caché sur desktop */
     .mobile-header { display: none; }
 
-    /* Overlay — caché par défaut (tous viewports) */
+    /* Overlay — fade in/out (tous viewports) */
     #sidebar-overlay {
-      display: none;
+      display: block;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,.7);
+      background: rgba(0,0,0,.75);
       z-index: 299;
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s ease;
     }
-    #sidebar-overlay.overlay-open { display: block; }
+    #sidebar-overlay.overlay-open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Hamburger → X animation */
+    .hamburger-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      align-items: center;
+      justify-content: center;
+    }
+    .hamburger-bar {
+      display: block;
+      width: 22px;
+      height: 2px;
+      background: #fff;
+      border-radius: 2px;
+      transition: transform .3s cubic-bezier(.4,0,.2,1), opacity .3s ease;
+      transform-origin: center;
+    }
+    .hamburger-btn.menu-open .bar-1 { transform: translateY(7px) rotate(45deg); }
+    .hamburger-btn.menu-open .bar-2 { opacity: 0; transform: scaleX(0); }
+    .hamburger-btn.menu-open .bar-3 { transform: translateY(-7px) rotate(-45deg); }
 
     @media (max-width: 768px) {
 
       /* Header mobile fixe */
       .mobile-header {
-        display: flex;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
         position: fixed;
         top: 0; left: 0; right: 0;
         height: 56px;
         background: #080808;
         border-bottom: 1px solid #1a1a1a;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 20px;
-        z-index: 200;
+        padding: 0 16px;
+        z-index: 350;
       }
+      .mobile-header-left { display: flex; align-items: center; }
+      .mobile-header-center { display: flex; align-items: center; justify-content: center; }
+      .mobile-header-right { display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
 
       /* Sidebar devient drawer */
       .sidebar {
@@ -301,17 +335,18 @@
         top: 0 !important;
         left: -100% !important;
         width: 85% !important;
-        max-width: 320px !important;
+        max-width: 300px !important;
         height: 100vh !important;
         z-index: 300 !important;
-        transition: left .3s cubic-bezier(.4,0,.2,1) !important;
+        transition: left .35s cubic-bezier(.4,0,.2,1) !important;
         overflow-y: auto !important;
         box-shadow: none !important;
+        border-right: 1px solid #1a1a1a !important;
       }
 
       .sidebar.drawer-open {
         left: 0 !important;
-        box-shadow: 8px 0 32px rgba(0,0,0,.8) !important;
+        box-shadow: 12px 0 40px rgba(0,0,0,.9) !important;
       }
 
       /* Main — prend toute la largeur */
@@ -478,23 +513,38 @@
 
 <!-- Header mobile -->
 <div class="mobile-header">
-  <div style="color:#FFC300; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:24px; letter-spacing:2px;">CUE</div>
-  <div style="display:flex; align-items:center; gap:14px;">
+  <!-- Left: hamburger -->
+  <div class="mobile-header-left">
+    <button class="hamburger-btn" id="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Menu" aria-expanded="false">
+      <span class="hamburger-bar bar-1"></span>
+      <span class="hamburger-bar bar-2"></span>
+      <span class="hamburger-bar bar-3"></span>
+    </button>
+  </div>
+
+  <!-- Center: logo -->
+  <div class="mobile-header-center">
+    <span style="color:#FFC300; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:26px; letter-spacing:3px;">CUE</span>
+  </div>
+
+  <!-- Right: messages + avatar -->
+  <div class="mobile-header-right">
     <div style="position:relative; cursor:pointer;"
          onclick="showPage('messages', document.querySelector('[data-page=messages]'))">
-      <span style="font-size:22px; color:#ddd;">💬</span>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
       <span id="mobile-msg-badge"
             style="display:none; position:absolute; top:-4px; right:-6px;
                    background:#ff3b30; color:#fff; font-size:9px; font-weight:800;
                    min-width:16px; height:16px; border-radius:8px;
                    align-items:center; justify-content:center; padding:0 3px;"></span>
     </div>
-    <button onclick="toggleMobileMenu()"
-            style="background:none; border:none; cursor:pointer; padding:8px; display:flex; flex-direction:column; gap:5px; align-items:center;">
-      <span style="display:block; width:22px; height:2px; background:#fff; border-radius:2px; transition:all .3s;"></span>
-      <span style="display:block; width:22px; height:2px; background:#fff; border-radius:2px; transition:all .3s;"></span>
-      <span style="display:block; width:22px; height:2px; background:#fff; border-radius:2px; transition:all .3s;"></span>
-    </button>
+    <img id="mobile-avatar"
+         src="https://ui-avatars.com/api/?name=DJ&background=FFC300&color=000"
+         alt="Avatar"
+         onclick="showPage('profile', document.querySelector('[data-page=profile]'))"
+         style="width:32px; height:32px; border-radius:50%; object-fit:cover; cursor:pointer; border:2px solid #1a1a1a;" />
   </div>
 </div>
 
@@ -1840,14 +1890,19 @@
   function toggleMobileMenu() {
     const sidebar = document.querySelector('.sidebar')
     const overlay = document.getElementById('sidebar-overlay')
+    const btn = document.getElementById('hamburger-btn')
     const isOpen = sidebar.classList.contains('drawer-open')
     if (isOpen) {
       sidebar.classList.remove('drawer-open')
       overlay.classList.remove('overlay-open')
+      btn?.classList.remove('menu-open')
+      btn?.setAttribute('aria-expanded', 'false')
       document.body.style.overflow = ''
     } else {
       sidebar.classList.add('drawer-open')
       overlay.classList.add('overlay-open')
+      btn?.classList.add('menu-open')
+      btn?.setAttribute('aria-expanded', 'true')
       document.body.style.overflow = 'hidden'
     }
   }
@@ -1855,8 +1910,11 @@
   function closeMobileMenu() {
     const sidebar = document.querySelector('.sidebar')
     const overlay = document.getElementById('sidebar-overlay')
+    const btn = document.getElementById('hamburger-btn')
     sidebar.classList.remove('drawer-open')
     overlay.classList.remove('overlay-open')
+    btn?.classList.remove('menu-open')
+    btn?.setAttribute('aria-expanded', 'false')
     document.body.style.overflow = ''
   }
 
