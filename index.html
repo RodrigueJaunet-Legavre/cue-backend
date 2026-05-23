@@ -4,6 +4,13 @@
 <meta charset="UTF-8"/> 
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>CUE — Find. Book. Pay. Review.</title>
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#FFC300">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CUE">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
@@ -968,6 +975,73 @@ async function startCheckout(plan) {
     alert('Erreur, réessaie.');
   }
 }
+
+// Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('SW registered'))
+      .catch(err => console.log('SW error:', err))
+  })
+}
+
+// Bannière iOS install
+function checkIOSInstall() {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
+  const isStandalone = window.navigator.standalone === true
+  const dismissed = localStorage.getItem('cue_install_dismissed')
+  if (isIOS && !isStandalone && !dismissed) {
+    setTimeout(() => {
+      document.getElementById('ios-install-banner').style.display = 'block'
+    }, 3000)
+  }
+}
+checkIOSInstall()
+
+// Bannière Android/Chrome
+let deferredPrompt = null
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault()
+  deferredPrompt = e
+  const banner = document.getElementById('ios-install-banner')
+  if (banner && !localStorage.getItem('cue_install_dismissed')) {
+    banner.querySelector('div > div:nth-child(2) > div:last-child').innerHTML =
+      "Ajoutez CUE à votre écran d'accueil"
+    const btn = document.createElement('button')
+    btn.textContent = 'Installer'
+    btn.style.cssText = 'background:#FFC300; color:#000; border:none; border-radius:8px; padding:8px 16px; font-weight:700; cursor:pointer; flex-shrink:0;'
+    btn.onclick = () => {
+      deferredPrompt.prompt()
+      deferredPrompt.userChoice.then(() => {
+        banner.style.display = 'none'
+        deferredPrompt = null
+      })
+    }
+    banner.querySelector('div').appendChild(btn)
+    setTimeout(() => banner.style.display = 'block', 2000)
+  }
+})
 </script>
+
+<!-- Bannière iOS install -->
+<div id="ios-install-banner" style="display:none; position:fixed; bottom:20px; left:16px; right:16px;
+     background:#111; border:1px solid rgba(255,195,0,.3); border-radius:16px; padding:16px 20px;
+     z-index:9999; box-shadow:0 8px 32px rgba(0,0,0,.6);">
+  <div style="display:flex; align-items:center; gap:14px;">
+    <div style="width:48px; height:48px; background:#FFC300; border-radius:12px;
+                display:flex; align-items:center; justify-content:center;
+                font-family:'Barlow Condensed',sans-serif; font-weight:900;
+                font-size:20px; color:#000; flex-shrink:0;">CUE</div>
+    <div style="flex:1;">
+      <div style="font-weight:700; color:#fff; font-size:15px; margin-bottom:2px;">Installer CUE</div>
+      <div style="color:#888; font-size:13px; line-height:1.4;">
+        Appuyez sur <strong style="color:#fff;">⎙</strong> puis
+        <strong style="color:#fff;">Sur l'écran d'accueil</strong>
+      </div>
+    </div>
+    <button onclick="document.getElementById('ios-install-banner').style.display='none'; localStorage.setItem('cue_install_dismissed','1')"
+            style="background:none; border:none; color:#666; font-size:20px; cursor:pointer; padding:4px; flex-shrink:0;">✕</button>
+  </div>
+</div>
 </body>
 </html>
