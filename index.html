@@ -477,7 +477,7 @@ footer{border-top:1px solid var(--BORDER);padding:60px 52px 30px;display:grid;gr
 
 <nav id="nav">
   <a href="#" onclick="goHome()" style="display:flex;align-items:center">
-    <svg class="logo-svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="16" fill="#FFC300"/><circle cx="50" cy="50" r="34" fill="none" stroke="#111" stroke-width="6"/><text x="50" y="59" text-anchor="middle" font-family="Arial Rounded MT Bold,Arial" font-size="24" font-weight="900" fill="#111">cue</text></svg>
+    <img src="/logo.jpeg" alt="CUE" style="height:38px; object-fit:contain;">
   </a>
   <div id="nav-links"></div>
   <div id="nav-cta"></div>
@@ -986,6 +986,11 @@ if ('serviceWorker' in navigator) {
 }
 
 // Bannière iOS install
+function dismissBanner() {
+  document.getElementById('ios-install-banner').style.display = 'none'
+  localStorage.setItem('cue_install_dismissed', '1')
+}
+
 function checkIOSInstall() {
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
   const isStandalone = window.navigator.standalone === true
@@ -1024,23 +1029,37 @@ window.addEventListener('beforeinstallprompt', (e) => {
 </script>
 
 <!-- Bannière iOS install -->
-<div id="ios-install-banner" style="display:none; position:fixed; bottom:20px; left:16px; right:16px;
-     background:#111; border:1px solid rgba(255,195,0,.3); border-radius:16px; padding:16px 20px;
-     z-index:9999; box-shadow:0 8px 32px rgba(0,0,0,.6);">
-  <div style="display:flex; align-items:center; gap:14px;">
-    <div style="width:48px; height:48px; background:#FFC300; border-radius:12px;
-                display:flex; align-items:center; justify-content:center;
-                font-family:'Barlow Condensed',sans-serif; font-weight:900;
-                font-size:20px; color:#000; flex-shrink:0;">CUE</div>
-    <div style="flex:1;">
-      <div style="font-weight:700; color:#fff; font-size:15px; margin-bottom:2px;">Installer CUE</div>
-      <div style="color:#888; font-size:13px; line-height:1.4;">
-        Appuyez sur <strong style="color:#fff;">⎙</strong> puis
-        <strong style="color:#fff;">Sur l'écran d'accueil</strong>
-      </div>
+<div id="ios-install-banner" style="display:none; position:fixed; bottom:24px;
+     left:16px; right:16px; background:#111; border:1px solid rgba(255,195,0,.4);
+     border-radius:20px; padding:20px; z-index:9999;
+     box-shadow:0 8px 40px rgba(0,0,0,.8);">
+
+  <button onclick="dismissBanner()" style="position:absolute; top:12px; right:12px;
+          background:none; border:none; color:#666; font-size:18px; cursor:pointer;">✕</button>
+
+  <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+    <div style="width:52px; height:52px; background:#FFC300; border-radius:14px;
+                display:flex; align-items:center; justify-content:center; flex-shrink:0;
+                font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; color:#000;">
+      CUE
     </div>
-    <button onclick="document.getElementById('ios-install-banner').style.display='none'; localStorage.setItem('cue_install_dismissed','1')"
-            style="background:none; border:none; color:#666; font-size:20px; cursor:pointer; padding:4px; flex-shrink:0;">✕</button>
+    <div>
+      <div style="font-weight:700; color:#fff; font-size:16px;">Installer CUE</div>
+      <div style="color:#888; font-size:13px;">Accès rapide depuis votre écran d'accueil</div>
+    </div>
+  </div>
+
+  <div style="background:#0a0a0a; border-radius:12px; padding:14px 16px;">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+      <span style="font-size:20px;">1️⃣</span>
+      <span style="color:#ddd; font-size:14px;">Appuyez sur le bouton <strong style="color:#FFC300;">Partager</strong>
+        <span style="font-size:18px;">⎙</span> en bas de Safari</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="font-size:20px;">2️⃣</span>
+      <span style="color:#ddd; font-size:14px;">Puis <strong style="color:#FFC300;">"Sur l'écran d'accueil"</strong>
+        <span style="font-size:16px;">＋</span></span>
+    </div>
   </div>
 </div>
 </body>
