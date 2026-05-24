@@ -1,6 +1,6 @@
 {
-  "name": "CUE DJ Platform",
-  "short_name": "CUE",
+  "name": "CUE DJ",
+  "short_name": "CUE DJ",
   "description": "La plateforme de booking DJ",
   "start_url": "/",
   "display": "standalone",
