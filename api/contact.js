@@ -24,7 +24,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (type === 'report') {
-      const sql = postgres(process.env.NETLIFY_DATABASE_URL, { ssl: 'require' });
+      const sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
       await sql`
         INSERT INTO reports (id, reporter_id, reported_id, type, description, status, created_at)
         VALUES (${Date.now().toString()}, ${senderEmail}, ${reportedUser || 'unknown'}, ${category}, ${message}, 'open', NOW())

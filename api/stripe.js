@@ -2,7 +2,7 @@ const Stripe = require('stripe');
 const postgres = require('postgres');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const sql = postgres(process.env.NETLIFY_DATABASE_URL, { ssl: 'require' });
+const sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
 
 const PRICES = {
   pro:      'price_1TVEcMRwFuYQb4HD2nNHQvP2',

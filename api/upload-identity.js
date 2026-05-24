@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const postgres = require('postgres');
 
-const sql = postgres(process.env.NETLIFY_DATABASE_URL, { ssl: 'require' });
+const sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
 
 const supabase = createClient(
   process.env.SUPABASE_URL,

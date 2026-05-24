@@ -1,7 +1,7 @@
 const postgres = require('postgres');
 const crypto = require('crypto');
 
-const sql = postgres(process.env.NETLIFY_DATABASE_URL, { ssl: 'require' });
+const sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
 
 function hashPassword(password) {
   return crypto.createHash('sha256').update(password + (process.env.SALT || 'cue_salt_2026')).digest('hex');
@@ -163,7 +163,18 @@ module.exports = async function handler(req, res) {
       await sql`DELETE FROM reports WHERE reporter_id = ${userId} OR reported_id = ${userId}`;
       await sql`DELETE FROM identity_documents WHERE user_id = ${userId}`;
       await sql`DELETE FROM sessions WHERE user_id = ${userId}`;
+      await sql`DELETE FROM contracts WHERE dj_id = ${userId} OR venue_id = ${userId}`;
       await sql`DELETE FROM users WHERE id = ${userId}`;
+
+      // Supprime aussi dans Supabase Auth avec la service key
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseAdmin = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_KEY
+      );
+      const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+      if (authError) console.log('Erreur suppression Supabase Auth:', authError.message);
+
       console.log('✅ Compte supprimé:', userId);
       return res.status(200).json({ success: true });
     } catch (err) {

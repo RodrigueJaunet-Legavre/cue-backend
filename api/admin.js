@@ -1,6 +1,6 @@
 const postgres = require('postgres');
 const { Resend } = require('resend');
-const sql = postgres(process.env.NETLIFY_DATABASE_URL, { ssl: 'require' });
+const sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
 
 async function getSignedUrl(supabaseUrl, supabaseKey, userId, fileType) {
   for (const ext of ['jpg', 'jpeg', 'png']) {

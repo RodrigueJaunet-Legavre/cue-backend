@@ -1,7 +1,7 @@
 const postgres = require('postgres');
 const { Resend } = require('resend');
 
-const sql = postgres(process.env.NETLIFY_DATABASE_URL, { ssl: 'require' });
+const sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 module.exports = async function handler(req, res) {

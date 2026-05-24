@@ -2,7 +2,7 @@ const Stripe = require('stripe');
 const postgres = require('postgres');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const sql = postgres(process.env.NETLIFY_DATABASE_URL, { ssl: 'require' });
+const sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
