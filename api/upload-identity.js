@@ -79,7 +79,7 @@ async function handler(req, res) {
       const [userRows] = await sql`SELECT first_name, last_name, email, user_type FROM users WHERE id = ${userId}`;
       if (userRows) {
         const adminEmail = process.env.ADMIN_EMAIL || 'cue.dj.app@gmail.com';
-        await fetch(`${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'http://localhost:3000'}/api/send-email`, {
+        await fetch('https://cuedj.eu/api/send-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
