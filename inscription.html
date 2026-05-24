@@ -465,10 +465,12 @@ async function submitStep1(e) {
 
 function handleCodeInput(input, type) {
   input.value = input.value.replace(/\D/g, '');
-  if (input.value) { input.classList.add('filled'); if (input.nextElementSibling?.classList.contains('code-digit')) input.nextElementSibling.focus(); }
-  else input.classList.remove('filled');
-  const code = Array.from(document.getElementById(type + 'CodeWrap').querySelectorAll('.code-digit')).map(i => i.value).join('');
-  if (code.length === 6) verifyEmailCode();
+  if (input.value) {
+    input.classList.add('filled');
+    if (input.nextElementSibling?.classList.contains('code-digit')) input.nextElementSibling.focus();
+  } else {
+    input.classList.remove('filled');
+  }
 }
 
 function handleCodeKeydown(e, input) { if (e.key === 'Backspace' && !input.value && input.previousElementSibling?.classList.contains('code-digit')) input.previousElementSibling.focus(); }
