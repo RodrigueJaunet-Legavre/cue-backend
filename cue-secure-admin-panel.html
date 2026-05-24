@@ -829,38 +829,41 @@
       });
       const docsData = await docsRes.json();
 
-      const rowStyle = `display:flex; align-items:center; gap:10px; padding:12px 16px;
-        background:#0a0a0a; border:1px solid var(--BORDER); border-radius:12px;
-        color:#fff; text-decoration:none; transition:all .2s;`;
+      const allDocs = docsData.allDocs || [];
 
-      let html = '<div style="display:flex; flex-direction:column; gap:10px;">';
-      if (!isOrg && docsData.selfieUrl) {
-        html += `<a href="${docsData.selfieUrl}" target="_blank" style="${rowStyle}"
-          onmouseover="this.style.borderColor='rgba(255,195,0,.4)'" onmouseout="this.style.borderColor='var(--BORDER)'">
-          <span style="font-size:20px;">🤳</span>
-          <div><div style="font-weight:700; font-size:14px;">Selfie</div><div style="color:var(--MUTED); font-size:12px;">Cliquer pour voir</div></div>
-          <span style="margin-left:auto; color:var(--MUTED);">↗</span>
-        </a>`;
-      } else if (!isOrg) {
-        html += '<div style="color:var(--MUTED); font-size:13px;">❌ Pas de selfie</div>';
-      }
-      if (docsData.documentUrl) {
-        const label = isOrg ? 'Document SIRET/KBIS' : "Pièce d'identité";
-        const icon = isOrg ? '📄' : '🪪';
-        html += `<a href="${docsData.documentUrl}" target="_blank" style="${rowStyle}"
-          onmouseover="this.style.borderColor='rgba(255,195,0,.4)'" onmouseout="this.style.borderColor='var(--BORDER)'">
-          <span style="font-size:20px;">${icon}</span>
-          <div><div style="font-weight:700; font-size:14px;">${label}</div><div style="color:var(--MUTED); font-size:12px;">Cliquer pour voir</div></div>
-          <span style="margin-left:auto; color:var(--MUTED);">↗</span>
-        </a>`;
-      } else {
-        html += '<div style="color:var(--MUTED); font-size:13px;">❌ Pas de document</div>';
-      }
-      html += '</div>';
-      if (!docsData.selfieUrl && !docsData.documentUrl) {
-        html = '<p style="color:#FFC300; font-size:13px;">⚠️ Aucun document soumis</p>';
-      }
-      document.getElementById('modal-docs-section').innerHTML = html;
+      const docsHTML = allDocs.length ? allDocs.map(doc => `
+        <a href="${doc.url}" target="_blank"
+           style="display:flex; align-items:center; gap:10px; padding:12px 16px;
+                  background:#0a0a0a; border:1px solid var(--BORDER); border-radius:12px;
+                  color:#fff; text-decoration:none; transition:all .2s; margin-bottom:8px;"
+           onmouseover="this.style.borderColor='rgba(255,195,0,.4)'"
+           onmouseout="this.style.borderColor='var(--BORDER)'">
+          <span style="font-size:20px;">
+            ${doc.type.includes('Selfie') ? '🤳'
+              : doc.type.includes('SIRET') || doc.type.includes('légal') ? '📄'
+              : '🪪'}
+          </span>
+          <div>
+            <div style="font-weight:700; font-size:14px;">${doc.type}</div>
+            <div style="color:var(--MUTED); font-size:12px;">
+              ${doc.submittedAt ? new Date(doc.submittedAt).toLocaleDateString('fr-FR') : ''} — Cliquer pour voir
+            </div>
+          </div>
+          <span style="margin-left:auto; color:var(--MUTED); font-size:18px;">↗</span>
+        </a>
+      `).join('') : '<div style="color:var(--MUTED); font-size:13px; padding:8px 0;">Aucun document soumis</div>';
+
+      const orgHTML = docsData.orgName ? `
+        <div style="background:#0a0a0a; border:1px solid var(--BORDER); border-radius:12px;
+                    padding:14px 16px; margin-bottom:12px;">
+          <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px;
+                      text-transform:uppercase; margin-bottom:8px;">Organisation</div>
+          <div style="font-weight:700; color:#fff; margin-bottom:4px;">${docsData.orgName}</div>
+          ${docsData.orgSiret ? `<div style="color:var(--MUTED); font-size:13px; font-family:monospace;">SIRET : ${docsData.orgSiret}</div>` : ''}
+        </div>
+      ` : '';
+
+      document.getElementById('modal-docs-section').innerHTML = orgHTML + docsHTML;
     } catch(err) {
       console.log('Erreur chargement docs:', err);
       document.getElementById('modal-docs-section').innerHTML = '<p style="color:#FFC300; font-size:13px;">⚠️ Erreur chargement documents</p>';

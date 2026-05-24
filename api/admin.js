@@ -162,15 +162,57 @@ module.exports = async function handler(req, res) {
 
   // GET DOCS
   if (adminAction === 'get_docs') {
+    const { userId } = body;
     try {
-      const { userId } = body;
-      const supabaseUrl = process.env.SUPABASE_URL;
-      const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
-      const [selfieUrl, documentUrl] = await Promise.all([
-        getSignedUrl(supabaseUrl, supabaseKey, userId, 'selfie'),
-        getSignedUrl(supabaseUrl, supabaseKey, userId, 'document')
-      ]);
-      return res.status(200).json({ selfieUrl, documentUrl });
+      const docs = await sql`
+        SELECT * FROM identity_documents
+        WHERE user_id = ${userId}
+        ORDER BY submitted_at DESC
+      `;
+
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseAdmin = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_KEY
+      );
+
+      const docsWithUrls = await Promise.all(docs.map(async (doc) => {
+        const url = doc.document_url || '';
+        const path = url.includes('/identity-docs/')
+          ? url.split('/identity-docs/')[1].split('?')[0]
+          : null;
+        if (!path) return { ...doc, signedUrl: doc.document_url };
+        const { data } = await supabaseAdmin.storage
+          .from('identity-docs')
+          .createSignedUrl(path, 3600);
+        return { ...doc, signedUrl: data?.signedUrl || doc.document_url };
+      }));
+
+      const [user] = await sql`SELECT * FROM users WHERE id = ${userId}`;
+
+      const selfieDoc = docsWithUrls.find(d => d.document_url?.includes('selfie'));
+      const cniDoc = docsWithUrls.find(d =>
+        d.document_url?.includes('cni') ||
+        d.document_url?.includes('document') ||
+        d.document_url?.includes('legal_doc') ||
+        d.document_url?.includes('id_doc')
+      );
+
+      return res.status(200).json({
+        selfieUrl: selfieDoc?.signedUrl || null,
+        documentUrl: cniDoc?.signedUrl || null,
+        allDocs: docsWithUrls.map(d => ({
+          url: d.signedUrl,
+          type: d.document_url?.includes('selfie') ? 'Selfie'
+            : d.document_url?.includes('legal_doc') ? 'Document légal (SIRET/KBIS)'
+            : d.document_url?.includes('cni') ? "Pièce d'identité"
+            : 'Document',
+          submittedAt: d.submitted_at
+        })),
+        orgName: user?.org_name,
+        orgSiret: user?.org_siret,
+        venueType: user?.venue_type
+      });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
