@@ -533,6 +533,7 @@
 
   // NAVIGATION
   function nextStep() {
+    alert(`currentStep: ${currentStep}, totalSteps: ${totalSteps}`);
     // Validation étape 2 - description obligatoire
     if (currentStep === 2) {
       const desc = document.getElementById('description').value.trim();
