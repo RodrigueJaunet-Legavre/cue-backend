@@ -4087,6 +4087,7 @@
     document.getElementById('conversation-active').style.display = 'flex';
     document.getElementById('conv-venue-name').textContent = venueName;
     await loadMessages(convId);
+    renderChatActions(currentConv);
     renderConversations();
   }
 
@@ -5104,14 +5105,24 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'send_message',
-          conversationId: convId,
-          senderId: user.id,
-          content: `📄 Proposition de contrat\n\nJ'ai généré un contrat pour notre collaboration. Vous pouvez le consulter ici :\n\n${generatedContractLink}`,
-          type: 'text'
+          convId,
+          djId: currentConv?.dj_id,
+          venueId: currentConv?.venue_id,
+          djName: currentConv?.dj_name,
+          venueName: currentConv?.venue_name,
+          senderType: 'dj',
+          message: {
+            senderId: user.id,
+            senderName: (user.first_name || '') + ' ' + (user.last_name || ''),
+            content: `📄 Proposition de contrat\n\nJ'ai généré un contrat pour notre collaboration. Vous pouvez le consulter ici :\n\n${generatedContractLink}`,
+            type: 'text'
+          }
         })
       })
       closeModal('modal-contract-generator')
-      await loadConversationMessages(convId)
+      invalidateConversationsCache()
+      await loadMessages(convId)
+      await loadConversations(true)
       alert('✅ Lien du contrat envoyé dans la conversation !')
     } catch(err) {
       alert('Erreur : ' + err.message)
