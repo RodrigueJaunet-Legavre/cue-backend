@@ -236,19 +236,32 @@ module.exports = async function handler(req, res) {
   }
 
   if (action === 'update_profile_by_id') {
-    const { userId, description, genres, instagram, tiktok, soundcloud, spotify, youtube, mixUrl, tracks, photo } = body;
+    const { userId, description, genres, instagram, tiktok, soundcloud,
+            spotify, youtube, mixUrl, tracks, photo } = body;
     try {
+      // Parse genres — accepte string JSON ou array
+      let genresArray = [];
+      if (genres) {
+        genresArray = Array.isArray(genres) ? genres : JSON.parse(genres);
+      }
+
+      // Parse tracks — accepte string JSON ou array
+      let tracksArray = [];
+      if (tracks) {
+        tracksArray = Array.isArray(tracks) ? tracks : JSON.parse(tracks);
+      }
+
       await sql`
         UPDATE users SET
           description = ${description || null},
-          genres = ${genres ? JSON.stringify(genres) : null},
+          genres = ${sql.array(genresArray)},
           instagram = ${instagram || null},
           tiktok = ${tiktok || null},
           soundcloud = ${soundcloud || null},
           spotify = ${spotify || null},
           youtube = ${youtube || null},
           mix_url = ${mixUrl || null},
-          tracks = ${tracks ? JSON.stringify(tracks) : null},
+          tracks = ${sql.array(tracksArray)},
           picture = ${photo || null},
           profile_complete = true,
           updated_at = NOW()
@@ -257,7 +270,7 @@ module.exports = async function handler(req, res) {
       const [user] = await sql`SELECT * FROM users WHERE id = ${userId}`;
       console.log('✅ profile_complete:', user?.profile_complete);
       return res.status(200).json({ success: true, user: sanitizeUser(user) });
-    } catch (err) {
+    } catch(err) {
       console.log('❌ update_profile_by_id error:', err.message);
       return res.status(500).json({ error: err.message });
     }
