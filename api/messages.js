@@ -67,15 +67,26 @@ module.exports = async function handler(req, res) {
   }
 
   if (action === 'send_message') {
-    const { convId, djId, venueId, djName, venueName, senderType, message } = body;
+    const { djId, venueId, djName, venueName, senderType, message, contractLink, contractId } = body;
+    // accept both convId and conversationId
+    const convId = body.convId || body.conversationId;
+    // accept both nested message object and flat format
+    const senderId2  = message?.senderId  || body.senderId;
+    const senderName = message?.senderName || body.senderName || '';
+    const content    = message?.content   || body.content || '';
+    const msgType    = message?.type      || body.type || 'text';
+    const offerData  = message?.offerData || null;
+
     const conv = await sql`SELECT * FROM conversations WHERE id = ${convId}`;
+    const preview = msgType === 'contract_proposal' ? '📄 Proposition de contrat' : content;
     if (!conv.length) {
-      await sql`INSERT INTO conversations (id, dj_id, venue_id, dj_name, venue_name, last_message, last_message_at) VALUES (${convId}, ${djId}, ${venueId}, ${djName}, ${venueName}, ${message.content}, NOW())`;
+      await sql`INSERT INTO conversations (id, dj_id, venue_id, dj_name, venue_name, last_message, last_message_at) VALUES (${convId}, ${djId||''}, ${venueId||''}, ${djName||''}, ${venueName||''}, ${preview}, NOW())`;
     } else {
-      await sql`UPDATE conversations SET last_message = ${message.content}, last_message_at = NOW() WHERE id = ${convId}`;
+      await sql`UPDATE conversations SET last_message = ${preview}, last_message_at = NOW() WHERE id = ${convId}`;
     }
     const msgId = Date.now().toString();
-    await sql`INSERT INTO messages (id, conversation_id, sender_id, sender_name, sender_type, content, type, offer_data) VALUES (${msgId}, ${convId}, ${message.senderId}, ${message.senderName}, ${senderType}, ${message.content}, ${message.type || 'text'}, ${message.offerData ? JSON.stringify(message.offerData) : null})`;
+    await sql`INSERT INTO messages (id, conversation_id, sender_id, sender_name, sender_type, content, type, offer_data, contract_link)
+      VALUES (${msgId}, ${convId}, ${senderId2}, ${senderName}, ${senderType||'dj'}, ${content}, ${msgType}, ${offerData ? JSON.stringify(offerData) : null}, ${contractLink || null})`;
     return res.status(200).json({ success: true, messageId: msgId });
   }
 
@@ -205,6 +216,16 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ unread: parseInt(unread[0]?.count || 0) });
     } catch (err) {
       return res.status(200).json({ unread: 0 });
+    }
+  }
+
+  if (action === 'respond_to_contract') {
+    const { messageId, status } = body;
+    try {
+      await sql`UPDATE messages SET contract_status = ${status} WHERE id = ${messageId}`;
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
     }
   }
 

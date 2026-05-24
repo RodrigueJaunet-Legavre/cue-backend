@@ -3273,6 +3273,79 @@
     }
   }
 
+  function renderContractMessage(msg, isMe) {
+    const status = msg.contract_status;
+    const canRespond = !isMe && !status;
+    return `
+      <div style="display:flex; justify-content:${isMe ? 'flex-end' : 'flex-start'}; margin-bottom:12px;">
+        <div style="max-width:340px; background:${isMe ? 'rgba(255,195,0,.1)' : '#1a1a1a'};
+                    border:1px solid ${isMe ? 'rgba(255,195,0,.3)' : '#333'};
+                    border-radius:16px; padding:16px; width:100%;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+            <span style="font-size:20px;">📄</span>
+            <span style="font-weight:700; color:#fff; font-size:14px;">Proposition de contrat</span>
+          </div>
+          <div style="margin-bottom:12px;">
+            <a href="${msg.contract_link}" target="_blank"
+               style="display:block; padding:10px; background:#0a0a0a; border:1px solid #333;
+                      border-radius:10px; color:#FFC300; text-decoration:none; font-size:13px;
+                      font-weight:700; text-align:center;">
+              👁 Voir le contrat
+            </a>
+          </div>
+          ${status === 'approved' ? `
+            <div style="background:rgba(0,200,100,.1); border:1px solid rgba(0,200,100,.3);
+                        border-radius:10px; padding:10px; text-align:center; color:#00c864;
+                        font-weight:700; font-size:13px; margin-bottom:8px;">✅ Contrat validé</div>
+            <button onclick="signGeneratedContract('${msg.contract_link}')"
+                    style="width:100%; padding:12px; background:linear-gradient(135deg,#FFC300,#FFD740);
+                           color:#000; border:none; border-radius:10px; font-weight:900;
+                           font-size:14px; cursor:pointer; font-family:'Barlow Condensed',sans-serif;
+                           letter-spacing:1px;">✍️ SIGNER LE CONTRAT</button>
+          ` : status === 'changes_requested' ? `
+            <div style="background:rgba(255,170,0,.1); border:1px solid rgba(255,170,0,.3);
+                        border-radius:10px; padding:10px; text-align:center; color:#ffaa00;
+                        font-weight:700; font-size:13px;">🔄 Modifications demandées</div>
+          ` : canRespond ? `
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <button onclick="respondToContract('${msg.id}', 'approved')"
+                      style="padding:10px; background:rgba(0,200,100,.15);
+                             border:1px solid rgba(0,200,100,.3); border-radius:10px;
+                             color:#00c864; font-weight:700; cursor:pointer; font-size:13px;
+                             font-family:Barlow,sans-serif;">✅ Valider</button>
+              <button onclick="respondToContract('${msg.id}', 'changes_requested')"
+                      style="padding:10px; background:rgba(255,170,0,.1);
+                             border:1px solid rgba(255,170,0,.3); border-radius:10px;
+                             color:#ffaa00; font-weight:700; cursor:pointer; font-size:13px;
+                             font-family:Barlow,sans-serif;">🔄 Modifications</button>
+            </div>
+          ` : `
+            <div style="color:var(--MUTED); font-size:12px; text-align:center; margin-top:4px;">
+              En attente de réponse...
+            </div>
+          `}
+        </div>
+      </div>`;
+  }
+
+  async function respondToContract(messageId, status) {
+    try {
+      await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'respond_to_contract', messageId, status, userId: user.id })
+      });
+      if (currentVenueConv) await loadVenueMessages(currentVenueConv.id);
+    } catch(err) {
+      alert('Erreur. Réessaie.');
+    }
+  }
+
+  function signGeneratedContract(contractLink) {
+    const url = contractLink.includes('?') ? contractLink + '&sign=true' : contractLink + '?sign=true';
+    window.open(url, '_blank');
+  }
+
   function renderVenueMessages(msgs) {
     const container = document.getElementById('conv-messages');
     if (!msgs.length) {
@@ -3282,6 +3355,7 @@
     container.innerHTML = msgs.map(msg => {
       const isMe = msg.sender_id === user.id;
       const isOffer = msg.type === 'offer';
+      if (msg.type === 'contract_proposal') return renderContractMessage(msg, isMe);
 
       if (isOffer) {
         let offer = msg.offer_data;
@@ -4985,11 +5059,11 @@
     modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 
     modal.innerHTML = `
-      <div style="background:#111;border-radius:20px 20px 0 0;width:100%;max-width:640px;padding:24px 24px 32px;max-height:90vh;overflow-y:auto;">
+      <div style="background:#111;border-radius:20px 20px 0 0;width:100%;max-width:640px;padding:24px 24px 32px;max-height:90vh;overflow-y:auto;position:relative;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
           <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;color:#fff;">✨ GÉNÉRATEUR DE CONTRAT IA</h2>
           <button onclick="document.getElementById('modal-contract-generator').remove()"
-                  style="background:none;border:none;color:#888;font-size:24px;cursor:pointer;">✕</button>
+                  style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
           <div>
@@ -5129,14 +5203,14 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'send_message',
-          convId,
+          conversationId: convId,
+          senderId: user.id,
+          senderName: getName(user),
           senderType: 'venue',
-          message: {
-            senderId: user.id,
-            senderName: getName(user),
-            content: `📄 Proposition de contrat\n\nJ'ai généré un contrat pour notre collaboration. Vous pouvez le consulter ici :\n\n${generatedContractLink}`,
-            type: 'text'
-          }
+          content: '📄 Proposition de contrat',
+          type: 'contract_proposal',
+          contractLink: generatedContractLink,
+          contractId: generatedContractId
         })
       });
 
@@ -5145,7 +5219,7 @@
       if (currentVenueConv && currentVenueConv.id === convId) {
         await loadVenueMessages(convId);
       }
-      alert('✅ Lien du contrat envoyé dans la conversation !');
+      alert('✅ Contrat envoyé !');
     } catch (err) {
       alert('Erreur : ' + err.message);
     }

@@ -240,10 +240,25 @@ module.exports = async function handler(req, res) {
   if (action === 'get_generated_contract') {
     const { contractId } = body;
     try {
-      const [contract] = await sql`
-        SELECT * FROM generated_contracts WHERE id = ${contractId}
-      `;
+      const [contract] = await sql`SELECT * FROM generated_contracts WHERE id = ${contractId}`;
       return res.status(200).json({ contract: contract || null });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  if (action === 'sign_generated_contract') {
+    const { contractId, signerName, signedAt } = body;
+    const ip = req.headers['x-forwarded-for'] || 'unknown';
+    try {
+      await sql`
+        UPDATE generated_contracts SET
+          signed_by  = array_append(COALESCE(signed_by,  ARRAY[]::text[]),        ${signerName}),
+          signed_at  = array_append(COALESCE(signed_at,  ARRAY[]::timestamptz[]), ${signedAt}::timestamptz),
+          signed_ip  = array_append(COALESCE(signed_ip,  ARRAY[]::text[]),        ${ip})
+        WHERE id = ${contractId}
+      `;
+      return res.status(200).json({ success: true });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
