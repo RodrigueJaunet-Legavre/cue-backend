@@ -308,6 +308,49 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    if (type === 'contract_signed_pay_now') {
+      const { cachet, djName, eventDate, paymentLink } = req.body;
+      result = await resend.emails.send({
+        from: 'CUE DJ <noreply@cuedj.eu>',
+        to: email,
+        subject: '💳 Contrat signé — Procédez au paiement — CUE',
+        html: `
+          <div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
+            <h2 style="color:#FFC300;">✅ Contrat signé — Paiement requis</h2>
+            <p>Bonjour ${firstName},</p>
+            <p>Le contrat avec <strong>${djName || 'le DJ'}</strong> a été signé par les deux parties.</p>
+            <p>Vous pouvez maintenant procéder au paiement via CUE.</p>
+            <div style="background:#111; border:1px solid rgba(255,195,0,.3); border-radius:12px; padding:24px; margin:24px 0;">
+              <table style="width:100%; border-collapse:collapse;">
+                <tr>
+                  <td style="color:#888; font-size:12px; padding:6px 0; text-transform:uppercase; letter-spacing:1px; width:120px;">Prestataire</td>
+                  <td style="color:#ddd;">${djName || '—'}</td>
+                </tr>
+                ${eventDate ? `<tr>
+                  <td style="color:#888; font-size:12px; padding:6px 0; text-transform:uppercase; letter-spacing:1px;">Date</td>
+                  <td style="color:#ddd;">${new Date(eventDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</td>
+                </tr>` : ''}
+                ${cachet ? `<tr>
+                  <td style="color:#888; font-size:12px; padding:6px 0; text-transform:uppercase; letter-spacing:1px;">Montant</td>
+                  <td style="color:#FFC300; font-weight:700; font-size:22px;">${cachet}€</td>
+                </tr>` : ''}
+              </table>
+            </div>
+            <a href="${paymentLink || 'https://cuedj.eu/dashboard-venue.html'}"
+               style="display:inline-block; background:#FFC300; color:#000; padding:16px 36px; border-radius:8px;
+                      text-decoration:none; font-weight:700; font-size:16px; margin-top:8px;">
+              Payer maintenant →
+            </a>
+            <p style="color:#888; font-size:12px; margin-top:20px;">
+              Le paiement est sécurisé et géré par la plateforme CUE.
+            </p>
+            <hr style="border-color:#222; margin:32px 0;">
+            <p style="color:#555; font-size:12px;">© 2026 CUE DJ Platform — cuedj.eu</p>
+          </div>
+        `
+      });
+    }
+
     console.log('Resend result:', JSON.stringify(result));
     return res.status(200).json({
       success: true,

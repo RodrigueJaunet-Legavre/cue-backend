@@ -2886,6 +2886,31 @@
             <div style="font-family:Barlow Condensed; font-weight:900; font-size:32px; color:var(--Y);">${g.fee || 0}€</div>
           </div>
           ${g.notes ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">NOTES</div><div style="color:var(--MUTED); font-size:14px; line-height:1.6;">${g.notes}</div></div>` : ''}
+          ${g.contractId ? `
+            <div style="background:rgba(0,200,100,.08); border:1px solid rgba(0,200,100,.3); border-radius:12px; padding:16px;">
+              <div style="font-weight:700; color:#00c864; font-size:13px; margin-bottom:10px;">✅ Contrat signé</div>
+              <div style="display:flex; gap:8px;">
+                <a href="https://cuedj.eu/contract-view.html?id=${g.contractId}" target="_blank"
+                   style="flex:1; text-align:center; background:#111; color:#FFC300; border:1px solid rgba(255,195,0,.4);
+                          padding:10px; border-radius:8px; text-decoration:none; font-weight:700; font-size:13px;">
+                  👁 Voir
+                </a>
+                <a href="https://cuedj.eu/contract-view.html?id=${g.contractId}&download=true" target="_blank"
+                   style="flex:1; text-align:center; background:#FFC300; color:#000;
+                          padding:10px; border-radius:8px; text-decoration:none; font-weight:700; font-size:13px;">
+                  📥 PDF
+                </a>
+              </div>
+            </div>
+          ` : g.bookingId ? `
+            <div style="background:#111; border:1px solid var(--BORDER); border-radius:12px; padding:16px;">
+              <div style="font-weight:700; color:var(--MUTED); font-size:13px; margin-bottom:10px;">📄 Contrat</div>
+              <button onclick="proposeContract('${g.convId || ''}', '${g.djId || ''}', '${g.venueId || ''}')"
+                      class="btn btn-outline" style="width:100%; font-size:13px; padding:10px;">
+                Générer un contrat
+              </button>
+            </div>
+          ` : ''}
         </div>
         <div class="modal-actions" style="margin-top:24px;">
           <button class="btn btn-outline" onclick="closeModal('modal-event-detail')">Fermer</button>
@@ -5099,6 +5124,7 @@
     modal.dataset.djName = data.djName || ''
     modal.dataset.venueName = data.venueName || ''
     modal.dataset.convId = data.convId || ''
+    modal.dataset.bookingId = data.bookingId || ''
     modal.classList.add('open')
     modal.onclick = (e) => { if (e.target === modal) closeModal('modal-contract-generator') }
   }
@@ -5137,7 +5163,9 @@
           venueName: modal.dataset.venueName,
           date, lieu, type, start, end,
           cachet: parseFloat(cachet),
-          extra
+          extra,
+          bookingId: modal.dataset.bookingId || null,
+          conversationId: modal.dataset.convId || null
         })
       })
       const data = await res.json()

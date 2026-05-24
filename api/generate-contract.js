@@ -9,7 +9,8 @@ module.exports = async function handler(req, res) {
     venueName, venueAddress, venuePhone, venueEmail, venueSiret,
     date, fee, start, end, type, details,
     // simplified fields from dashboard modal
-    cachet, lieu, extra
+    cachet, lieu, extra,
+    bookingId, conversationId
   } = req.body;
 
   const effectiveFee = fee || cachet;
@@ -84,8 +85,18 @@ Le contrat doit avoir ces 10 sections numérotées :
     const contractId = 'CGEN-' + Date.now();
 
     await sql`
-      INSERT INTO generated_contracts (id, dj_name, venue_name, event_date, content, created_at)
-      VALUES (${contractId}, ${djName || ''}, ${venueName || ''}, ${effectiveDate || ''}, ${contractText}, NOW())
+      INSERT INTO generated_contracts (
+        id, dj_name, venue_name, event_date, content,
+        cachet, lieu, start_time, end_time, booking_id, conversation_id,
+        created_at
+      )
+      VALUES (
+        ${contractId}, ${djName || ''}, ${venueName || ''}, ${effectiveDate || null}, ${contractText},
+        ${(effectiveFee)?.toString() || null}, ${lieu || venueAddress || null},
+        ${start || null}, ${end || null},
+        ${bookingId || null}, ${conversationId || null},
+        NOW()
+      )
     `;
 
     return res.status(200).json({

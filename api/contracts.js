@@ -274,27 +274,61 @@ module.exports = async function handler(req, res) {
         `;
       }
 
-      // Email aux deux parties si tout signé
-      if (allSigned && conversationId) {
-        const [conv] = await sql`SELECT * FROM conversations WHERE id = ${conversationId}`;
-        if (conv) {
-          const [dj]    = await sql`SELECT email, first_name FROM users WHERE id = ${conv.dj_id}`;
-          const [venue] = await sql`SELECT email, first_name FROM users WHERE id = ${conv.venue_id}`;
-          for (const party of [dj, venue].filter(Boolean)) {
-            await fetch('https://cuedj.eu/api/send-email', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                type: 'contract_fully_signed',
-                email: party.email,
-                firstName: party.first_name,
-                contractId,
-                contractLink:  `https://cuedj.eu/contract-view.html?id=${contractId}`,
-                downloadLink:  `https://cuedj.eu/contract-view.html?id=${contractId}&download=true`,
-                signers: contract.signed_by,
-                dates:   contract.signed_at
-              })
-            }).catch(() => {});
+      // Si tout signé : mise à jour booking + emails
+      if (allSigned) {
+        // Met à jour le booking lié
+        if (contract.booking_id) {
+          await sql`
+            UPDATE bookings SET
+              contract_id     = ${contractId},
+              contract_status = 'signed',
+              updated_at      = NOW()
+            WHERE id = ${contract.booking_id}
+          `.catch(() => {});
+        }
+
+        const convId = conversationId || contract.conversation_id;
+        if (convId) {
+          const [conv] = await sql`SELECT * FROM conversations WHERE id = ${convId}`.catch(() => []);
+          if (conv) {
+            const [dj]    = await sql`SELECT email, first_name FROM users WHERE id = ${conv.dj_id}`.catch(() => []);
+            const [venue] = await sql`SELECT email, first_name FROM users WHERE id = ${conv.venue_id}`.catch(() => []);
+
+            // Email "contrat signé" aux deux parties
+            for (const party of [dj, venue].filter(Boolean)) {
+              await fetch('https://cuedj.eu/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  type: 'contract_fully_signed',
+                  email: party.email,
+                  firstName: party.first_name,
+                  contractId,
+                  contractLink: `https://cuedj.eu/contract-view.html?id=${contractId}`,
+                  downloadLink: `https://cuedj.eu/contract-view.html?id=${contractId}&download=true`,
+                  signers: contract.signed_by,
+                  dates:   contract.signed_at
+                })
+              }).catch(() => {});
+            }
+
+            // Email "payer maintenant" au venue
+            if (venue) {
+              await fetch('https://cuedj.eu/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  type: 'contract_signed_pay_now',
+                  email: venue.email,
+                  firstName: venue.first_name,
+                  contractId,
+                  cachet: contract.cachet,
+                  djName: contract.dj_name,
+                  eventDate: contract.event_date,
+                  paymentLink: `https://cuedj.eu/dashboard-venue.html`
+                })
+              }).catch(() => {});
+            }
           }
         }
       }
