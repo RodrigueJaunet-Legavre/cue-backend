@@ -241,24 +241,24 @@ module.exports = async function handler(req, res) {
       await sql`
         UPDATE users SET
           description = ${description || null},
-          genres = ${genres || []},
+          genres = ${genres ? JSON.stringify(genres) : null},
           instagram = ${instagram || null},
           tiktok = ${tiktok || null},
           soundcloud = ${soundcloud || null},
           spotify = ${spotify || null},
           youtube = ${youtube || null},
           mix_url = ${mixUrl || null},
-          tracks = ${tracks || []},
+          tracks = ${tracks ? JSON.stringify(tracks) : null},
           picture = ${photo || null},
           profile_complete = true,
           updated_at = NOW()
         WHERE id = ${userId}
       `;
-      const users = await sql`SELECT * FROM users WHERE id = ${userId}`;
-      const user = users[0] || null;
+      const [user] = await sql`SELECT * FROM users WHERE id = ${userId}`;
       console.log('✅ profile_complete:', user?.profile_complete);
       return res.status(200).json({ success: true, user: sanitizeUser(user) });
     } catch (err) {
+      console.log('❌ update_profile_by_id error:', err.message);
       return res.status(500).json({ error: err.message });
     }
   }
