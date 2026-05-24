@@ -128,6 +128,11 @@ module.exports = async function handler(req, res) {
       const newStatus = statusMap[action];
       if (!newStatus) return res.status(400).json({ error: 'Action inconnue' });
       await sql`UPDATE users SET identity_status = ${newStatus} WHERE id = ${userId}`;
+      if (action === 'approve') {
+        await sql`UPDATE identity_documents SET status = 'approved' WHERE user_id = ${userId}`;
+      } else if (action === 'reject' || action === 'request_new') {
+        await sql`UPDATE identity_documents SET status = 'rejected' WHERE user_id = ${userId}`;
+      }
 
       // Email selon l'action
       if (action !== 'suspend') {
@@ -167,6 +172,7 @@ module.exports = async function handler(req, res) {
       const docs = await sql`
         SELECT * FROM identity_documents
         WHERE user_id = ${userId}
+        AND status = 'pending'
         ORDER BY submitted_at DESC
       `;
 
@@ -265,6 +271,7 @@ module.exports = async function handler(req, res) {
     try {
       const { userId, motif, docs } = body;
       await sql`UPDATE users SET identity_status = 'rejected', identity_motif = ${motif || null}, identity_docs_required = ${docs ? JSON.stringify(docs) : null} WHERE id = ${userId}`;
+      await sql`UPDATE identity_documents SET status = 'rejected' WHERE user_id = ${userId}`;
       const [userRow] = await sql`SELECT * FROM users WHERE id = ${userId}`;
       if (userRow?.email) {
         try {

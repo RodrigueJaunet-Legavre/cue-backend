@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="/logo.png">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <title>CUE — Admin</title>
   <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -484,6 +484,44 @@
   }
 
   let currentVerifUserId = null;
+  const docsCache = {};
+
+  function renderDocs(docsData) {
+    const allDocs = docsData.allDocs || [];
+    const docsHTML = allDocs.length ? allDocs.map(doc => `
+      <a href="${doc.url}" target="_blank"
+         style="display:flex; align-items:center; gap:10px; padding:12px 16px;
+                background:#0a0a0a; border:1px solid var(--BORDER); border-radius:12px;
+                color:#fff; text-decoration:none; transition:all .2s; margin-bottom:8px;"
+         onmouseover="this.style.borderColor='rgba(255,195,0,.4)'"
+         onmouseout="this.style.borderColor='var(--BORDER)'">
+        <span style="font-size:20px;">
+          ${doc.type.includes('Selfie') ? '🤳'
+            : doc.type.includes('SIRET') || doc.type.includes('légal') ? '📄'
+            : '🪪'}
+        </span>
+        <div>
+          <div style="font-weight:700; font-size:14px;">${doc.type}</div>
+          <div style="color:var(--MUTED); font-size:12px;">
+            ${doc.submittedAt ? new Date(doc.submittedAt).toLocaleDateString('fr-FR') : ''} — Cliquer pour voir
+          </div>
+        </div>
+        <span style="margin-left:auto; color:var(--MUTED); font-size:18px;">↗</span>
+      </a>
+    `).join('') : '<div style="color:var(--MUTED); font-size:13px; padding:8px 0;">Aucun document soumis</div>';
+
+    const orgHTML = docsData.orgName ? `
+      <div style="background:#0a0a0a; border:1px solid var(--BORDER); border-radius:12px;
+                  padding:14px 16px; margin-bottom:12px;">
+        <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px;
+                    text-transform:uppercase; margin-bottom:8px;">Organisation</div>
+        <div style="font-weight:700; color:#fff; margin-bottom:4px;">${docsData.orgName}</div>
+        ${docsData.orgSiret ? `<div style="color:var(--MUTED); font-size:13px; font-family:monospace;">SIRET : ${docsData.orgSiret}</div>` : ''}
+      </div>
+    ` : '';
+
+    document.getElementById('modal-docs-section').innerHTML = orgHTML + docsHTML;
+  }
 
   // LOGIN
   function adminLogin() {
@@ -614,6 +652,19 @@
         </td>
       </tr>
     `).join('');
+
+    // Précharge les docs en arrière-plan
+    users.forEach(async (v) => {
+      if (docsCache[v.id]) return;
+      try {
+        const r = await fetch('/api/admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adminAction: 'get_docs', userId: v.id, adminSecret: getSecret() })
+        });
+        docsCache[v.id] = await r.json();
+      } catch(e) {}
+    });
   }
 
   async function loadUsers(type = 'all') {
@@ -797,79 +848,31 @@
   async function openVerifModal(userId, name, email, userType) {
     currentVerifUserId = userId;
 
-    // Récupère les infos complètes
-    const res = await fetch('/api/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'get_user', userId })
-    });
-    const data = await res.json();
-    const u = data.user;
-
-    const isOrg = u?.venue_type === 'organisation';
-
+    document.getElementById('modal-verif').classList.add('open');
     document.getElementById('modal-user-info').innerHTML = `
-      <p><strong>${name}</strong> — ${userType?.toUpperCase()} ${isOrg ? '(Organisation)' : '(Particulier)'}</p>
+      <p><strong>${name}</strong> — ${userType?.toUpperCase()}</p>
       <p style="color:var(--MUTED);">${email}</p>
-      ${isOrg ? `
-        <div style="background:#1a1a1a; border-radius:8px; padding:12px 16px; margin-top:12px;">
-          <div><strong>Organisation :</strong> ${u.org_name || '—'}</div>
-          <div><strong>SIRET :</strong> ${u.org_siret || '—'}</div>
-        </div>
-      ` : ''}
     `;
+    document.getElementById('modal-docs-section').innerHTML =
+      '<div style="text-align:center; padding:20px; color:var(--MUTED);">⏳ Chargement...</div>';
 
-    // Charge les documents
-    document.getElementById('modal-docs-section').innerHTML = '<p style="color:#888; font-size:13px;">Chargement des documents...</p>';
     try {
-      const docsRes = await fetch('/api/admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminAction: 'get_docs', userId, adminSecret: getSecret() })
-      });
-      const docsData = await docsRes.json();
-
-      const allDocs = docsData.allDocs || [];
-
-      const docsHTML = allDocs.length ? allDocs.map(doc => `
-        <a href="${doc.url}" target="_blank"
-           style="display:flex; align-items:center; gap:10px; padding:12px 16px;
-                  background:#0a0a0a; border:1px solid var(--BORDER); border-radius:12px;
-                  color:#fff; text-decoration:none; transition:all .2s; margin-bottom:8px;"
-           onmouseover="this.style.borderColor='rgba(255,195,0,.4)'"
-           onmouseout="this.style.borderColor='var(--BORDER)'">
-          <span style="font-size:20px;">
-            ${doc.type.includes('Selfie') ? '🤳'
-              : doc.type.includes('SIRET') || doc.type.includes('légal') ? '📄'
-              : '🪪'}
-          </span>
-          <div>
-            <div style="font-weight:700; font-size:14px;">${doc.type}</div>
-            <div style="color:var(--MUTED); font-size:12px;">
-              ${doc.submittedAt ? new Date(doc.submittedAt).toLocaleDateString('fr-FR') : ''} — Cliquer pour voir
-            </div>
-          </div>
-          <span style="margin-left:auto; color:var(--MUTED); font-size:18px;">↗</span>
-        </a>
-      `).join('') : '<div style="color:var(--MUTED); font-size:13px; padding:8px 0;">Aucun document soumis</div>';
-
-      const orgHTML = docsData.orgName ? `
-        <div style="background:#0a0a0a; border:1px solid var(--BORDER); border-radius:12px;
-                    padding:14px 16px; margin-bottom:12px;">
-          <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px;
-                      text-transform:uppercase; margin-bottom:8px;">Organisation</div>
-          <div style="font-weight:700; color:#fff; margin-bottom:4px;">${docsData.orgName}</div>
-          ${docsData.orgSiret ? `<div style="color:var(--MUTED); font-size:13px; font-family:monospace;">SIRET : ${docsData.orgSiret}</div>` : ''}
-        </div>
-      ` : '';
-
-      document.getElementById('modal-docs-section').innerHTML = orgHTML + docsHTML;
+      let docsData = docsCache[userId];
+      if (!docsData) {
+        const res = await fetch('/api/admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adminAction: 'get_docs', userId, adminSecret: getSecret() })
+        });
+        docsData = await res.json();
+        docsCache[userId] = docsData;
+      }
+      renderDocs(docsData);
     } catch(err) {
       console.log('Erreur chargement docs:', err);
-      document.getElementById('modal-docs-section').innerHTML = '<p style="color:#FFC300; font-size:13px;">⚠️ Erreur chargement documents</p>';
+      document.getElementById('modal-docs-section').innerHTML =
+        '<p style="color:#FFC300; font-size:13px;">⚠️ Erreur chargement documents</p>';
     }
-
-    document.getElementById('modal-verif').classList.add('open');
   }
 
   function closeModal(id) {
