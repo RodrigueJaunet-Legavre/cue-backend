@@ -264,8 +264,33 @@
 
     /* NAV BADGES */
     .nav-item { position:relative; display:flex; align-items:center; }
-    .nav-badge { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:#ff3b30; color:#fff; font-size:10px; font-weight:800; min-width:20px; height:20px; border-radius:10px; display:inline-flex !important; align-items:center !important; justify-content:center !important; padding:0 5px; line-height:1 !important; vertical-align:middle; pointer-events:none; z-index:10; box-sizing:border-box; text-align:center; }
-    @keyframes badgePop { from { transform:translateY(-50%) scale(0); opacity:0; } to { transform:translateY(-50%) scale(1); opacity:1; } }
+    .nav-badge {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #ff3b30;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      min-width: 20px;
+      height: 20px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 5px;
+      box-sizing: border-box;
+      line-height: 1;
+      pointer-events: none;
+      z-index: 10;
+      box-shadow: 0 2px 6px rgba(255,59,48,.5);
+      animation: badgePop .25s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes badgePop {
+      from { transform: translateY(-50%) scale(0); }
+      to   { transform: translateY(-50%) scale(1); }
+    }
 
     /* ============================================
        MOBILE RESPONSIVE — dashboard-dj.html
@@ -4483,6 +4508,7 @@
     if (!navItem) return
     navItem.querySelectorAll('.nav-badge').forEach(b => b.remove())
     if (count > 0) {
+      navItem.style.position = 'relative'
       const badge = document.createElement('span')
       badge.className = 'nav-badge'
       badge.textContent = count > 99 ? '99+' : String(count)

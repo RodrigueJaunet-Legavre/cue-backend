@@ -51,7 +51,29 @@
     .nav-item.active { color:var(--Y); background:rgba(255,195,0,.08); }
     .nav-item.active::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--Y); border-radius:0 2px 2px 0; }
     .nav-icon { font-size:18px; width:22px; text-align:center; }
-    .nav-badge { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:#ff3b30; color:#fff; font-size:10px; font-weight:800; min-width:20px; height:20px; border-radius:10px; display:inline-flex !important; align-items:center !important; justify-content:center !important; padding:0 5px; line-height:1 !important; vertical-align:middle; pointer-events:none; z-index:10; box-sizing:border-box; text-align:center; }
+    .nav-badge {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #ff3b30;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      min-width: 20px;
+      height: 20px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 5px;
+      box-sizing: border-box;
+      line-height: 1;
+      pointer-events: none;
+      z-index: 10;
+      box-shadow: 0 2px 6px rgba(255,59,48,.5);
+      animation: badgePop .25s cubic-bezier(.34,1.56,.64,1);
+    }
 
     .sidebar-footer { padding:24px; border-top:1px solid var(--BORDER); margin-top:auto; }
     .btn-logout { width:100%; padding:12px; border:1px solid var(--BORDER); border-radius:10px; background:transparent; color:var(--MUTED); cursor:pointer; font-weight:600; font-size:14px; transition:all .2s; }
@@ -495,7 +517,10 @@
     @keyframes shimmer { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }
     @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.6; } }
     @keyframes slideUp { from { opacity:0; transform:translateY(40px) scale(.97); } to { opacity:1; transform:translateY(0) scale(1); } }
-    @keyframes badgePop { 0% { transform:scale(0); } 100% { transform:scale(1); } }
+    @keyframes badgePop {
+      from { transform: translateY(-50%) scale(0); }
+      to   { transform: translateY(-50%) scale(1); }
+    }
 
     /* CARDS */
     .card { transition:border-color .25s, box-shadow .25s; }
@@ -551,7 +576,6 @@
 
     /* NAV BADGES */
     .nav-item { position:relative; display:flex; align-items:center; }
-    @keyframes badgePop { from { transform:translateY(-50%) scale(0); opacity:0; } to { transform:translateY(-50%) scale(1); opacity:1; } }
 
     /* ── Contract Modal CUE ── */
     #modal-contract .modal-card {
@@ -4558,6 +4582,7 @@
     if (!navItem) return
     navItem.querySelectorAll('.nav-badge').forEach(b => b.remove())
     if (count > 0) {
+      navItem.style.position = 'relative'
       const badge = document.createElement('span')
       badge.className = 'nav-badge'
       badge.textContent = count > 99 ? '99+' : String(count)
