@@ -74,6 +74,30 @@ async function handler(req, res) {
     }
     await sql`UPDATE users SET identity_status = 'pending' WHERE id = ${userId}`;
 
+    // Envoie l'email de notification admin
+    try {
+      const [userRows] = await sql`SELECT first_name, last_name, email, user_type FROM users WHERE id = ${userId}`;
+      if (userRows) {
+        const adminEmail = process.env.ADMIN_EMAIL || 'cue.dj.app@gmail.com';
+        await fetch(`${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'http://localhost:3000'}/api/send-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'admin_verification',
+            email: adminEmail,
+            userName: `${userRows.first_name || ''} ${userRows.last_name || ''}`.trim(),
+            userEmail: userRows.email,
+            userType: userRows.user_type || 'DJ',
+            userId,
+            selfieUrl: selfieUrl,
+            docUrl: docUrl
+          })
+        });
+      }
+    } catch (emailErr) {
+      console.error('[upload-identity] Erreur email admin:', emailErr.message);
+    }
+
     return res.status(200).json({ success: true, paths: results });
   } catch (err) {
     console.error('[upload-identity] Erreur handler:', err.message);
