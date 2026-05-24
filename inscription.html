@@ -485,8 +485,6 @@ async function verifyEmailCode() {
   if (!verifyCode(code)) { document.getElementById('emailCodeError').classList.add('show'); return; }
   document.getElementById('verifyEmailBtn').disabled = true;
   document.getElementById('verifyEmailSpinner').classList.add('on');
-  console.log('Code correct → completeRegistration()');
-  sessionStorage.setItem('reg_user', JSON.stringify({ ...formData, createdAt: new Date().toISOString() }));
   await completeRegistration();
 }
 
