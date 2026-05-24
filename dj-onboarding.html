@@ -858,11 +858,10 @@
       console.log('Erreur check post-sauvegarde:', e.message);
     }
 
-    // Affiche étape finale
-    document.getElementById('step-' + currentStep).classList.remove('active');
+    // Affiche step-complete
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
     document.getElementById('step-complete').classList.add('active');
     document.getElementById('progress-fill').style.width = '100%';
-    document.getElementById('step-indicator').textContent = 'Profil complété ✓';
     const skipBtn = document.querySelector('.skip-btn');
     if (skipBtn) skipBtn.style.display = 'none';
 
@@ -952,27 +951,22 @@
     const btn = document.getElementById('plan-btn');
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Chargement...'; }
 
-    // Récupère l'UUID Supabase réel — toujours depuis la session
     const { supabase } = await import('./js/supabase-client.js');
     const { data: { session } } = await supabase.auth.getSession();
     const userId = session?.user?.id;
     const email  = session?.user?.email;
-    console.log('userId depuis session:', userId);
 
-    if (!userId) {
-      alert('Session expirée. Reconnecte-toi.');
-      window.location.replace('login.html');
-      return;
-    }
+    if (!userId) { window.location.replace('login.html'); return; }
+
+    // Sauvegarde le plan
+    await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update_plan', userId, plan: selectedPlan })
+    });
 
     if (selectedPlan === 'starter') {
-      await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'update_plan', userId, plan: 'starter' })
-      });
-
-      showStep(totalSteps + 1);
+      await completeProfile();
       return;
     }
 
