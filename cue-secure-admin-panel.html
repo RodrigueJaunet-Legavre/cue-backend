@@ -434,16 +434,7 @@
   <div class="modal-card">
     <h2>Documents d'identité</h2>
     <div id="modal-user-info" style="margin-bottom:24px;"></div>
-    <div class="doc-preview">
-      <div style="flex:1;">
-        <p id="selfie-label" style="color:var(--MUTED); font-size:12px; margin-bottom:8px;">SELFIE</p>
-        <img id="modal-selfie" src="" alt="Selfie" style="max-width:100%;">
-      </div>
-      <div style="flex:1;">
-        <p id="doc-label" style="color:var(--MUTED); font-size:12px; margin-bottom:8px;">PIÈCE D'IDENTITÉ</p>
-        <img id="modal-document" src="" alt="Document" style="max-width:100%;">
-      </div>
-    </div>
+    <div id="doc-links" style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:24px;"></div>
     <div class="modal-actions">
       <button class="btn btn-approve" onclick="validateUser('approve')">✅ Approuver</button>
       <button class="btn btn-warn" onclick="openRequestDocsModal()">🔄 Demander nouveaux docs</button>
@@ -828,13 +819,8 @@
       ` : ''}
     `;
 
-    // Reset images
-    document.getElementById('modal-selfie').src = '';
-    document.getElementById('modal-document').src = '';
-    document.getElementById('modal-selfie').style.display = 'block';
-    document.getElementById('modal-document').style.display = 'block';
-
     // Charge les documents
+    document.getElementById('doc-links').innerHTML = '<p style="color:#888; font-size:13px;">Chargement des documents...</p>';
     try {
       const docsRes = await fetch('/api/admin', {
         method: 'POST',
@@ -843,38 +829,25 @@
       });
       const docsData = await docsRes.json();
 
-      if (isOrg) {
-        // Organisation → document SIRET uniquement
-        document.getElementById('modal-selfie').style.display = 'none';
-        document.getElementById('selfie-label').textContent = '—';
-        document.getElementById('doc-label').textContent = 'DOCUMENT SIRET/KBIS';
-        if (docsData.documentUrl) {
-          document.getElementById('modal-document').src = docsData.documentUrl;
-        } else {
-          document.getElementById('modal-document').alt = 'Aucun document';
-        }
-      } else {
-        // Particulier (DJ ou venue) → selfie + CNI
-        document.getElementById('selfie-label').textContent = 'SELFIE';
-        document.getElementById('doc-label').textContent = 'PIÈCE D\'IDENTITÉ';
-        if (docsData.selfieUrl) {
-          document.getElementById('modal-selfie').src = docsData.selfieUrl;
-        } else {
-          document.getElementById('modal-selfie').alt = 'Aucun document';
-        }
-        if (docsData.documentUrl) {
-          document.getElementById('modal-document').src = docsData.documentUrl;
-        } else {
-          document.getElementById('modal-document').alt = 'Aucun document';
-        }
-      }
+      const linkStyle = `display:inline-flex; align-items:center; gap:8px; padding:10px 16px;
+        background:rgba(255,195,0,.1); border:1px solid rgba(255,195,0,.3);
+        border-radius:10px; color:var(--Y); text-decoration:none; font-weight:700; font-size:14px;`;
 
-      if (!docsData.selfieUrl && !docsData.documentUrl) {
-        document.getElementById('modal-user-info').innerHTML += '<p style="color:#FFC300; margin-top:12px;">⚠️ Aucun document soumis</p>';
+      let links = '';
+      if (!isOrg && docsData.selfieUrl) {
+        links += `<a href="${docsData.selfieUrl}" target="_blank" style="${linkStyle}">🔗 Voir le selfie</a>`;
       }
+      if (docsData.documentUrl) {
+        const label = isOrg ? '🔗 Voir le document SIRET/KBIS' : '🔗 Voir la pièce d\'identité';
+        links += `<a href="${docsData.documentUrl}" target="_blank" style="${linkStyle}">${label}</a>`;
+      }
+      if (!links) {
+        links = '<p style="color:#FFC300; font-size:13px;">⚠️ Aucun document soumis</p>';
+      }
+      document.getElementById('doc-links').innerHTML = links;
     } catch(err) {
       console.log('Erreur chargement docs:', err);
-      document.getElementById('modal-user-info').innerHTML += '<p style="color:#FFC300; margin-top:12px;">⚠️ Erreur chargement documents</p>';
+      document.getElementById('doc-links').innerHTML = '<p style="color:#FFC300; font-size:13px;">⚠️ Erreur chargement documents</p>';
     }
 
     document.getElementById('modal-verif').classList.add('open');
