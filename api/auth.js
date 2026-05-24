@@ -263,6 +263,25 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'save_presskit') {
+    const { userId, bioShort, bioLong, years, gigs, countries } = body;
+    try {
+      await sql`
+        UPDATE users SET
+          pk_bio_short = ${bioShort || null},
+          pk_bio_long  = ${bioLong  || null},
+          pk_years     = ${years     ? parseInt(years)     : null},
+          pk_gigs      = ${gigs      ? parseInt(gigs)      : null},
+          pk_countries = ${countries ? parseInt(countries) : null},
+          updated_at   = NOW()
+        WHERE id = ${userId}
+      `;
+      return res.status(200).json({ success: true });
+    } catch(err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   if (action === 'get_user') {
     const { userId, email } = body;
 

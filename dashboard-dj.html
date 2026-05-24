@@ -905,6 +905,13 @@
     <div class="nav-item" data-page="contracts" onclick="showPage('contracts', this)">
       <span class="nav-icon">📄</span><span class="nav-label">Contrats</span>
     </div>
+    <div class="nav-item" data-page="presskit" onclick="showPage('presskit', this)">
+      <span class="nav-icon">🗂️</span><span class="nav-label">Presskit</span>
+      <span style="font-size:9px; background:rgba(255,195,0,.2); color:#FFC300;
+                   padding:2px 6px; border-radius:4px; font-weight:700; margin-left:auto;">
+        BUSINESS
+      </span>
+    </div>
   </div>
 
   <div class="nav-section">
@@ -1325,6 +1332,182 @@
 
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- PRESSKIT -->
+  <div id="page-presskit" class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">PRESSKIT</h1>
+        <p class="page-sub">Ton dossier de presse professionnel</p>
+      </div>
+    </div>
+
+    <!-- Locked state — pour Starter et Pro -->
+    <div id="presskit-locked" style="display:none;">
+      <div style="text-align:center; padding:60px 24px; max-width:480px; margin:0 auto;">
+        <div style="font-size:64px; margin-bottom:24px;">🔒</div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900;
+                    font-size:36px; color:#fff; margin-bottom:12px; line-height:1;">
+          FONCTIONNALITÉ<br>BUSINESS
+        </div>
+        <p style="color:var(--MUTED); font-size:15px; line-height:1.7; margin-bottom:32px;">
+          Le Presskit te permet de créer un dossier de presse professionnel
+          avec ta bio, tes photos, tes stats et tes liens — prêt à envoyer aux venues et aux médias.
+        </p>
+
+        <div style="background:#0a0a0a; border:1px solid rgba(255,195,0,.2);
+                    border-radius:16px; padding:24px; margin-bottom:32px; text-align:left;">
+          <div style="font-weight:700; color:#fff; margin-bottom:16px; font-size:15px;">
+            ✨ Ce que tu obtiens avec Business :
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px; font-size:14px; color:#ddd; line-height:1.5;">
+            <div>🗂️ Presskit PDF téléchargeable et partageable</div>
+            <div>📸 Galerie photos professionnelle</div>
+            <div>📊 Stats et métriques de tes performances</div>
+            <div>🔗 Lien public unique à partager</div>
+            <div>✏️ Bio personnalisable multilingue</div>
+            <div>📱 Compatible mobile et réseaux sociaux</div>
+          </div>
+        </div>
+
+        <div style="background:linear-gradient(135deg, rgba(255,195,0,.1), rgba(255,215,0,.05));
+                    border:1px solid rgba(255,195,0,.3); border-radius:14px; padding:20px;
+                    margin-bottom:24px;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div style="text-align:left;">
+              <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900;
+                          font-size:28px; color:#fff;">BUSINESS</div>
+              <div style="color:var(--MUTED); font-size:13px; margin-top:2px;">
+                0% de commission · Toutes les fonctionnalités
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900;
+                          font-size:36px; color:#FFC300;">79€</div>
+              <div style="color:var(--MUTED); font-size:12px;">/mois</div>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="showPage('subscription', document.querySelector('[data-page=subscription]'))"
+                class="btn btn-primary" style="width:100%; padding:18px;
+                font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:20px;
+                letter-spacing:1px;">
+          PASSER AU PLAN BUSINESS →
+        </button>
+        <div style="color:#555; font-size:12px; margin-top:12px;">
+          Annulable à tout moment
+        </div>
+      </div>
+    </div>
+
+    <!-- Unlocked state — pour Business -->
+    <div id="presskit-unlocked" style="display:none;">
+
+      <!-- En-tête presskit -->
+      <div class="card" style="margin-bottom:20px; background:linear-gradient(135deg, #111 0%, #1a1500 100%); border-color:rgba(255,195,0,.3);">
+        <div class="card-body" style="padding:28px;">
+          <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+            <div style="position:relative;">
+              <img id="presskit-avatar" src=""
+                   style="width:80px; height:80px; border-radius:50%; object-fit:cover;
+                          border:3px solid #FFC300;">
+            </div>
+            <div style="flex:1;">
+              <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900;
+                          font-size:32px; color:#fff;" id="presskit-name"></div>
+              <div style="color:#FFC300; font-size:14px; font-weight:600; margin-top:2px;"
+                   id="presskit-genres"></div>
+              <div style="color:var(--MUTED); font-size:13px; margin-top:6px;">
+                🔗 Lien public :
+                <span style="color:#FFC300; cursor:pointer;" onclick="copyPresskitLink()">
+                  cuedj.eu/presskit/<span id="presskit-slug"></span>
+                </span>
+              </div>
+            </div>
+            <button onclick="downloadPresskit()" class="btn btn-primary" style="padding:12px 24px; white-space:nowrap;">
+              📥 Télécharger PDF
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bio -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <span class="card-title">📝 Bio</span>
+          <button onclick="savePresskit()" class="btn btn-outline btn-sm">Sauvegarder</button>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Bio courte (pour les venues)</label>
+            <textarea id="pk-bio-short" rows="3" class="form-input" maxlength="300"
+                      placeholder="DJ spécialisé en techno et house depuis 10 ans..."></textarea>
+            <div style="color:var(--MUTED); font-size:11px; margin-top:4px;">Max 300 caractères</div>
+          </div>
+          <div class="form-group" style="margin-top:16px;">
+            <label class="form-label">Bio longue (pour les médias)</label>
+            <textarea id="pk-bio-long" rows="6" class="form-input"
+                      placeholder="Biographie complète..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <span class="card-title">📊 Chiffres clés</span>
+        </div>
+        <div class="card-body">
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px;">
+            <div>
+              <label class="form-label">Années d'expérience</label>
+              <input type="number" id="pk-years" class="form-input" placeholder="5">
+            </div>
+            <div>
+              <label class="form-label">Gigs joués</label>
+              <input type="number" id="pk-gigs" class="form-input" placeholder="200">
+            </div>
+            <div>
+              <label class="form-label">Pays visités</label>
+              <input type="number" id="pk-countries" class="form-input" placeholder="10">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Réseaux sociaux -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <span class="card-title">🔗 Réseaux & liens</span>
+        </div>
+        <div class="card-body">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Instagram</label>
+              <input type="text" id="pk-instagram" class="form-input" placeholder="@djname">
+            </div>
+            <div class="form-group">
+              <label class="form-label">SoundCloud</label>
+              <input type="url" id="pk-soundcloud" class="form-input" placeholder="soundcloud.com/...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Spotify</label>
+              <input type="url" id="pk-spotify" class="form-input" placeholder="open.spotify.com/...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">YouTube</label>
+              <input type="url" id="pk-youtube" class="form-input" placeholder="youtube.com/...">
+            </div>
+          </div>
+          <button onclick="savePresskit()" class="btn btn-primary" style="margin-top:8px; width:fit-content; padding:12px 24px;">
+            💾 Sauvegarder
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -2314,6 +2497,7 @@
       case 'overview': checkBadgeConditions(); break;
       case 'subscription': initSubscriptionPage(); break;
       case 'contracts': loadContracts(); break;
+      case 'presskit': initPresskitPage(); break;
       case 'settings':
         if (document.getElementById('iban-input')) document.getElementById('iban-input').value = user.iban ? formatIBAN(user.iban) : '';
         if (document.getElementById('bic-input')) document.getElementById('bic-input').value = user.bic || '';
@@ -4425,6 +4609,84 @@
     } catch (err) {
       alert('Erreur. Réessaie.');
     }
+  }
+
+  function initPresskitPage() {
+    const plan = user.plan || 'starter';
+    const hasAccess = plan === 'business';
+
+    document.getElementById('presskit-locked').style.display   = hasAccess ? 'none'  : 'block';
+    document.getElementById('presskit-unlocked').style.display = hasAccess ? 'block' : 'none';
+
+    if (!hasAccess) return;
+
+    const avatarEl = document.getElementById('presskit-avatar');
+    if (avatarEl && user.picture) avatarEl.src = user.picture;
+
+    const nameEl = document.getElementById('presskit-name');
+    if (nameEl) nameEl.textContent = ((user.first_name || '') + ' ' + (user.last_name || '')).trim();
+
+    const genresEl = document.getElementById('presskit-genres');
+    if (genresEl && user.genres) {
+      const genres = Array.isArray(user.genres) ? user.genres : JSON.parse(user.genres || '[]');
+      genresEl.textContent = genres.join(' · ');
+    }
+
+    const slugEl = document.getElementById('presskit-slug');
+    if (slugEl) {
+      slugEl.textContent = ((user.first_name || '') + '-' + (user.last_name || ''))
+        .toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    }
+
+    if (user.instagram)  { const el = document.getElementById('pk-instagram');  if (el) el.value = user.instagram; }
+    if (user.soundcloud) { const el = document.getElementById('pk-soundcloud'); if (el) el.value = user.soundcloud; }
+    if (user.spotify)    { const el = document.getElementById('pk-spotify');    if (el) el.value = user.spotify; }
+    if (user.youtube)    { const el = document.getElementById('pk-youtube');    if (el) el.value = user.youtube; }
+    if (user.pk_bio_short)  { const el = document.getElementById('pk-bio-short');  if (el) el.value = user.pk_bio_short; }
+    if (user.pk_bio_long)   { const el = document.getElementById('pk-bio-long');   if (el) el.value = user.pk_bio_long; }
+    if (user.pk_years)      { const el = document.getElementById('pk-years');      if (el) el.value = user.pk_years; }
+    if (user.pk_gigs)       { const el = document.getElementById('pk-gigs');       if (el) el.value = user.pk_gigs; }
+    if (user.pk_countries)  { const el = document.getElementById('pk-countries');  if (el) el.value = user.pk_countries; }
+  }
+
+  function copyPresskitLink() {
+    const slug = document.getElementById('presskit-slug')?.textContent;
+    if (!slug) return;
+    navigator.clipboard.writeText('https://cuedj.eu/presskit/' + slug)
+      .then(() => alert('✅ Lien copié !'))
+      .catch(() => alert('https://cuedj.eu/presskit/' + slug));
+  }
+
+  async function savePresskit() {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = '⏳ Sauvegarde...';
+
+    try {
+      await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'save_presskit',
+          userId: user.id,
+          bioShort:  document.getElementById('pk-bio-short')?.value  || '',
+          bioLong:   document.getElementById('pk-bio-long')?.value   || '',
+          years:     document.getElementById('pk-years')?.value      || '',
+          gigs:      document.getElementById('pk-gigs')?.value       || '',
+          countries: document.getElementById('pk-countries')?.value  || ''
+        })
+      });
+      btn.textContent = '✅ Sauvegardé !';
+      setTimeout(() => { btn.disabled = false; btn.textContent = 'Sauvegarder'; }, 2000);
+    } catch(err) {
+      alert('Erreur. Réessaie.');
+      btn.disabled = false;
+      btn.textContent = 'Sauvegarder';
+    }
+  }
+
+  function downloadPresskit() {
+    alert('📥 Génération du PDF en cours...\n\nFonctionnalité disponible prochainement.');
   }
 
   function initSubscriptionPage() {
