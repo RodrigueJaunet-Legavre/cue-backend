@@ -138,15 +138,24 @@ footer{border-top:1px solid var(--BORDER);padding:60px 52px 30px;display:grid;gr
   </div>
 </div>
 
-<script>
-const isLogged = localStorage.getItem('cue_logged_in') === 'true';
-if (!isLogged) {
-  document.getElementById('content-locked').style.display = 'block';
-  document.getElementById('content-main').style.display = 'none';
-} else {
-  document.getElementById('content-locked').style.display = 'none';
-  document.getElementById('content-main').style.display = 'block';
-}
+<script type="module">
+// Auth gate via Supabase session
+(async () => {
+  try {
+    const { supabase } = await import('./js/supabase-client.js');
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      document.getElementById('content-locked').style.display = 'none';
+      document.getElementById('content-main').style.display = 'block';
+    } else {
+      document.getElementById('content-locked').style.display = 'block';
+      document.getElementById('content-main').style.display = 'none';
+    }
+  } catch(e) {
+    document.getElementById('content-locked').style.display = 'block';
+    document.getElementById('content-main').style.display = 'none';
+  }
+})();
 const API_BASE = '/api';
 let chatOpen = false;
 function toggleChat(){chatOpen=!chatOpen;document.getElementById('cwin').classList.toggle('open',chatOpen);if(chatOpen)document.getElementById('cinput').focus();}

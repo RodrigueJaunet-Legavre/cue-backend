@@ -523,7 +523,7 @@
     return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
   }
 
-  const user = JSON.parse(localStorage.getItem('cue_user') || '{}');
+  let user = {};
 
   // Genres list
   const GENRES = ['House', 'Tech House', 'Techno', 'Deep House', 'Minimal', 'Afro House', 'Melodic Techno', 'Progressive House', 'Trance', 'Drum & Bass', 'Hip-Hop', 'R&B', 'Reggaeton', 'Salsa', 'Electronic', 'Ambient', 'Commercial', 'Open Format', 'Disco', 'Funk'];
@@ -833,10 +833,7 @@
       });
       const data = await res.json();
       if (data.user) {
-        localStorage.setItem('cue_user', JSON.stringify({
-          ...data.user,
-          profile_complete: true, profileComplete: true
-        }));
+        user = { ...data.user, profile_complete: true };
       }
     } catch(err) {
       console.log('Erreur completeProfile:', err.message);
@@ -873,10 +870,9 @@
       if (avatar) { avatar.src = profilePhoto; avatar.style.display = 'block'; }
       if (placeholder) placeholder.style.display = 'none';
     }
-    const finalUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
     const nameEl = document.getElementById('preview-name');
     const genresEl = document.getElementById('preview-genres');
-    if (nameEl) nameEl.textContent = (finalUser.first_name || finalUser.firstName || '') + ' ' + (finalUser.last_name || finalUser.lastName || '');
+    if (nameEl) nameEl.textContent = (user.first_name || user.firstName || '') + ' ' + (user.last_name || user.lastName || '');
     if (genresEl) genresEl.textContent = selectedGenres.join(' · ');
 
     // Checklist badge
@@ -953,27 +949,16 @@
     const btn = document.getElementById('plan-btn');
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Chargement...'; }
 
-    // Récupère l'UUID Supabase réel — pas le localStorage
-    let userId = null;
-    try {
-      const { supabase } = await import('./js/supabase-client.js');
-      const { data: { session } } = await supabase.auth.getSession();
-      userId = session?.user?.id;
-      console.log('userId Supabase:', userId);
-    } catch(e) {
-      console.log('Erreur Supabase:', e);
-    }
-
-    // Fallback localStorage
-    if (!userId) {
-      const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
-      userId = savedUser.id || savedUser.user_id;
-      console.log('userId localStorage:', userId);
-    }
+    // Récupère l'UUID Supabase réel — toujours depuis la session
+    const { supabase } = await import('./js/supabase-client.js');
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+    const email  = session?.user?.email;
+    console.log('userId depuis session:', userId);
 
     if (!userId) {
-      alert('Erreur: session introuvable. Réessaie.');
-      if (btn) { btn.disabled = false; btn.textContent = 'Continuer →'; }
+      alert('Session expirée. Reconnecte-toi.');
+      window.location.replace('login.html');
       return;
     }
 
@@ -983,11 +968,6 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'update_plan', userId, plan: 'starter' })
       });
-
-      // Met à jour localStorage
-      const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
-      savedUser.plan = 'starter';
-      localStorage.setItem('cue_user', JSON.stringify(savedUser));
 
       showStep(totalSteps + 1);
       return;
@@ -999,7 +979,6 @@
         pro: 'price_1TVEcMRwFuYQb4HD2nNHQvP2',
         business: 'price_1TVEdhRwFuYQb4HDvq7lrKfb'
       };
-      const email = JSON.parse(localStorage.getItem('cue_user') || '{}').email;
       const res = await fetch('/api/stripe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1037,10 +1016,6 @@
   }
 
   function goToDashboard() {
-    const savedUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
-    savedUser.profile_complete = true;
-    savedUser.profileComplete = true;
-    localStorage.setItem('cue_user', JSON.stringify(savedUser));
     window.location.replace('dashboard-dj.html');
   }
 
@@ -1096,6 +1071,9 @@
     if (data.user?.profile_complete === true) {
       window.location.replace('dashboard-dj.html')
       return
+    }
+    if (data.user) {
+      user = data.user;
     }
   });
 </script>

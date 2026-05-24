@@ -327,9 +327,20 @@ function redirectAfterLogin(userData) {
   }
 }
 
-function smartRedirect() {
-  const u = JSON.parse(localStorage.getItem('cue_user') || '{}');
-  redirectAfterLogin(u);
+async function smartRedirect() {
+  try {
+    const { supabase } = await import('./js/supabase-client.js');
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { window.location.replace('login.html'); return; }
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_user', userId: session.user.id, email: session.user.email })
+    });
+    const data = await res.json();
+    if (data.user) { redirectAfterLogin(data.user); }
+    else { window.location.replace('login.html'); }
+  } catch(e) { window.location.replace('login.html'); }
 }
 
 

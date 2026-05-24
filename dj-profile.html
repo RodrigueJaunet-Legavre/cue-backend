@@ -478,6 +478,25 @@
   async function init() {
     createParticles()
 
+    // Charge la session de l'utilisateur connecté
+    try {
+      const { supabase } = await import('./js/supabase-client.js');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        isLogged = true;
+        const sesRes = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'get_user', userId: session.user.id, email: session.user.email })
+        });
+        const sesData = await sesRes.json();
+        if (sesData.user) {
+          loggedUser = sesData.user;
+          loggedType = loggedUser.user_type || loggedUser.userType;
+        }
+      }
+    } catch(e) {}
+
     // Récupère le DJ depuis la DB
     console.log('djId depuis URL:', djId)
     if (djId) {
@@ -505,19 +524,6 @@
       }
     }
 
-    // Fallback localStorage si c'est le DJ connecté
-    const localUser = JSON.parse(localStorage.getItem('cue_user') || '{}')
-    if (localUser.id && (!djId || localUser.id === djId)) {
-      djData = {
-        ...localUser,
-        firstName: localUser.first_name || localUser.firstName || '',
-        lastName: localUser.last_name || localUser.lastName || ''
-      }
-      console.log('mix_url brut:', djData.mix_url)
-      renderProfile()
-      return
-    }
-
     // DJ non trouvé
     document.getElementById('hero-section').style.display = 'none'
     document.getElementById('not-found').style.display = 'block'
@@ -528,9 +534,8 @@
 
   function renderProfile() {
     const dj = djData;
-    const reviews = JSON.parse(localStorage.getItem('cue_reviews') || '[]').filter(r => r.djId === dj.id);
-    const avgRating = reviews.length ? (reviews.reduce((s,r) => s + r.rating, 0) / reviews.length).toFixed(1) : (dj.rating || null);
-    const reviewCount = reviews.length || dj.reviews || 0;
+    const avgRating = dj.rating || null;
+    const reviewCount = dj.reviews || 0;
 
     const firstName = getFirstName(dj)
     const lastName = getLastName(dj)
@@ -741,9 +746,9 @@
     }
   }
 
-  const loggedUser = JSON.parse(localStorage.getItem('cue_user') || '{}');
-  const isLogged = localStorage.getItem('cue_logged_in') === 'true';
-  const loggedType = loggedUser.user_type || loggedUser.userType;
+  let loggedUser = {};
+  let isLogged = false;
+  let loggedType = null;
 
   function renderActionButtons(targetDjId) {
     const actionsDiv = document.getElementById('profile-actions');
@@ -818,9 +823,8 @@
   }
 
   function openOfferModal(targetDjId) {
-    localStorage.setItem('contact_dj_id', targetDjId);
-    localStorage.setItem('contact_dj_name', document.getElementById('hero-name')?.textContent || 'DJ');
-    window.location.href = 'dashboard-venue.html?action=contact&djId=' + targetDjId;
+    const djName = encodeURIComponent(document.getElementById('hero-name')?.textContent || 'DJ');
+    window.location.href = `dashboard-venue.html?action=contact&djId=${targetDjId}&djName=${djName}`;
   }
 
   function openContactModal() {

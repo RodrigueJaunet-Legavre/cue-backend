@@ -1983,7 +1983,7 @@
   }
 
   const user = {};
-  let favoriteDJIds = new Set(JSON.parse(localStorage.getItem('venue_favorites') || '[]'));
+  let favoriteDJIds = new Set();
   let bookings = [];
   let venueBookings = bookings;
   let allVenueReviews = [];
@@ -2099,10 +2099,8 @@
     // Handle redirect from dj-profile.html with contact intent
     if (urlParams.get('action') === 'contact') {
       const contactDjId = urlParams.get('djId');
-      const contactDjName = localStorage.getItem('contact_dj_name') || 'DJ';
+      const contactDjName = decodeURIComponent(urlParams.get('djName') || 'DJ');
       if (contactDjId) {
-        localStorage.removeItem('contact_dj_id');
-        localStorage.removeItem('contact_dj_name');
         setTimeout(() => openContactModal(contactDjId, contactDjName), 500);
       }
     }
@@ -2187,10 +2185,9 @@
       const data = await res.json();
       if (data.favorites) {
         favoriteDJIds = new Set(data.favorites);
-        localStorage.setItem('cue_favorites', JSON.stringify([...favoriteDJIds]));
       }
     } catch (err) {
-      // keep localStorage fallback already loaded
+      // in-memory fallback (empty set)
     }
     updateFavBadge();
     checkAllFavorites([...favoriteDJIds]);
@@ -2799,7 +2796,6 @@
     if (newState) { favoriteDJIds.add(djId); } else { favoriteDJIds.delete(djId); }
     updateFavBtn(btn, newState);
     updateFavBadge();
-    localStorage.setItem('venue_favorites', JSON.stringify([...favoriteDJIds]));
 
     try {
       const res = await fetch('/api/auth', {
@@ -2811,7 +2807,6 @@
       // Sync avec réponse serveur
       if (data.added) { favoriteDJIds.add(djId); updateFavBtn(btn, true); }
       else { favoriteDJIds.delete(djId); updateFavBtn(btn, false); }
-      localStorage.setItem('venue_favorites', JSON.stringify([...favoriteDJIds]));
     } catch(err) {
       // Revert si erreur réseau
       if (isFav) { favoriteDJIds.add(djId); updateFavBtn(btn, true); }
@@ -3421,7 +3416,6 @@
           };
           venueBookings.push(newBooking);
           bookings = venueBookings;
-          localStorage.setItem('venue_bookings', JSON.stringify(venueBookings));
           renderCalendar();
           renderVenueBookings();
           loadStats();

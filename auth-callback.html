@@ -57,9 +57,6 @@ async function handleCallback() {
   if (data.user) {
     // Compte trouvé → met à jour l'ID si nécessaire
     const dbUser = data.user
-    localStorage.setItem('cue_user', JSON.stringify(dbUser))
-    localStorage.setItem('cue_logged_in', 'true')
-
     const userType = dbUser.user_type
     const profileComplete = dbUser.profile_complete === true
 
