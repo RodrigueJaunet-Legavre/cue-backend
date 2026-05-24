@@ -832,6 +832,8 @@
         })
       });
       const data = await res.json();
+      console.log('=== RÉPONSE API ===', JSON.stringify(data));
+      alert('Réponse: ' + JSON.stringify(data).slice(0, 300));
       if (data.user) {
         user = { ...data.user, profile_complete: true };
       }
