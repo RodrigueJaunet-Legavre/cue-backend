@@ -65,11 +65,24 @@ async function handler(req, res) {
       ? `${process.env.SUPABASE_URL}/storage/v1/object/identity-docs/${results.identity_card}`
       : null;
 
-    if (selfieUrl && docUrl) {
+    if (selfieUrl) {
       await sql`
-        INSERT INTO identity_documents (id, user_id, selfie_url, document_url, status, submitted_at)
-        VALUES (${Date.now().toString()}, ${userId}, ${selfieUrl}, ${docUrl}, 'pending', NOW())
-        ON CONFLICT (user_id) DO UPDATE SET selfie_url = ${selfieUrl}, document_url = ${docUrl}, status = 'pending', submitted_at = NOW()
+        INSERT INTO identity_documents (id, user_id, document_url, document_type, status, submitted_at)
+        VALUES (${Date.now().toString() + '_selfie'}, ${userId}, ${selfieUrl}, 'selfie', 'pending', NOW())
+        ON CONFLICT (user_id, document_type) DO UPDATE SET
+          document_url = ${selfieUrl},
+          status = 'pending',
+          submitted_at = NOW()
+      `;
+    }
+    if (docUrl) {
+      await sql`
+        INSERT INTO identity_documents (id, user_id, document_url, document_type, status, submitted_at)
+        VALUES (${Date.now().toString() + '_cni'}, ${userId}, ${docUrl}, 'cni', 'pending', NOW())
+        ON CONFLICT (user_id, document_type) DO UPDATE SET
+          document_url = ${docUrl},
+          status = 'pending',
+          submitted_at = NOW()
       `;
     }
     await sql`UPDATE users SET identity_status = 'pending' WHERE id = ${userId}`;
