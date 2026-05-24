@@ -115,9 +115,21 @@
     }
 
     @media print {
-      .top-bar { display:none; }
-      .contract-wrapper { box-shadow:none; margin:0; border-radius:0; }
-      body { background:#fff; }
+      .top-bar { display:none !important; }
+      body { background:#fff !important; }
+      .contract-wrapper {
+        box-shadow:none !important;
+        margin:0 !important;
+        border-radius:0 !important;
+        max-width:100% !important;
+      }
+      #sign-section { display:none !important; }
+      #signatures-section {
+        display:block !important;
+        border:1px solid #00c864 !important;
+      }
+      button { display:none !important; }
+      .contract-body { font-size:12px !important; line-height:1.6 !important; }
     }
   </style>
 </head>
@@ -148,6 +160,17 @@
   <div class="contract-footer">
     Contrat généré via CUE DJ Platform — cuedj.eu<br>
     Ce document a valeur contractuelle entre les parties.
+  </div>
+  <div id="signatures-section" style="display:none; padding:24px 40px; background:#f0fff4; border-top:2px solid #00c864;">
+    <h3 style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px;
+                color:#00c864; margin-bottom:16px;">✅ SIGNATURES</h3>
+    <div id="signatures-list"></div>
+    <button onclick="window.print()"
+            style="margin-top:20px; padding:14px 32px; background:#080808; color:#FFC300;
+                   border:2px solid #FFC300; border-radius:10px; font-weight:900; font-size:15px;
+                   cursor:pointer; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;">
+      📥 TÉLÉCHARGER PDF
+    </button>
   </div>
   <div id="sign-section" style="display:none; padding:32px 40px; border-top:2px solid #FFC300; background:#f9f9f9;">
     <h3 style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:24px; margin-bottom:16px; color:#111;">
@@ -198,15 +221,41 @@ async function loadContract() {
       return;
     }
 
+    const contract = data.contract;
     document.getElementById('contract-ref').textContent = 'Réf. ' + id;
-    document.getElementById('contract-body').textContent = data.contract.content;
-    document.title = `Contrat DJ — ${data.contract.dj_name} × ${data.contract.venue_name}`;
+    document.getElementById('contract-body').textContent = contract.content;
+    document.title = `Contrat DJ — ${contract.dj_name} × ${contract.venue_name}`;
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('contract-wrapper').style.display = 'block';
 
+    // Affiche les signatures existantes
+    if (contract.signed_by && contract.signed_by.length > 0) {
+      const sigSection = document.getElementById('signatures-section');
+      sigSection.style.display = 'block';
+      document.getElementById('signatures-list').innerHTML = contract.signed_by.map((name, i) => `
+        <div style="display:flex; align-items:center; gap:12px; padding:12px;
+                    background:#fff; border-radius:10px; border:1px solid #d4edda; margin-bottom:8px;">
+          <span style="font-size:24px;">✍️</span>
+          <div>
+            <div style="font-weight:700; color:#111; font-size:15px;">${name}</div>
+            <div style="color:#666; font-size:12px;">
+              Signé le ${new Date(contract.signed_at[i]).toLocaleDateString('fr-FR')}
+              à ${new Date(contract.signed_at[i]).toLocaleTimeString('fr-FR')}
+              ${contract.signed_ip?.[i] ? '· IP : ' + contract.signed_ip[i] : ''}
+            </div>
+          </div>
+          <span style="margin-left:auto; color:#00c864; font-weight:700;">✅</span>
+        </div>
+      `).join('');
+    }
+
     if (params.get('sign') === 'true') {
       document.getElementById('sign-section').style.display = 'block';
+    }
+
+    if (params.get('download') === 'true') {
+      setTimeout(() => window.print(), 1000);
     }
   } catch (err) {
     document.getElementById('loading').innerHTML =
@@ -219,7 +268,12 @@ async function signContract() {
   if (!name) { alert('Entrez votre nom complet.'); return; }
 
   const params = new URLSearchParams(window.location.search);
-  const contractId = params.get('id');
+  const contractId     = params.get('id');
+  const conversationId = params.get('conv');
+  const userId         = params.get('user');
+
+  const btn = document.querySelector('#sign-section button[onclick="signContract()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Signature...'; }
 
   try {
     const res = await fetch('/api/contracts', {
@@ -229,24 +283,46 @@ async function signContract() {
         action: 'sign_generated_contract',
         contractId,
         signerName: name,
-        signedAt: new Date().toISOString()
+        signedAt: new Date().toISOString(),
+        conversationId: conversationId || null,
+        userId: userId || null
       })
     });
     const data = await res.json();
     if (data.success) {
       document.getElementById('sign-section').innerHTML = `
         <div style="text-align:center; padding:24px;">
-          <div style="font-size:48px; margin-bottom:12px;">✅</div>
-          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px; color:#00c864;">
+          <div style="font-size:56px; margin-bottom:12px;">✅</div>
+          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900;
+                      font-size:28px; color:#00c864; margin-bottom:8px;">
             CONTRAT SIGNÉ !
           </div>
-          <p style="color:#888; margin-top:8px; font-size:14px;">
-            Signé par ${name} le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}
+          <p style="color:#666; font-size:14px; margin-bottom:16px;">
+            Signé par <strong>${name}</strong>
+            le ${new Date().toLocaleDateString('fr-FR')}
+            à ${new Date().toLocaleTimeString('fr-FR')}
           </p>
+          ${data.allSigned ? `
+            <div style="background:#f0fff4; border:1px solid #00c864; border-radius:12px;
+                        padding:16px; margin-bottom:16px; color:#00c864; font-weight:700;">
+              🎉 Les deux parties ont signé ! Le contrat est finalisé.
+            </div>
+            <button onclick="window.print()"
+                    style="padding:14px 32px; background:#080808; color:#FFC300;
+                           border:2px solid #FFC300; border-radius:10px; font-weight:900;
+                           font-size:15px; cursor:pointer; font-family:'Barlow Condensed',sans-serif;
+                           letter-spacing:1px;">
+              📥 Télécharger le contrat signé
+            </button>
+          ` : `
+            <p style="color:#888; font-size:13px;">En attente de la signature de l'autre partie.</p>
+          `}
         </div>`;
+      setTimeout(() => location.reload(), 2500);
     }
   } catch(err) {
     alert('Erreur. Réessaie.');
+    if (btn) { btn.disabled = false; btn.textContent = '✍️ SIGNER'; }
   }
 }
 

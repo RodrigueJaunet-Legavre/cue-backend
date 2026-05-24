@@ -248,17 +248,58 @@ module.exports = async function handler(req, res) {
   }
 
   if (action === 'sign_generated_contract') {
-    const { contractId, signerName, signedAt } = body;
+    const { contractId, signerName, signedAt, userId, conversationId } = body;
     const ip = req.headers['x-forwarded-for'] || 'unknown';
     try {
       await sql`
         UPDATE generated_contracts SET
-          signed_by  = array_append(COALESCE(signed_by,  ARRAY[]::text[]),        ${signerName}),
-          signed_at  = array_append(COALESCE(signed_at,  ARRAY[]::timestamptz[]), ${signedAt}::timestamptz),
-          signed_ip  = array_append(COALESCE(signed_ip,  ARRAY[]::text[]),        ${ip})
+          signed_by = array_append(COALESCE(signed_by, ARRAY[]::text[]),        ${signerName}),
+          signed_at = array_append(COALESCE(signed_at, ARRAY[]::timestamptz[]), ${signedAt}::timestamptz),
+          signed_ip = array_append(COALESCE(signed_ip, ARRAY[]::text[]),        ${ip})
         WHERE id = ${contractId}
       `;
-      return res.status(200).json({ success: true });
+
+      const [contract] = await sql`SELECT * FROM generated_contracts WHERE id = ${contractId}`;
+      const signaturesCount = (contract.signed_by || []).length;
+      const allSigned = signaturesCount >= 2;
+
+      // Notifie dans la conversation
+      if (conversationId) {
+        const notifContent = allSigned
+          ? `✅ Contrat signé par les deux parties !\n\nSignataires :\n${(contract.signed_by || []).map((name, i) => `• ${name} — ${new Date(contract.signed_at[i]).toLocaleDateString('fr-FR')}`).join('\n')}\n\n📥 Télécharger : https://cuedj.eu/contract-view.html?id=${contractId}&download=true`
+          : `✍️ ${signerName} a signé le contrat.\n\nEn attente de la signature de l'autre partie.\n\n🔗 Voir le contrat : https://cuedj.eu/contract-view.html?id=${contractId}&sign=true`;
+        await sql`
+          INSERT INTO messages (id, conversation_id, sender_id, content, type, created_at)
+          VALUES (${Date.now().toString()}, ${conversationId}, ${userId || 'system'}, ${notifContent}, 'contract_signed', NOW())
+        `;
+      }
+
+      // Email aux deux parties si tout signé
+      if (allSigned && conversationId) {
+        const [conv] = await sql`SELECT * FROM conversations WHERE id = ${conversationId}`;
+        if (conv) {
+          const [dj]    = await sql`SELECT email, first_name FROM users WHERE id = ${conv.dj_id}`;
+          const [venue] = await sql`SELECT email, first_name FROM users WHERE id = ${conv.venue_id}`;
+          for (const party of [dj, venue].filter(Boolean)) {
+            await fetch('https://cuedj.eu/api/send-email', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'contract_fully_signed',
+                email: party.email,
+                firstName: party.first_name,
+                contractId,
+                contractLink:  `https://cuedj.eu/contract-view.html?id=${contractId}`,
+                downloadLink:  `https://cuedj.eu/contract-view.html?id=${contractId}&download=true`,
+                signers: contract.signed_by,
+                dates:   contract.signed_at
+              })
+            }).catch(() => {});
+          }
+        }
+      }
+
+      return res.status(200).json({ success: true, allSigned, signaturesCount });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }

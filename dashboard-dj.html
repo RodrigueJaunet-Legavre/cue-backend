@@ -4291,8 +4291,12 @@
   }
 
   function signGeneratedContract(contractLink) {
-    const url = contractLink.includes('?') ? contractLink + '&sign=true' : contractLink + '?sign=true'
-    window.open(url, '_blank')
+    const base = contractLink.split('?')[0]
+    const params = new URLSearchParams(contractLink.split('?')[1] || '')
+    params.set('sign', 'true')
+    if (currentConv?.id) params.set('conv', currentConv.id)
+    if (user?.id) params.set('user', user.id)
+    window.open(base + '?' + params.toString(), '_blank')
   }
 
   function renderMessages(msgs) {
@@ -5191,7 +5195,7 @@
           senderType: 'dj',
           content: '📄 Proposition de contrat',
           type: 'contract_proposal',
-          contractLink: generatedContractLink,
+          contractLink: `https://cuedj.eu/contract-view.html?id=${generatedContractId}`,
           contractId: generatedContractId
         })
       })

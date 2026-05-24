@@ -267,6 +267,47 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    if (type === 'contract_fully_signed') {
+      result = await resend.emails.send({
+        from: 'CUE DJ <noreply@cuedj.eu>',
+        to: email,
+        subject: '✅ Contrat signé par les deux parties — CUE',
+        html: `
+          <div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
+            <h2 style="color:#FFC300;">🎉 Contrat finalisé !</h2>
+            <p>Bonjour ${req.body.firstName},</p>
+            <p>Le contrat a été signé par les deux parties. Vous pouvez maintenant le télécharger.</p>
+            <div style="background:#111; border:1px solid #333; border-radius:12px; padding:20px; margin:24px 0;">
+              <div style="font-weight:700; color:#fff; margin-bottom:12px;">✍️ Signatures :</div>
+              ${(req.body.signers || []).map((name, i) => `
+                <div style="color:#ddd; margin-bottom:6px;">• ${name} — ${new Date(req.body.dates[i]).toLocaleDateString('fr-FR')}</div>
+              `).join('')}
+            </div>
+            <table style="width:100%; border-collapse:separate; border-spacing:12px; margin-top:24px;">
+              <tr>
+                <td style="width:50%;">
+                  <a href="${req.body.contractLink}"
+                     style="display:block; background:#111; color:#FFC300; padding:14px 24px; border-radius:8px;
+                            text-decoration:none; font-weight:700; text-align:center; border:1px solid #FFC300;">
+                    👁 Voir le contrat
+                  </a>
+                </td>
+                <td style="width:50%;">
+                  <a href="${req.body.downloadLink}"
+                     style="display:block; background:#FFC300; color:#000; padding:14px 24px; border-radius:8px;
+                            text-decoration:none; font-weight:700; text-align:center;">
+                    📥 Télécharger PDF
+                  </a>
+                </td>
+              </tr>
+            </table>
+            <hr style="border-color:#222; margin:32px 0;">
+            <p style="color:#555; font-size:12px;">© 2026 CUE DJ Platform — cuedj.eu</p>
+          </div>
+        `
+      });
+    }
+
     console.log('Resend result:', JSON.stringify(result));
     return res.status(200).json({
       success: true,
