@@ -127,6 +127,53 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    if (type === 'admin_verification') {
+      const adminEmail = process.env.ADMIN_EMAIL || 'cue.dj.app@gmail.com';
+      const body = req.body;
+      result = await resend.emails.send({
+        from: 'CUE DJ <noreply@cuedj.eu>',
+        to: adminEmail,
+        subject: `🪪 Nouvelle demande de vérification — ${body.userName}`,
+        html: `
+          <div style="font-family:Arial; padding:40px; max-width:600px; margin:auto;">
+            <h2 style="color:#FFC300; background:#080808; padding:20px; border-radius:12px;">
+              🪪 Nouvelle demande de vérification
+            </h2>
+            <table style="width:100%; border-collapse:collapse; margin:20px 0;">
+              <tr><td style="padding:10px; border:1px solid #ddd; font-weight:bold;">Utilisateur</td>
+                  <td style="padding:10px; border:1px solid #ddd;">${body.userName}</td></tr>
+              <tr><td style="padding:10px; border:1px solid #ddd; font-weight:bold;">Email</td>
+                  <td style="padding:10px; border:1px solid #ddd;">${body.userEmail}</td></tr>
+              <tr><td style="padding:10px; border:1px solid #ddd; font-weight:bold;">Type</td>
+                  <td style="padding:10px; border:1px solid #ddd;">${body.userType || 'DJ'}</td></tr>
+              <tr><td style="padding:10px; border:1px solid #ddd; font-weight:bold;">ID</td>
+                  <td style="padding:10px; border:1px solid #ddd; font-family:monospace;">${body.userId}</td></tr>
+            </table>
+            ${body.selfieUrl ? `
+            <div style="margin:16px 0;">
+              <strong>📸 Selfie :</strong><br>
+              <a href="${body.selfieUrl}" style="color:#FFC300;">${body.selfieUrl}</a>
+            </div>` : ''}
+            ${body.docUrl ? `
+            <div style="margin:16px 0;">
+              <strong>🪪 Document :</strong><br>
+              <a href="${body.docUrl}" style="color:#FFC300;">${body.docUrl}</a>
+            </div>` : ''}
+            ${body.orgName ? `
+            <div style="margin:16px 0;">
+              <strong>🏢 Organisation :</strong> ${body.orgName}<br>
+              <strong>SIRET :</strong> ${body.orgSiret || '—'}
+            </div>` : ''}
+            <a href="https://cuedj.eu/cue-secure-admin-panel.html"
+               style="display:inline-block; background:#FFC300; color:#000; padding:14px 32px;
+                      border-radius:8px; text-decoration:none; font-weight:700; margin-top:16px;">
+              Gérer dans l'admin →
+            </a>
+          </div>
+        `
+      });
+    }
+
     console.log('Resend result:', JSON.stringify(result));
     return res.status(200).json({
       success: true,
