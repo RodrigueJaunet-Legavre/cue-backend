@@ -121,10 +121,17 @@ module.exports = async function handler(req, res) {
       const [contract] = await sql`SELECT * FROM contracts WHERE id = ${contractId}`;
 
       if (contract.venue_completed) {
+        const aiText = await generateContractWithAI(contract);
+        if (aiText) {
+          await sql`UPDATE contracts SET ai_generated_text = ${aiText}, status = 'ready_to_sign', updated_at = NOW() WHERE id = ${contractId}`;
+          contract.ai_generated_text = aiText;
+          contract.status = 'ready_to_sign';
+        }
         await notifyBothParties(contract, 'ready_to_sign');
       }
 
-      return res.status(200).json({ success: true, contract });
+      const [updated] = await sql`SELECT * FROM contracts WHERE id = ${contractId}`;
+      return res.status(200).json({ success: true, contract: updated });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -155,10 +162,17 @@ module.exports = async function handler(req, res) {
       const [contract] = await sql`SELECT * FROM contracts WHERE id = ${contractId}`;
 
       if (contract.dj_completed) {
+        const aiText = await generateContractWithAI(contract);
+        if (aiText) {
+          await sql`UPDATE contracts SET ai_generated_text = ${aiText}, status = 'ready_to_sign', updated_at = NOW() WHERE id = ${contractId}`;
+          contract.ai_generated_text = aiText;
+          contract.status = 'ready_to_sign';
+        }
         await notifyBothParties(contract, 'ready_to_sign');
       }
 
-      return res.status(200).json({ success: true, contract });
+      const [updated] = await sql`SELECT * FROM contracts WHERE id = ${contractId}`;
+      return res.status(200).json({ success: true, contract: updated });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -225,6 +239,70 @@ module.exports = async function handler(req, res) {
 
   return res.status(400).json({ error: 'Action invalide' });
 };
+
+async function generateContractWithAI(contract) {
+  try {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{
+          role: 'user',
+          content: `Tu es un expert juridique spécialisé dans les contrats de prestation artistique en France.
+Génère un contrat de prestation DJ professionnel et complet en français avec ces informations :
+
+PRESTATAIRE (DJ) :
+- Nom : ${contract.dj_legal_name || contract.dj_name}
+- Adresse : ${contract.dj_address || 'Non renseignée'}
+- Email : ${contract.dj_email}
+- Téléphone : ${contract.dj_phone || 'Non renseigné'}
+- Matériel apporté : ${contract.dj_equipment || 'Non renseigné'}
+- Rider technique : ${contract.dj_rider || 'Non renseigné'}
+
+CLIENT (VENUE) :
+- Nom : ${contract.venue_legal_name || contract.venue_name}
+- Adresse : ${contract.venue_address || 'Non renseignée'}
+- Contact sur place : ${contract.venue_contact || 'Non renseigné'}
+- Email : ${contract.venue_email}
+
+PRESTATION :
+- Date : ${contract.event_date}
+- Lieu exact : ${contract.venue_location || 'Non renseigné'}
+- Type d'événement : ${contract.event_type || 'Prestation DJ'}
+- Programme horaire : ${contract.venue_schedule || 'Non renseigné'}
+- Matériel fourni par le venue : ${contract.venue_equipment || 'Non renseigné'}
+- Conditions particulières : ${contract.venue_conditions || 'Aucune'}
+- Cachet total : ${contract.amount}€ TTC
+
+Le contrat doit inclure :
+1. Identification des parties
+2. Objet du contrat
+3. Conditions de la prestation
+4. Rémunération et modalités de paiement
+5. Obligations du prestataire
+6. Obligations du client
+7. Matériel et technique
+8. Annulation et force majeure
+9. Propriété intellectuelle
+10. Règlement des litiges
+
+Rédige un contrat professionnel, complet et juridiquement solide.`
+        }],
+        max_tokens: 3000,
+        temperature: 0.3
+      })
+    });
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || null;
+  } catch (err) {
+    console.log('Erreur génération IA:', err.message);
+    return null;
+  }
+}
 
 async function notifyBothParties(contract, status) {
   const to = [contract.dj_email, contract.venue_email].filter(Boolean);

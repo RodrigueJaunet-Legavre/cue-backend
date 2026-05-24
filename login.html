@@ -25,10 +25,10 @@
     input:focus { outline:none; border-color:#FFC300; }
     .password-wrap { position:relative; }
     .eye-btn { position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:18px; color:#888; }
-    .btn-primary { width:100%; padding:16px; background:#FFC300; color:#000; border:none; border-radius:10px; font-weight:700; font-size:16px; cursor:pointer; font-family:Barlow,sans-serif; margin-top:8px; transition:all .2s; display:flex; align-items:center; justify-content:center; gap:10px; }
+    .btn-primary { width:100%; padding:16px; background:#FFC300; color:#000; border:none; border-radius:10px; font-weight:700; font-size:16px; cursor:pointer; font-family:Barlow,sans-serif; margin-top:8px; transition:all .2s; display:flex; align-items:center; justify-content:center; gap:8px; }
     .btn-primary:hover { background:#FFD740; }
     .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
-    .spinner { width:18px; height:18px; border:2px solid rgba(0,0,0,.2); border-top-color:#000; border-radius:50%; animation:spin .7s linear infinite; display:none; flex-shrink:0; }
+    .spinner { width:18px; height:18px; min-width:18px; min-height:18px; border:2px solid rgba(0,0,0,.2); border-top-color:#000; border-radius:50%; animation:spin .7s linear infinite; display:none; flex-shrink:0; box-sizing:border-box; }
     .spinner.on { display:block; }
     @keyframes spin { to { transform:rotate(360deg); } }
     .btn-google { width:100%; padding:14px; background:#fff; color:#333; border:none; border-radius:10px; font-weight:700; font-size:15px; cursor:pointer; font-family:Barlow,sans-serif; display:flex; align-items:center; justify-content:center; gap:10px; margin-top:12px; transition:all .2s; }
