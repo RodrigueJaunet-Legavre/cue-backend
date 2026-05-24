@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contrat — CUE DJ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=Barlow:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#f5f5f5; font-family:Barlow,sans-serif; color:#111; }
+
+    .top-bar {
+      background:#080808;
+      padding:16px 32px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom:3px solid #FFC300;
+    }
+
+    .logo {
+      color:#FFC300;
+      font-family:'Barlow Condensed',sans-serif;
+      font-weight:900;
+      font-size:28px;
+      letter-spacing:3px;
+    }
+
+    .download-btn {
+      background:#FFC300;
+      color:#000;
+      border:none;
+      border-radius:10px;
+      padding:10px 24px;
+      font-weight:700;
+      font-size:14px;
+      cursor:pointer;
+      font-family:Barlow,sans-serif;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .download-btn:hover { background:#e6b000; }
+
+    .contract-wrapper {
+      max-width:800px;
+      margin:40px auto;
+      background:#fff;
+      border-radius:16px;
+      box-shadow:0 4px 32px rgba(0,0,0,.1);
+      overflow:hidden;
+    }
+
+    .contract-header {
+      background:#080808;
+      padding:32px 40px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    .contract-title {
+      color:#fff;
+      font-family:'Barlow Condensed',sans-serif;
+      font-weight:900;
+      font-size:24px;
+      letter-spacing:1px;
+    }
+
+    .contract-ref {
+      color:#FFC300;
+      font-size:13px;
+      font-family:monospace;
+      margin-top:6px;
+    }
+
+    .yellow-line {
+      height:4px;
+      background:linear-gradient(90deg,#FFC300,#FFD740);
+    }
+
+    .contract-body {
+      padding:40px;
+      white-space:pre-wrap;
+      line-height:1.8;
+      font-size:14px;
+      color:#333;
+    }
+
+    .contract-footer {
+      background:#f9f9f9;
+      border-top:1px solid #eee;
+      padding:20px 40px;
+      text-align:center;
+      color:#888;
+      font-size:12px;
+      line-height:1.8;
+    }
+
+    #loading {
+      text-align:center;
+      padding:80px 32px;
+      color:#888;
+    }
+
+    @media (max-width:640px) {
+      .top-bar { padding:12px 20px; }
+      .logo { font-size:22px; }
+      .download-btn { padding:8px 16px; font-size:13px; }
+      .contract-wrapper { margin:20px 12px; border-radius:12px; }
+      .contract-header { padding:24px 20px; flex-direction:column; gap:16px; align-items:flex-start; }
+      .contract-body { padding:24px 20px; }
+      .contract-footer { padding:16px 20px; }
+    }
+
+    @media print {
+      .top-bar { display:none; }
+      .contract-wrapper { box-shadow:none; margin:0; border-radius:0; }
+      body { background:#fff; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="logo">CUE</div>
+  <button class="download-btn" onclick="window.print()">
+    Imprimer / PDF
+  </button>
+</div>
+
+<div id="loading">
+  <div style="font-size:40px; margin-bottom:16px; opacity:.4;">⏳</div>
+  <div style="font-size:18px;">Chargement du contrat...</div>
+</div>
+
+<div class="contract-wrapper" id="contract-wrapper" style="display:none;">
+  <div class="contract-header">
+    <div>
+      <div class="contract-title">CONTRAT DE PRESTATION DJ</div>
+      <div class="contract-ref" id="contract-ref"></div>
+    </div>
+    <img src="/logo.png" alt="CUE" style="height:48px; object-fit:contain;" onerror="this.style.display='none'">
+  </div>
+  <div class="yellow-line"></div>
+  <div class="contract-body" id="contract-body"></div>
+  <div class="contract-footer">
+    Contrat généré via CUE DJ Platform — cuedj.eu<br>
+    Ce document a valeur contractuelle entre les parties.
+  </div>
+</div>
+
+<script>
+async function loadContract() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+
+  if (!id) {
+    document.getElementById('loading').innerHTML =
+      '<div style="color:#ff4444; font-size:18px;">Contrat introuvable</div>';
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/contracts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_generated_contract', contractId: id })
+    });
+    const data = await res.json();
+
+    if (!data.contract) {
+      document.getElementById('loading').innerHTML =
+        '<div style="color:#ff4444; font-size:18px;">Contrat introuvable</div>';
+      return;
+    }
+
+    document.getElementById('contract-ref').textContent = 'Réf. ' + id;
+    document.getElementById('contract-body').textContent = data.contract.content;
+    document.title = `Contrat DJ — ${data.contract.dj_name} × ${data.contract.venue_name}`;
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('contract-wrapper').style.display = 'block';
+  } catch (err) {
+    document.getElementById('loading').innerHTML =
+      '<div style="color:#ff4444;">Erreur de chargement</div>';
+  }
+}
+
+loadContract();
+</script>
+</body>
+</html>

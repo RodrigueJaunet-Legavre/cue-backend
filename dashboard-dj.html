@@ -4971,15 +4971,9 @@
               <input type="time" id="cg-end" class="form-input" value="02:00">
             </div>
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-            <div class="form-group">
-              <label class="form-label">Cachet (€) <span style="color:#ff4444;">*</span></label>
-              <input type="number" id="cg-cachet" class="form-input" placeholder="500">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Acompte (%)</label>
-              <input type="number" id="cg-acompte" class="form-input" placeholder="30" value="30">
-            </div>
+          <div class="form-group">
+            <label class="form-label">Cachet (€) <span style="color:#ff4444;">*</span></label>
+            <input type="number" id="cg-cachet" class="form-input" placeholder="500">
           </div>
           <div class="form-group">
             <label class="form-label">Informations complémentaires</label>
@@ -4994,12 +4988,13 @@
             <pre id="cg-text" style="white-space:pre-wrap; color:#ddd; font-size:13px;
                                      font-family:Barlow,sans-serif; line-height:1.7;"></pre>
           </div>
+          <div id="cg-link-section"></div>
           <div style="display:flex; gap:10px; margin-top:16px;">
-            <button onclick="sendContractInChat()" class="btn btn-primary" style="flex:1;">
-              📤 Envoyer dans la conversation
+            <button onclick="sendContractLinkInChat()" class="btn btn-primary" style="flex:1;">
+              📤 Envoyer le lien dans la conversation
             </button>
-            <button onclick="copyContract()" class="btn btn-outline" style="padding:12px 20px;">
-              📋 Copier
+            <button onclick="window.open(generatedContractLink, '_blank')" class="btn btn-outline" style="padding:12px 20px;">
+              👁 Voir
             </button>
           </div>
         </div>
@@ -5024,6 +5019,8 @@
   }
 
   let generatedContractText = ''
+  let generatedContractLink = ''
+  let generatedContractId = ''
 
   async function generateContractAI() {
     const btn = document.getElementById('cg-generate-btn')
@@ -5037,7 +5034,6 @@
     const start = document.getElementById('cg-start').value
     const end = document.getElementById('cg-end').value
     const cachet = document.getElementById('cg-cachet').value
-    const acompte = document.getElementById('cg-acompte').value
     const extra = document.getElementById('cg-extra').value
 
     if (!date || !cachet) {
@@ -5056,16 +5052,33 @@
           venueName: modal.dataset.venueName,
           date, lieu, type, start, end,
           cachet: parseFloat(cachet),
-          acompte: parseFloat(acompte) || 30,
           extra
         })
       })
       const data = await res.json()
       if (data.contract) {
         generatedContractText = data.contract
+        generatedContractLink = data.link
+        generatedContractId = data.contractId
         document.getElementById('cg-text').textContent = data.contract
         document.getElementById('cg-result').style.display = 'block'
         document.getElementById('cg-buttons').style.display = 'none'
+        document.getElementById('cg-link-section').innerHTML = `
+          <div style="background:rgba(255,195,0,.08); border:1px solid rgba(255,195,0,.3);
+                      border-radius:12px; padding:14px 16px; margin-top:16px;">
+            <div style="font-weight:700; color:#FFC300; margin-bottom:6px; font-size:13px;">🔗 Lien du contrat</div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="text" value="${data.link}" readonly
+                     style="flex:1; background:#0a0a0a; border:1px solid #333; color:#ddd;
+                            padding:8px 12px; border-radius:8px; font-size:12px; font-family:monospace;">
+              <button onclick="copyContractLink('${data.link}')"
+                      style="background:rgba(255,195,0,.2); border:1px solid rgba(255,195,0,.3);
+                             color:#FFC300; padding:8px 14px; border-radius:8px; cursor:pointer;
+                             font-weight:700; font-family:Barlow,sans-serif; white-space:nowrap; font-size:13px;">
+                Copier
+              </button>
+            </div>
+          </div>`
       } else {
         throw new Error(data.error || 'Erreur génération')
       }
@@ -5076,10 +5089,14 @@
     }
   }
 
-  async function sendContractInChat() {
-    if (!generatedContractText) return
+  function copyContractLink(url) {
+    navigator.clipboard.writeText(url).then(() => alert('✅ Lien copié !'))
+  }
+
+  async function sendContractLinkInChat() {
+    if (!generatedContractLink) return
     const modal = document.getElementById('modal-contract-generator')
-    const convId = modal.dataset.convId
+    const convId = modal?.dataset.convId
     if (!convId) { alert('Conversation non trouvée.'); return }
     try {
       await fetch('/api/messages', {
@@ -5089,13 +5106,13 @@
           action: 'send_message',
           conversationId: convId,
           senderId: user.id,
-          content: '📄 **PROPOSITION DE CONTRAT**\n\n' + generatedContractText,
-          type: 'contract_proposal'
+          content: `📄 Proposition de contrat\n\nJ'ai généré un contrat pour notre collaboration. Vous pouvez le consulter ici :\n\n${generatedContractLink}`,
+          type: 'text'
         })
       })
       closeModal('modal-contract-generator')
       await loadConversationMessages(convId)
-      alert('✅ Contrat envoyé dans la conversation !')
+      alert('✅ Lien du contrat envoyé dans la conversation !')
     } catch(err) {
       alert('Erreur : ' + err.message)
     }

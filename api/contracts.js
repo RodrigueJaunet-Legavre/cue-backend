@@ -237,6 +237,18 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'get_generated_contract') {
+    const { contractId } = body;
+    try {
+      const [contract] = await sql`
+        SELECT * FROM generated_contracts WHERE id = ${contractId}
+      `;
+      return res.status(200).json({ contract: contract || null });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   return res.status(400).json({ error: 'Action invalide' });
 };
 

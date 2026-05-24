@@ -1,15 +1,19 @@
+const postgres = require('postgres');
+const sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   const {
     djName, djAddress, djPhone, djEmail, djSiret,
     venueName, venueAddress, venuePhone, venueEmail, venueSiret,
-    date, fee, start, end, type, acompte, details
+    date, fee, start, end, type, details,
+    // simplified fields from dashboard modal
+    cachet, lieu, extra
   } = req.body;
 
-  const acompteText = acompte > 0
-    ? `Un acompte de ${acompte}% (${Math.round(fee * acompte / 100)}€) sera versé à la signature du contrat. Le solde de ${Math.round(fee * (100 - acompte) / 100)}€ sera réglé le soir de la prestation.`
-    : `Le paiement intégral de ${fee}€ sera effectué le soir de la prestation.`;
+  const effectiveFee = fee || cachet;
+  const effectiveDate = date;
 
   try {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -20,7 +24,8 @@ module.exports = async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
-        max_tokens: 2500,
+        max_tokens: 3000,
+        temperature: 0.3,
         messages: [
           {
             role: 'system',
@@ -32,25 +37,27 @@ module.exports = async function handler(req, res) {
 
 **PRESTATAIRE (DJ) :**
 - Nom : ${djName}
-- Adresse : ${djAddress || 'Non renseignée'}
-- Téléphone : ${djPhone || 'Non renseigné'}
-- Email : ${djEmail || 'Non renseigné'}
+${djAddress ? `- Adresse : ${djAddress}` : ''}
+${djPhone ? `- Téléphone : ${djPhone}` : ''}
+${djEmail ? `- Email : ${djEmail}` : ''}
 ${djSiret ? `- SIRET : ${djSiret}` : ''}
 
 **CLIENT :**
 - Nom : ${venueName}
-- Adresse : ${venueAddress || 'Non renseignée'}
-- Téléphone : ${venuePhone || 'Non renseigné'}
-- Email : ${venueEmail || 'Non renseigné'}
+${venueAddress ? `- Adresse : ${venueAddress}` : ''}
+${venuePhone ? `- Téléphone : ${venuePhone}` : ''}
+${venueEmail ? `- Email : ${venueEmail}` : ''}
 ${venueSiret ? `- SIRET : ${venueSiret}` : ''}
 
 **ÉVÉNEMENT :**
-- Type : ${type}
-- Date : ${new Date(date).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-- Horaires : ${start} → ${end}
-- Cachet : ${fee}€ TTC
-- Paiement : ${acompteText}
-- Détails : ${details || 'Aucun détail supplémentaire'}
+- Type : ${type || 'Prestation DJ'}
+- Date : ${effectiveDate ? new Date(effectiveDate).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'À définir'}
+${start ? `- Début : ${start}` : ''}
+${end ? `- Fin : ${end}` : ''}
+- Lieu : ${lieu || venueAddress || 'À définir'}
+- Cachet : ${effectiveFee}€ TTC
+- Modalités de paiement : Paiement intégral de ${effectiveFee}€ via la plateforme CUE (cuedj.eu).
+${details || extra ? `- Conditions particulières : ${details || extra}` : ''}
 
 Le contrat doit avoir ces 10 sections numérotées :
 1. PARTIES
@@ -68,9 +75,24 @@ Le contrat doit avoir ces 10 sections numérotées :
       })
     });
 
-    const data = await response.json();
-    if (!response.ok) return res.status(500).json({ error: data.error?.message || 'Erreur Groq' });
-    return res.status(200).json({ contract: data.choices[0].message.content });
+    const groqData = await response.json();
+    if (!response.ok) return res.status(500).json({ error: groqData.error?.message || 'Erreur Groq' });
+
+    const contractText = groqData.choices?.[0]?.message?.content;
+    if (!contractText) throw new Error('Génération échouée');
+
+    const contractId = 'CGEN-' + Date.now();
+
+    await sql`
+      INSERT INTO generated_contracts (id, dj_name, venue_name, event_date, content, created_at)
+      VALUES (${contractId}, ${djName || ''}, ${venueName || ''}, ${effectiveDate || ''}, ${contractText}, NOW())
+    `;
+
+    return res.status(200).json({
+      contract: contractText,
+      contractId,
+      link: `https://cuedj.eu/contract-view.html?id=${contractId}`
+    });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }

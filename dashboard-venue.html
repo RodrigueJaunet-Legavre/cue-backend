@@ -5015,10 +5015,6 @@
             <label style="color:#888;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Cachet (€)</label>
             <input id="cg-cachet" type="number" placeholder="Ex: 800" style="width:100%;background:#1a1a1a;border:1px solid #333;color:#ddd;padding:10px 12px;border-radius:8px;font-size:14px;font-family:Barlow,sans-serif;" />
           </div>
-          <div>
-            <label style="color:#888;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Acompte (€)</label>
-            <input id="cg-acompte" type="number" placeholder="Ex: 200" style="width:100%;background:#1a1a1a;border:1px solid #333;color:#ddd;padding:10px 12px;border-radius:8px;font-size:14px;font-family:Barlow,sans-serif;" />
-          </div>
         </div>
         <div style="margin-bottom:16px;">
           <label style="color:#888;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Conditions particulières</label>
@@ -5033,9 +5029,10 @@
           <div style="border:1px solid #333;border-radius:10px;padding:16px;background:#0a0a0a;margin-bottom:12px;">
             <pre id="cg-text" style="white-space:pre-wrap;font-size:13px;color:#ddd;font-family:Barlow,sans-serif;line-height:1.6;"></pre>
           </div>
-          <div style="display:flex;gap:10px;">
-            ${data.convId ? `<button onclick="sendContractInChat()" style="flex:1;padding:12px;background:#FFC300;color:#000;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;font-family:Barlow,sans-serif;">📨 Envoyer dans le chat</button>` : ''}
-            <button onclick="copyContract()" style="flex:1;padding:12px;background:#1a1a1a;color:#fff;border:1px solid #333;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;font-family:Barlow,sans-serif;">📋 Copier</button>
+          <div id="cg-link-section"></div>
+          <div style="display:flex;gap:10px;margin-top:12px;">
+            <button onclick="sendContractLinkInChat()" style="flex:1;padding:12px;background:#FFC300;color:#000;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;font-family:Barlow,sans-serif;">📤 Envoyer le lien dans la conversation</button>
+            <button onclick="window.open(generatedContractLink,'_blank')" style="padding:12px 20px;background:#1a1a1a;color:#fff;border:1px solid #333;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;font-family:Barlow,sans-serif;">👁 Voir</button>
           </div>
         </div>
       </div>
@@ -5046,69 +5043,111 @@
   }
 
   let generatedContractText = '';
+  let generatedContractLink = '';
+  let generatedContractId = '';
 
   async function generateContractAI() {
     const btn = document.getElementById('cg-gen-btn');
     btn.disabled = true;
     btn.textContent = '⏳ Génération en cours...';
 
+    const modal = document.getElementById('modal-contract-generator');
     const date = document.getElementById('cg-date').value;
     const lieu = document.getElementById('cg-lieu').value;
     const type = document.getElementById('cg-type').value;
     const start = document.getElementById('cg-start').value;
     const end = document.getElementById('cg-end').value;
     const cachet = document.getElementById('cg-cachet').value;
-    const acompte = document.getElementById('cg-acompte').value;
     const extra = document.getElementById('cg-extra').value;
 
     try {
       const res = await fetch('/api/generate-contract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, lieu, type, start, end, cachet, acompte, extra })
+        body: JSON.stringify({
+          djName: modal?.dataset.djName || '',
+          venueName: modal?.dataset.venueId || '',
+          date, lieu, type, start, end, cachet, extra
+        })
       });
       const result = await res.json();
-      generatedContractText = result.contract || result.text || '';
 
-      const pre = document.getElementById('cg-text');
-      if (pre) pre.textContent = generatedContractText;
+      if (result.contract) {
+        generatedContractText = result.contract;
+        generatedContractLink = result.link;
+        generatedContractId = result.contractId;
 
-      const resultDiv = document.getElementById('cg-result');
-      if (resultDiv) resultDiv.style.display = 'block';
+        const pre = document.getElementById('cg-text');
+        if (pre) pre.textContent = generatedContractText;
+
+        const resultDiv = document.getElementById('cg-result');
+        if (resultDiv) resultDiv.style.display = 'block';
+
+        const linkSection = document.getElementById('cg-link-section');
+        if (linkSection) {
+          linkSection.innerHTML = `
+            <div style="background:rgba(255,195,0,.08);border:1px solid rgba(255,195,0,.3);
+                        border-radius:12px;padding:14px 16px;margin-top:12px;">
+              <div style="font-weight:700;color:#FFC300;margin-bottom:6px;font-size:13px;">🔗 Lien du contrat</div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <input type="text" value="${result.link}" readonly
+                       style="flex:1;background:#0a0a0a;border:1px solid #333;color:#ddd;
+                              padding:8px 12px;border-radius:8px;font-size:12px;font-family:monospace;">
+                <button onclick="copyContractLink('${result.link}')"
+                        style="background:rgba(255,195,0,.2);border:1px solid rgba(255,195,0,.3);
+                               color:#FFC300;padding:8px 14px;border-radius:8px;cursor:pointer;
+                               font-weight:700;font-family:Barlow,sans-serif;white-space:nowrap;font-size:13px;">
+                  Copier
+                </button>
+              </div>
+            </div>`;
+        }
+      } else {
+        throw new Error(result.error || 'Erreur génération');
+      }
     } catch (err) {
-      alert('Erreur lors de la génération. Réessaie.');
+      alert('Erreur : ' + err.message);
     }
 
     btn.disabled = false;
-    btn.textContent = '✨ Générer le contrat avec l\'IA';
+    btn.textContent = "✨ Générer le contrat avec l'IA";
   }
 
-  async function sendContractInChat() {
+  function copyContractLink(url) {
+    navigator.clipboard.writeText(url).then(() => alert('✅ Lien copié !'));
+  }
+
+  async function sendContractLinkInChat() {
+    if (!generatedContractLink) return;
     const modal = document.getElementById('modal-contract-generator');
-    if (!modal || !generatedContractText) return;
-    const convId = modal.dataset.convId;
+    const convId = modal?.dataset.convId;
     if (!convId) { alert('Aucune conversation associée.'); return; }
 
-    await fetch('/api/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'send_message',
-        convId,
-        senderType: 'venue',
-        message: {
-          senderId: user.id,
-          senderName: getName(user),
-          content: generatedContractText,
-          type: 'contract_proposal'
-        }
-      })
-    });
+    try {
+      await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'send_message',
+          convId,
+          senderType: 'venue',
+          message: {
+            senderId: user.id,
+            senderName: getName(user),
+            content: `📄 Proposition de contrat\n\nJ'ai généré un contrat pour notre collaboration. Vous pouvez le consulter ici :\n\n${generatedContractLink}`,
+            type: 'text'
+          }
+        })
+      });
 
-    modal.remove();
-    invalidateConversationsCache();
-    if (currentVenueConv && currentVenueConv.id === convId) {
-      await loadVenueMessages(convId);
+      modal.remove();
+      invalidateConversationsCache();
+      if (currentVenueConv && currentVenueConv.id === convId) {
+        await loadVenueMessages(convId);
+      }
+      alert('✅ Lien du contrat envoyé dans la conversation !');
+    } catch (err) {
+      alert('Erreur : ' + err.message);
     }
   }
 
