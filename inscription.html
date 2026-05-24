@@ -121,29 +121,16 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
 }
 
 @media (max-width: 768px) {
-  body {
-    padding: 20px 16px !important;
-    align-items: flex-start !important;
-  }
-  .container {
-    padding: 0 !important;
-    max-width: 100% !important;
-  }
-  h1 { font-size: 32px !important; }
-  .type-cards, .subtype-cards {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 10px !important;
-  }
-  .type-card { padding: 16px 12px !important; }
-  .two-col {
-    grid-template-columns: 1fr !important;
-    gap: 0 !important;
-  }
-  .form-input { font-size: 16px !important; }
-  .btn, .btn-google {
-    padding: 14px !important;
-    font-size: 15px !important;
-  }
+  body { padding: 24px 16px !important; align-items: flex-start !important; }
+  .container { max-width: 100% !important; padding: 0 !important; }
+  h1 { font-size: 30px !important; }
+  .type-cards, .subtype-cards, .types { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  .type-card, .subtype-card { padding: 16px 12px !important; }
+  .type-icon, .subtype-icon { font-size: 28px !important; }
+  .two-col { grid-template-columns: 1fr !important; }
+  .form-input, input { font-size: 16px !important; }
+  .btn, .btn-next { padding: 16px !important; font-size: 15px !important; }
+  .code-digit { width: 44px !important; height: 52px !important; font-size: 22px !important; }
 }
 </style>
   <link rel="stylesheet" href="css/responsive.css">
