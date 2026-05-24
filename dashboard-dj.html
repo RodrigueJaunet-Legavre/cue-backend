@@ -1823,12 +1823,15 @@
             <div style="color:var(--MUTED); font-size:13px; margin-top:4px;">Ton badge vérifié est actif sur ton profil</div>
           </div>
         </div>
-        <div id="verif-rejected" style="display:none; align-items:center; gap:16px;">
-          <span style="font-size:36px;">❌</span>
-          <div>
-            <div style="font-weight:700; color:#ff4444;">Documents refusés</div>
-            <div style="color:var(--MUTED); font-size:13px; margin-top:4px;">Renvoie des documents lisibles et valides</div>
+        <div id="verif-rejected" style="display:none; flex-direction:column; gap:12px;">
+          <div style="display:flex; align-items:center; gap:16px;">
+            <span style="font-size:36px;">❌</span>
+            <div>
+              <div style="font-weight:700; color:#ff4444;">Documents refusés</div>
+              <div style="color:var(--MUTED); font-size:13px; margin-top:4px;">Renvoie des documents lisibles et valides</div>
+            </div>
           </div>
+          <div id="verif-rejected-motif"></div>
         </div>
       </div>
 
@@ -2643,8 +2646,33 @@
       document.getElementById('verif-approved').style.display = 'flex';
       document.getElementById('verif-form-card').style.display = 'none';
     } else if (status === 'rejected') {
-      document.getElementById('verif-rejected').style.display = 'flex';
+      const rejectedEl = document.getElementById('verif-rejected');
+      rejectedEl.style.display = 'flex';
+      rejectedEl.style.flexDirection = 'column';
       document.getElementById('verif-form-card').style.display = 'block';
+      // Affiche le motif si présent
+      const motifEl = document.getElementById('verif-rejected-motif');
+      if (motifEl) {
+        const motif = user.identity_motif;
+        const docsRequired = user.identity_docs_required
+          ? (Array.isArray(user.identity_docs_required) ? user.identity_docs_required : JSON.parse(user.identity_docs_required))
+          : [];
+        if (motif || docsRequired.length) {
+          motifEl.innerHTML = `
+            <div style="background:rgba(255,68,68,.08); border:1px solid rgba(255,68,68,.2);
+                        border-radius:12px; padding:16px 20px;">
+              ${motif ? `<div style="font-weight:700; color:#ff4444; margin-bottom:6px;">📋 Message de notre équipe :</div>
+              <div style="color:#ddd; font-size:14px; line-height:1.6;">${motif}</div>` : ''}
+              ${docsRequired.length ? `
+              <div style="margin-top:12px; font-weight:700; color:#fff; font-size:13px;">Documents à renvoyer :</div>
+              <ul style="color:#ddd; font-size:13px; line-height:2; margin:6px 0 0 20px;">
+                ${docsRequired.map(d => `<li>${d}</li>`).join('')}
+              </ul>` : ''}
+            </div>`;
+        } else {
+          motifEl.innerHTML = '';
+        }
+      }
     } else if (status === 'pending') {
       document.getElementById('verif-pending').style.display = 'flex';
       document.getElementById('verif-form-card').style.display = 'none';

@@ -4716,6 +4716,32 @@
       banner.style.border = '1px solid rgba(255,68,68,.3)'
       banner.style.color = '#ff4444'
       banner.textContent = '❌ Vérification refusée. Veuillez renvoyer vos documents.'
+      // Affiche le motif si présent
+      const motif = user.identity_motif
+      const docsRequired = user.identity_docs_required
+        ? (Array.isArray(user.identity_docs_required) ? user.identity_docs_required : JSON.parse(user.identity_docs_required))
+        : []
+      let motifEl = document.getElementById('verif-rejected-motif-venue')
+      if (!motifEl) {
+        motifEl = document.createElement('div')
+        motifEl.id = 'verif-rejected-motif-venue'
+        banner.insertAdjacentElement('afterend', motifEl)
+      }
+      if (motif || docsRequired.length) {
+        motifEl.innerHTML = `
+          <div style="background:rgba(255,68,68,.08); border:1px solid rgba(255,68,68,.2);
+                      border-radius:12px; padding:16px 20px; margin-top:12px;">
+            ${motif ? `<div style="font-weight:700; color:#ff4444; margin-bottom:6px;">📋 Message de notre équipe :</div>
+            <div style="color:#ddd; font-size:14px; line-height:1.6;">${motif}</div>` : ''}
+            ${docsRequired.length ? `
+            <div style="margin-top:12px; font-weight:700; color:#fff; font-size:13px;">Documents à renvoyer :</div>
+            <ul style="color:#ddd; font-size:13px; line-height:2; margin:6px 0 0 20px;">
+              ${docsRequired.map(d => `<li>${d}</li>`).join('')}
+            </ul>` : ''}
+          </div>`
+      } else {
+        motifEl.innerHTML = ''
+      }
     } else {
       banner.style.display = 'none'
     }

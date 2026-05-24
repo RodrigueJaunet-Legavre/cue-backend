@@ -174,6 +174,99 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    if (type === 'identity_approved') {
+      result = await resend.emails.send({
+        from: 'CUE DJ <noreply@cuedj.eu>',
+        to: email,
+        subject: '✅ Votre identité a été vérifiée — CUE',
+        html: `
+          <div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
+            <h2 style="color:#FFC300;">✅ Identité vérifiée !</h2>
+            <p>Bonjour ${firstName},</p>
+            <p>Bonne nouvelle — votre identité a été <strong style="color:#00c864;">vérifiée avec succès</strong> par notre équipe.</p>
+            <p>Vous pouvez maintenant obtenir le badge vérifié CUE sur votre profil.</p>
+            <a href="https://cuedj.eu/dashboard-dj.html"
+               style="background:#FFC300; color:#000; padding:14px 32px; border-radius:8px;
+                      text-decoration:none; font-weight:700; display:inline-block; margin-top:20px;">
+              Voir mon profil →
+            </a>
+            <hr style="border-color:#222; margin:32px 0;">
+            <p style="color:#555; font-size:12px;">© 2026 CUE DJ Platform — cuedj.eu</p>
+          </div>
+        `
+      });
+    }
+
+    if (type === 'identity_rejected') {
+      const { motif } = req.body;
+      result = await resend.emails.send({
+        from: 'CUE DJ <noreply@cuedj.eu>',
+        to: email,
+        subject: "❌ Vérification d'identité refusée — CUE",
+        html: `
+          <div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
+            <h2 style="color:#ff4444;">❌ Vérification refusée</h2>
+            <p>Bonjour ${firstName},</p>
+            <p>Votre demande de vérification d'identité a été <strong style="color:#ff4444;">refusée</strong>.</p>
+            ${motif ? `
+            <div style="background:#1a0000; border:1px solid rgba(255,68,68,.3); border-radius:12px; padding:16px 20px; margin:20px 0;">
+              <div style="font-weight:700; color:#ff4444; margin-bottom:6px;">Motif du refus :</div>
+              <div style="color:#ddd;">${motif}</div>
+            </div>` : ''}
+            <p>Si vous pensez qu'il s'agit d'une erreur, contactez notre support.</p>
+            <a href="https://cuedj.eu"
+               style="background:#FFC300; color:#000; padding:14px 32px; border-radius:8px;
+                      text-decoration:none; font-weight:700; display:inline-block; margin-top:20px;">
+              Contacter le support →
+            </a>
+            <hr style="border-color:#222; margin:32px 0;">
+            <p style="color:#555; font-size:12px;">© 2026 CUE DJ Platform — cuedj.eu</p>
+          </div>
+        `
+      });
+    }
+
+    if (type === 'identity_new_docs') {
+      const { motif, docsRequired } = req.body;
+      const docsLabels = {
+        selfie: "Selfie avec pièce d'identité",
+        cni: "Carte nationale d'identité",
+        passport: 'Passeport',
+        kbis: 'Extrait Kbis',
+        siret: 'Document SIRET/SIREN'
+      };
+      const docsList = (docsRequired || []).map(d => `<li>${docsLabels[d] || d}</li>`).join('');
+      result = await resend.emails.send({
+        from: 'CUE DJ <noreply@cuedj.eu>',
+        to: email,
+        subject: '📋 Nouveaux documents requis pour votre vérification — CUE',
+        html: `
+          <div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
+            <h2 style="color:#FFC300;">📋 Documents supplémentaires requis</h2>
+            <p>Bonjour ${firstName},</p>
+            <p>Notre équipe a examiné votre dossier et a besoin de documents supplémentaires pour valider votre identité.</p>
+            ${motif ? `
+            <div style="background:#1a1500; border:1px solid rgba(255,195,0,.3); border-radius:12px; padding:16px 20px; margin:20px 0;">
+              <div style="font-weight:700; color:#FFC300; margin-bottom:6px;">Message de notre équipe :</div>
+              <div style="color:#ddd;">${motif}</div>
+            </div>` : ''}
+            ${docsList ? `
+            <div style="background:#111; border-radius:12px; padding:16px 20px; margin:20px 0;">
+              <div style="font-weight:700; color:#fff; margin-bottom:10px;">Documents à fournir :</div>
+              <ul style="color:#ddd; line-height:2; padding-left:20px;">${docsList}</ul>
+            </div>` : ''}
+            <a href="https://cuedj.eu/dashboard-dj.html"
+               style="background:#FFC300; color:#000; padding:14px 32px; border-radius:8px;
+                      text-decoration:none; font-weight:700; display:inline-block; margin-top:20px;">
+              Renvoyer mes documents →
+            </a>
+            <hr style="border-color:#222; margin:32px 0;">
+            <p style="color:#555; font-size:12px;">© 2026 CUE DJ Platform — cuedj.eu</p>
+          </div>
+        `
+      });
+    }
+
     console.log('Resend result:', JSON.stringify(result));
     return res.status(200).json({
       success: true,

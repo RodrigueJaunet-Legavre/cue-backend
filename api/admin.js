@@ -130,46 +130,23 @@ module.exports = async function handler(req, res) {
       await sql`UPDATE users SET identity_status = ${newStatus} WHERE id = ${userId}`;
 
       // Email selon l'action
-      if (action !== 'suspend' && process.env.RESEND_API_KEY) {
+      if (action !== 'suspend') {
         try {
           const [userRow] = await sql`SELECT * FROM users WHERE id = ${userId}`;
           if (userRow?.email) {
-            const resend = new Resend(process.env.RESEND_API_KEY);
-            let subject, html;
-            const firstName = userRow.first_name || 'DJ';
-
-            if (action === 'approve') {
-              subject = '✅ Ton identité a été vérifiée sur CUE';
-              html = `<div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
-                <h2 style="color:#FFC300;">Identité vérifiée ✅</h2>
-                <p>Bonjour ${firstName},</p>
-                <p>Ton identité a été vérifiée avec succès. Tu peux maintenant obtenir le badge vérifié CUE.</p>
-                <a href="https://cuedj.eu/dashboard-dj.html" style="background:#FFC300; color:#000; padding:14px 32px; border-radius:8px; text-decoration:none; font-weight:700; display:inline-block; margin-top:16px;">Accéder à mon dashboard →</a>
-              </div>`;
-            } else if (action === 'request_new') {
-              subject = '📋 Nouveaux documents requis — CUE';
-              html = `<div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
-                <h2 style="color:#FFC300;">Nouveaux documents requis</h2>
-                <p>Bonjour ${firstName},</p>
-                <p>Notre équipe a examiné vos documents et nécessite que vous en soumettez de nouveaux.</p>
-                <div style="background:#1a1a1a; border-left:4px solid #FFC300; padding:16px; margin:20px 0; border-radius:0 8px 8px 0;">
-                  <strong style="color:#FFC300;">Motif :</strong>
-                  <p style="margin-top:8px; color:#ddd;">${motif || ''}</p>
-                </div>
-                <a href="https://cuedj.eu/dashboard-dj.html" style="background:#FFC300; color:#000; padding:14px 32px; border-radius:8px; text-decoration:none; font-weight:700; display:inline-block; margin-top:16px;">Soumettre de nouveaux documents →</a>
-              </div>`;
-            } else if (action === 'reject') {
-              subject = '❌ Vérification d\'identité refusée — CUE';
-              html = `<div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
-                <h2 style="color:#ff4444;">Vérification refusée</h2>
-                <p>Bonjour ${firstName},</p>
-                <p>Nous n'avons pas pu vérifier votre identité. Si vous pensez qu'il s'agit d'une erreur, contactez notre support.</p>
-                <a href="https://cuedj.eu" style="background:#FFC300; color:#000; padding:14px 32px; border-radius:8px; text-decoration:none; font-weight:700; display:inline-block; margin-top:16px;">Retour à CUE</a>
-              </div>`;
-            }
-
-            if (subject && html) {
-              await resend.emails.send({ from: 'CUE DJ <noreply@cuedj.eu>', to: userRow.email, subject, html });
+            const typeMap = { approve: 'identity_approved', reject: 'identity_rejected', request_new: 'identity_new_docs' };
+            const emailType = typeMap[action];
+            if (emailType) {
+              await fetch('https://cuedj.eu/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  type: emailType,
+                  email: userRow.email,
+                  firstName: userRow.first_name || '',
+                  motif: motif || ''
+                })
+              });
             }
           }
         } catch (emailErr) {
@@ -252,29 +229,24 @@ module.exports = async function handler(req, res) {
   if (adminAction === 'request_new_docs') {
     try {
       const { userId, motif, docs } = body;
-      await sql`UPDATE users SET identity_status = 'pending', identity_motif = ${motif}, identity_docs_required = ${docs} WHERE id = ${userId}`;
+      await sql`UPDATE users SET identity_status = 'rejected', identity_motif = ${motif || null}, identity_docs_required = ${docs ? JSON.stringify(docs) : null} WHERE id = ${userId}`;
       const [userRow] = await sql`SELECT * FROM users WHERE id = ${userId}`;
-      if (userRow?.email && process.env.RESEND_API_KEY) {
-        const resend = new Resend(process.env.RESEND_API_KEY);
-        const docsText = (docs || []).map(d => d === 'selfie' ? '🤳 Selfie' : '🪪 Pièce d\'identité').join(', ');
-        const firstName = userRow.first_name || 'Utilisateur';
-        await resend.emails.send({
-          from: 'CUE DJ <noreply@cuedj.eu>',
-          to: userRow.email,
-          subject: '📋 Nouveaux documents requis — CUE',
-          html: `<div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
-            <h2 style="color:#FFC300;">Nouveaux documents requis</h2>
-            <p>Bonjour ${firstName},</p>
-            <p>Notre équipe a examiné vos documents et nécessite que vous en soumettez de nouveaux.</p>
-            <div style="background:#1a1a1a; border-left:4px solid #FFC300; padding:16px; margin:20px 0; border-radius:0 8px 8px 0;">
-              <strong style="color:#FFC300;">Documents à renvoyer :</strong>
-              <p style="margin-top:8px;">${docsText}</p>
-              <strong style="color:#FFC300; margin-top:12px; display:block;">Motif :</strong>
-              <p style="margin-top:8px; color:#ddd;">${motif}</p>
-            </div>
-            <a href="https://cuedj.eu/dashboard-dj.html" style="background:#FFC300; color:#000; padding:14px 32px; border-radius:8px; text-decoration:none; font-weight:700; display:inline-block; margin-top:16px;">Renvoyer mes documents →</a>
-          </div>`
-        });
+      if (userRow?.email) {
+        try {
+          await fetch('https://cuedj.eu/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'identity_new_docs',
+              email: userRow.email,
+              firstName: userRow.first_name || '',
+              motif: motif || '',
+              docsRequired: docs || []
+            })
+          });
+        } catch (emailErr) {
+          console.log('Email non envoyé:', emailErr.message);
+        }
       }
       return res.status(200).json({ success: true });
     } catch (err) {
