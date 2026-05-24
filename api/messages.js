@@ -9,6 +9,9 @@ module.exports = async function handler(req, res) {
 
   if (action === 'get_conversations') {
     const { userId, userType } = body;
+    if (!userId || userId === 'undefined') {
+      return res.status(400).json({ error: 'userId requis', conversations: [] });
+    }
     try {
       let convs;
       if (userType === 'dj') {

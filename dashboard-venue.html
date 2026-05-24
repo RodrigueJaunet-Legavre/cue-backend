@@ -2033,58 +2033,47 @@
       const { supabase } = await import('./js/supabase-client.js')
       const { data: { session } } = await supabase.auth.getSession()
 
-      if (!session) {
-        window.location.replace('login.html')
-        return
-      }
+      if (!session) { window.location.replace('login.html'); return }
+
+      // Timeout sur get_user — max 10 secondes
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 10000)
 
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get_user', userId: session.user.id, email: session.user.email })
+        body: JSON.stringify({ action: 'get_user', userId: session.user.id, email: session.user.email }),
+        signal: controller.signal
       })
-      const data = await res.json()
+      clearTimeout(timeout)
 
-      if (!data.user) {
-        await supabase.auth.signOut()
-        localStorage.clear()
-        window.location.replace('login.html')
-        return
-      }
+      const data = await res.json()
+      if (!data.user) { window.location.replace('login.html'); return }
 
       Object.assign(user, data.user)
 
-      const userType = user.user_type || user.userType
-      if (!userType || userType !== 'venue') {
-        window.location.replace('index.html')
-        return
-      }
+      if (user.user_type !== 'venue') { window.location.replace('index.html'); return }
 
-    } catch (err) {
-      console.log('Erreur init:', err.message)
-      window.location.replace('login.html')
-      return
-    }
+      updateUI()
 
-    updateUI()
+      // Charge les données en séquence pour éviter de surcharger
+      await loadStats()
+      loadVenueConversations() // pas de await — charge en arrière-plan
 
-    allDJs = demoDJs
-    await Promise.all([
-      loadVenueBookings(),
-      filterDJs(),
-      loadMyReviews(),
+      allDJs = demoDJs
+      await loadVenueBookings()
+      filterDJs()
+      loadMyReviews()
       loadFavorites()
-    ])
-    reviewsLoaded = true
-    loadStats()
-    renderFavorites()
-    renderCalendar()
-    renderUpcomingBookings()
-    updateFavBadge()
-    checkVerificationNotification()
-    updateVerifNavItem()
-    loadUnreadCounts()
-    setInterval(loadUnreadCounts, 30000)
+      reviewsLoaded = true
+      renderFavorites()
+      renderCalendar()
+      renderUpcomingBookings()
+      updateFavBadge()
+      checkVerificationNotification()
+      updateVerifNavItem()
+      loadUnreadCounts()
+      setInterval(loadUnreadCounts, 30000)
 
     // Handle redirect after Stripe payment
     const urlParams = new URLSearchParams(window.location.search);
@@ -2106,6 +2095,11 @@
         setTimeout(() => openContactModal(contactDjId, contactDjName), 500);
       }
     }
+  } catch(err) {
+    if (err.name === 'AbortError') { window.location.reload(); return }
+    console.error('init error:', err)
+    window.location.replace('login.html')
+  }
   }
 
   function updateUI() {
@@ -3190,6 +3184,10 @@
   }
 
   async function loadVenueConversations(force = false) {
+    if (!user?.id) {
+      console.log('loadVenueConversations: pas de userId');
+      return;
+    }
     const now = Date.now();
     if (!force && conversationsCache && (now - conversationsCacheTime < CONV_CACHE_TTL)) {
       renderVenueConversations(conversationsCache);
