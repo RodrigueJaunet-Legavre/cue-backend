@@ -15,6 +15,8 @@ module.exports = async function handler(req, res) {
       picture TEXT,
       plan TEXT DEFAULT 'starter',
       identity_status TEXT DEFAULT 'none',
+      identity_motif TEXT,
+      identity_docs_required TEXT,
       profile_complete BOOLEAN DEFAULT false,
       description TEXT,
       genres TEXT[],
