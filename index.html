@@ -9,7 +9,7 @@
   <link rel="icon" href="/logo-icon.png">
   <link rel="apple-touch-icon" href="/logo-icon.png">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.95/build/spline-viewer.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
   <style>
     :root {
@@ -802,8 +802,7 @@
       section { padding: 60px 20px !important; }
 
       .hero { min-height: 100vh !important; padding: 100px 20px 60px !important; }
-      .hero > div:first-child { opacity: 0.5 !important; }
-      spline-viewer { transform: scale(0.7) translateY(10%) !important; transform-origin: center center !important; }
+      #hero-canvas { opacity: 0.5 !important; transform: scale(0.7) translateY(10%) !important; transform-origin: center center !important; }
       .hero > div[style*="z-index:1"] {
         background: linear-gradient(to bottom, transparent 0%, rgba(8,8,8,.4) 40%, rgba(8,8,8,.7) 100%) !important;
         border-radius: 20px !important;
@@ -834,7 +833,7 @@
     @media (prefers-reduced-motion: reduce) {
       .marquee-track { animation: none !important; }
       .hero-title { animation: none !important; opacity: 1 !important; }
-      spline-viewer { display: none !important; }
+      #hero-canvas { display: none !important; }
       .reveal { opacity: 1 !important; transform: none !important; filter: none !important; }
     }
   </style>
@@ -859,13 +858,7 @@
 
 <!-- Hero -->
 <section class="hero" style="max-width:100%; padding-left:24px; padding-right:24px;">
-  <div style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:0;">
-    <spline-viewer
-      url="https://prod.spline.design/424D4vzVLwu2z5V0/scene.splinecode"
-      style="width:100%; height:100%; opacity:.85;"
-      loading-anim-type="none">
-    </spline-viewer>
-  </div>
+  <canvas id="hero-canvas" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:0;"></canvas>
   <div class="hero-bg"></div>
   <div class="hero-grid"></div>
 
@@ -1203,6 +1196,177 @@ async function checkAuth() {
   } catch(e) {}
 }
 checkAuth()
+
+// ── THREE.JS PLATINE DJ ──
+function initScene() {
+  const canvas = document.getElementById('hero-canvas')
+  if (!canvas) return
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true })
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  renderer.setSize(canvas.offsetWidth, canvas.offsetHeight)
+  renderer.shadowMap.enabled = true
+
+  const scene = new THREE.Scene()
+  const camera = new THREE.PerspectiveCamera(45, canvas.offsetWidth / canvas.offsetHeight, 0.1, 100)
+  camera.position.set(0, 3, 7)
+  camera.lookAt(0, 0, 0)
+
+  // ── PLATINE BASE ──
+  const baseGeo = new THREE.CylinderGeometry(2.8, 2.8, 0.15, 64)
+  const baseMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9, roughness: 0.2 })
+  const base = new THREE.Mesh(baseGeo, baseMat)
+  base.position.y = -0.5
+  scene.add(base)
+
+  // ── PLATEAU TOURNANT ──
+  const plateauGeo = new THREE.CylinderGeometry(2.4, 2.4, 0.08, 64)
+  const plateauMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8, roughness: 0.3 })
+  const plateau = new THREE.Mesh(plateauGeo, plateauMat)
+  plateau.position.y = -0.35
+  scene.add(plateau)
+
+  // ── VINYLE ──
+  const vinylGeo = new THREE.CylinderGeometry(2.2, 2.2, 0.06, 128)
+  const vinylMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, metalness: 0.3, roughness: 0.8 })
+  const vinyl = new THREE.Mesh(vinylGeo, vinylMat)
+  vinyl.position.y = -0.28
+  scene.add(vinyl)
+
+  // ── SILLONS ──
+  const grooves = []
+  for (let i = 0; i < 20; i++) {
+    const r = 0.5 + i * 0.085
+    const grooveGeo = new THREE.TorusGeometry(r, 0.003, 8, 128)
+    const grooveMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.4, roughness: 0.6 })
+    const groove = new THREE.Mesh(grooveGeo, grooveMat)
+    groove.rotation.x = Math.PI / 2
+    groove.position.y = -0.25
+    scene.add(groove)
+    grooves.push(groove)
+  }
+
+  // ── LABEL CENTRAL ──
+  const labelGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.065, 64)
+  const labelMat = new THREE.MeshStandardMaterial({ color: 0xFFC300, metalness: 0.5, roughness: 0.5, emissive: 0xFFC300, emissiveIntensity: 0.3 })
+  const label = new THREE.Mesh(labelGeo, labelMat)
+  label.position.y = -0.245
+  scene.add(label)
+
+  // ── AXE CENTRAL ──
+  const axeGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.4, 16)
+  const axeMat = new THREE.MeshStandardMaterial({ color: 0xCCCCCC, metalness: 1, roughness: 0.1 })
+  const axe = new THREE.Mesh(axeGeo, axeMat)
+  axe.position.y = -0.1
+  scene.add(axe)
+
+  // ── BRAS PICKUP ──
+  const armGroup = new THREE.Group()
+  const armMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.9, roughness: 0.1 })
+  const armBody = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.06, 1.8), armMat)
+  armBody.position.set(0, 0, -0.9)
+  armGroup.add(armBody)
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.05, 0.15), armMat)
+  head.position.set(0, 0, -1.8)
+  armGroup.add(head)
+  const needle = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.3, 8), new THREE.MeshStandardMaterial({ color: 0xFFFFFF, metalness: 1 }))
+  needle.rotation.x = Math.PI / 2
+  needle.position.set(0, -0.08, -1.85)
+  armGroup.add(needle)
+  const pivot = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.2, 16), armMat)
+  pivot.position.set(0, 0.1, 0)
+  armGroup.add(pivot)
+  armGroup.position.set(2.2, -0.2, 0)
+  armGroup.rotation.y = -Math.PI * 0.15
+  scene.add(armGroup)
+
+  // ── BOUTONS ──
+  const buttonPositions = [
+    { x: -2.2, z: -1.2, color: 0xFFC300 },
+    { x: -2.2, z: -0.8, color: 0x333333 },
+    { x: -2.2, z: -0.4, color: 0x333333 },
+    { x: -2.2, z: 0,    color: 0x333333 },
+  ]
+  buttonPositions.forEach(bp => {
+    const btnMat = new THREE.MeshStandardMaterial({ color: bp.color, metalness: 0.7, roughness: 0.3, emissive: bp.color === 0xFFC300 ? 0xFFC300 : 0x000000, emissiveIntensity: bp.color === 0xFFC300 ? 0.4 : 0 })
+    const btn = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.08, 16), btnMat)
+    btn.position.set(bp.x, -0.37, bp.z)
+    scene.add(btn)
+  })
+
+  // ── PARTICULES ──
+  const pCount = 200
+  const pPositions = new Float32Array(pCount * 3)
+  for (let i = 0; i < pCount; i++) {
+    const r = 3 + Math.random() * 5
+    const theta = Math.random() * Math.PI * 2
+    const phi = (Math.random() - 0.5) * Math.PI
+    pPositions[i * 3]     = r * Math.cos(theta) * Math.cos(phi)
+    pPositions[i * 3 + 1] = r * Math.sin(phi) * 0.4
+    pPositions[i * 3 + 2] = r * Math.sin(theta) * Math.cos(phi)
+  }
+  const pGeo = new THREE.BufferGeometry()
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3))
+  const pMat = new THREE.PointsMaterial({ color: 0xFFC300, size: 0.04, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending })
+  const particles = new THREE.Points(pGeo, pMat)
+  scene.add(particles)
+
+  // ── LUMIÈRES ──
+  scene.add(new THREE.AmbientLight(0xffffff, 0.4))
+  const keyLight = new THREE.PointLight(0xFFC300, 4, 20)
+  keyLight.position.set(4, 5, 4)
+  scene.add(keyLight)
+  const fillLight = new THREE.PointLight(0x4466ff, 2, 15)
+  fillLight.position.set(-4, 2, -2)
+  scene.add(fillLight)
+  const rimLight = new THREE.DirectionalLight(0xffffff, 1)
+  rimLight.position.set(0, 8, -5)
+  scene.add(rimLight)
+
+  // ── GROUPE VINYLE ──
+  const vinylGroup = new THREE.Group()
+  vinylGroup.add(vinyl)
+  vinylGroup.add(label)
+  vinylGroup.add(axe)
+  grooves.forEach(g => vinylGroup.add(g))
+  scene.add(vinylGroup)
+
+  // ── MOUSE ──
+  let mx = 0, my = 0
+  document.addEventListener('mousemove', e => {
+    mx = (e.clientX / window.innerWidth - .5) * 2
+    my = -(e.clientY / window.innerHeight - .5) * 2
+  })
+
+  // ── RESIZE ──
+  window.addEventListener('resize', () => {
+    camera.aspect = canvas.offsetWidth / canvas.offsetHeight
+    camera.updateProjectionMatrix()
+    renderer.setSize(canvas.offsetWidth, canvas.offsetHeight)
+  })
+
+  // ── ANIMATION ──
+  let time = 0, camX = 0, camY = 0
+  function animate() {
+    requestAnimationFrame(animate)
+    time += 0.01
+    vinylGroup.rotation.y += 0.02
+    plateau.rotation.y += 0.02
+    particles.rotation.y += 0.001
+    keyLight.position.x = Math.cos(time * 0.5) * 5
+    keyLight.position.z = Math.sin(time * 0.5) * 5
+    keyLight.intensity = 3 + Math.sin(time * 2) * 1
+    camX += (mx * 0.4 - camX) * 0.05
+    camY += (my * 0.2 - camY) * 0.05
+    camera.position.x = camX
+    camera.position.y = 3 + camY
+    camera.lookAt(0, -0.3, 0)
+    renderer.render(scene, camera)
+  }
+  animate()
+}
+
+window.addEventListener('load', initScene)
 </script>
 </body>
 </html>
