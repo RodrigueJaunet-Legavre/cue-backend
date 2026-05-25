@@ -795,25 +795,47 @@
 
     /* ─── MOBILE ─── */
     @media (max-width: 768px) {
-      nav { padding: 16px 20px; }
+      nav { padding: 14px 20px !important; }
       nav.scrolled { padding: 12px 20px; }
-      .nav-links { display: none; }
+      .nav-links { display: none !important; }
 
-      section { padding: 80px 20px; }
+      section { padding: 60px 20px !important; }
 
-      .hero { padding: 100px 20px 60px; }
-      .hero-title { font-size: clamp(52px, 15vw, 80px); }
+      .hero { min-height: 100vh !important; padding: 100px 20px 60px !important; }
+      .hero > div:first-child { opacity: 0.5 !important; }
+      spline-viewer { transform: scale(0.7) translateY(10%) !important; transform-origin: center center !important; }
+      .hero > div[style*="z-index:1"] {
+        background: linear-gradient(to bottom, transparent 0%, rgba(8,8,8,.4) 40%, rgba(8,8,8,.7) 100%) !important;
+        border-radius: 20px !important;
+        padding: 24px !important;
+        backdrop-filter: blur(2px) !important;
+      }
+      .hero-title { font-size: clamp(52px, 14vw, 80px) !important; }
       .hero-sub { font-size: 15px; }
-      .hero-ctas { flex-direction: column; gap: 12px; width: 100%; }
-      .btn-hero-primary, .btn-hero-secondary { width: 100%; text-align: center; }
+      .hero-ctas { flex-direction: column !important; width: 100% !important; }
+      .btn-hero-primary, .btn-hero-secondary { width: 100% !important; text-align: center !important; }
 
-      .how-layout { grid-template-columns: 1fr; gap: 48px; }
-      .features-grid { grid-template-columns: 1fr; }
+      .how-layout { grid-template-columns: 1fr !important; gap: 48px !important; }
+      .features-grid { grid-template-columns: 1fr !important; gap: 1px !important; }
       .feature-card { border-right: none; }
-      .pricing-grid { grid-template-columns: 1fr; }
+      .pricing-grid { grid-template-columns: 1fr !important; }
 
-      footer { flex-direction: column; gap: 20px; text-align: center; }
-      .footer-links { flex-wrap: wrap; justify-content: center; gap: 16px; }
+      .particle { display: none !important; }
+      .marquee-track { animation-duration: 30s !important; }
+      .reveal { transition-duration: .6s !important; }
+
+      .final-cta { padding: 80px 20px !important; }
+
+      footer { padding: 32px 20px !important; flex-direction: column !important; gap: 20px !important; text-align: center !important; }
+      .footer-links { flex-wrap: wrap !important; justify-content: center !important; gap: 16px !important; }
+    }
+
+    /* ─── REDUCED MOTION ─── */
+    @media (prefers-reduced-motion: reduce) {
+      .marquee-track { animation: none !important; }
+      .hero-title { animation: none !important; opacity: 1 !important; }
+      spline-viewer { display: none !important; }
+      .reveal { opacity: 1 !important; transform: none !important; filter: none !important; }
     }
   </style>
 </head>
@@ -1128,13 +1150,15 @@ document.querySelectorAll('.reveal, .feature-card, .pricing-card, .how-step, .fi
 })
 
 // Parallax hero
-window.addEventListener('scroll', () => {
-  const scrolled = window.scrollY
-  const heroBg = document.querySelector('.hero-bg')
-  const heroGrid = document.querySelector('.hero-grid')
-  if (heroBg) heroBg.style.transform = `translateY(${scrolled * .3}px)`
-  if (heroGrid) heroGrid.style.transform = `translateY(${scrolled * .15}px)`
-})
+if (window.innerWidth > 768) {
+  window.addEventListener('scroll', () => {
+    const scrolled = window.scrollY
+    const heroBg = document.querySelector('.hero-bg')
+    const heroGrid = document.querySelector('.hero-grid')
+    if (heroBg) heroBg.style.transform = `translateY(${scrolled * .3}px)`
+    if (heroGrid) heroGrid.style.transform = `translateY(${scrolled * .15}px)`
+  })
+}
 
 // Stagger how steps
 document.querySelectorAll('.how-step').forEach((step, i) => {
