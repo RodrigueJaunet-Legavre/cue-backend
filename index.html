@@ -32,30 +32,6 @@
       overflow-x: hidden;
     }
 
-    /* ─── CURSOR ─── */
-    .cursor {
-      width: 12px;
-      height: 12px;
-      background: var(--yellow);
-      border-radius: 50%;
-      position: fixed;
-      pointer-events: none;
-      z-index: 9999;
-      transition: transform .15s ease;
-      mix-blend-mode: difference;
-    }
-
-    .cursor-ring {
-      width: 40px;
-      height: 40px;
-      border: 1px solid rgba(255,195,0,.4);
-      border-radius: 50%;
-      position: fixed;
-      pointer-events: none;
-      z-index: 9998;
-      transition: all .3s ease;
-    }
-
     /* ─── NAV ─── */
     nav {
       position: fixed;
@@ -212,7 +188,12 @@
       text-transform: uppercase;
       margin-bottom: 8px;
       opacity: 0;
-      animation: fadeUp .8s ease .4s forwards;
+      animation: fadeUp .8s ease .4s forwards, textGlow 4s ease-in-out 1.2s infinite;
+    }
+
+    @keyframes textGlow {
+      0%, 100% { text-shadow: none; }
+      50% { text-shadow: 0 0 80px rgba(255,195,0,.15); }
     }
 
     .hero-title-outline {
@@ -279,38 +260,41 @@
       background: rgba(255,255,255,.05);
     }
 
-    /* Scroll indicator */
-    .scroll-indicator {
+    /* ─── HERO RING ─── */
+    .hero::after {
+      content: '';
       position: absolute;
-      bottom: 40px;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,195,0,.06);
+      top: 50%;
       left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
+      transform: translate(-50%, -50%);
+      animation: expandRing 4s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes expandRing {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: .6; }
+      50% { transform: translate(-50%, -50%) scale(1.1); opacity: .3; }
+    }
+
+    /* ─── PARTICLES ─── */
+    .particle {
+      position: absolute;
+      background: var(--yellow);
+      border-radius: 50%;
+      animation: floatParticle linear infinite;
       opacity: 0;
-      animation: fadeUp .8s ease 1.2s forwards;
+      pointer-events: none;
     }
 
-    .scroll-line {
-      width: 1px;
-      height: 60px;
-      background: linear-gradient(to bottom, transparent, var(--yellow), transparent);
-      animation: scrollAnim 2s ease-in-out infinite;
-    }
-
-    @keyframes scrollAnim {
-      0%, 100% { opacity: .3; transform: scaleY(.8); }
-      50% { opacity: 1; transform: scaleY(1); }
-    }
-
-    .scroll-text {
-      font-size: 10px;
-      letter-spacing: 3px;
-      color: var(--muted);
-      text-transform: uppercase;
-      writing-mode: vertical-rl;
+    @keyframes floatParticle {
+      0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+      10% { opacity: .6; }
+      90% { opacity: .6; }
+      100% { transform: translateY(-100px) translateX(60px); opacity: 0; }
     }
 
     /* ─── MARQUEE ─── */
@@ -328,6 +312,8 @@
       animation: marquee 20s linear infinite;
       width: max-content;
     }
+
+    .marquee-track:hover { animation-play-state: paused; }
 
     .marquee-item {
       font-family: 'Barlow Condensed', sans-serif;
@@ -438,11 +424,12 @@
       line-height: 1;
       flex-shrink: 0;
       width: 60px;
-      transition: color .3s;
+      transition: color .3s, transform .3s;
     }
 
     .how-step:hover .how-step-num {
       color: var(--yellow);
+      transform: scale(1.1);
     }
 
     .how-step-content h3 {
@@ -490,6 +477,7 @@
 
     .feature-card:hover {
       background: rgba(255,195,0,.04);
+      box-shadow: 0 0 40px rgba(255,195,0,.06);
     }
 
     .feature-card:last-child,
@@ -563,6 +551,12 @@
     .pricing-card.featured {
       border-color: rgba(255,195,0,.4);
       background: linear-gradient(135deg, #111 0%, #0d0d00 100%);
+      animation: cardGlow 3s ease-in-out infinite;
+    }
+
+    @keyframes cardGlow {
+      0%, 100% { box-shadow: 0 0 40px rgba(255,195,0,.06); }
+      50% { box-shadow: 0 0 80px rgba(255,195,0,.12); }
     }
 
     .pricing-card.featured::before {
@@ -788,12 +782,14 @@
     .reveal {
       opacity: 0;
       transform: translateY(40px);
-      transition: all .8s cubic-bezier(.16,1,.3,1);
+      filter: blur(4px);
+      transition: all .9s cubic-bezier(.16,1,.3,1);
     }
 
     .reveal.visible {
       opacity: 1;
       transform: translateY(0);
+      filter: blur(0);
     }
 
     /* ─── MOBILE ─── */
@@ -817,16 +813,10 @@
 
       footer { flex-direction: column; gap: 20px; text-align: center; }
       .footer-links { flex-wrap: wrap; justify-content: center; gap: 16px; }
-
-      .cursor, .cursor-ring { display: none; }
     }
   </style>
 </head>
 <body>
-
-<!-- Custom cursor -->
-<div class="cursor" id="cursor"></div>
-<div class="cursor-ring" id="cursor-ring"></div>
 
 <!-- Navigation -->
 <nav id="navbar">
@@ -870,10 +860,6 @@
     <a href="login.html" class="btn-hero-secondary">I already have an account</a>
   </div>
 
-  <div class="scroll-indicator">
-    <div class="scroll-line"></div>
-    <span class="scroll-text">Scroll</span>
-  </div>
 </section>
 
 <!-- Marquee -->
@@ -958,32 +944,44 @@
 
   <div class="features-grid">
     <div class="feature-card">
-      <div class="feature-icon">V</div>
+      <div class="feature-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="16" height="16" rx="4" stroke="#FFC300" stroke-width="1.5"/><path d="M6 10l3 3 5-5" stroke="#FFC300" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
       <div class="feature-title">Verified Profiles</div>
       <p class="feature-desc">Every DJ and venue goes through our verification process. No fake profiles, only real professionals.</p>
     </div>
     <div class="feature-card">
-      <div class="feature-icon">A</div>
+      <div class="feature-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L3 7v6c0 3.3 2.7 6 7 7 4.3-1 7-3.7 7-7V7l-7-5z" stroke="#FFC300" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 10h6M10 7v6" stroke="#FFC300" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
       <div class="feature-title">AI Contracts</div>
       <p class="feature-desc">Generate professional legal contracts in seconds using our AI. Both parties sign digitally.</p>
     </div>
     <div class="feature-card">
-      <div class="feature-icon">S</div>
+      <div class="feature-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="5" width="14" height="10" rx="2" stroke="#FFC300" stroke-width="1.5"/><path d="M7 9h6M7 12h4" stroke="#FFC300" stroke-width="1.5" stroke-linecap="round"/><circle cx="15" cy="5" r="3" fill="#FFC300" opacity=".2" stroke="#FFC300" stroke-width="1"/></svg>
+      </div>
       <div class="feature-title">Secure Payments</div>
       <p class="feature-desc">Funds are held in escrow until the performance is completed and validated by the venue.</p>
     </div>
     <div class="feature-card">
-      <div class="feature-icon">M</div>
+      <div class="feature-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M18 14a2 2 0 0 1-2 2H5l-3 3V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z" stroke="#FFC300" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 8h8M6 11h5" stroke="#FFC300" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
       <div class="feature-title">Direct Messaging</div>
       <p class="feature-desc">Negotiate directly with DJs or venues through our integrated messaging and offer system.</p>
     </div>
     <div class="feature-card">
-      <div class="feature-icon">C</div>
+      <div class="feature-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="13" rx="2" stroke="#FFC300" stroke-width="1.5"/><path d="M3 8h14M7 2v4M13 2v4" stroke="#FFC300" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="13" r="1.5" fill="#FFC300"/></svg>
+      </div>
       <div class="feature-title">Calendar Management</div>
       <p class="feature-desc">Manage your availability and bookings with an integrated calendar synced to your confirmed gigs.</p>
     </div>
     <div class="feature-card">
-      <div class="feature-icon">R</div>
+      <div class="feature-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2l2.4 5 5.6.8-4 4 .9 5.5L10 15l-4.9 2.3.9-5.5-4-4 5.6-.8z" stroke="#FFC300" stroke-width="1.5" stroke-linejoin="round"/></svg>
+      </div>
       <div class="feature-title">Reviews & Ratings</div>
       <p class="feature-desc">Build your reputation through verified reviews from real events. Stand out with a proven track record.</p>
     </div>
@@ -1077,40 +1075,25 @@
 </footer>
 
 <script>
-// Custom cursor
-const cursor = document.getElementById('cursor')
-const ring = document.getElementById('cursor-ring')
-let mouseX = 0, mouseY = 0
-let ringX = 0, ringY = 0
-
-document.addEventListener('mousemove', e => {
-  mouseX = e.clientX
-  mouseY = e.clientY
-  cursor.style.left = mouseX - 6 + 'px'
-  cursor.style.top = mouseY - 6 + 'px'
-})
-
-function animateRing() {
-  ringX += (mouseX - ringX - 20) * .12
-  ringY += (mouseY - ringY - 20) * .12
-  ring.style.left = ringX + 'px'
-  ring.style.top = ringY + 'px'
-  requestAnimationFrame(animateRing)
+// Particles
+function createParticles() {
+  const hero = document.querySelector('.hero')
+  if (!hero) return
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div')
+    p.className = 'particle'
+    p.style.cssText = `
+      left: ${Math.random() * 100}%;
+      animation-duration: ${8 + Math.random() * 12}s;
+      animation-delay: ${Math.random() * 8}s;
+      width: ${1 + Math.random() * 2}px;
+      height: ${1 + Math.random() * 2}px;
+      opacity: ${.2 + Math.random() * .4};
+    `
+    hero.appendChild(p)
+  }
 }
-animateRing()
-
-document.querySelectorAll('a, button').forEach(el => {
-  el.addEventListener('mouseenter', () => {
-    cursor.style.transform = 'scale(2.5)'
-    ring.style.transform = 'scale(1.5)'
-    ring.style.borderColor = 'rgba(255,195,0,.6)'
-  })
-  el.addEventListener('mouseleave', () => {
-    cursor.style.transform = 'scale(1)'
-    ring.style.transform = 'scale(1)'
-    ring.style.borderColor = 'rgba(255,195,0,.4)'
-  })
-})
+createParticles()
 
 // Navbar scroll
 const navbar = document.getElementById('navbar')
