@@ -92,6 +92,14 @@
         <button type="button" class="eye-btn" onclick="togglePwd()">👁</button>
       </div>
     </div>
+    <div style="text-align:right; margin-top:6px; margin-bottom:16px;">
+      <a href="#" onclick="openForgotPassword(); return false;"
+         style="color:#888; font-size:13px; text-decoration:none; transition:color .2s;"
+         onmouseover="this.style.color='#FFC300'"
+         onmouseout="this.style.color='#888'">
+        Mot de passe oublié ?
+      </a>
+    </div>
     <button type="submit" class="btn-primary" id="login-btn"><span id="login-label">Se connecter</span><div class="spinner" id="login-spinner"></div></button>
   </form>
 
@@ -104,6 +112,76 @@
 
   <div class="link">
     Pas encore de compte ? <a href="inscription.html">S'inscrire</a>
+  </div>
+</div>
+
+<!-- Modal mot de passe oublié -->
+<div id="modal-forgot"
+     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.8);
+            z-index:9999; align-items:center; justify-content:center; padding:24px;">
+  <div style="background:#111; border:1px solid #333; border-radius:20px;
+              padding:32px; width:100%; max-width:420px; position:relative;">
+
+    <button onclick="closeForgotPassword()"
+            style="position:absolute; top:16px; right:16px; background:rgba(255,255,255,.1);
+                   border:none; color:#fff; width:32px; height:32px; border-radius:50%;
+                   cursor:pointer; font-size:16px; display:flex; align-items:center;
+                   justify-content:center;">✕</button>
+
+    <!-- Étape 1 : saisir email -->
+    <div id="forgot-step1">
+      <h2 style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px;
+                 color:#fff; margin-bottom:8px;">MOT DE PASSE<br>OUBLIÉ</h2>
+      <p style="color:#888; font-size:14px; line-height:1.6; margin-bottom:24px;">
+        Entre ton adresse email et on t'envoie un lien pour réinitialiser ton mot de passe.
+      </p>
+      <div style="margin-bottom:16px;">
+        <label style="display:block; color:#888; font-size:11px; font-weight:700;
+                      letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">
+          Email
+        </label>
+        <input type="email" id="forgot-email"
+               style="width:100%; background:#1a1a1a; border:1px solid #333; color:#ddd;
+                      padding:14px 16px; border-radius:10px; font-size:16px;
+                      font-family:Barlow,sans-serif; outline:none; transition:border-color .2s;"
+               placeholder="ton@email.com"
+               onfocus="this.style.borderColor='#FFC300'"
+               onblur="this.style.borderColor='#333'">
+      </div>
+      <div id="forgot-error" style="display:none; background:rgba(255,68,68,.1);
+           color:#ff4444; border:1px solid rgba(255,68,68,.2); border-radius:8px;
+           padding:12px; font-size:14px; margin-bottom:16px;"></div>
+      <button onclick="sendResetEmail()"
+              id="forgot-btn"
+              style="width:100%; padding:16px; background:#FFC300; color:#000; border:none;
+                     border-radius:10px; font-weight:700; font-size:16px; cursor:pointer;
+                     font-family:Barlow,sans-serif; transition:all .2s; display:flex;
+                     align-items:center; justify-content:center; gap:8px;">
+        Envoyer le lien →
+      </button>
+    </div>
+
+    <!-- Étape 2 : confirmation -->
+    <div id="forgot-step2" style="display:none; text-align:center; padding:16px 0;">
+      <div style="font-size:56px; margin-bottom:16px;">📧</div>
+      <h3 style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:24px;
+                 color:#fff; margin-bottom:12px;">EMAIL ENVOYÉ !</h3>
+      <p style="color:#888; font-size:14px; line-height:1.7; margin-bottom:24px;">
+        Vérifie ta boîte mail. Le lien de réinitialisation expire dans <strong style="color:#fff;">1 heure</strong>.
+      </p>
+      <p style="color:#666; font-size:12px; margin-bottom:20px;">
+        Pas reçu ? Vérifie tes spams ou
+        <a href="#" onclick="showForgotStep1()"
+           style="color:#FFC300; text-decoration:none;">réessaie</a>.
+      </p>
+      <button onclick="closeForgotPassword()"
+              style="padding:12px 32px; background:transparent; color:#888;
+                     border:1px solid #333; border-radius:10px; cursor:pointer;
+                     font-family:Barlow,sans-serif; font-weight:700;">
+        Fermer
+      </button>
+    </div>
+
   </div>
 </div>
 
@@ -204,6 +282,78 @@ async function loginWithGoogle() {
     if (error) showError('Erreur Google : ' + error.message)
   } catch(err) {
     showError('Erreur Google. Réessaie.')
+  }
+}
+
+function openForgotPassword() {
+  const modal = document.getElementById('modal-forgot')
+  modal.style.display = 'flex'
+  document.body.style.overflow = 'hidden'
+  setTimeout(() => document.getElementById('forgot-email')?.focus(), 100)
+}
+
+function closeForgotPassword() {
+  const modal = document.getElementById('modal-forgot')
+  modal.style.display = 'none'
+  document.body.style.overflow = ''
+  showForgotStep1()
+}
+
+function showForgotStep1() {
+  document.getElementById('forgot-step1').style.display = 'block'
+  document.getElementById('forgot-step2').style.display = 'none'
+  document.getElementById('forgot-error').style.display = 'none'
+  const input = document.getElementById('forgot-email')
+  if (input) input.value = ''
+}
+
+document.getElementById('modal-forgot').addEventListener('click', function(e) {
+  if (e.target === this) closeForgotPassword()
+})
+
+async function sendResetEmail() {
+  const email = document.getElementById('forgot-email')?.value?.trim()
+  const btn = document.getElementById('forgot-btn')
+  const errorEl = document.getElementById('forgot-error')
+
+  errorEl.style.display = 'none'
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errorEl.textContent = 'Adresse email invalide.'
+    errorEl.style.display = 'block'
+    return
+  }
+
+  btn.disabled = true
+  btn.innerHTML = '<div style="width:18px;height:18px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite;"></div>'
+
+  try {
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm')
+    const supabase = createClient(
+      'https://orjhkfdvihuvqcjxhjwe.supabase.co',
+      document.querySelector('meta[name="supabase-key"]').content
+    )
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://cuedj.eu/reset-password.html'
+    })
+
+    if (error) {
+      errorEl.textContent = 'Erreur : ' + error.message
+      errorEl.style.display = 'block'
+      btn.disabled = false
+      btn.textContent = 'Envoyer le lien →'
+      return
+    }
+
+    document.getElementById('forgot-step1').style.display = 'none'
+    document.getElementById('forgot-step2').style.display = 'block'
+
+  } catch(err) {
+    errorEl.textContent = 'Erreur réseau. Réessaie.'
+    errorEl.style.display = 'block'
+    btn.disabled = false
+    btn.textContent = 'Envoyer le lien →'
   }
 }
 
