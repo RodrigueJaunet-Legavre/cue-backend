@@ -42,16 +42,14 @@
     .section-title { color:#888; font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:12px; text-align:center; }
 
   @media (max-width: 768px) {
-    body { padding: 24px 16px !important; align-items: flex-start !important; }
-    .container { max-width: 100% !important; padding: 0 !important; }
-    h1 { font-size: 30px !important; }
-    .type-cards, .subtype-cards, .types { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
-    .type-card, .subtype-card { padding: 16px 12px !important; }
-    .type-icon, .subtype-icon { font-size: 28px !important; }
-    .two-col { grid-template-columns: 1fr !important; }
-    .form-input, input { font-size: 16px !important; }
-    .btn, .btn-next { padding: 16px !important; font-size: 15px !important; }
-    .code-digit { width: 44px !important; height: 52px !important; font-size: 22px !important; }
+    body { padding: 24px 16px; }
+    .container { max-width: 100%; }
+    .types { flex-direction: column; gap: 12px; }
+    .type-card { max-width: 100%; }
+    .subtype-cards { flex-direction: row; gap: 10px; }
+    .subtype-card { flex: 1; }
+    .form-input, input { font-size: 16px; }
+    .btn { padding: 16px; font-size: 15px; }
   }
   </style>
   <link rel="stylesheet" href="css/responsive.css">
