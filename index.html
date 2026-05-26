@@ -813,7 +813,7 @@
       #hero-canvas {
         position: relative !important;
         width: 100% !important;
-        height: 300px !important;
+        height: 380px !important;
         opacity: 1 !important;
         display: block !important;
         flex-shrink: 0 !important;
@@ -1236,8 +1236,8 @@ function initScene() {
   camera.lookAt(0, 0, 0)
 
   if (isMobile) {
-    camera.fov = 60
-    camera.position.set(0, 2.5, 5)
+    camera.fov = 75
+    camera.position.set(0, 1.5, 3)
     camera.lookAt(0, 0, 0)
     camera.updateProjectionMatrix()
   }
@@ -1308,9 +1308,9 @@ function initScene() {
       })
 
       if (isMobile) {
-        model.scale.setScalar(scale * 0.8)
-        model.position.y = 0
-        model.rotation.x = -0.2
+        model.scale.setScalar(scale * 2.5)
+        model.position.y = -0.3
+        model.rotation.x = -0.3
       }
 
       scene.add(model)
