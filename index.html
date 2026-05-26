@@ -1313,7 +1313,20 @@ function initScene() {
         model.rotation.x = -0.3
       }
 
-      scene.add(model)
+      // Flash lumineux à l'arrivée
+      const flashLight = new THREE.PointLight(0xFFC300, 0, 8)
+      flashLight.position.set(0, 2, 3)
+      scene.add(flashLight)
+
+      // Position initiale hors écran
+      model.position.y = -8
+      model.rotation.x = -1.5
+      model.rotation.y = Math.PI
+
+      // Paramètres d'entrée
+      entryDone = false
+      entryStart = Date.now()
+      modelFlash = flashLight
     },
     (progress) => {
       console.log('Loading:', (progress.loaded / progress.total * 100).toFixed(0) + '%')
@@ -1339,18 +1352,48 @@ function initScene() {
     renderer.setSize(canvas.offsetWidth, canvas.offsetHeight)
   })
 
-  // ── ANIMATE ──
+  // ── ANIMATION STATE ──
   let time = 0
+  let entryDone = true
+  let entryStart = 0
+  let modelFlash = null
+  const entryDuration = 2.5
+
   function animate() {
     requestAnimationFrame(animate)
     time += 0.008
 
-    // Rotation douce du modèle
     if (model) {
-      currentX += (targetX - currentX) * 0.04
-      currentY += (targetY - currentY) * 0.04
-      model.rotation.y = currentX + time * 0.1
-      model.rotation.x = currentY * 0.3
+      if (!entryDone) {
+        const elapsed = (Date.now() - entryStart) / 1000
+        const entryProgress = Math.min(elapsed / entryDuration, 1)
+        const eased = 1 - Math.pow(1 - entryProgress, 3)
+
+        const targetY = isMobile ? -0.3 : -0.5
+        model.position.y = -8 + (8 + targetY) * eased
+        model.rotation.x = -1.5 + 1.5 * eased
+        model.rotation.y = Math.PI - Math.PI * eased
+
+        // Flash lumineux à l'impact
+        if (modelFlash) {
+          if (entryProgress > 0.7 && entryProgress < 0.95) {
+            modelFlash.intensity = (entryProgress - 0.7) / 0.25 * 6
+          } else if (entryProgress >= 0.95) {
+            modelFlash.intensity = Math.max(0, modelFlash.intensity - 0.2)
+          }
+        }
+
+        if (entryProgress >= 1) {
+          entryDone = true
+          model.position.y = targetY
+        }
+      } else {
+        // Rotation normale après entrée
+        currentX += (targetX - currentX) * 0.04
+        currentY += (targetY - currentY) * 0.04
+        model.rotation.y = currentX + time * 0.08
+        model.rotation.x = currentY * 0.2 - 0.1
+      }
     }
 
     // Lumière dorée qui tourne
