@@ -966,6 +966,9 @@
     <div class="nav-item" data-page="settings" onclick="showPage('settings', this)">
       <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M8 1.5v1.3M8 13.2v1.3M1.5 8h1.3M13.2 8h1.3M3.5 3.5l.9.9M11.6 11.6l.9.9M3.5 12.5l.9-.9M11.6 4.4l.9-.9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span><span class="nav-label">Paramètres</span>
     </div>
+    <div class="nav-item" data-page="blog" onclick="showPage('blog', this)">
+      <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z" stroke="currentColor" stroke-width="1.4"/><path d="M5 5.5h6M5 8h6M5 10.5h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span><span class="nav-label">Blog</span>
+    </div>
     <div class="nav-item" data-page="contact" onclick="showPage('contact', this)">
       <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 11a1.5 1.5 0 0 1-1.5 1.5H4L1.5 15V3.5A1.5 1.5 0 0 1 3 2h10A1.5 1.5 0 0 1 14 3.5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></span><span class="nav-label">Contact</span>
     </div>
@@ -1961,6 +1964,20 @@
     </div>
   </div>
 
+  <!-- PAGE BLOG -->
+  <div id="page-blog" class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">BLOG</h1>
+        <p class="page-sub">Conseils et actualités CUE</p>
+      </div>
+      <a href="/blog.html" target="_blank" class="btn btn-outline" style="padding:10px 20px; white-space:nowrap;">Voir tout →</a>
+    </div>
+    <div id="dashboard-blog-grid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:16px;">
+      <div style="grid-column:1/-1; text-align:center; color:var(--MUTED); padding:40px;">Chargement...</div>
+    </div>
+  </div>
+
   <!-- PAGE LÉGAL -->
   <div id="page-legal" class="page">
     <div class="page-header">
@@ -2636,6 +2653,7 @@
         break;
       case 'calendar': renderCalendar(); break;
       case 'earnings': renderEarnings(); break;
+      case 'blog': loadBlogDashboard(); break;
       case 'contact': initContactPage(); break;
       case 'legal': break;
       case 'verification': initVerificationPage(); break;
@@ -4646,6 +4664,51 @@
     if (diff < 3600000) return Math.floor(diff / 60000) + 'min';
     if (diff < 86400000) return Math.floor(diff / 3600000) + 'h';
     return d.toLocaleDateString('fr-FR');
+  }
+
+  async function loadBlogDashboard() {
+    try {
+      const res = await fetch('/api/blog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_articles' })
+      })
+      const data = await res.json()
+      const articles = data.articles || []
+      const grid = document.getElementById('dashboard-blog-grid')
+      if (!grid) return
+
+      if (!articles.length) {
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:var(--MUTED); padding:40px;">Aucun article pour le moment.</div>'
+        return
+      }
+
+      grid.innerHTML = articles.map(a => `
+        <a href="/article.html?slug=${a.slug}" target="_blank"
+           style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:16px;
+                  overflow:hidden; text-decoration:none; transition:all .3s; display:block;"
+           onmouseover="this.style.borderColor='rgba(255,195,0,.3)'"
+           onmouseout="this.style.borderColor='var(--BORDER)'">
+          ${a.cover
+            ? `<img src="${a.cover}" alt="${a.title}" style="width:100%; aspect-ratio:16/9; object-fit:cover;">`
+            : `<div style="width:100%; aspect-ratio:16/9; background:linear-gradient(135deg,#111,#1a1500);
+                           display:flex; align-items:center; justify-content:center;">
+                 <img src="/logo.png" alt="CUE" style="height:32px; opacity:.2; object-fit:contain;">
+               </div>`
+          }
+          <div style="padding:16px;">
+            <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:18px;
+                        color:#fff; text-transform:uppercase; line-height:1.2; margin-bottom:6px;">
+              ${a.title}
+            </div>
+            ${a.summary ? `<div style="font-size:13px; color:var(--MUTED); line-height:1.5;">${a.summary}</div>` : ''}
+            <div style="font-size:11px; color:#444; margin-top:8px;">
+              ${a.date ? new Date(a.date).toLocaleDateString('fr-FR', {day:'2-digit',month:'long',year:'numeric'}) : ''}
+            </div>
+          </div>
+        </a>
+      `).join('')
+    } catch(e) {}
   }
 
   function initContactPage() {
