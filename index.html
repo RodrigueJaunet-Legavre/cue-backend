@@ -803,13 +803,22 @@
 
       section { padding: 60px 20px !important; }
 
-      .hero { min-height: 100vh !important; padding: 100px 20px 60px !important; }
-      #hero-canvas { opacity: 0.5 !important; transform: scale(0.7) translateY(10%) !important; transform-origin: center center !important; }
+      .hero { min-height: 100vh !important; padding-top: 80px !important; flex-direction: column !important; }
+      #hero-canvas {
+        opacity: 1 !important;
+        height: 50vh !important;
+        position: relative !important;
+        z-index: 0 !important;
+        transform: none !important;
+        width: 100% !important;
+        min-height: 260px !important;
+      }
       .hero > div[style*="z-index:1"] {
-        background: linear-gradient(to bottom, transparent 0%, rgba(8,8,8,.4) 40%, rgba(8,8,8,.7) 100%) !important;
-        border-radius: 20px !important;
-        padding: 24px !important;
-        backdrop-filter: blur(2px) !important;
+        position: relative !important;
+        z-index: 1 !important;
+        padding: 0 20px !important;
+        background: none !important;
+        backdrop-filter: none !important;
       }
       .hero-title { font-size: clamp(52px, 14vw, 80px) !important; }
       .hero-sub { font-size: 15px; }
@@ -1213,9 +1222,18 @@ function initScene() {
   renderer.shadowMap.enabled = true
 
   const scene = new THREE.Scene()
+  const isMobile = window.innerWidth <= 768
+
   const camera = new THREE.PerspectiveCamera(40, canvas.offsetWidth / canvas.offsetHeight, 0.1, 100)
   camera.position.set(0, 2, 5)
   camera.lookAt(0, 0, 0)
+
+  // Camera plus proche sur mobile
+  if (isMobile) {
+    camera.position.set(0, 1.5, 3.5)
+    camera.fov = 55
+    camera.updateProjectionMatrix()
+  }
 
   // ── LUMIÈRES ──
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
@@ -1281,6 +1299,11 @@ function initScene() {
           }
         }
       })
+
+      if (isMobile) {
+        model.scale.setScalar(scale * 1.4)
+        model.position.y -= 0.2
+      }
 
       scene.add(model)
     },
