@@ -804,27 +804,29 @@
       section { padding: 60px 20px !important; }
 
       .hero {
-        flex-direction: column !important;
-        justify-content: flex-start !important;
-        padding-top: 70px !important;
-        padding-bottom: 40px !important;
         min-height: 100vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        padding-bottom: 60px !important;
+        padding-top: 70px !important;
       }
       #hero-canvas {
-        position: relative !important;
+        position: absolute !important;
+        inset: 0 !important;
         width: 100% !important;
-        height: 380px !important;
-        opacity: 1 !important;
-        display: block !important;
-        flex-shrink: 0 !important;
+        height: 100% !important;
+        opacity: 0.9 !important;
       }
-      .hero > div[style*="z-index:1"],
-      .hero-content {
+      .hero > div[style*="z-index:1"] {
         position: relative !important;
-        z-index: 1 !important;
-        margin-top: 20px !important;
-        padding: 0 20px !important;
+        z-index: 2 !important;
         text-align: center !important;
+        background: linear-gradient(to top, rgba(8,8,8,.95) 0%, rgba(8,8,8,.6) 60%, transparent 100%) !important;
+        padding: 40px 20px 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
       }
       .hero-title { font-size: 52px !important; }
       .hero-bg, .hero-grid { display: none !important; }
@@ -854,6 +856,265 @@
       #hero-canvas { display: none !important; }
       .reveal { opacity: 1 !important; transform: none !important; filter: none !important; }
     }
+
+  /* ── EXPLORE TABS ── */
+  .explore-wrap { padding: 100px 48px; max-width: 1200px; margin: 0 auto; }
+
+  .explore-tabbar {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 100px;
+    padding: 5px;
+    margin: 0 auto 72px;
+    gap: 2px;
+    display: flex;
+    width: fit-content;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .explore-tab-pill {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    height: calc(100% - 10px);
+    background: #FFC300;
+    border-radius: 100px;
+    transition: transform .38s cubic-bezier(.4,0,.2,1), width .38s cubic-bezier(.4,0,.2,1);
+    z-index: 0;
+    pointer-events: none;
+  }
+  .etab {
+    position: relative;
+    z-index: 1;
+    padding: 10px 28px;
+    border-radius: 100px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: .5px;
+    background: transparent;
+    color: rgba(255,255,255,.4);
+    transition: color .35s;
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+  .etab.etab-active { color: #000; }
+
+  /* Panels */
+  .explore-panels { position: relative; }
+  .epanel {
+    display: none;
+    animation: epanelIn .42s cubic-bezier(.4,0,.2,1) forwards;
+  }
+  .epanel.epanel-active { display: block; }
+  @keyframes epanelIn {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* HOW IT WORKS */
+  .how-grid {
+    display: grid;
+    grid-template-columns: 1fr 1px 1fr;
+    gap: 0 56px;
+  }
+  .how-vline {
+    background: rgba(255,255,255,.05);
+    position: relative;
+    overflow: hidden;
+  }
+  .how-vline::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 0;
+    background: linear-gradient(to bottom, transparent 0%, #FFC300 50%, transparent 100%);
+    animation: vlineDrop 1.4s ease .3s forwards;
+  }
+  @keyframes vlineDrop { to { height: 100%; } }
+  .how-side-tag {
+    font-size: 10px; font-weight: 800; letter-spacing: 3px;
+    text-transform: uppercase; color: #FFC300;
+    margin-bottom: 40px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .how-side-tag::before {
+    content: ''; width: 28px; height: 1px;
+    background: #FFC300; display: block; flex-shrink: 0;
+  }
+  .how-step {
+    display: flex; gap: 24px; margin-bottom: 40px; cursor: default;
+  }
+  .how-step-num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900; font-size: 60px; line-height: 1;
+    flex-shrink: 0; width: 60px;
+    color: rgba(255,195,0,.08);
+    transition: color .4s, text-shadow .4s;
+    user-select: none;
+  }
+  .how-step:hover .how-step-num {
+    color: #FFC300;
+    text-shadow: 0 0 40px rgba(255,195,0,.35);
+  }
+  .how-step-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900; font-size: 22px;
+    text-transform: uppercase; color: #fff;
+    margin-bottom: 8px; letter-spacing: .3px;
+    transition: color .3s;
+  }
+  .how-step:hover .how-step-title { color: #FFC300; }
+  .how-step-desc { font-size: 13px; color: rgba(255,255,255,.35); line-height: 1.75; }
+
+  /* Stats */
+  .how-stats {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    gap: 1px; background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 20px; overflow: hidden; margin-top: 64px;
+  }
+  .how-stat { background: #0c0c0c; padding: 32px 36px; text-align: center; }
+  .how-stat-num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900; font-size: 52px; color: #FFC300;
+    line-height: 1; margin-bottom: 8px;
+  }
+  .how-stat-label {
+    font-size: 11px; color: rgba(255,255,255,.3);
+    letter-spacing: 1.5px; text-transform: uppercase;
+  }
+
+  /* FEATURES */
+  .feat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+  .feat-card {
+    background: #0c0c0c;
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 20px; padding: 28px;
+    cursor: default; position: relative; overflow: hidden;
+    transition: border-color .4s, transform .4s, box-shadow .4s;
+  }
+  .feat-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 30% 0%, rgba(255,195,0,.09) 0%, transparent 65%);
+    opacity: 0; transition: opacity .4s;
+  }
+  .feat-card:hover { border-color: rgba(255,195,0,.3); transform: translateY(-5px); box-shadow: 0 24px 64px rgba(0,0,0,.5), 0 0 0 1px rgba(255,195,0,.08); }
+  .feat-card:hover::before { opacity: 1; }
+  .feat-icon {
+    width: 46px; height: 46px;
+    border: 1px solid rgba(255,195,0,.18); border-radius: 14px;
+    background: rgba(255,195,0,.05);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+    transition: transform .4s, border-color .4s, background .4s;
+  }
+  .feat-card:hover .feat-icon { transform: scale(1.12); border-color: rgba(255,195,0,.45); background: rgba(255,195,0,.1); }
+  .feat-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900; font-size: 20px;
+    text-transform: uppercase; color: #fff;
+    margin-bottom: 10px; letter-spacing: .3px;
+  }
+  .feat-desc { font-size: 13px; color: rgba(255,255,255,.35); line-height: 1.75; }
+
+  /* PRICING */
+  .pricing-grid-new { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; align-items: start; }
+  .pc {
+    background: #0c0c0c;
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 24px; padding: 32px;
+    position: relative;
+    transition: transform .4s, box-shadow .4s;
+  }
+  .pc:hover { transform: translateY(-6px); }
+  .pc.pc-featured {
+    background: linear-gradient(155deg, #111 0%, #1b1400 100%);
+    border-color: rgba(255,195,0,.28);
+    box-shadow: 0 0 80px rgba(255,195,0,.07);
+  }
+  .pc.pc-featured:hover { box-shadow: 0 24px 80px rgba(255,195,0,.14); }
+  .pc-badge {
+    position: absolute; top: -1px; right: 24px;
+    background: #FFC300; color: #000;
+    font-size: 9px; font-weight: 800;
+    letter-spacing: 2px; text-transform: uppercase;
+    padding: 5px 14px; border-radius: 0 0 10px 10px;
+  }
+  .pc-name { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,.3); margin-bottom: 20px; }
+  .pc-price {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900; font-size: 60px; color: #fff; line-height: 1; margin-bottom: 4px;
+  }
+  .pc-price span { font-size: 18px; font-weight: 400; color: rgba(255,255,255,.35); }
+  .pc-commission { font-size: 12px; color: #FFC300; font-weight: 700; margin-bottom: 4px; }
+  .pc-note { font-size: 10px; color: rgba(255,255,255,.22); margin-bottom: 24px; line-height: 1.5; }
+  .pc-divider { height: 1px; background: rgba(255,255,255,.06); margin-bottom: 20px; }
+  .pc-feat { display: flex; align-items: center; gap: 10px; font-size: 13px; margin-bottom: 10px; color: rgba(255,255,255,.65); }
+  .pc-feat.dim { color: rgba(255,255,255,.2); }
+  .pc-feat svg { flex-shrink: 0; }
+  .pc-cta {
+    display: block; width: 100%; padding: 13px;
+    border-radius: 12px; text-align: center; text-decoration: none;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900; font-size: 16px;
+    letter-spacing: 1px; text-transform: uppercase;
+    margin-top: 24px; transition: all .3s; cursor: pointer;
+  }
+  .pc-cta.pc-ghost { background: transparent; color: rgba(255,255,255,.45); border: 1px solid rgba(255,255,255,.1); }
+  .pc-cta.pc-ghost:hover { border-color: rgba(255,255,255,.28); color: #fff; }
+  .pc-cta.pc-primary { background: #FFC300; color: #000; border: 1px solid #FFC300; }
+  .pc-cta.pc-primary:hover { background: #FFD740; box-shadow: 0 10px 32px rgba(255,195,0,.28); transform: translateY(-1px); }
+
+  /* BLOG */
+  .blog-grid-new { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+  .blog-card-new {
+    background: #0c0c0c;
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 20px; overflow: hidden;
+    text-decoration: none; display: block;
+    transition: border-color .4s, transform .4s, box-shadow .4s;
+  }
+  .blog-card-new:hover { border-color: rgba(255,195,0,.28); transform: translateY(-4px); box-shadow: 0 20px 56px rgba(0,0,0,.5); }
+  .blog-card-new img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
+  .blog-card-placeholder { width: 100%; aspect-ratio: 16/9; background: linear-gradient(135deg, #111, #1a1400); }
+  .blog-card-body { padding: 20px 22px; }
+  .blog-card-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .blog-card-tag { font-size: 9px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #FFC300; background: rgba(255,195,0,.07); border: 1px solid rgba(255,195,0,.14); padding: 3px 10px; border-radius: 100px; }
+  .blog-card-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 20px; text-transform: uppercase; color: #fff; line-height: 1.15; margin-bottom: 8px; }
+  .blog-card-summary { font-size: 12px; color: rgba(255,255,255,.32); line-height: 1.65; }
+  .blog-all-link { text-align: center; margin-top: 40px; }
+  .blog-all-link a {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: #FFC300; text-decoration: none; font-size: 13px;
+    font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    padding-bottom: 4px; border-bottom: 1px solid transparent;
+    transition: border-color .3s;
+  }
+  .blog-all-link a:hover { border-color: #FFC300; }
+
+  /* MOBILE */
+  @media (max-width: 768px) {
+    .explore-wrap { padding: 60px 20px; }
+    .etab { padding: 9px 14px; font-size: 12px; }
+    .how-grid { grid-template-columns: 1fr; }
+    .how-vline { display: none; }
+    .how-stats { grid-template-columns: 1fr 1fr; }
+    .feat-grid { grid-template-columns: 1fr 1fr; }
+    .pricing-grid-new { grid-template-columns: 1fr; }
+    .blog-grid-new { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .etab { padding: 8px 10px; font-size: 11px; }
+    .feat-grid { grid-template-columns: 1fr; }
+    .how-stats { grid-template-columns: 1fr; }
+  }
   </style>
 </head>
 <body>
@@ -867,7 +1128,7 @@
     <li><a href="#explore" onclick="switchTab('how')">How it works</a></li>
     <li><a href="#explore" onclick="switchTab('features')">Features</a></li>
     <li><a href="#explore" onclick="switchTab('pricing')">Pricing</a></li>
-    <li><a href="#explore" onclick="switchTab('blog')">Blog</a></li>
+    <li><a href="#explore" onclick="switchTab('blog')">Articles</a></li>
   </ul>
   <div class="nav-ctas">
     <a href="login.html" class="btn-ghost">Log in</a>
@@ -914,288 +1175,201 @@
   </div>
 </div>
 
-<!-- Explore tabs -->
-<section id="explore" style="padding:80px 48px; max-width:1200px; margin:0 auto;">
+<!-- ── EXPLORE ── -->
+<section id="explore" class="explore-wrap">
 
-  <!-- Tabs navigation -->
-  <div style="display:flex; align-items:center; justify-content:center; gap:4px;
-               background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.06);
-               border-radius:100px; padding:4px; margin-bottom:60px; width:fit-content;
-               margin-left:auto; margin-right:auto;">
-    <button onclick="switchTab('how')" id="tab-how"
-            style="padding:10px 28px; border-radius:100px; border:none; cursor:pointer;
-                   font-family:Barlow,sans-serif; font-weight:700; font-size:14px;
-                   background:#FFC300; color:#000; transition:all .3s;">
-      How it works
-    </button>
-    <button onclick="switchTab('features')" id="tab-features"
-            style="padding:10px 28px; border-radius:100px; border:none; cursor:pointer;
-                   font-family:Barlow,sans-serif; font-weight:700; font-size:14px;
-                   background:transparent; color:rgba(255,255,255,.5); transition:all .3s;">
-      Features
-    </button>
-    <button onclick="switchTab('pricing')" id="tab-pricing"
-            style="padding:10px 28px; border-radius:100px; border:none; cursor:pointer;
-                   font-family:Barlow,sans-serif; font-weight:700; font-size:14px;
-                   background:transparent; color:rgba(255,255,255,.5); transition:all .3s;">
-      Pricing
-    </button>
-    <button onclick="switchTab('blog')" id="tab-blog"
-            style="padding:10px 28px; border-radius:100px; border:none; cursor:pointer;
-                   font-family:Barlow,sans-serif; font-weight:700; font-size:14px;
-                   background:transparent; color:rgba(255,255,255,.5); transition:all .3s;">
-      Blog
-    </button>
+  <!-- Tab bar -->
+  <div class="explore-tabbar" id="explore-tabbar">
+    <div class="explore-tab-pill" id="tab-pill"></div>
+    <button class="etab etab-active" data-tab="how" onclick="switchTab('how',this)">How it works</button>
+    <button class="etab" data-tab="features" onclick="switchTab('features',this)">Features</button>
+    <button class="etab" data-tab="pricing" onclick="switchTab('pricing',this)">Pricing</button>
+    <button class="etab" data-tab="blog" onclick="switchTab('blog',this)">Articles</button>
   </div>
 
-  <!-- Tab content -->
-  <div id="tab-content">
+  <!-- Panels -->
+  <div class="explore-panels">
 
     <!-- HOW IT WORKS -->
-    <div id="content-how">
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:40px;">
+    <div class="epanel epanel-active" id="epanel-how">
+      <div class="how-grid">
         <div>
-          <div style="font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase;
-                      color:#FFC300; margin-bottom:20px; display:flex; align-items:center; gap:10px;">
-            <span style="width:24px; height:1px; background:#FFC300; display:block;"></span>
-            For DJs
-          </div>
-          <div style="display:flex; gap:20px; margin-bottom:28px; cursor:default;"
-               onmouseover="this.querySelector('.step-num').style.color='#FFC300'"
-               onmouseout="this.querySelector('.step-num').style.color='rgba(255,195,0,.15)'">
-            <div class="step-num" style="font-family:'Barlow Condensed',sans-serif; font-weight:900;
-                         font-size:42px; color:rgba(255,195,0,.15); line-height:1; flex-shrink:0;
-                         width:52px; transition:color .3s;">01</div>
+          <div class="how-side-tag">For DJs</div>
+          <div class="how-step">
+            <div class="how-step-num">01</div>
             <div>
-              <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:20px;
-                          color:#fff; text-transform:uppercase; margin-bottom:4px;">Create your profile</div>
-              <div style="font-size:13px; color:rgba(255,255,255,.4); line-height:1.6;">Build a verified profile with your mixes and biography.</div>
+              <div class="how-step-title">Create your profile</div>
+              <div class="how-step-desc">Build a verified profile with your mixes, genres and biography. Get certified by our team.</div>
             </div>
           </div>
-          <div style="display:flex; gap:20px; margin-bottom:28px; cursor:default;"
-               onmouseover="this.querySelector('.step-num').style.color='#FFC300'"
-               onmouseout="this.querySelector('.step-num').style.color='rgba(255,195,0,.15)'">
-            <div class="step-num" style="font-family:'Barlow Condensed',sans-serif; font-weight:900;
-                         font-size:42px; color:rgba(255,195,0,.15); line-height:1; flex-shrink:0;
-                         width:52px; transition:color .3s;">02</div>
+          <div class="how-step">
+            <div class="how-step-num">02</div>
             <div>
-              <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:20px;
-                          color:#fff; text-transform:uppercase; margin-bottom:4px;">Receive offers</div>
-              <div style="font-size:13px; color:rgba(255,255,255,.4); line-height:1.6;">Venues discover you and send booking offers directly.</div>
+              <div class="how-step-title">Receive offers</div>
+              <div class="how-step-desc">Venues discover your profile and send booking offers directly through our secure system.</div>
             </div>
           </div>
-          <div style="display:flex; gap:20px; margin-bottom:28px; cursor:default;"
-               onmouseover="this.querySelector('.step-num').style.color='#FFC300'"
-               onmouseout="this.querySelector('.step-num').style.color='rgba(255,195,0,.15)'">
-            <div class="step-num" style="font-family:'Barlow Condensed',sans-serif; font-weight:900;
-                         font-size:42px; color:rgba(255,195,0,.15); line-height:1; flex-shrink:0;
-                         width:52px; transition:color .3s;">03</div>
+          <div class="how-step">
+            <div class="how-step-num">03</div>
             <div>
-              <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:20px;
-                          color:#fff; text-transform:uppercase; margin-bottom:4px;">Get paid securely</div>
-              <div style="font-size:13px; color:rgba(255,255,255,.4); line-height:1.6;">Sign AI contracts, perform, get paid — fully protected.</div>
+              <div class="how-step-title">Get paid securely</div>
+              <div class="how-step-desc">Sign AI-generated contracts, perform, and receive payment — fully protected by CUE.</div>
             </div>
           </div>
         </div>
+        <div class="how-vline"></div>
         <div>
-          <div style="font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase;
-                      color:#FFC300; margin-bottom:20px; display:flex; align-items:center; gap:10px;">
-            <span style="width:24px; height:1px; background:#FFC300; display:block;"></span>
-            For Venues
-          </div>
-          <div style="display:flex; gap:20px; margin-bottom:28px; cursor:default;"
-               onmouseover="this.querySelector('.step-num').style.color='#FFC300'"
-               onmouseout="this.querySelector('.step-num').style.color='rgba(255,195,0,.15)'">
-            <div class="step-num" style="font-family:'Barlow Condensed',sans-serif; font-weight:900;
-                         font-size:42px; color:rgba(255,195,0,.15); line-height:1; flex-shrink:0;
-                         width:52px; transition:color .3s;">01</div>
+          <div class="how-side-tag">For Venues</div>
+          <div class="how-step">
+            <div class="how-step-num">01</div>
             <div>
-              <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:20px;
-                          color:#fff; text-transform:uppercase; margin-bottom:4px;">Browse verified DJs</div>
-              <div style="font-size:13px; color:rgba(255,255,255,.4); line-height:1.6;">Search curated verified DJs by genre, location and rating.</div>
+              <div class="how-step-title">Browse verified DJs</div>
+              <div class="how-step-desc">Search curated verified DJs by genre, location and rating. Save your favorites instantly.</div>
             </div>
           </div>
-          <div style="display:flex; gap:20px; margin-bottom:28px; cursor:default;"
-               onmouseover="this.querySelector('.step-num').style.color='#FFC300'"
-               onmouseout="this.querySelector('.step-num').style.color='rgba(255,195,0,.15)'">
-            <div class="step-num" style="font-family:'Barlow Condensed',sans-serif; font-weight:900;
-                         font-size:42px; color:rgba(255,195,0,.15); line-height:1; flex-shrink:0;
-                         width:52px; transition:color .3s;">02</div>
+          <div class="how-step">
+            <div class="how-step-num">02</div>
             <div>
-              <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:20px;
-                          color:#fff; text-transform:uppercase; margin-bottom:4px;">Book with confidence</div>
-              <div style="font-size:13px; color:rgba(255,255,255,.4); line-height:1.6;">Send offers, negotiate and sign professional contracts.</div>
+              <div class="how-step-title">Book with confidence</div>
+              <div class="how-step-desc">Send offers, negotiate directly, and sign professional contracts — all in one place.</div>
             </div>
           </div>
-          <div style="display:flex; gap:20px; margin-bottom:28px; cursor:default;"
-               onmouseover="this.querySelector('.step-num').style.color='#FFC300'"
-               onmouseout="this.querySelector('.step-num').style.color='rgba(255,195,0,.15)'">
-            <div class="step-num" style="font-family:'Barlow Condensed',sans-serif; font-weight:900;
-                         font-size:42px; color:rgba(255,195,0,.15); line-height:1; flex-shrink:0;
-                         width:52px; transition:color .3s;">03</div>
+          <div class="how-step">
+            <div class="how-step-num">03</div>
             <div>
-              <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:20px;
-                          color:#fff; text-transform:uppercase; margin-bottom:4px;">Pay after the event</div>
-              <div style="font-size:13px; color:rgba(255,255,255,.4); line-height:1.6;">Funds held in escrow until performance is validated.</div>
+              <div class="how-step-title">Pay after the event</div>
+              <div class="how-step-desc">Funds held in escrow until the performance is validated. Your money is always protected.</div>
             </div>
           </div>
+        </div>
+      </div>
+      <!-- Animated stats -->
+      <div class="how-stats">
+        <div class="how-stat">
+          <div class="how-stat-num" data-target="1200" data-suffix="+">0</div>
+          <div class="how-stat-label">DJs registered</div>
+        </div>
+        <div class="how-stat">
+          <div class="how-stat-num" data-target="500" data-suffix="+">0</div>
+          <div class="how-stat-label">Venues partnered</div>
+        </div>
+        <div class="how-stat">
+          <div class="how-stat-num" data-target="98" data-suffix="%">0</div>
+          <div class="how-stat-label">Satisfaction rate</div>
         </div>
       </div>
     </div>
 
     <!-- FEATURES -->
-    <div id="content-features" style="display:none;">
-      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px;">
-        <div style="background:#111; border:1px solid rgba(255,255,255,.06); border-radius:16px;
-                    padding:24px; transition:all .3s; cursor:default;"
-             onmouseover="this.style.borderColor='rgba(255,195,0,.3)';this.style.background='rgba(255,195,0,.03)'"
-             onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.background='#111'">
-          <div style="width:36px; height:36px; border:1px solid rgba(255,195,0,.3); border-radius:10px;
-                      background:rgba(255,195,0,.06); margin-bottom:16px;"></div>
-          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:18px;
-                      color:#fff; text-transform:uppercase; margin-bottom:8px;">Verified Profiles</div>
-          <div style="font-size:13px; color:rgba(255,255,255,.4); line-height:1.6;">Every DJ and venue goes through our verification process.</div>
+    <div class="epanel" id="epanel-features">
+      <div class="feat-grid">
+        <div class="feat-card">
+          <div class="feat-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L3 6.5v4c0 4 3 7 7 8 4-1 7-4 7-8v-4L10 2z" stroke="#FFC300" stroke-width="1.4" stroke-linejoin="round"/><path d="M7 10l2 2 4-4" stroke="#FFC300" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="feat-title">Verified Profiles</div>
+          <div class="feat-desc">Every DJ and venue goes through our strict verification process. No fake profiles, only real professionals.</div>
         </div>
-        <div style="background:#111; border:1px solid rgba(255,255,255,.06); border-radius:16px;
-                    padding:24px; transition:all .3s; cursor:default;"
-             onmouseover="this.style.borderColor='rgba(255,195,0,.3)';this.style.background='rgba(255,195,0,.03)'"
-             onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.background='#111'">
-          <div style="width:36px; height:36px; border:1px solid rgba(255,195,0,.3); border-radius:10px;
-                      background:rgba(255,195,0,.06); margin-bottom:16px;"></div>
-          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:18px;
-                      color:#fff; text-transform:uppercase; margin-bottom:8px;">AI Contracts</div>
-          <div style="font-size:13px; color:rgba(255,255,255,.4); line-height:1.6;">Generate legal contracts in seconds. Both parties sign digitally.</div>
+        <div class="feat-card">
+          <div class="feat-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="14" rx="3" stroke="#FFC300" stroke-width="1.4"/><path d="M7 10h6M10 7v6" stroke="#FFC300" stroke-width="1.4" stroke-linecap="round"/><circle cx="15" cy="5" r="2.5" fill="#FFC300" opacity=".3"/><path d="M14 4.5l.8.8" stroke="#FFC300" stroke-width="1" stroke-linecap="round"/></svg>
+          </div>
+          <div class="feat-title">AI Contracts</div>
+          <div class="feat-desc">Generate professional legal contracts in seconds. Both parties sign digitally — zero paperwork.</div>
         </div>
-        <div style="background:#111; border:1px solid rgba(255,255,255,.06); border-radius:16px;
-                    padding:24px; transition:all .3s; cursor:default;"
-             onmouseover="this.style.borderColor='rgba(255,195,0,.3)';this.style.background='rgba(255,195,0,.03)'"
-             onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.background='#111'">
-          <div style="width:36px; height:36px; border:1px solid rgba(255,195,0,.3); border-radius:10px;
-                      background:rgba(255,195,0,.06); margin-bottom:16px;"></div>
-          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:18px;
-                      color:#fff; text-transform:uppercase; margin-bottom:8px;">Secure Payments</div>
-          <div style="font-size:13px; color:rgba(255,255,255,.4); line-height:1.6;">Funds held in escrow until the performance is validated.</div>
+        <div class="feat-card">
+          <div class="feat-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="7" width="14" height="10" rx="2" stroke="#FFC300" stroke-width="1.4"/><path d="M7 7V5a3 3 0 0 1 6 0v2" stroke="#FFC300" stroke-width="1.4" stroke-linecap="round"/><circle cx="10" cy="12" r="1.5" fill="#FFC300"/></svg>
+          </div>
+          <div class="feat-title">Secure Payments</div>
+          <div class="feat-desc">Funds held in escrow until the performance is completed and validated by the venue.</div>
         </div>
-        <div style="background:#111; border:1px solid rgba(255,255,255,.06); border-radius:16px;
-                    padding:24px; transition:all .3s; cursor:default;"
-             onmouseover="this.style.borderColor='rgba(255,195,0,.3)';this.style.background='rgba(255,195,0,.03)'"
-             onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.background='#111'">
-          <div style="width:36px; height:36px; border:1px solid rgba(255,195,0,.3); border-radius:10px;
-                      background:rgba(255,195,0,.06); margin-bottom:16px;"></div>
-          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:18px;
-                      color:#fff; text-transform:uppercase; margin-bottom:8px;">Direct Messaging</div>
-          <div style="font-size:13px; color:rgba(255,255,255,.4); line-height:1.6;">Negotiate directly through our integrated messaging system.</div>
+        <div class="feat-card">
+          <div class="feat-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M17 13a2 2 0 0 1-2 2H5.5L3 17.5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" stroke="#FFC300" stroke-width="1.4" stroke-linejoin="round"/><path d="M7 8h6M7 11h4" stroke="#FFC300" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </div>
+          <div class="feat-title">Direct Messaging</div>
+          <div class="feat-desc">Negotiate directly with DJs or venues through our real-time integrated messaging system.</div>
         </div>
-        <div style="background:#111; border:1px solid rgba(255,255,255,.06); border-radius:16px;
-                    padding:24px; transition:all .3s; cursor:default;"
-             onmouseover="this.style.borderColor='rgba(255,195,0,.3)';this.style.background='rgba(255,195,0,.03)'"
-             onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.background='#111'">
-          <div style="width:36px; height:36px; border:1px solid rgba(255,195,0,.3); border-radius:10px;
-                      background:rgba(255,195,0,.06); margin-bottom:16px;"></div>
-          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:18px;
-                      color:#fff; text-transform:uppercase; margin-bottom:8px;">Calendar</div>
-          <div style="font-size:13px; color:rgba(255,255,255,.4); line-height:1.6;">Manage bookings with a calendar synced to your confirmed gigs.</div>
+        <div class="feat-card">
+          <div class="feat-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="13" rx="2" stroke="#FFC300" stroke-width="1.4"/><path d="M3 8h14M7 2v4M13 2v4" stroke="#FFC300" stroke-width="1.4" stroke-linecap="round"/><circle cx="10" cy="13" r="1.5" fill="#FFC300"/></svg>
+          </div>
+          <div class="feat-title">Calendar</div>
+          <div class="feat-desc">Manage your availability and bookings with an integrated calendar synced to confirmed gigs.</div>
         </div>
-        <div style="background:#111; border:1px solid rgba(255,255,255,.06); border-radius:16px;
-                    padding:24px; transition:all .3s; cursor:default;"
-             onmouseover="this.style.borderColor='rgba(255,195,0,.3)';this.style.background='rgba(255,195,0,.03)'"
-             onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.background='#111'">
-          <div style="width:36px; height:36px; border:1px solid rgba(255,195,0,.3); border-radius:10px;
-                      background:rgba(255,195,0,.06); margin-bottom:16px;"></div>
-          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:18px;
-                      color:#fff; text-transform:uppercase; margin-bottom:8px;">Reviews</div>
-          <div style="font-size:13px; color:rgba(255,255,255,.4); line-height:1.6;">Build your reputation through verified reviews from real events.</div>
+        <div class="feat-card">
+          <div class="feat-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2l2.2 4.8 5.3.7-3.8 3.7.9 5.2L10 13.8l-4.6 2.6.9-5.2L2.5 7.5l5.3-.7L10 2z" stroke="#FFC300" stroke-width="1.4" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="feat-title">Reviews</div>
+          <div class="feat-desc">Build your reputation through verified reviews from real events. Stand out with a proven record.</div>
         </div>
       </div>
     </div>
 
     <!-- PRICING -->
-    <div id="content-pricing" style="display:none;">
-      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px;">
-        <div style="background:#111; border:1px solid rgba(255,255,255,.06); border-radius:20px;
-                    padding:28px; transition:all .3s;"
-             onmouseover="this.style.transform='translateY(-4px)'"
-             onmouseout="this.style.transform='translateY(0)'">
-          <div style="font-size:11px; letter-spacing:3px; text-transform:uppercase;
-                      color:rgba(255,255,255,.4); margin-bottom:12px;">Starter</div>
-          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:48px;
-                      color:#fff; line-height:1;">Free</div>
-          <div style="font-size:12px; color:#FFC300; font-weight:600; margin:8px 0 20px;">15% commission</div>
-          <div style="height:1px; background:rgba(255,255,255,.06); margin-bottom:16px;"></div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.7);"><span style="color:#00c864; flex-shrink:0;">+</span>Public profile</div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.7);"><span style="color:#00c864; flex-shrink:0;">+</span>Venue messaging</div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.7);"><span style="color:#00c864; flex-shrink:0;">+</span>Presentation mix</div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.7);"><span style="color:#00c864; flex-shrink:0;">+</span>Up to 3 tracks</div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.25);"><span style="flex-shrink:0;">-</span>Unlimited tracks</div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.25);"><span style="flex-shrink:0;">-</span>Search priority</div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.25);"><span style="flex-shrink:0;">-</span>Press kit</div>
-          <a href="/inscription.html" style="display:block; width:100%; padding:12px; border-radius:10px;
-             text-align:center; text-decoration:none; font-weight:700; font-size:13px; margin-top:20px;
-             background:transparent; color:rgba(255,255,255,.6);
-             border:1px solid rgba(255,255,255,.15); transition:all .3s;"
-             onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">Get started</a>
+    <div class="epanel" id="epanel-pricing">
+      <div class="pricing-grid-new">
+        <!-- Starter -->
+        <div class="pc">
+          <div class="pc-name">Starter</div>
+          <div class="pc-price">Free</div>
+          <div class="pc-commission">15% commission per booking</div>
+          <div class="pc-note">&nbsp;</div>
+          <div class="pc-divider"></div>
+          <div class="pc-feat"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(0,200,100,.12)"/><path d="M4.5 7l2 2 3-3" stroke="#00c864" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Public profile</div>
+          <div class="pc-feat"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(0,200,100,.12)"/><path d="M4.5 7l2 2 3-3" stroke="#00c864" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Venue messaging</div>
+          <div class="pc-feat"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(0,200,100,.12)"/><path d="M4.5 7l2 2 3-3" stroke="#00c864" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Presentation mix</div>
+          <div class="pc-feat"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(0,200,100,.12)"/><path d="M4.5 7l2 2 3-3" stroke="#00c864" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Up to 3 tracks</div>
+          <div class="pc-feat dim"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(255,255,255,.05)"/><path d="M5 5l4 4M9 5l-4 4" stroke="rgba(255,255,255,.2)" stroke-width="1.4" stroke-linecap="round"/></svg>Unlimited tracks</div>
+          <div class="pc-feat dim"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(255,255,255,.05)"/><path d="M5 5l4 4M9 5l-4 4" stroke="rgba(255,255,255,.2)" stroke-width="1.4" stroke-linecap="round"/></svg>Search priority</div>
+          <div class="pc-feat dim"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(255,255,255,.05)"/><path d="M5 5l4 4M9 5l-4 4" stroke="rgba(255,255,255,.2)" stroke-width="1.4" stroke-linecap="round"/></svg>Press kit</div>
+          <a href="/inscription.html" class="pc-cta pc-ghost">Get started free</a>
         </div>
-        <div style="background:linear-gradient(135deg,#111,#1a1500); border:1px solid rgba(255,195,0,.4);
-                    border-radius:20px; padding:28px; position:relative; transition:all .3s;"
-             onmouseover="this.style.transform='translateY(-4px)'"
-             onmouseout="this.style.transform='translateY(0)'">
-          <div style="position:absolute; top:16px; right:16px; background:#FFC300; color:#000;
-                      font-size:9px; font-weight:700; padding:3px 10px; border-radius:100px;
-                      letter-spacing:1px;">POPULAR</div>
-          <div style="font-size:11px; letter-spacing:3px; text-transform:uppercase;
-                      color:rgba(255,255,255,.4); margin-bottom:12px;">Pro</div>
-          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:48px;
-                      color:#fff; line-height:1;">24€/mo</div>
-          <div style="font-size:12px; color:#FFC300; font-weight:600; margin:8px 0 20px;">5% commission</div>
-          <div style="height:1px; background:rgba(255,255,255,.06); margin-bottom:16px;"></div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.7);"><span style="color:#00c864; flex-shrink:0;">+</span>Public profile</div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.7);"><span style="color:#00c864; flex-shrink:0;">+</span>Venue messaging</div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.7);"><span style="color:#00c864; flex-shrink:0;">+</span>Presentation mix</div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.7);"><span style="color:#00c864; flex-shrink:0;">+</span>Unlimited tracks</div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.7);"><span style="color:#00c864; flex-shrink:0;">+</span>Search priority</div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.25);"><span style="flex-shrink:0;">-</span>Press kit</div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.25);"><span style="flex-shrink:0;">-</span>Featured first</div>
-          <a href="/inscription.html" style="display:block; width:100%; padding:12px; border-radius:10px;
-             text-align:center; text-decoration:none; font-weight:700; font-size:13px; margin-top:20px;
-             background:#FFC300; color:#000; border:1px solid #FFC300; transition:all .3s;"
-             onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">Get started</a>
+        <!-- Pro -->
+        <div class="pc pc-featured">
+          <div class="pc-badge">Most popular</div>
+          <div class="pc-name">Pro</div>
+          <div class="pc-price">24<span>€/mo</span></div>
+          <div class="pc-commission">5% commission per booking</div>
+          <div class="pc-note">&nbsp;</div>
+          <div class="pc-divider"></div>
+          <div class="pc-feat"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(0,200,100,.12)"/><path d="M4.5 7l2 2 3-3" stroke="#00c864" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Public profile</div>
+          <div class="pc-feat"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(0,200,100,.12)"/><path d="M4.5 7l2 2 3-3" stroke="#00c864" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Venue messaging</div>
+          <div class="pc-feat"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(0,200,100,.12)"/><path d="M4.5 7l2 2 3-3" stroke="#00c864" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Presentation mix</div>
+          <div class="pc-feat"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(0,200,100,.12)"/><path d="M4.5 7l2 2 3-3" stroke="#00c864" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Unlimited tracks</div>
+          <div class="pc-feat"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(0,200,100,.12)"/><path d="M4.5 7l2 2 3-3" stroke="#00c864" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Search priority</div>
+          <div class="pc-feat dim"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(255,255,255,.05)"/><path d="M5 5l4 4M9 5l-4 4" stroke="rgba(255,255,255,.2)" stroke-width="1.4" stroke-linecap="round"/></svg>Press kit</div>
+          <div class="pc-feat dim"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(255,255,255,.05)"/><path d="M5 5l4 4M9 5l-4 4" stroke="rgba(255,255,255,.2)" stroke-width="1.4" stroke-linecap="round"/></svg>Featured first</div>
+          <a href="/inscription.html" class="pc-cta pc-primary">Start with Pro</a>
         </div>
-        <div style="background:#111; border:1px solid rgba(255,255,255,.06); border-radius:20px;
-                    padding:28px; transition:all .3s;"
-             onmouseover="this.style.transform='translateY(-4px)'"
-             onmouseout="this.style.transform='translateY(0)'">
-          <div style="font-size:11px; letter-spacing:3px; text-transform:uppercase;
-                      color:rgba(255,255,255,.4); margin-bottom:12px;">Business</div>
-          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:48px;
-                      color:#fff; line-height:1;">79€/mo</div>
-          <div style="font-size:12px; color:#FFC300; font-weight:600; margin:8px 0 4px;">0% commission</div>
-          <div style="font-size:10px; color:rgba(255,255,255,.3); margin-bottom:16px; line-height:1.5;">3-month minimum commitment</div>
-          <div style="height:1px; background:rgba(255,255,255,.06); margin-bottom:16px;"></div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.7);"><span style="color:#00c864; flex-shrink:0;">+</span>Public profile</div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.7);"><span style="color:#00c864; flex-shrink:0;">+</span>Venue messaging</div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.7);"><span style="color:#00c864; flex-shrink:0;">+</span>Presentation mix</div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.7);"><span style="color:#00c864; flex-shrink:0;">+</span>Unlimited tracks</div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.7);"><span style="color:#00c864; flex-shrink:0;">+</span>Search priority</div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.7);"><span style="color:#00c864; flex-shrink:0;">+</span>Press kit</div>
-          <div style="display:flex; gap:8px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.7);"><span style="color:#00c864; flex-shrink:0;">+</span>Featured first</div>
-          <a href="/inscription.html" style="display:block; width:100%; padding:12px; border-radius:10px;
-             text-align:center; text-decoration:none; font-weight:700; font-size:13px; margin-top:20px;
-             background:transparent; color:rgba(255,255,255,.6);
-             border:1px solid rgba(255,255,255,.15); transition:all .3s;"
-             onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">Get started</a>
+        <!-- Business -->
+        <div class="pc">
+          <div class="pc-name">Business</div>
+          <div class="pc-price">79<span>€/mo</span></div>
+          <div class="pc-commission">0% commission per booking</div>
+          <div class="pc-note">3-month minimum commitment</div>
+          <div class="pc-divider"></div>
+          <div class="pc-feat"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(0,200,100,.12)"/><path d="M4.5 7l2 2 3-3" stroke="#00c864" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Public profile</div>
+          <div class="pc-feat"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(0,200,100,.12)"/><path d="M4.5 7l2 2 3-3" stroke="#00c864" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Venue messaging</div>
+          <div class="pc-feat"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(0,200,100,.12)"/><path d="M4.5 7l2 2 3-3" stroke="#00c864" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Presentation mix</div>
+          <div class="pc-feat"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(0,200,100,.12)"/><path d="M4.5 7l2 2 3-3" stroke="#00c864" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Unlimited tracks</div>
+          <div class="pc-feat"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(0,200,100,.12)"/><path d="M4.5 7l2 2 3-3" stroke="#00c864" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Search priority</div>
+          <div class="pc-feat"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(0,200,100,.12)"/><path d="M4.5 7l2 2 3-3" stroke="#00c864" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Press kit</div>
+          <div class="pc-feat"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(0,200,100,.12)"/><path d="M4.5 7l2 2 3-3" stroke="#00c864" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Featured first</div>
+          <a href="/inscription.html" class="pc-cta pc-ghost">Go Business</a>
         </div>
       </div>
     </div>
 
     <!-- BLOG -->
-    <div id="content-blog" style="display:none;">
-      <div id="blog-grid-tab" style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px;">
-        <div style="grid-column:1/-1; text-align:center; color:rgba(255,255,255,.3); padding:40px;">Loading...</div>
+    <div class="epanel" id="epanel-blog">
+      <div class="blog-grid-new" id="blog-grid-tab">
+        <div style="grid-column:1/-1; text-align:center; color:rgba(255,255,255,.25); padding:60px 0; font-size:14px; letter-spacing:1px;">Loading...</div>
       </div>
-      <div style="text-align:center; margin-top:32px;">
-        <a href="/blog.html" style="color:#FFC300; text-decoration:none; font-size:14px; font-weight:700;">
-          View all articles →
-        </a>
+      <div class="blog-all-link">
+        <a href="/blog.html">View all articles →</a>
       </div>
     </div>
 
@@ -1314,23 +1488,66 @@ async function checkAuth() {
 }
 checkAuth()
 
+// ── EXPLORE TABS ──
 let blogTabLoaded = false
+let statsAnimated = false
 
-function switchTab(tab) {
-  ;['how','features','pricing','blog'].forEach(t => {
-    const btn = document.getElementById(`tab-${t}`)
-    const content = document.getElementById(`content-${t}`)
-    if (btn) { btn.style.background = 'transparent'; btn.style.color = 'rgba(255,255,255,.5)' }
-    if (content) content.style.display = 'none'
-  })
-  const activeBtn = document.getElementById(`tab-${tab}`)
-  const activeContent = document.getElementById(`content-${tab}`)
-  if (activeBtn) { activeBtn.style.background = '#FFC300'; activeBtn.style.color = '#000' }
-  if (activeContent) { activeContent.style.display = 'block' }
+function switchTab(tab, btn) {
+  document.querySelectorAll('.etab').forEach(b => b.classList.remove('etab-active'))
+  document.querySelectorAll('.epanel').forEach(p => p.classList.remove('epanel-active'))
+  if (btn) {
+    btn.classList.add('etab-active')
+    movePill(btn)
+  }
+  const panel = document.getElementById(`epanel-${tab}`)
+  if (panel) panel.classList.add('epanel-active')
+  if (tab === 'how' && !statsAnimated) { statsAnimated = true; animateStats() }
   if (tab === 'blog' && !blogTabLoaded) { blogTabLoaded = true; loadBlogTab() }
 }
 
+function movePill(btn) {
+  const pill = document.getElementById('tab-pill')
+  const bar = document.getElementById('explore-tabbar')
+  if (!pill || !bar) return
+  const firstBtn = bar.querySelector('.etab')
+  if (!firstBtn) return
+  const firstRect = firstBtn.getBoundingClientRect()
+  const btnRect = btn.getBoundingClientRect()
+  pill.style.transform = `translateX(${btnRect.left - firstRect.left}px)`
+  pill.style.width = btnRect.width + 'px'
+}
+
+function animateStats() {
+  document.querySelectorAll('.how-stat-num').forEach(el => {
+    const target = +el.dataset.target
+    const suffix = el.dataset.suffix || ''
+    const dur = 1600
+    let start = null
+    const tick = ts => {
+      if (!start) start = ts
+      const p = Math.min((ts - start) / dur, 1)
+      const ease = 1 - Math.pow(1 - p, 4)
+      el.textContent = Math.floor(ease * target) + suffix
+      if (p < 1) requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  })
+}
+
+window.addEventListener('load', () => {
+  const active = document.querySelector('.etab.etab-active')
+  if (active) movePill(active)
+  setTimeout(animateStats, 800)
+  statsAnimated = true
+})
+window.addEventListener('resize', () => {
+  const active = document.querySelector('.etab.etab-active')
+  if (active) movePill(active)
+})
+
 async function loadBlogTab() {
+  const grid = document.getElementById('blog-grid-tab')
+  if (!grid) return
   try {
     const res = await fetch('/api/blog', {
       method: 'POST',
@@ -1339,30 +1556,26 @@ async function loadBlogTab() {
     })
     const data = await res.json()
     const articles = (data.articles || []).slice(0, 3)
-    const grid = document.getElementById('blog-grid-tab')
-    if (!grid) return
     if (!articles.length) {
-      grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:rgba(255,255,255,.3); padding:40px;">No articles yet.</div>'
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:rgba(255,255,255,.25);padding:60px 0;">No articles yet.</div>'
       return
     }
     grid.innerHTML = articles.map(a => `
-      <a href="/article.html?slug=${a.slug}"
-         style="background:#111; border:1px solid rgba(255,255,255,.06); border-radius:16px;
-                overflow:hidden; text-decoration:none; display:block; transition:all .3s;"
-         onmouseover="this.style.borderColor='rgba(255,195,0,.3)';this.style.transform='translateY(-3px)'"
-         onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.transform='translateY(0)'">
+      <a href="/article.html?slug=${encodeURIComponent(a.slug)}" class="blog-card-new">
         ${a.cover
-          ? `<img src="${a.cover}" alt="${a.title}" style="width:100%; aspect-ratio:16/9; object-fit:cover;">`
-          : `<div style="width:100%; aspect-ratio:16/9; background:linear-gradient(135deg,#111,#1a1500);"></div>`
+          ? `<img src="${a.cover}" alt="${a.title}">`
+          : `<div class="blog-card-placeholder"></div>`
         }
-        <div style="padding:16px;">
-          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:18px;
-                      color:#fff; text-transform:uppercase; line-height:1.2; margin-bottom:6px;">${a.title}</div>
-          ${a.summary ? `<div style="font-size:12px; color:rgba(255,255,255,.4); line-height:1.5;">${a.summary}</div>` : ''}
+        <div class="blog-card-body">
+          ${a.tags.length ? `<div class="blog-card-tags">${a.tags.map(t=>`<span class="blog-card-tag">${t}</span>`).join('')}</div>` : ''}
+          <div class="blog-card-title">${a.title}</div>
+          ${a.summary ? `<div class="blog-card-summary">${a.summary}</div>` : ''}
         </div>
       </a>
     `).join('')
-  } catch(e) {}
+  } catch(e) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:rgba(255,255,255,.25);padding:60px 0;">Could not load articles.</div>'
+  }
 }
 
 // ── THREE.JS GLB LOADER ──
@@ -1385,8 +1598,8 @@ function initScene() {
   camera.lookAt(0, 0, 0)
 
   if (isMobile) {
-    camera.fov = 75
-    camera.position.set(0, 1.5, 3)
+    camera.fov = 55
+    camera.position.set(0, 2.5, 8)
     camera.lookAt(0, 0, 0)
     camera.updateProjectionMatrix()
   }
@@ -1457,9 +1670,9 @@ function initScene() {
       })
 
       if (isMobile) {
-        model.scale.setScalar(scale * 2.5)
-        model.position.y = -0.3
-        model.rotation.x = -0.3
+        model.scale.setScalar(scale * 1.2)
+        model.position.y = -0.5
+        model.rotation.x = -0.15
       }
 
       scene.add(model)
