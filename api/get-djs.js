@@ -27,7 +27,9 @@ module.exports = async function handler(req, res) {
 
     if (genre) djs = djs.filter(dj => dj.genres?.includes(genre));
     if (minRating) djs = djs.filter(dj => parseFloat(dj.avg_rating) >= parseFloat(minRating));
-    if (verifiedOnly) djs = djs.filter(dj => dj.identity_status === 'verified');
+    if (verifiedOnly === true || verifiedOnly === 'true') {
+      djs = djs.filter(dj => dj.identity_status === 'verified');
+    }
     if (search) {
       const q = search.toLowerCase();
       djs = djs.filter(dj =>
@@ -37,9 +39,18 @@ module.exports = async function handler(req, res) {
       );
     }
 
+    // Tri : Business en premier, puis Pro, puis Starter, puis par rating
     if (sort === 'reviews') djs.sort((a, b) => b.review_count - a.review_count);
     else if (sort === 'bookings') djs.sort((a, b) => b.booking_count - a.booking_count);
     else if (sort === 'newest') djs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    else {
+      const planOrder = { business: 0, pro: 1, starter: 2 };
+      djs.sort((a, b) => {
+        const planDiff = (planOrder[a.plan] ?? 2) - (planOrder[b.plan] ?? 2);
+        if (planDiff !== 0) return planDiff;
+        return (b.avg_rating || 0) - (a.avg_rating || 0);
+      });
+    }
 
     return res.status(200).json({ djs });
   } catch (err) {
