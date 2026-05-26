@@ -803,22 +803,31 @@
 
       section { padding: 60px 20px !important; }
 
-      .hero { min-height: 100vh !important; padding-top: 80px !important; flex-direction: column !important; }
-      #hero-canvas {
-        position: absolute !important;
-        inset: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        opacity: 0.6 !important;
+      .hero {
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+        padding-top: 70px !important;
+        padding-bottom: 40px !important;
+        min-height: 100vh !important;
       }
-      .hero > div[style*="z-index:1"] {
+      #hero-canvas {
+        position: relative !important;
+        width: 100% !important;
+        height: 300px !important;
+        opacity: 1 !important;
+        display: block !important;
+        flex-shrink: 0 !important;
+      }
+      .hero > div[style*="z-index:1"],
+      .hero-content {
         position: relative !important;
         z-index: 1 !important;
+        margin-top: 20px !important;
         padding: 0 20px !important;
-        background: none !important;
-        backdrop-filter: none !important;
+        text-align: center !important;
       }
-      .hero-title { font-size: clamp(52px, 14vw, 80px) !important; }
+      .hero-title { font-size: 52px !important; }
+      .hero-bg, .hero-grid { display: none !important; }
       .hero-sub { font-size: 15px; }
       .hero-ctas { flex-direction: column !important; width: 100% !important; }
       .btn-hero-primary, .btn-hero-secondary { width: 100% !important; text-align: center !important; }
@@ -1226,10 +1235,10 @@ function initScene() {
   camera.position.set(0, 2, 5)
   camera.lookAt(0, 0, 0)
 
-  // Caméra adaptée mobile
   if (isMobile) {
-    camera.fov = 70
-    camera.position.set(0, 1.8, 6)
+    camera.fov = 60
+    camera.position.set(0, 2.5, 5)
+    camera.lookAt(0, 0, 0)
     camera.updateProjectionMatrix()
   }
 
@@ -1299,9 +1308,9 @@ function initScene() {
       })
 
       if (isMobile) {
-        const mobileScale = scale * 0.7
-        model.scale.setScalar(mobileScale)
-        model.position.y = -0.5
+        model.scale.setScalar(scale * 0.8)
+        model.position.y = 0
+        model.rotation.x = -0.2
       }
 
       scene.add(model)
