@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title">Article — CUE DJ Platform</title>
+  <meta name="description" id="page-desc" content="">
+  <link rel="icon" href="/logo-icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Barlow:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#080808; color:#ddd; font-family:Barlow,sans-serif; min-height:100vh; }
+
+    nav {
+      padding: 20px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      position: sticky;
+      top: 0;
+      background: rgba(8,8,8,.95);
+      backdrop-filter: blur(10px);
+      z-index: 100;
+    }
+    nav img { height: 44px; object-fit: contain; }
+    .back-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: rgba(255,255,255,.5);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: color .2s;
+    }
+    .back-link:hover { color: #fff; }
+    .btn-yellow {
+      display: inline-block;
+      padding: 8px 20px;
+      background: #FFC300;
+      border-radius: 100px;
+      color: #000;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      transition: all .3s;
+    }
+    .btn-yellow:hover { background: #FFD740; transform: translateY(-1px); }
+
+    .article-hero {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 60px 48px 40px;
+    }
+    .article-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .article-tag {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #FFC300;
+      background: rgba(255,195,0,.1);
+      border: 1px solid rgba(255,195,0,.2);
+      padding: 4px 12px;
+      border-radius: 100px;
+    }
+    .article-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: clamp(36px, 6vw, 64px);
+      line-height: .95;
+      text-transform: uppercase;
+      letter-spacing: -1px;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+    .article-meta {
+      font-size: 13px;
+      color: rgba(255,255,255,.3);
+      margin-bottom: 40px;
+    }
+
+    .article-cover {
+      width: calc(100% - 96px);
+      max-width: 900px;
+      margin: 0 auto 60px;
+      display: block;
+      border-radius: 16px;
+    }
+
+    .article-content {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 48px 80px;
+      font-size: 17px;
+      line-height: 1.8;
+      color: rgba(255,255,255,.75);
+    }
+    .article-content h1, .article-content h2, .article-content h3 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: #fff;
+      margin: 40px 0 16px;
+      line-height: 1;
+    }
+    .article-content h1 { font-size: 40px; }
+    .article-content h2 { font-size: 32px; }
+    .article-content h3 { font-size: 24px; color: #FFC300; }
+    .article-content p { margin-bottom: 20px; }
+    .article-content strong { color: #fff; font-weight: 700; }
+    .article-content a { color: #FFC300; }
+    .article-content ul, .article-content ol { margin: 0 0 20px 24px; }
+    .article-content li { margin-bottom: 8px; }
+    .article-content blockquote {
+      border-left: 3px solid #FFC300;
+      padding: 16px 24px;
+      margin: 24px 0;
+      background: rgba(255,195,0,.04);
+      border-radius: 0 12px 12px 0;
+      font-style: italic;
+      color: rgba(255,255,255,.6);
+    }
+    .article-content code {
+      background: rgba(255,255,255,.08);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 14px;
+    }
+    .article-content pre {
+      background: #111;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      padding: 20px;
+      overflow-x: auto;
+      margin-bottom: 24px;
+    }
+    .article-content hr {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,.08);
+      margin: 40px 0;
+    }
+    .article-content figure { margin: 32px 0; }
+    .article-content figure img { width: 100%; border-radius: 12px; display: block; }
+    .article-content figcaption {
+      text-align: center;
+      font-size: 13px;
+      color: rgba(255,255,255,.3);
+      margin-top: 10px;
+    }
+    .article-content .video-embed {
+      position: relative;
+      padding-bottom: 56.25%;
+      margin: 32px 0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .article-content .video-embed iframe {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0; left: 0;
+    }
+    .article-content .callout {
+      display: flex;
+      gap: 12px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin: 24px 0;
+    }
+
+    .article-cta {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 48px 80px;
+    }
+    .article-cta-card {
+      background: linear-gradient(135deg, #111 0%, #1a1500 100%);
+      border: 1px solid rgba(255,195,0,.2);
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+    }
+    .article-cta-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 32px;
+      color: #fff;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .article-cta-sub {
+      color: rgba(255,255,255,.5);
+      font-size: 15px;
+      margin-bottom: 24px;
+    }
+    .btn-cta {
+      display: inline-block;
+      padding: 14px 36px;
+      background: #FFC300;
+      border-radius: 100px;
+      color: #000;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 700;
+      transition: all .3s;
+    }
+    .btn-cta:hover { background: #FFD740; transform: translateY(-1px); }
+
+    .loading {
+      text-align: center;
+      padding: 120px 48px;
+      color: rgba(255,255,255,.3);
+      font-size: 18px;
+    }
+
+    @media (max-width: 768px) {
+      nav { padding: 14px 20px; }
+      .article-hero { padding: 40px 20px 32px; }
+      .article-cover { width: calc(100% - 40px); }
+      .article-content { padding: 0 20px 60px; font-size: 16px; }
+      .article-cta { padding: 0 20px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/"><img src="/logo.png" alt="CUE"></a>
+  <a href="/blog.html" class="back-link">← Blog</a>
+  <a href="/inscription.html" class="btn-yellow">Get started</a>
+</nav>
+
+<div id="content">
+  <div class="loading">Chargement de l'article...</div>
+</div>
+
+<script>
+async function loadArticle() {
+  const params = new URLSearchParams(window.location.search)
+  const slug = params.get('slug')
+
+  if (!slug) {
+    window.location.href = '/blog.html'
+    return
+  }
+
+  try {
+    const res = await fetch('/api/blog', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_article', slug })
+    })
+    const data = await res.json()
+    const a = data.article
+
+    if (!a) {
+      document.getElementById('content').innerHTML =
+        '<div class="loading">Article introuvable.</div>'
+      return
+    }
+
+    document.getElementById('page-title').textContent = `${a.title} — CUE DJ Platform`
+    document.getElementById('page-desc').content = a.summary
+
+    document.getElementById('content').innerHTML = `
+      <div class="article-hero">
+        ${a.tags.length ? `
+          <div class="article-tags">
+            ${a.tags.map(t => `<span class="article-tag">${t}</span>`).join('')}
+          </div>` : ''}
+        <h1 class="article-title">${a.title}</h1>
+        <div class="article-meta">
+          ${a.date ? new Date(a.date).toLocaleDateString('fr-FR', {
+            day:'2-digit', month:'long', year:'numeric'
+          }) : ''}
+        </div>
+      </div>
+
+      ${a.cover ? `<img src="${a.cover}" alt="${a.title}" class="article-cover">` : ''}
+
+      <div class="article-content">${a.content}</div>
+
+      <div class="article-cta">
+        <div class="article-cta-card">
+          <div class="article-cta-title">Ready to get started?</div>
+          <p class="article-cta-sub">Join CUE and connect with the best DJs and venues.</p>
+          <a href="/inscription.html" class="btn-cta">Create my account</a>
+        </div>
+      </div>
+    `
+  } catch(err) {
+    document.getElementById('content').innerHTML =
+      '<div class="loading">Erreur de chargement.</div>'
+  }
+}
+loadArticle()
+</script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog — CUE DJ Platform</title>
+  <meta name="description" content="Conseils, actualités et guides pour DJs et venues professionnels.">
+  <link rel="icon" href="/logo-icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Barlow:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#080808; color:#ddd; font-family:Barlow,sans-serif; min-height:100vh; }
+
+    nav {
+      padding: 20px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    nav img { height: 48px; object-fit: contain; }
+    .nav-links { display: flex; gap: 24px; }
+    .nav-links a {
+      color: rgba(255,255,255,.6);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: #fff; }
+    .btn-yellow {
+      padding: 10px 24px;
+      background: #FFC300;
+      border-radius: 100px;
+      color: #000;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .hero {
+      padding: 80px 48px 60px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #FFC300;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-label::before {
+      content: '';
+      width: 32px;
+      height: 1px;
+      background: #FFC300;
+    }
+    h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: clamp(48px, 7vw, 80px);
+      line-height: .95;
+      text-transform: uppercase;
+      letter-spacing: -1px;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+    .hero-sub {
+      color: rgba(255,255,255,.45);
+      font-size: 17px;
+      max-width: 500px;
+      line-height: 1.7;
+    }
+
+    .articles-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 48px 80px;
+    }
+    .article-card {
+      background: #111;
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 20px;
+      overflow: hidden;
+      text-decoration: none;
+      transition: all .3s ease;
+      display: block;
+    }
+    .article-card:hover {
+      border-color: rgba(255,195,0,.3);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(0,0,0,.4);
+    }
+    .article-cover {
+      width: 100%;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      background: #1a1a1a;
+      display: block;
+    }
+    .article-cover-placeholder {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: linear-gradient(135deg, #111 0%, #1a1500 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .article-body { padding: 24px; }
+    .article-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .article-tag {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #FFC300;
+      background: rgba(255,195,0,.1);
+      border: 1px solid rgba(255,195,0,.2);
+      padding: 3px 10px;
+      border-radius: 100px;
+    }
+    .article-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 22px;
+      color: #fff;
+      line-height: 1.2;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+    .article-summary {
+      font-size: 14px;
+      color: rgba(255,255,255,.45);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    .article-meta { font-size: 12px; color: rgba(255,255,255,.3); }
+    .loading { text-align: center; padding: 80px; color: rgba(255,255,255,.3); grid-column: 1/-1; }
+    .empty { text-align: center; padding: 80px; grid-column: 1/-1; color: rgba(255,255,255,.3); }
+
+    @media (max-width: 768px) {
+      nav { padding: 16px 20px; }
+      .hero { padding: 60px 20px 40px; }
+      .articles-grid { grid-template-columns: 1fr; padding: 0 20px 60px; gap: 16px; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/"><img src="/logo.png" alt="CUE"></a>
+  <div class="nav-links">
+    <a href="/#how-it-works">How it works</a>
+    <a href="/#pricing">Pricing</a>
+    <a href="/blog.html" style="color:#FFC300;">Blog</a>
+  </div>
+  <a href="/inscription.html" class="btn-yellow">Get started</a>
+</nav>
+
+<div class="hero">
+  <div class="section-label">Blog</div>
+  <h1>NEWS &<br>INSIGHTS.</h1>
+  <p class="hero-sub">Conseils, actualités et guides pour DJs et venues professionnels.</p>
+</div>
+
+<div class="articles-grid" id="articles-grid">
+  <div class="loading">Chargement des articles...</div>
+</div>
+
+<script>
+async function loadArticles() {
+  try {
+    const res = await fetch('/api/blog', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_articles' })
+    })
+    const data = await res.json()
+    const articles = data.articles || []
+    const grid = document.getElementById('articles-grid')
+
+    if (!articles.length) {
+      grid.innerHTML = '<div class="empty">Aucun article publié pour le moment.</div>'
+      return
+    }
+
+    grid.innerHTML = articles.map(a => `
+      <a href="/article.html?slug=${a.slug}" class="article-card">
+        ${a.cover
+          ? `<img src="${a.cover}" alt="${a.title}" class="article-cover" loading="lazy">`
+          : `<div class="article-cover-placeholder">
+              <img src="/logo.png" alt="CUE" style="height:48px; opacity:.3; object-fit:contain;">
+            </div>`
+        }
+        <div class="article-body">
+          ${a.tags.length ? `
+            <div class="article-tags">
+              ${a.tags.map(t => `<span class="article-tag">${t}</span>`).join('')}
+            </div>` : ''}
+          <div class="article-title">${a.title}</div>
+          ${a.summary ? `<div class="article-summary">${a.summary}</div>` : ''}
+          <div class="article-meta">
+            ${a.date ? new Date(a.date).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' }) : ''}
+          </div>
+        </div>
+      </a>
+    `).join('')
+  } catch(err) {
+    document.getElementById('articles-grid').innerHTML =
+      '<div class="empty">Erreur de chargement. Réessaie.</div>'
+  }
+}
+loadArticles()
+</script>
+</body>
+</html>
