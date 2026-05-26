@@ -805,13 +805,11 @@
 
       .hero { min-height: 100vh !important; padding-top: 80px !important; flex-direction: column !important; }
       #hero-canvas {
-        opacity: 1 !important;
-        height: 50vh !important;
-        position: relative !important;
-        z-index: 0 !important;
-        transform: none !important;
+        position: absolute !important;
+        inset: 0 !important;
         width: 100% !important;
-        min-height: 260px !important;
+        height: 100% !important;
+        opacity: 0.6 !important;
       }
       .hero > div[style*="z-index:1"] {
         position: relative !important;
@@ -1228,10 +1226,10 @@ function initScene() {
   camera.position.set(0, 2, 5)
   camera.lookAt(0, 0, 0)
 
-  // Camera plus proche sur mobile
+  // Caméra adaptée mobile
   if (isMobile) {
-    camera.position.set(0, 1.5, 3.5)
-    camera.fov = 55
+    camera.fov = 70
+    camera.position.set(0, 1.8, 6)
     camera.updateProjectionMatrix()
   }
 
@@ -1301,8 +1299,9 @@ function initScene() {
       })
 
       if (isMobile) {
-        model.scale.setScalar(scale * 1.4)
-        model.position.y -= 0.2
+        const mobileScale = scale * 0.7
+        model.scale.setScalar(mobileScale)
+        model.position.y = -0.5
       }
 
       scene.add(model)
