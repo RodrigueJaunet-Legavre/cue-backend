@@ -1657,21 +1657,35 @@
     </div>
     <div style="max-width:680px;">
 
-      <!-- Informations personnelles -->
-      <div class="card" style="margin-bottom:20px;">
-        <div class="card-header"><span class="card-title">Informations personnelles</span></div>
+      <!-- Organisation -->
+      <div id="profile-org-section" class="card" style="margin-bottom:20px; display:none;">
+        <div class="card-header"><span class="card-title">Identité</span></div>
         <div class="card-body">
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div class="form-group">
+            <label class="form-label">Nom de l'organisation</label>
+            <input type="text" id="profile-orgname" class="form-input" placeholder="SAS Club XYZ, Association...">
+          </div>
+          <button onclick="saveVenuePersonalInfo()" class="btn btn-primary" style="width:fit-content; padding:12px 24px; margin-top:8px;">
+            Sauvegarder
+          </button>
+        </div>
+      </div>
+
+      <!-- Particulier -->
+      <div id="profile-particulier-section" class="card" style="margin-bottom:20px; display:none;">
+        <div class="card-header"><span class="card-title">Identité</span></div>
+        <div class="card-body">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
             <div class="form-group">
               <label class="form-label">Prénom</label>
-              <input type="text" id="profile-firstname" class="form-input" placeholder="Votre prénom">
+              <input type="text" id="venue-profile-firstname" class="form-input" placeholder="Jean">
             </div>
             <div class="form-group">
               <label class="form-label">Nom</label>
-              <input type="text" id="profile-lastname" class="form-input" placeholder="Votre nom">
+              <input type="text" id="venue-profile-lastname" class="form-input" placeholder="Dupont">
             </div>
           </div>
-          <button onclick="savePersonalInfo(event)" class="btn btn-primary" style="width:fit-content; padding:12px 24px;">
+          <button onclick="saveVenuePersonalInfo()" class="btn btn-primary" style="width:fit-content; padding:12px 24px; margin-top:16px;">
             Sauvegarder
           </button>
         </div>
@@ -2350,36 +2364,56 @@
     btn.classList.toggle('active', isFav);
   }
 
-  async function savePersonalInfo(e) {
-    const btn = e.target
-    const firstName = document.getElementById('profile-firstname')?.value?.trim()
-    const lastName = document.getElementById('profile-lastname')?.value?.trim()
-    btn.disabled = true; btn.textContent = 'Sauvegarde...'
+  async function saveVenuePersonalInfo() {
+    const vType = user.venue_type || 'particulier'
+    const btn = event.target
+    btn.disabled = true
+    btn.textContent = '⏳ Sauvegarde...'
+    const body = { action: 'update_name', userId: user.id }
+    if (vType === 'organisation') {
+      body.orgName = document.getElementById('profile-orgname')?.value?.trim()
+    } else {
+      body.firstName = document.getElementById('venue-profile-firstname')?.value?.trim()
+      body.lastName = document.getElementById('venue-profile-lastname')?.value?.trim()
+    }
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'update_name', userId: user.id, firstName, lastName })
+        body: JSON.stringify(body)
       })
       const data = await res.json()
       if (data.success) {
-        user.first_name = firstName; user.last_name = lastName
+        if (vType === 'organisation') user.org_name = body.orgName
+        else { user.first_name = body.firstName; user.last_name = body.lastName }
         updateUI()
         btn.textContent = '✅ Sauvegardé !'
         setTimeout(() => { btn.disabled = false; btn.textContent = 'Sauvegarder' }, 2000)
       } else { throw new Error(data.error) }
     } catch(err) {
       alert('Erreur. Réessaie.')
-      btn.disabled = false; btn.textContent = 'Sauvegarder'
+      btn.disabled = false
+      btn.textContent = 'Sauvegarder'
     }
   }
 
   function loadVenueProfile() {
     const vType = user.venue_type || 'particulier';
-    const fn = document.getElementById('profile-firstname')
-    const ln = document.getElementById('profile-lastname')
-    if (fn) fn.value = user.first_name || ''
-    if (ln) ln.value = user.last_name || ''
+
+    const orgSection = document.getElementById('profile-org-section')
+    const partSection = document.getElementById('profile-particulier-section')
+    if (orgSection) orgSection.style.display = vType === 'organisation' ? 'block' : 'none'
+    if (partSection) partSection.style.display = vType === 'particulier' ? 'block' : 'none'
+
+    if (vType === 'organisation') {
+      const orgEl = document.getElementById('profile-orgname')
+      if (orgEl) orgEl.value = user.org_name || ''
+    } else {
+      const fn = document.getElementById('venue-profile-firstname')
+      const ln = document.getElementById('venue-profile-lastname')
+      if (fn) fn.value = user.first_name || ''
+      if (ln) ln.value = user.last_name || ''
+    }
     if (user.picture) {
       document.getElementById('venue-profile-avatar').innerHTML =
         `<img src="${user.picture}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;

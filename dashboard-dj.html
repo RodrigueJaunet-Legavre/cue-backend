@@ -1632,21 +1632,30 @@
       </a>
     </div>
 
-    <!-- INFORMATIONS PERSONNELLES -->
+    <!-- IDENTITÉ -->
     <div class="card" style="margin-bottom:24px;">
-      <div class="card-header"><span class="card-title">Informations personnelles</span></div>
+      <div class="card-header"><span class="card-title">Identité</span></div>
       <div class="card-body">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
-          <div class="form-group">
-            <label class="form-label">Prénom</label>
-            <input type="text" id="profile-firstname" class="form-input" placeholder="Ton prénom">
+        <div class="form-group" style="margin-bottom:20px;">
+          <label class="form-label">Nom de scène <span style="color:#888; font-size:11px; font-weight:400; text-transform:none;">(affiché aux venues)</span></label>
+          <input type="text" id="profile-stagename" class="form-input" placeholder="DJ Nova, KARA...">
+        </div>
+        <div style="border-top:1px solid var(--BORDER); margin-bottom:20px; padding-top:16px;">
+          <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:12px;">
+            Identité légale — pour les contrats uniquement
           </div>
-          <div class="form-group">
-            <label class="form-label">Nom</label>
-            <input type="text" id="profile-lastname" class="form-input" placeholder="Ton nom">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="form-group">
+              <label class="form-label">Prénom</label>
+              <input type="text" id="profile-firstname" class="form-input" placeholder="Jean">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nom</label>
+              <input type="text" id="profile-lastname" class="form-input" placeholder="Dupont">
+            </div>
           </div>
         </div>
-        <button onclick="savePersonalInfo(event)" class="btn btn-primary" style="width:fit-content; padding:12px 24px;">
+        <button onclick="savePersonalInfo()" class="btn btn-primary" style="width:fit-content; padding:12px 24px;">
           Sauvegarder
         </button>
       </div>
@@ -3757,27 +3766,32 @@
     if (id) window.open('dj-profile.html?id=' + id, '_blank');
   }
 
-  async function savePersonalInfo(e) {
-    const btn = e.target
+  async function savePersonalInfo() {
+    const stageName = document.getElementById('profile-stagename')?.value?.trim()
     const firstName = document.getElementById('profile-firstname')?.value?.trim()
     const lastName = document.getElementById('profile-lastname')?.value?.trim()
-    btn.disabled = true; btn.textContent = 'Sauvegarde...'
+    const btn = event.target
+    btn.disabled = true
+    btn.textContent = '⏳ Sauvegarde...'
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'update_name', userId: user.id, firstName, lastName })
+        body: JSON.stringify({ action: 'update_name', userId: user.id, firstName, lastName, stageName })
       })
       const data = await res.json()
       if (data.success) {
-        user.first_name = firstName; user.last_name = lastName
+        user.first_name = firstName
+        user.last_name = lastName
+        user.stage_name = stageName
         updateUI()
         btn.textContent = '✅ Sauvegardé !'
         setTimeout(() => { btn.disabled = false; btn.textContent = 'Sauvegarder' }, 2000)
       } else { throw new Error(data.error) }
     } catch(err) {
       alert('Erreur. Réessaie.')
-      btn.disabled = false; btn.textContent = 'Sauvegarder'
+      btn.disabled = false
+      btn.textContent = 'Sauvegarder'
     }
   }
 
@@ -3807,8 +3821,10 @@
     const genres = user.genres || [];
     selectedGenres = [...genres];
 
+    const stageName = document.getElementById('profile-stagename')
     const fn = document.getElementById('profile-firstname')
     const ln = document.getElementById('profile-lastname')
+    if (stageName) stageName.value = user.stage_name || ''
     if (fn) fn.value = user.first_name || ''
     if (ln) ln.value = user.last_name || ''
 

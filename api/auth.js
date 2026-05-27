@@ -247,17 +247,20 @@ module.exports = async function handler(req, res) {
   }
 
   if (action === 'update_name') {
-    const { userId, firstName, lastName } = body
+    const { userId, firstName, lastName, stageName, orgName } = body
     try {
       await sql`
         UPDATE users SET
           first_name = ${firstName || null},
           last_name = ${lastName || null},
+          stage_name = ${stageName || null},
+          org_name = ${orgName || null},
           updated_at = NOW()
         WHERE id = ${userId}
       `
       return res.status(200).json({ success: true })
     } catch(err) {
+      console.log('update_name error:', err.message)
       return res.status(500).json({ error: err.message })
     }
   }
