@@ -3792,7 +3792,8 @@
         user.first_name = firstName
         user.last_name = lastName
         user.stage_name = stageName
-        updateUI()
+        document.querySelectorAll('.user-avatar, #user-avatar, #sidebar-avatar').forEach(el => { if (user.picture) el.src = user.picture })
+        document.querySelectorAll('.user-name, #user-name, #sidebar-name').forEach(el => { el.textContent = user.stage_name || (user.first_name + ' ' + user.last_name) })
         btn.textContent = '✅ Sauvegardé !'
         setTimeout(() => { btn.disabled = false; btn.textContent = 'Sauvegarder' }, 2000)
       } else { throw new Error(data.error) }
@@ -4246,7 +4247,8 @@
         Object.assign(user, data.user || {})
         profilePhotoFile = null
         profilePhotoChanged = false
-        updateUI()
+        document.querySelectorAll('.user-avatar, #user-avatar, #sidebar-avatar').forEach(el => { if (user.picture) el.src = user.picture })
+        document.querySelectorAll('.user-name, #user-name, #sidebar-name').forEach(el => { el.textContent = user.stage_name || (user.first_name + ' ' + user.last_name) })
         if (typeof checkBadgeConditions === 'function') checkBadgeConditions()
         btn.textContent = '✅ Profil sauvegardé !'
         setTimeout(() => { btn.disabled = false; btn.textContent = 'SAUVEGARDER MON PROFIL' }, 2500)
