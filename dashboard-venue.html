@@ -2191,6 +2191,10 @@
   ];
 
   async function init() {
+    // Nettoyage préventif des overlays bloquants
+    document.querySelectorAll('.verif-notif-overlay').forEach(el => el.remove())
+    document.body.style.overflow = ''
+
     try {
       const { supabase } = await import('./js/supabase-client.js')
       const { data: { session } } = await supabase.auth.getSession()
@@ -5022,6 +5026,10 @@
   }
 
   function showVerifApprovedNotif() {
+    // Supprime toute notif existante
+    document.querySelectorAll('.verif-notif-overlay').forEach(el => el.remove())
+    document.body.style.overflow = 'hidden'
+
     if (!document.getElementById('notif-styles')) {
       const style = document.createElement('style');
       style.id = 'notif-styles';
@@ -5034,14 +5042,20 @@
     }
     const notif = document.createElement('div');
     notif.className = 'verif-notif-overlay';
-    notif.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.85); backdrop-filter:blur(12px); z-index:9999; display:flex; align-items:center; justify-content:center; animation:verif-fadeIn .4s ease;';
+    notif.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);backdrop-filter:blur(12px);z-index:9999;display:flex;align-items:center;justify-content:center;animation:verif-fadeIn .4s ease;';
+
+    function closeNotif() {
+      notif.remove()
+      document.body.style.overflow = ''
+    }
+
     notif.innerHTML = `
       <div style="background:var(--CARD); border:1px solid rgba(0,200,100,.3); border-radius:24px; padding:48px; text-align:center; max-width:480px; width:90%; box-shadow:0 32px 80px rgba(0,200,100,.15); animation:verif-slideUp .4s ease;">
         <div style="font-size:72px; margin-bottom:24px; animation:verif-bounce .6s ease .3s both;">✅</div>
         <h2 style="font-family:Barlow Condensed; font-weight:900; font-size:36px; color:#00c864; margin:0 0 12px;">IDENTITÉ VÉRIFIÉE !</h2>
         <p style="color:#ddd; font-size:16px; line-height:1.6; margin:0 0 8px;">Félicitations ! Votre identité a été vérifiée par notre équipe.</p>
         <p style="color:var(--MUTED); font-size:14px; margin:0 0 32px;">Votre badge CUE vérifié est maintenant actif sur votre profil.</p>
-        <button onclick="this.closest('.verif-notif-overlay').remove()"
+        <button onclick="this.closest('.verif-notif-overlay').remove(); document.body.style.overflow='';"
                 style="background:var(--Y); color:#000; border:none; border-radius:12px; padding:16px 40px; font-weight:700; font-size:18px; cursor:pointer; font-family:Barlow,sans-serif; width:100%;"
                 onmouseover="this.style.background='#FFD740'"
                 onmouseout="this.style.background='var(--Y)'">
@@ -5049,8 +5063,8 @@
         </button>
       </div>
     `;
+    notif.addEventListener('click', e => { if (e.target === notif) closeNotif() });
     document.body.appendChild(notif);
-    notif.addEventListener('click', e => { if (e.target === notif) notif.remove(); });
   }
 
   function closeModal(id) { document.getElementById(id).classList.remove('open'); }
