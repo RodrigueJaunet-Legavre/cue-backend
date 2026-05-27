@@ -246,6 +246,38 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'update_name') {
+    const { userId, firstName, lastName } = body
+    try {
+      await sql`
+        UPDATE users SET
+          first_name = ${firstName || null},
+          last_name = ${lastName || null},
+          updated_at = NOW()
+        WHERE id = ${userId}
+      `
+      return res.status(200).json({ success: true })
+    } catch(err) {
+      return res.status(500).json({ error: err.message })
+    }
+  }
+
+  if (action === 'update_genres') {
+    const { userId, genres } = body
+    try {
+      const genresArray = Array.isArray(genres) ? genres : []
+      await sql`
+        UPDATE users SET
+          genres = ${sql.array(genresArray)},
+          updated_at = NOW()
+        WHERE id = ${userId}
+      `
+      return res.status(200).json({ success: true })
+    } catch(err) {
+      return res.status(500).json({ error: err.message })
+    }
+  }
+
   if (action === 'update_profile_by_id') {
     const { userId, description, genres, instagram, tiktok, soundcloud,
             spotify, youtube, mixUrl, tracks, photo } = body;
