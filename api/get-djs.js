@@ -9,7 +9,7 @@ module.exports = async function handler(req, res) {
   try {
     let djs = await sql`
       SELECT
-        u.id, u.first_name, u.last_name, u.email, u.user_type,
+        u.id, u.first_name, u.last_name, u.stage_name, u.email, u.user_type,
         u.plan, u.identity_status, u.description, u.genres,
         u.instagram, u.soundcloud, u.spotify, u.youtube,
         u.mix_url, u.tracks, u.picture, u.profile_complete, u.created_at,
@@ -33,7 +33,7 @@ module.exports = async function handler(req, res) {
     if (search) {
       const q = search.toLowerCase();
       djs = djs.filter(dj =>
-        (dj.first_name + ' ' + dj.last_name).toLowerCase().includes(q) ||
+        (dj.stage_name || (dj.first_name + ' ' + dj.last_name)).toLowerCase().includes(q) ||
         dj.description?.toLowerCase().includes(q) ||
         dj.genres?.some(g => g.toLowerCase().includes(q))
       );

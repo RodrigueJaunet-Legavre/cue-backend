@@ -2486,6 +2486,9 @@
   }
 
   const user = {};
+  function getDisplayName(u) {
+    return u.stage_name || ((u.first_name || '') + ' ' + (u.last_name || '')).trim() || 'DJ'
+  }
   let gigs = [];
   let reviews = [];
   let allReviews = [];
@@ -2524,11 +2527,9 @@
       if (user.user_type !== 'dj') { window.location.replace('index.html'); return }
 
       // Affiche les infos
-      const firstName = user.first_name || user.firstName || 'DJ'
-      const lastName = user.last_name || user.lastName || ''
       const plan = user.plan || 'starter'
-      document.getElementById('sidebar-name').textContent = firstName + ' ' + lastName
-      document.getElementById('header-name').textContent = firstName
+      document.getElementById('sidebar-name').textContent = getDisplayName(user)
+      document.getElementById('header-name').textContent = user.stage_name || user.first_name || 'DJ'
       document.getElementById('sidebar-plan').textContent = plan.toUpperCase()
       const photo = user.picture || user.profile?.photo
       if (photo) {
@@ -2663,7 +2664,7 @@
     if (avatarEl && user.picture) {
       avatarEl.src = user.picture
       avatarEl.onerror = () => {
-        avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.first_name || 'U')}&background=FFC300&color=000`
+        avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(getDisplayName(user))}&background=FFC300&color=000`
       }
     }
   }
@@ -2804,8 +2805,7 @@
   function initVerificationPage() {
     document.getElementById('verif-email-field').value = user.email || '';
     document.getElementById('verif-name-field').value =
-      (user.first_name || user.firstName || '') + ' ' +
-      (user.last_name || user.lastName || '');
+      ((user.first_name || user.firstName || '') + ' ' + (user.last_name || user.lastName || '')).trim();
 
     const status = user.identity_status || 'none';
 
@@ -4739,7 +4739,7 @@
         senderType: 'dj',
         message: {
           senderId: user.id,
-          senderName: (user.first_name || user.firstName || '') + ' ' + (user.last_name || user.lastName || ''),
+          senderName: getDisplayName(user),
           content: reply,
           type: 'text'
         }
@@ -4904,7 +4904,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'contact',
-          senderName: (user.first_name || user.firstName || '') + ' ' + (user.last_name || user.lastName || ''),
+          senderName: getDisplayName(user),
           senderEmail: user.email,
           subject,
           message
@@ -4942,7 +4942,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'report',
-          senderName: (user.first_name || user.firstName || '') + ' ' + (user.last_name || user.lastName || ''),
+          senderName: getDisplayName(user),
           senderEmail: user.email,
           category,
           message,
@@ -5140,7 +5140,7 @@
     if (avatarEl && user.picture) avatarEl.src = user.picture;
 
     const nameEl = document.getElementById('presskit-name');
-    if (nameEl) nameEl.textContent = ((user.first_name || '') + ' ' + (user.last_name || '')).trim();
+    if (nameEl) nameEl.textContent = getDisplayName(user);
 
     const genresEl = document.getElementById('presskit-genres');
     if (genresEl && user.genres) {
@@ -5150,8 +5150,8 @@
 
     const slugEl = document.getElementById('presskit-slug');
     if (slugEl) {
-      slugEl.textContent = ((user.first_name || '') + '-' + (user.last_name || ''))
-        .toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      slugEl.textContent = (user.stage_name || ((user.first_name || '') + ' ' + (user.last_name || '')))
+        .trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     }
 
     if (user.instagram)  { const el = document.getElementById('pk-instagram');  if (el) el.value = user.instagram; }
@@ -5386,7 +5386,7 @@
       convId,
       djId: djId || conv.dj_id,
       venueId: venueId || conv.venue_id,
-      djName: conv.dj_name || (user.first_name + ' ' + user.last_name) || '',
+      djName: conv.dj_name || getDisplayName(user),
       venueName: conv.venue_name || ''
     })
   }
@@ -5515,7 +5515,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          djName: modal.dataset.djName || (user.first_name + ' ' + user.last_name),
+          djName: modal.dataset.djName || getDisplayName(user),
           venueName: modal.dataset.venueName,
           date, lieu, type, start, end,
           cachet: parseFloat(cachet),
@@ -5575,7 +5575,7 @@
           action: 'send_message',
           conversationId: convId,
           senderId: user.id,
-          senderName: (user.first_name || '') + ' ' + (user.last_name || ''),
+          senderName: getDisplayName(user),
           senderType: 'dj',
           content: '📄 Proposition de contrat',
           type: 'contract_proposal',
