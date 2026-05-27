@@ -1665,9 +1665,6 @@
             <label class="form-label">Nom de l'organisation</label>
             <input type="text" id="profile-orgname" class="form-input" placeholder="SAS Club XYZ, Association...">
           </div>
-          <button onclick="saveVenuePersonalInfo()" class="btn btn-primary" style="width:fit-content; padding:12px 24px; margin-top:8px;">
-            Sauvegarder
-          </button>
         </div>
       </div>
 
@@ -1685,9 +1682,6 @@
               <input type="text" id="venue-profile-lastname" class="form-input" placeholder="Dupont">
             </div>
           </div>
-          <button onclick="saveVenuePersonalInfo()" class="btn btn-primary" style="width:fit-content; padding:12px 24px; margin-top:16px;">
-            Sauvegarder
-          </button>
         </div>
       </div>
 
@@ -1714,25 +1708,25 @@
             <label class="form-label">Description</label>
             <textarea id="venue-description" rows="4" class="form-input"
                       placeholder="Décrivez votre lieu, votre style d'événements..."
-                      oninput="showSaveBar()"></textarea>
+                     ></textarea>
           </div>
           <div class="form-group">
             <label class="form-label">Ville</label>
-            <input type="text" id="venue-city" class="form-input" placeholder="Paris" oninput="showSaveBar()">
+            <input type="text" id="venue-city" class="form-input" placeholder="Paris">
           </div>
           <div id="org-fields-section">
             <div class="form-group">
               <label class="form-label">Site web</label>
-              <input type="url" id="venue-website" class="form-input" placeholder="https://monclub.fr" oninput="showSaveBar()">
+              <input type="url" id="venue-website" class="form-input" placeholder="https://monclub.fr">
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
               <div class="form-group">
                 <label class="form-label">Nom de l'organisation</label>
-                <input type="text" id="org-name-profile" class="form-input" placeholder="Club XYZ" oninput="showSaveBar()">
+                <input type="text" id="org-name-profile" class="form-input" placeholder="Club XYZ">
               </div>
               <div class="form-group">
                 <label class="form-label">SIRET / SIREN</label>
-                <input type="text" id="org-siret-profile" class="form-input" placeholder="123 456 789" oninput="showSaveBar()">
+                <input type="text" id="org-siret-profile" class="form-input" placeholder="123 456 789">
               </div>
             </div>
           </div>
@@ -1791,16 +1785,15 @@
         </div>
       </div>
 
-      <!-- Barre de sauvegarde -->
-      <div id="save-bar" style="display:none; position:sticky; bottom:20px; background:var(--CARD);
-                                 border:1px solid var(--BORDER); border-radius:16px; padding:16px 24px;
-                                 align-items:center; justify-content:space-between;
-                                 box-shadow:0 8px 32px rgba(0,0,0,.5);">
-        <span style="color:var(--MUTED); font-size:14px;">Modifications non sauvegardées</span>
-        <div style="display:flex; gap:12px;">
-          <button onclick="resetProfileChanges()" class="btn btn-outline">Annuler</button>
-          <button id="save-profile-btn" onclick="saveVenueProfile()" class="btn btn-primary">💾 Sauvegarder</button>
-        </div>
+      <!-- Bouton global sauvegarde -->
+      <div style="position:sticky; bottom:0; background:linear-gradient(to top, #080808 60%, transparent);
+                  padding:20px 0; margin-top:8px; z-index:10;">
+        <button id="save-venue-profile-btn" onclick="saveFullVenueProfile()"
+                class="btn btn-primary"
+                style="width:100%; padding:18px; font-family:'Barlow Condensed',sans-serif;
+                       font-weight:900; font-size:20px; letter-spacing:1px; border-radius:14px;">
+          SAUVEGARDER MON PROFIL
+        </button>
       </div>
     </div>
   </div>
@@ -2162,6 +2155,7 @@
   let currentRatingDJ = null;
   let currentDJ = null;
   let venueProfilePhotoNew = null;
+  let venueProfilePhotoFile = null;
   let venuePhotosNew = [null, null, null];
   let venuePhotosSaved = [null, null, null];
   let allDJs = [];
@@ -2441,18 +2435,17 @@
         document.getElementById(`photo-remove-${i}`).style.display = 'flex';
       }
     });
-    hideSaveBar();
   }
 
   function handleProfilePhoto(input) {
     const file = input.files[0];
     if (!file || file.size > 5 * 1024 * 1024) { alert('Max 5MB.'); return; }
+    venueProfilePhotoFile = file;
     const reader = new FileReader();
     reader.onload = e => {
       venueProfilePhotoNew = e.target.result;
       document.getElementById('venue-profile-avatar').innerHTML =
         `<img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
-      showSaveBar();
     };
     reader.readAsDataURL(file);
   }
@@ -2467,7 +2460,6 @@
       document.getElementById(`photo-preview-${index}`).style.display = 'block';
       document.getElementById(`photo-placeholder-${index}`).style.display = 'none';
       document.getElementById(`photo-remove-${index}`).style.display = 'flex';
-      showSaveBar();
     };
     reader.readAsDataURL(file);
   }
@@ -2477,22 +2469,6 @@
     document.getElementById(`photo-preview-${index}`).style.display = 'none';
     document.getElementById(`photo-placeholder-${index}`).style.display = 'block';
     document.getElementById(`photo-remove-${index}`).style.display = 'none';
-    showSaveBar();
-  }
-
-  function showSaveBar() {
-    const bar = document.getElementById('save-bar');
-    if (bar) bar.style.display = 'flex';
-  }
-
-  function hideSaveBar() {
-    const bar = document.getElementById('save-bar');
-    if (bar) bar.style.display = 'none';
-  }
-
-  function resetProfileChanges() {
-    hideSaveBar();
-    loadVenueProfile();
   }
 
   async function saveVenueProfile() {
@@ -2517,7 +2493,6 @@
       const data = await res.json();
       if (data.user) {
         Object.assign(user, data.user);
-        hideSaveBar();
         updateUI();
         if (btn) { btn.textContent = '✅ Sauvegardé !'; setTimeout(() => { btn.disabled = false; btn.textContent = '💾 Sauvegarder'; }, 2000); }
       } else {
@@ -2527,6 +2502,77 @@
     } catch (err) {
       alert('Erreur. Réessaie.');
       if (btn) { btn.disabled = false; btn.textContent = '💾 Sauvegarder'; }
+    }
+  }
+
+  async function saveFullVenueProfile() {
+    const btn = document.getElementById('save-venue-profile-btn')
+    btn.disabled = true
+    btn.textContent = '⏳ Sauvegarde...'
+    try {
+      const { supabase } = await import('./js/supabase-client.js')
+      const { data: { session } } = await supabase.auth.getSession()
+      const userId = session?.user?.id || user.id
+
+      let photoUrl = user.picture || ''
+      if (venueProfilePhotoFile) {
+        const ext = venueProfilePhotoFile.name.split('.').pop()
+        const storageRes = await fetch(
+          `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/avatars/${userId}/profile.${ext}`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session?.access_token}`,
+              'Content-Type': venueProfilePhotoFile.type,
+              'x-upsert': 'true'
+            },
+            body: venueProfilePhotoFile
+          }
+        )
+        if (storageRes.ok) {
+          photoUrl = `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/public/avatars/${userId}/profile.${ext}`
+        }
+      }
+
+      const vType = user.venue_type || 'particulier'
+      const body = {
+        action: 'update_venue_profile',
+        userId,
+        picture: photoUrl,
+        description: document.getElementById('venue-description')?.value?.trim() || '',
+        city: document.getElementById('venue-city')?.value?.trim() || '',
+        website: document.getElementById('venue-website')?.value?.trim() || '',
+        orgName: document.getElementById('org-name-profile')?.value?.trim() || '',
+        orgSiret: document.getElementById('org-siret-profile')?.value?.trim() || '',
+        venuePhotos: venuePhotosNew.filter(Boolean)
+      }
+      if (vType === 'organisation') {
+        body.orgName = document.getElementById('profile-orgname')?.value?.trim() || body.orgName
+      } else {
+        body.firstName = document.getElementById('venue-profile-firstname')?.value?.trim() || user.first_name
+        body.lastName = document.getElementById('venue-profile-lastname')?.value?.trim() || user.last_name
+      }
+
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      const data = await res.json()
+      if (data.user) {
+        Object.assign(user, data.user)
+        venueProfilePhotoFile = null
+        venueProfilePhotoNew = null
+        updateUI()
+        btn.textContent = '✅ Profil sauvegardé !'
+        setTimeout(() => { btn.disabled = false; btn.textContent = 'SAUVEGARDER MON PROFIL' }, 2500)
+      } else {
+        throw new Error(data.error || 'Erreur')
+      }
+    } catch(err) {
+      alert('Erreur : ' + err.message)
+      btn.disabled = false
+      btn.textContent = 'SAUVEGARDER MON PROFIL'
     }
   }
 

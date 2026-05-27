@@ -1655,9 +1655,6 @@
             </div>
           </div>
         </div>
-        <button onclick="savePersonalInfo()" class="btn btn-primary" style="width:fit-content; padding:12px 24px;">
-          Sauvegarder
-        </button>
       </div>
     </div>
 
@@ -1697,7 +1694,6 @@
     <div class="card" style="margin-bottom:24px;">
       <div class="card-header">
         <span class="card-title">🎵 Genres musicaux</span>
-        <button onclick="saveGenres(event)" class="btn btn-outline btn-sm">Sauvegarder</button>
       </div>
       <div class="card-body">
         <p style="color:var(--MUTED); font-size:13px; margin-bottom:16px;">Sélectionne jusqu'à 5 genres (min. 1)</p>
@@ -1777,7 +1773,7 @@
     </div>
 
     <!-- PARTAGE -->
-    <div class="card">
+    <div class="card" style="margin-bottom:24px;">
       <div class="card-header"><span class="card-title">🔗 Partager mon profil</span></div>
       <div class="card-body">
         <p style="color:var(--MUTED); font-size:14px; margin-bottom:16px;">Partage ton profil DJ directement depuis ici</p>
@@ -1788,6 +1784,17 @@
           <button class="btn btn-outline" onclick="shareProfile('copy')">🔗 Copier lien</button>
         </div>
       </div>
+    </div>
+
+    <!-- BOUTON SAUVEGARDE GLOBAL -->
+    <div style="position:sticky; bottom:0; background:linear-gradient(to top, #080808 60%, transparent);
+                padding:20px 0; margin-top:8px; z-index:10;">
+      <button id="save-profile-btn" onclick="saveFullProfile()"
+              class="btn btn-primary"
+              style="width:100%; padding:18px; font-family:'Barlow Condensed',sans-serif;
+                     font-weight:900; font-size:20px; letter-spacing:1px; border-radius:14px;">
+        SAUVEGARDER MON PROFIL
+      </button>
     </div>
   </div>
 
@@ -3750,6 +3757,7 @@
 
   // VARIABLES PROFIL
   let profilePhoto = null;
+  let profilePhotoFile = null;
   let profilePhotoChanged = false;
   let profileMix = null;
   let profileTracks = [];
@@ -3914,6 +3922,7 @@
     const file = input.files[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) { alert('La photo ne doit pas dépasser 5MB.'); return; }
+    profilePhotoFile = file;
     const reader = new FileReader();
     reader.onload = (e) => {
       profilePhoto = e.target.result;
@@ -4177,6 +4186,78 @@
       const el = document.getElementById(id);
       if (el) el.addEventListener('input', showSaveBar);
     });
+  }
+
+  async function saveFullProfile() {
+    const btn = document.getElementById('save-profile-btn')
+    btn.disabled = true
+    btn.textContent = '⏳ Sauvegarde...'
+    try {
+      const { supabase } = await import('./js/supabase-client.js')
+      const { data: { session } } = await supabase.auth.getSession()
+      const userId = session?.user?.id || user.id
+
+      // Upload photo si nouvelle
+      let photoUrl = user.picture || ''
+      if (profilePhotoFile) {
+        const ext = profilePhotoFile.name.split('.').pop()
+        const storageRes = await fetch(
+          `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/avatars/${userId}/profile.${ext}`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session?.access_token}`,
+              'Content-Type': profilePhotoFile.type,
+              'x-upsert': 'true'
+            },
+            body: profilePhotoFile
+          }
+        )
+        if (storageRes.ok) {
+          photoUrl = `https://orjhkfdvihuvqcjxhjwe.supabase.co/storage/v1/object/public/avatars/${userId}/profile.${ext}`
+        }
+      }
+
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_full_profile',
+          userId,
+          firstName: document.getElementById('profile-firstname')?.value?.trim() || user.first_name,
+          lastName: document.getElementById('profile-lastname')?.value?.trim() || user.last_name,
+          stageName: document.getElementById('profile-stagename')?.value?.trim() || user.stage_name,
+          photo: photoUrl,
+          description: document.getElementById('profile-description')?.value?.trim() || user.description,
+          genres: selectedGenres.length ? selectedGenres : (user.genres || []),
+          instagram: document.getElementById('social-instagram')?.value?.trim() || '',
+          tiktok: document.getElementById('social-tiktok')?.value?.trim() || '',
+          soundcloud: document.getElementById('social-soundcloud')?.value?.trim() || '',
+          spotify: document.getElementById('social-spotify')?.value?.trim() || '',
+          youtube: document.getElementById('social-youtube')?.value?.trim() || '',
+          iban: document.getElementById('iban-input')?.value?.replace(/\s/g, '') || user.iban,
+          bic: document.getElementById('bic-input')?.value?.toUpperCase() || user.bic,
+          bankName: document.getElementById('bank-name-input')?.value || user.bank_name
+        })
+      })
+
+      const data = await res.json()
+      if (data.success) {
+        Object.assign(user, data.user || {})
+        profilePhotoFile = null
+        profilePhotoChanged = false
+        updateUI()
+        if (typeof checkBadgeConditions === 'function') checkBadgeConditions()
+        btn.textContent = '✅ Profil sauvegardé !'
+        setTimeout(() => { btn.disabled = false; btn.textContent = 'SAUVEGARDER MON PROFIL' }, 2500)
+      } else {
+        throw new Error(data.error || 'Erreur')
+      }
+    } catch(err) {
+      alert('Erreur : ' + err.message)
+      btn.disabled = false
+      btn.textContent = 'SAUVEGARDER MON PROFIL'
+    }
   }
 
   async function saveProfile() {

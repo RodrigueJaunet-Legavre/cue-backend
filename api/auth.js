@@ -281,6 +281,38 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'update_full_profile') {
+    const { userId, firstName, lastName, stageName, photo, description,
+            genres, instagram, tiktok, soundcloud, spotify, youtube,
+            iban, bic, bankName } = body
+    try {
+      await sql`
+        UPDATE users SET
+          first_name = ${firstName || null},
+          last_name = ${lastName || null},
+          stage_name = ${stageName || null},
+          picture = ${photo || null},
+          description = ${description || null},
+          genres = ${sql.array(Array.isArray(genres) ? genres : [])},
+          instagram = ${instagram || null},
+          tiktok = ${tiktok || null},
+          soundcloud = ${soundcloud || null},
+          spotify = ${spotify || null},
+          youtube = ${youtube || null},
+          iban = ${iban || null},
+          bic = ${bic || null},
+          bank_name = ${bankName || null},
+          updated_at = NOW()
+        WHERE id = ${userId}
+      `
+      const [updatedUser] = await sql`SELECT * FROM users WHERE id = ${userId}`
+      return res.status(200).json({ success: true, user: sanitizeUser(updatedUser) })
+    } catch(err) {
+      console.log('update_full_profile error:', err.message)
+      return res.status(500).json({ error: err.message })
+    }
+  }
+
   if (action === 'update_profile_by_id') {
     const { userId, description, genres, instagram, tiktok, soundcloud,
             spotify, youtube, mixUrl, tracks, photo } = body;
