@@ -2426,8 +2426,8 @@
     const orgSiretEl = document.getElementById('org-siret-profile');
     if (orgNameEl) orgNameEl.value = user.org_name || '';
     if (orgSiretEl) orgSiretEl.value = user.org_siret || '';
-    const orgSection = document.getElementById('org-fields-section');
-    if (orgSection) orgSection.style.display = vType === 'organisation' ? 'block' : 'none';
+    const orgFieldsSection = document.getElementById('org-fields-section');
+    if (orgFieldsSection) orgFieldsSection.style.display = vType === 'organisation' ? 'block' : 'none';
     const photos = Array.isArray(user.venue_photos) ? user.venue_photos : [];
     venuePhotosSaved = [photos[0] || null, photos[1] || null, photos[2] || null];
     venuePhotosNew = [...venuePhotosSaved];
