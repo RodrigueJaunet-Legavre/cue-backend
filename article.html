@@ -259,6 +259,36 @@ async function loadArticle() {
     const data = await res.json()
     const a = data.article
 
+    function setSEOMeta(a) {
+      const url = window.location.href
+      const title = a.title || ''
+      const desc = a.summary || ''
+      const image = a.cover || 'https://cuedj.eu/logo.png'
+      const date = a.date || ''
+      const set = (id, val) => { const el = document.getElementById(id); if(el) el.content = val }
+      set('og-title', title)
+      set('og-description', desc)
+      set('og-image', image)
+      set('og-url', url)
+      set('tw-title', title)
+      set('tw-description', desc)
+      set('tw-image', image)
+      const desc_meta = document.querySelector('meta[name="description"]')
+      if (desc_meta) desc_meta.content = desc
+      const jsonld = document.getElementById('json-ld-article')
+      if (jsonld) jsonld.textContent = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: title,
+        image: image,
+        datePublished: date,
+        description: desc,
+        url: url,
+        publisher: { '@type': 'Organization', name: 'CUE DJ Platform', logo: { '@type': 'ImageObject', url: 'https://cuedj.eu/logo.png' } }
+      })
+    }
+    setSEOMeta(a)
+
     if (!a) {
       document.getElementById('content').innerHTML =
         '<div class="loading">Article introuvable.</div>'
