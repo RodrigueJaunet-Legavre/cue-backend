@@ -117,52 +117,75 @@
     .card-title { font-weight:700; font-size:16px; }
     .card-body { padding:24px; }
 
-    /* FIND DJ */
-    .search-bar { display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap; }
-    .search-input {
-      flex:1; min-width:200px; background:var(--CARD); border:1px solid var(--BORDER);
-      color:var(--TEXT); padding:14px 20px; border-radius:12px; font-size:15px;
-      font-family:Barlow,sans-serif; transition:border-color .2s;
+    /* FIND DJ — Premium */
+    .find-dj-search { margin-bottom: 24px; }
+    .search-wrap { position: relative; margin-bottom: 14px; }
+    .search-wrap svg { position:absolute; left:18px; top:50%; transform:translateY(-50%); pointer-events:none; }
+    .search-input-premium {
+      width:100%; background:var(--CARD); border:1px solid var(--BORDER);
+      color:var(--TEXT); padding:15px 20px 15px 50px; border-radius:14px;
+      font-size:15px; font-family:Barlow,sans-serif; transition:border-color .2s; outline:none;
     }
-    .search-input:focus { outline:none; border-color:var(--Y); }
-    .filter-select {
+    .search-input-premium:focus { border-color:var(--Y); }
+    .search-input-premium::placeholder { color:var(--MUTED); }
+    .genre-pills { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+    .genre-chip {
+      padding:7px 16px; border-radius:50px; font-size:12px; font-weight:700;
+      background:var(--CARD); border:1px solid var(--BORDER); color:var(--MUTED);
+      cursor:pointer; transition:all .2s; user-select:none;
+    }
+    .genre-chip:hover { border-color:var(--Y); color:var(--Y); }
+    .genre-chip.active { background:var(--Y); color:#000; border-color:var(--Y); }
+    .find-dj-controls { display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:24px; }
+    .toggle-wrap { display:flex; align-items:center; gap:10px; font-size:13px; font-weight:700; color:var(--MUTED); cursor:pointer; }
+    .toggle-switch { position:relative; width:40px; height:22px; flex-shrink:0; display:inline-block; }
+    .toggle-switch input { opacity:0; width:0; height:0; position:absolute; }
+    .toggle-track { position:absolute; inset:0; background:var(--BORDER); border-radius:22px; transition:background .2s; cursor:pointer; }
+    .toggle-track::before { content:''; position:absolute; width:16px; height:16px; background:#fff; border-radius:50%; top:3px; left:3px; transition:transform .2s; }
+    .toggle-switch input:checked + .toggle-track { background:var(--Y); }
+    .toggle-switch input:checked + .toggle-track::before { transform:translateX(18px); }
+    .sort-select-mini {
       background:var(--CARD); border:1px solid var(--BORDER); color:var(--TEXT);
-      padding:14px 16px; border-radius:12px; font-size:14px; cursor:pointer;
-      font-family:Barlow,sans-serif; transition:border-color .2s;
+      padding:9px 14px; border-radius:10px; font-size:13px; font-weight:700;
+      cursor:pointer; font-family:Barlow,sans-serif; transition:border-color .2s; outline:none; margin-left:auto;
     }
-    .filter-select:focus { outline:none; border-color:var(--Y); }
+    .sort-select-mini:focus { border-color:var(--Y); }
 
     /* DJ CARDS GRID */
-    #djs-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 20px;
-      padding: 4px;
-    }
+    #djs-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; padding:4px; }
     .dj-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
     .dj-card {
-      background:var(--CARD); border:1px solid var(--BORDER); border-radius:16px;
-      overflow:hidden; transition:all .3s; cursor:pointer; position:relative;
+      background:#111; border:1px solid rgba(255,255,255,.06); border-radius:20px;
+      overflow:hidden; cursor:pointer; position:relative; display:flex; flex-direction:column;
+      opacity:0; transform:translateY(24px);
+      transition:opacity .4s ease, transform .4s ease, border-color .25s, box-shadow .25s;
     }
-    .dj-card:hover { transform:translateY(-4px); border-color:rgba(255,195,0,.4); box-shadow:0 20px 40px rgba(0,0,0,.4); }
-    .dj-card-banner { height:80px; background:linear-gradient(135deg, #1a1a1a 0%, #111 100%); position:relative; }
-    .dj-card-banner::after { content:''; position:absolute; inset:0; background:radial-gradient(circle at 70% 50%, rgba(255,195,0,.08) 0%, transparent 70%); }
-    .dj-card-avatar { width:72px; height:72px; border-radius:50%; border:3px solid var(--Y); position:absolute; bottom:-36px; left:20px; background:#0a0a0a; display:flex; align-items:center; justify-content:center; font-size:28px; overflow:hidden; }
-    .dj-card-body { padding:44px 20px 20px; }
-    .dj-card-name { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; color:#fff; }
-    .dj-card-genres { color:var(--Y); font-size:12px; font-weight:700; margin:6px 0; }
-    .dj-card-rating { display:flex; align-items:center; gap:6px; margin-bottom:12px; }
-    .dj-card-stars { color:var(--Y); font-size:14px; }
+    .dj-card.visible { opacity:1; transform:translateY(0); }
+    .dj-card:hover { transform:translateY(-6px) !important; border-color:rgba(255,195,0,.45) !important; box-shadow:0 20px 48px rgba(255,195,0,.07), 0 24px 48px rgba(0,0,0,.5) !important; }
+    .dj-card-banner { height:120px; position:relative; overflow:hidden; flex-shrink:0; }
+    .dj-card-banner.plan-business { background:linear-gradient(135deg,#1a1200 0%,#3d2800 50%,#1a1200 100%); }
+    .dj-card-banner.plan-pro { background:linear-gradient(135deg,#140a2e 0%,#2d1560 50%,#140a2e 100%); }
+    .dj-card-banner.plan-starter { background:linear-gradient(135deg,#111 0%,#1c1c1c 100%); }
+    .dj-card-banner::after { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 80% 50%,rgba(255,195,0,.1) 0%,transparent 65%); pointer-events:none; }
+    .dj-card-plan-badge { position:absolute; top:12px; left:12px; z-index:2; font-size:10px; font-weight:700; letter-spacing:1px; padding:4px 10px; border-radius:20px; }
+    .dj-card-plan-badge.plan-business { background:rgba(255,195,0,.15); color:var(--Y); border:1px solid rgba(255,195,0,.3); }
+    .dj-card-plan-badge.plan-pro { background:rgba(150,80,255,.2); color:#c084fc; border:1px solid rgba(150,80,255,.35); }
+    .dj-card-plan-badge.plan-starter { background:rgba(255,255,255,.06); color:var(--MUTED); border:1px solid rgba(255,255,255,.1); }
+    .dj-card-verified { position:absolute; top:12px; right:12px; z-index:2; background:rgba(0,0,0,.75); backdrop-filter:blur(6px); border:1px solid rgba(255,195,0,.35); border-radius:20px; padding:4px 10px; font-size:10px; font-weight:700; color:var(--Y); }
+    .dj-card-avatar { width:72px; height:72px; border-radius:50%; border:3px solid var(--Y); position:absolute; bottom:-36px; left:50%; transform:translateX(-50%); background:#0a0a0a; display:flex; align-items:center; justify-content:center; font-size:26px; overflow:hidden; z-index:3; }
+    .dj-card-avatar img { width:100%; height:100%; object-fit:cover; }
+    .dj-card-body { padding:48px 20px 20px; display:flex; flex-direction:column; flex:1; text-align:center; }
+    .dj-card-name { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:24px; color:#fff; margin-bottom:8px; line-height:1.1; text-transform:uppercase; }
+    .dj-card-genres { display:flex; flex-wrap:wrap; gap:5px; justify-content:center; margin-bottom:10px; }
+    .dj-card-genre-pill { background:rgba(255,195,0,.1); border:1px solid rgba(255,195,0,.2); color:var(--Y); font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; white-space:nowrap; }
+    .dj-card-rating { display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:10px; }
+    .dj-card-stars { color:var(--Y); font-size:13px; letter-spacing:1px; }
     .dj-card-reviews { color:var(--MUTED); font-size:12px; }
-    .dj-card-desc { color:var(--MUTED); font-size:13px; line-height:1.5; margin-bottom:16px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .dj-card-desc { color:var(--MUTED); font-size:13px; line-height:1.5; margin-bottom:16px; flex:1; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
     .dj-card-footer { display:flex; gap:8px; }
-    .fav-btn {
-      position:absolute; top:12px; right:12px; background:rgba(0,0,0,.6);
-      border:none; color:var(--MUTED); font-size:20px; cursor:pointer;
-      padding:8px; border-radius:8px; transition:all .2s; backdrop-filter:blur(4px);
-    }
-    .fav-btn:hover { color:var(--Y); }
-    .fav-btn.active { color:var(--Y); }
+    .fav-btn { background:rgba(0,0,0,.6); border:1px solid rgba(255,255,255,.1); color:var(--MUTED); font-size:16px; cursor:pointer; padding:0 14px; border-radius:10px; transition:all .2s; backdrop-filter:blur(4px); flex-shrink:0; }
+    .fav-btn:hover { color:var(--Y); border-color:rgba(255,195,0,.4); }
+    .fav-btn.active { color:var(--Y); border-color:rgba(255,195,0,.4); }
     .verified-badge { display:inline-flex; align-items:center; gap:4px; background:rgba(0,200,100,.1); color:var(--SUCCESS); padding:3px 8px; border-radius:20px; font-size:11px; font-weight:700; margin-bottom:8px; }
 
     /* TABS */
@@ -284,8 +307,8 @@
     .dj-profile-header { position:relative; height:120px; background:linear-gradient(135deg, #1a1a1a 0%, #111 100%); border-radius:12px 12px 0 0; margin:-40px -40px 60px; }
     .dj-profile-avatar { position:absolute; bottom:-40px; left:32px; width:80px; height:80px; border-radius:50%; border:3px solid var(--Y); background:#0a0a0a; display:flex; align-items:center; justify-content:center; font-size:32px; overflow:hidden; }
 
-    @media (max-width:1200px) { .dj-grid { grid-template-columns:repeat(2,1fr); } }
-    @media (max-width:768px) { .dj-grid { grid-template-columns:1fr; } .stats-grid { grid-template-columns:repeat(2,1fr); } }
+    @media (max-width:1200px) { .dj-grid { grid-template-columns:repeat(2,1fr); } #djs-grid { grid-template-columns:repeat(2,1fr); } }
+    @media (max-width:768px) { .dj-grid { grid-template-columns:1fr; } #djs-grid { grid-template-columns:1fr; } .stats-grid { grid-template-columns:repeat(2,1fr); } }
 
     /* ============================================
        MOBILE RESPONSIVE — dashboard-venue.html
@@ -562,10 +585,6 @@
     /* REVIEW CARDS */
     .review-card { transition:border-color .25s, transform .2s; animation:slideIn .3s ease; }
     .review-card:hover { border-color:rgba(255,195,0,.2) !important; transform:translateX(4px); }
-
-    /* DJ CARDS */
-    .dj-card { transition:border-color .25s, transform .25s, box-shadow .25s; }
-    .dj-card:hover { transform:translateY(-6px) !important; box-shadow:0 20px 48px rgba(0,0,0,.5) !important; }
 
     /* SCROLLBAR */
     ::-webkit-scrollbar { width:6px; }
@@ -1068,31 +1087,48 @@
       </div>
     </div>
 
-    <div class="search-bar">
-      <input type="text" class="search-input" id="search-query" placeholder="🔍 Rechercher un DJ, un style..." oninput="filterDJs()">
-      <select class="filter-select" id="filter-genre" onchange="filterDJs()">
-        <option value="">Tous les genres</option>
-        <option>House</option><option>Tech House</option><option>Techno</option>
-        <option>Deep House</option><option>Hip-Hop</option><option>R&B</option>
-        <option>Commercial</option><option>Open Format</option><option>Afro House</option><option>Reggaeton</option>
-      </select>
-      <select class="filter-select" id="filter-rating" onchange="filterDJs()">
-        <option value="">Toutes les notes</option>
-        <option value="4">★★★★+ (4 étoiles)</option>
-        <option value="3">★★★+ (3 étoiles)</option>
-      </select>
-      <select class="filter-select" id="filter-verified" onchange="filterDJs()">
-        <option value="">Tous</option>
-        <option value="verified">✅ Vérifiés seulement</option>
-      </select>
-      <select class="filter-select" id="filter-sort" onchange="filterDJs()">
-        <option value="rating">Mieux notés</option>
-        <option value="newest">Plus récents</option>
-        <option value="reviews">Plus d'avis</option>
-      </select>
+    <div class="find-dj-search">
+      <!-- Recherche pleine largeur -->
+      <div class="search-wrap">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" class="search-input-premium" id="search-query"
+               placeholder="Rechercher un DJ, un style musical..." oninput="filterDJs()">
+      </div>
+
+      <!-- Pills genres -->
+      <div class="genre-pills" id="genre-pills">
+        <span class="genre-chip" data-genre="House" onclick="toggleGenreChip(this)">House</span>
+        <span class="genre-chip" data-genre="Tech House" onclick="toggleGenreChip(this)">Tech House</span>
+        <span class="genre-chip" data-genre="Techno" onclick="toggleGenreChip(this)">Techno</span>
+        <span class="genre-chip" data-genre="Deep House" onclick="toggleGenreChip(this)">Deep House</span>
+        <span class="genre-chip" data-genre="Hip-Hop" onclick="toggleGenreChip(this)">Hip-Hop</span>
+        <span class="genre-chip" data-genre="R&B" onclick="toggleGenreChip(this)">R&amp;B</span>
+        <span class="genre-chip" data-genre="Commercial" onclick="toggleGenreChip(this)">Commercial</span>
+        <span class="genre-chip" data-genre="Open Format" onclick="toggleGenreChip(this)">Open Format</span>
+        <span class="genre-chip" data-genre="Afro House" onclick="toggleGenreChip(this)">Afro House</span>
+        <span class="genre-chip" data-genre="Reggaeton" onclick="toggleGenreChip(this)">Reggaeton</span>
+      </div>
+
+      <!-- Contrôles : toggle vérifié + tri -->
+      <div class="find-dj-controls">
+        <label class="toggle-wrap">
+          <span class="toggle-switch">
+            <input type="checkbox" id="filter-verified" onchange="filterDJs()">
+            <span class="toggle-track"></span>
+          </span>
+          Vérifiés uniquement
+        </label>
+        <select class="sort-select-mini" id="filter-sort" onchange="filterDJs()">
+          <option value="rating">Mieux notés</option>
+          <option value="newest">Plus récents</option>
+          <option value="reviews">Plus d'avis</option>
+        </select>
+      </div>
     </div>
 
-    <div id="dj-count" style="color:var(--MUTED); font-size:14px; margin-bottom:20px;"></div>
+    <div id="dj-count" style="color:var(--MUTED); font-size:13px; font-weight:700; margin-bottom:20px;"></div>
     <div id="djs-grid"></div>
   </div>
 
@@ -3098,12 +3134,17 @@
     checkPaymentReminders();
   }
 
+  function toggleGenreChip(el) {
+    el.classList.toggle('active');
+    filterDJs();
+  }
+
   async function filterDJs() {
-    const query = document.getElementById('search-query').value;
-    const genre = document.getElementById('filter-genre').value;
-    const minRating = document.getElementById('filter-rating').value;
-    const verifiedOnly = document.getElementById('filter-verified').value === 'verified';
-    const sort = document.getElementById('filter-sort').value;
+    const query = (document.getElementById('search-query')?.value || '').trim();
+    const activeChips = [...document.querySelectorAll('.genre-chip.active')].map(c => c.dataset.genre);
+    const genre = activeChips[0] || '';
+    const verifiedOnly = document.getElementById('filter-verified')?.checked || false;
+    const sort = document.getElementById('filter-sort')?.value || 'rating';
 
     showSkeleton('djs-grid', 'dj', 6);
 
@@ -3111,7 +3152,7 @@
       const res = await fetch('/api/get-djs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ search: query, genre, minRating, verifiedOnly, sort })
+        body: JSON.stringify({ search: query, genre, genres: activeChips, verifiedOnly, sort })
       });
       const data = await res.json();
       allDJs = data.djs?.length ? data.djs : demoDJs;
@@ -3119,7 +3160,8 @@
       allDJs = demoDJs;
     }
 
-    document.getElementById('dj-count').textContent = allDJs.length + ' DJ' + (allDJs.length > 1 ? 's' : '') + ' trouvé' + (allDJs.length > 1 ? 's' : '');
+    const n = allDJs.length;
+    document.getElementById('dj-count').textContent = n + ' DJ' + (n > 1 ? 's' : '') + ' trouvé' + (n > 1 ? 's' : '');
     renderDJs(allDJs);
   }
 
