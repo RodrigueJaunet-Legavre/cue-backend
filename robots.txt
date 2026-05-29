@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /cue-secure-admin-panel.html
+Sitemap: https://cuedj.eu/api/sitemap
