@@ -885,7 +885,7 @@
 
   <!-- Center: logo -->
   <div class="mobile-header-center">
-    <img src="/logo.png" alt="CUE" style="height:64px; width:auto; object-fit:contain; display:block;">
+    <img src="/logo.png" alt="CUE" style="height:64px; width:auto; object-fit:contain; display:block;" loading="lazy">
   </div>
 
   <!-- Right: messages + avatar -->
@@ -905,7 +905,7 @@
          src="https://ui-avatars.com/api/?name=DJ&background=FFC300&color=000"
          alt="Avatar"
          onclick="showPage('profile', document.querySelector('[data-page=profile]'))"
-         style="width:32px; height:32px; border-radius:50%; object-fit:cover; cursor:pointer; border:2px solid #1a1a1a;" />
+         style="width:32px; height:32px; border-radius:50%; object-fit:cover; cursor:pointer; border:2px solid #1a1a1a;" / loading="lazy">
   </div>
 </div>
 
@@ -1454,7 +1454,7 @@
             <div style="position:relative;">
               <img id="presskit-avatar" src=""
                    style="width:80px; height:80px; border-radius:50%; object-fit:cover;
-                          border:3px solid #FFC300;">
+                          border:3px solid #FFC300;" loading="lazy">
             </div>
             <div style="flex:1;">
               <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900;
@@ -1927,7 +1927,7 @@
                   <div style="font-weight:700; color:#fff; margin-bottom:4px;">Cliquer pour ajouter</div>
                   <div style="color:var(--MUTED); font-size:12px;">JPG ou PNG • Max 10MB</div>
                 </div>
-                <img id="selfie-preview" style="display:none; width:120px; height:120px; object-fit:cover; border-radius:50%; margin:auto;">
+                <img id="selfie-preview" style="display:none; width:120px; height:120px; object-fit:cover; border-radius:50%; margin:auto;" loading="lazy">
               </div>
             </div>
 
@@ -1943,7 +1943,7 @@
                   <div style="font-weight:700; color:#fff; margin-bottom:4px;">Cliquer pour ajouter</div>
                   <div style="color:var(--MUTED); font-size:12px;">Passeport, CNI ou permis • JPG ou PNG • Max 10MB</div>
                 </div>
-                <img id="doc-preview" style="display:none; width:100%; max-height:150px; object-fit:contain; border-radius:8px; margin-top:8px;">
+                <img id="doc-preview" style="display:none; width:100%; max-height:150px; object-fit:contain; border-radius:8px; margin-top:8px;" loading="lazy">
               </div>
             </div>
 
@@ -2542,7 +2542,7 @@
       const photo = user.picture || user.profile?.photo
       if (photo) {
         document.getElementById('sidebar-avatar').innerHTML =
-          `<img src="${photo}" style="width:64px; height:64px; border-radius:50%; object-fit:cover;">`
+          `<img src="${photo}" style="width:64px; height:64px; border-radius:50%; object-fit:cover;" loading="lazy">`
       }
       updateMobileHeader()
 
@@ -3848,7 +3848,7 @@
     const photo = user.picture || profile.photo;
     if (photo) {
       document.getElementById('profile-avatar-preview').innerHTML =
-        `<img src="${photo}" style="width:120px; height:120px; border-radius:50%; object-fit:cover;">`;
+        `<img src="${photo}" style="width:120px; height:120px; border-radius:50%; object-fit:cover;" loading="lazy">`;
     }
 
     const desc = document.getElementById('profile-description');
@@ -3937,9 +3937,9 @@
       profilePhoto = e.target.result;
       profilePhotoChanged = true;
       document.getElementById('profile-avatar-preview').innerHTML =
-        `<img src="${e.target.result}" style="width:120px; height:120px; border-radius:50%; object-fit:cover;">`;
+        `<img src="${e.target.result}" style="width:120px; height:120px; border-radius:50%; object-fit:cover;" loading="lazy">`;
       document.getElementById('sidebar-avatar').innerHTML =
-        `<img src="${e.target.result}" style="width:64px; height:64px; border-radius:50%; object-fit:cover;">`;
+        `<img src="${e.target.result}" style="width:64px; height:64px; border-radius:50%; object-fit:cover;" loading="lazy">`;
       showSaveBar();
     };
     reader.readAsDataURL(file);
@@ -4472,12 +4472,12 @@
           <!-- Header immersif -->
           <div style="position:relative; height:200px; background:#111; overflow:hidden;">
             ${venue.picture
-              ? `<img src="${venue.picture}" style="width:100%; height:100%; object-fit:cover; filter:blur(8px) brightness(.4);">`
+              ? `<img src="${venue.picture}" style="width:100%; height:100%; object-fit:cover; filter:blur(8px) brightness(.4);" loading="lazy">`
               : `<div style="width:100%; height:100%; background:linear-gradient(135deg, #111, #1a1a1a);"></div>`}
             <div style="position:absolute; inset:0; display:flex; align-items:center; padding:32px; gap:24px;">
               <div style="width:88px; height:88px; border-radius:50%; overflow:hidden; border:3px solid var(--Y); flex-shrink:0;">
                 ${venue.picture
-                  ? `<img src="${venue.picture}" style="width:100%; height:100%; object-fit:cover;">`
+                  ? `<img src="${venue.picture}" style="width:100%; height:100%; object-fit:cover;" loading="lazy">`
                   : `<div style="width:100%; height:100%; background:#1a1a1a; display:flex; align-items:center; justify-content:center; font-size:36px;">🏛️</div>`}
               </div>
               <div>
@@ -4518,7 +4518,7 @@
                          onclick="openPhotoFullscreen('${p}')">
                       <img src="${p}" style="width:100%; height:100%; object-fit:cover; transition:transform .3s;"
                            onmouseover="this.style.transform='scale(1.05)'"
-                           onmouseout="this.style.transform='scale(1)'">
+                           onmouseout="this.style.transform='scale(1)'" loading="lazy">
                     </div>`).join('')}
                 </div>
                 <div style="color:var(--MUTED); font-size:12px; margin-top:8px; text-align:center;">Cliquez sur une photo pour l'agrandir</div>
@@ -4545,7 +4545,7 @@
       document.body.appendChild(overlay);
     }
     overlay.innerHTML = `
-      <img src="${src}" style="max-width:90vw; max-height:90vh; object-fit:contain; border-radius:12px; box-shadow:0 32px 80px rgba(0,0,0,.8);">
+      <img src="${src}" style="max-width:90vw; max-height:90vh; object-fit:contain; border-radius:12px; box-shadow:0 32px 80px rgba(0,0,0,.8);" loading="lazy">
       <button onclick="event.stopPropagation(); document.getElementById('photo-fullscreen').style.display='none'"
               style="position:fixed; top:20px; right:20px; background:rgba(255,255,255,.1); border:none; color:#fff; width:44px; height:44px; border-radius:50%; cursor:pointer; font-size:20px; backdrop-filter:blur(4px);">✕</button>
     `;
@@ -4870,10 +4870,10 @@
            onmouseover="this.style.borderColor='rgba(255,195,0,.3)'"
            onmouseout="this.style.borderColor='var(--BORDER)'">
           ${a.cover
-            ? `<img src="${a.cover}" alt="${a.title}" style="width:100%; aspect-ratio:16/9; object-fit:cover;">`
+            ? `<img src="${a.cover}" alt="${a.title}" style="width:100%; aspect-ratio:16/9; object-fit:cover;" loading="lazy">`
             : `<div style="width:100%; aspect-ratio:16/9; background:linear-gradient(135deg,#111,#1a1500);
                            display:flex; align-items:center; justify-content:center;">
-                 <img src="/logo.png" alt="CUE" style="height:32px; opacity:.2; object-fit:contain;">
+                 <img src="/logo.png" alt="CUE" style="height:32px; opacity:.2; object-fit:contain;" loading="lazy">
                </div>`
           }
           <div style="padding:16px;">

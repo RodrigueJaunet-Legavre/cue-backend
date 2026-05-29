@@ -23,7 +23,10 @@
   <meta name="theme-color" content="#FFC300">
   <link rel="icon" href="/logo-icon.png">
   <link rel="apple-touch-icon" href="/logo-icon.png">
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Barlow:wght@300;400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet"></noscript>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -1137,7 +1140,7 @@
 <!-- Navigation -->
 <nav id="navbar">
   <div class="nav-logo">
-    <a href="/"><img src="/logo.png" alt="CUE"></a>
+    <a href="/"><img src="/logo.png" alt="CUE" loading="lazy"></a>
   </div>
   <ul class="nav-links">
     <li><a href="#explore" onclick="switchTab('how')">How it works</a></li>
@@ -1380,7 +1383,7 @@
 <!-- Footer -->
 <footer>
   <div class="footer-logo">
-    <a href="/"><img src="/logo.png" alt="CUE"></a>
+    <a href="/"><img src="/logo.png" alt="CUE" loading="lazy"></a>
   </div>
   <ul class="footer-links">
     <li><a href="#explore" onclick="switchTab('how')">How it works</a></li>
@@ -1564,7 +1567,7 @@ async function loadBlogTab() {
     grid.innerHTML = articles.map(a => `
       <a href="/article.html?slug=${encodeURIComponent(a.slug)}" class="blog-card-new">
         ${a.cover
-          ? `<img src="${a.cover}" alt="${a.title}">`
+          ? `<img src="${a.cover}" alt="${a.title}" loading="lazy">`
           : `<div class="blog-card-placeholder"></div>`
         }
         <div class="blog-card-body">

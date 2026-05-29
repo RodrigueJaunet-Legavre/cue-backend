@@ -172,7 +172,7 @@
 <body>
 
 <nav>
-  <a href="/"><img src="/logo.png" alt="CUE"></a>
+  <a href="/"><img src="/logo.png" alt="CUE" loading="lazy"></a>
   <div class="nav-links">
     <a href="/#how-it-works">How it works</a>
     <a href="/#pricing">Pricing</a>
@@ -213,7 +213,7 @@ async function loadArticles() {
         ${a.cover
           ? `<img src="${a.cover}" alt="${a.title}" class="article-cover" loading="lazy">`
           : `<div class="article-cover-placeholder">
-              <img src="/logo.png" alt="CUE" style="height:48px; opacity:.3; object-fit:contain;">
+              <img src="/logo.png" alt="CUE" style="height:48px; opacity:.3; object-fit:contain;" loading="lazy">
             </div>`
         }
         <div class="article-body">

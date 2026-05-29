@@ -146,7 +146,7 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
 <body>
 
 <nav>
-  <a href="index.html"><img src="/logo.png" alt="CUE" style="height:64px; width:auto; object-fit:contain; display:block;"></a>
+  <a href="index.html"><img src="/logo.png" alt="CUE" style="height:64px; width:auto; object-fit:contain; display:block;" loading="lazy"></a>
   <a href="login.html" class="nav-link">Déjà inscrit ? Connexion</a>
 </nav>
 
@@ -198,7 +198,7 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
               <div style="font-size:24px;">📷</div>
               <div style="color:#888; font-size:11px; margin-top:4px;">Photo</div>
             </div>
-            <img id="venue-profile-preview" style="display:none; width:100%; height:100%; object-fit:cover;">
+            <img id="venue-profile-preview" style="display:none; width:100%; height:100%; object-fit:cover;" loading="lazy">
           </div>
           <input type="file" id="venue-profile-input" accept="image/*" style="display:none"
                  onchange="handleVenueProfilePhoto(this)">
@@ -217,7 +217,7 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
                 <div style="font-size:20px;">+</div>
                 <div style="color:#888; font-size:11px; margin-top:4px;">Photo 1</div>
               </div>
-              <img id="venue-photo-preview-0" style="display:none; width:100%; height:100%; object-fit:cover;">
+              <img id="venue-photo-preview-0" style="display:none; width:100%; height:100%; object-fit:cover;" loading="lazy">
               <input type="file" id="venue-photo-input-0" accept="image/*" style="display:none" onchange="handleVenuePhoto(this,0)">
             </div>
             <div id="venue-photo-zone-1"
@@ -231,7 +231,7 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
                 <div style="font-size:20px;">+</div>
                 <div style="color:#888; font-size:11px; margin-top:4px;">Photo 2</div>
               </div>
-              <img id="venue-photo-preview-1" style="display:none; width:100%; height:100%; object-fit:cover;">
+              <img id="venue-photo-preview-1" style="display:none; width:100%; height:100%; object-fit:cover;" loading="lazy">
               <input type="file" id="venue-photo-input-1" accept="image/*" style="display:none" onchange="handleVenuePhoto(this,1)">
             </div>
             <div id="venue-photo-zone-2"
@@ -245,7 +245,7 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px
                 <div style="font-size:20px;">+</div>
                 <div style="color:#888; font-size:11px; margin-top:4px;">Photo 3</div>
               </div>
-              <img id="venue-photo-preview-2" style="display:none; width:100%; height:100%; object-fit:cover;">
+              <img id="venue-photo-preview-2" style="display:none; width:100%; height:100%; object-fit:cover;" loading="lazy">
               <input type="file" id="venue-photo-input-2" accept="image/*" style="display:none" onchange="handleVenuePhoto(this,2)">
             </div>
           </div>

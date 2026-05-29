@@ -250,7 +250,7 @@
 <body>
 
 <nav>
-  <a href="/"><img src="/logo.png" alt="CUE"></a>
+  <a href="/"><img src="/logo.png" alt="CUE" loading="lazy"></a>
   <a href="/blog.html" class="back-link">← Blog</a>
   <a href="/inscription.html" class="btn-yellow">Get started</a>
 </nav>
@@ -302,7 +302,7 @@ async function loadArticle() {
         </div>
       </div>
 
-      ${a.cover ? `<img src="${a.cover}" alt="${a.title}" class="article-cover">` : ''}
+      ${a.cover ? `<img src="${a.cover}" alt="${a.title}" class="article-cover" loading="lazy">` : ''}
 
       <div class="article-content">${a.content}</div>
 

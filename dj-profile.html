@@ -580,7 +580,7 @@
     const photo = dj.picture || dj.profile?.photo || dj.photo;
     if (photo) {
       document.getElementById('hero-avatar').innerHTML =
-        `<img src="${photo}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+        `<img src="${photo}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" loading="lazy">`;
     }
 
     document.getElementById('stat-gigs').textContent = dj.gigs || 0;
