@@ -15,14 +15,16 @@
   ],
   "shortcuts": [
     {
-      "name": "Messages",
+      "name": "Mes messages",
+      "short_name": "Messages",
       "url": "/dashboard-dj.html?page=messages",
-      "description": "Voir mes messages"
+      "icons": [{ "src": "/logo-icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Find DJ",
+      "short_name": "Find DJ",
       "url": "/dashboard-venue.html?page=find-dj",
-      "description": "Trouver un DJ"
+      "icons": [{ "src": "/logo-icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
