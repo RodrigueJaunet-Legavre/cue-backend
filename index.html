@@ -1134,6 +1134,11 @@
     .how-stats { grid-template-columns: 1fr; }
   }
   </style>
+
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CUE DJ">
 </head>
 <body>
 
@@ -1730,6 +1735,46 @@ function initScene() {
 }
 
 window.addEventListener('load', initScene)
+
+/* ── PWA INSTALL ── */
+let deferredPrompt = null
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault()
+  deferredPrompt = e
+  const btn = document.getElementById('pwa-install-btn')
+  if (btn) btn.style.display = 'flex'
+})
+
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('pwa-install-btn')
+  if (btn) btn.style.display = 'none'
+  deferredPrompt = null
+})
+
+async function installPWA() {
+  if (!deferredPrompt) return
+  deferredPrompt.prompt()
+  const { outcome } = await deferredPrompt.userChoice
+  if (outcome === 'accepted') {
+    localStorage.setItem('cue_pwa_installed', 'true')
+  }
+  deferredPrompt = null
+}
 </script>
+
+<button id="pwa-install-btn" onclick="installPWA()"
+        style="display:none; position:fixed; bottom:24px; right:24px; z-index:999;
+               background:#FFC300; color:#000; border:none; border-radius:100px;
+               padding:12px 20px; font-weight:700; font-size:13px; cursor:pointer;
+               align-items:center; gap:8px; box-shadow:0 8px 24px rgba(255,195,0,.3);
+               font-family:Barlow,sans-serif; transition:all .3s;"
+        onmouseover="this.style.transform='translateY(-2px)'"
+        onmouseout="this.style.transform='translateY(0)'">
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M8 2v8M4 7l4 4 4-4M2 12h12" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>
+  Installer l'app
+</button>
 </body>
 </html>

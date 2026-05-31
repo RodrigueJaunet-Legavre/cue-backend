@@ -2563,6 +2563,14 @@
       loadUnreadCounts()
       setInterval(loadUnreadCounts, 30000)
 
+    // Routing PWA shortcuts — ?page=
+    const urlParams = new URLSearchParams(window.location.search);
+    const startPage = urlParams.get('page');
+    if (startPage) {
+      const navItem = document.querySelector(`.nav-item[data-page="${startPage}"]`);
+      if (navItem) setTimeout(() => showPage(startPage, navItem), 100);
+    }
+
     // Retour depuis Stripe après paiement abonnement
     const params = new URLSearchParams(window.location.search);
     const subSuccess = params.get('sub_success');

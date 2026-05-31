@@ -1,24 +1,28 @@
 {
   "name": "CUE DJ",
   "short_name": "CUE DJ",
-  "description": "La plateforme de booking DJ",
+  "description": "La plateforme de booking DJ professionnelle",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#080808",
   "theme_color": "#FFC300",
   "orientation": "portrait",
+  "categories": ["music", "business"],
+  "screenshots": [],
   "icons": [
+    { "src": "/logo-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/logo-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
     {
-      "src": "/logo-icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "name": "Messages",
+      "url": "/dashboard-dj.html?page=messages",
+      "description": "Voir mes messages"
     },
     {
-      "src": "/logo-icon.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "name": "Find DJ",
+      "url": "/dashboard-venue.html?page=find-dj",
+      "description": "Trouver un DJ"
     }
   ]
 }
