@@ -1470,32 +1470,6 @@ document.querySelectorAll('.feature-card').forEach((card, i) => {
 })
 
 // Check if user is logged in
-async function checkAuth() {
-  try {
-    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm')
-    const supabase = createClient(
-      'https://orjhkfdvihuvqcjxhjwe.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yamhrZmR2aWh1dnFjanhoandlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MzU2ODEsImV4cCI6MjA5NDAxMTY4MX0.Ti7anM1O3KqbZYLxRkl1rWbcghJF5FgmRxNqOTV6JL0'
-    )
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session) {
-      const res = await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get_user', userId: session.user.id, email: session.user.email })
-      })
-      const data = await res.json()
-      if (data.user) {
-        const navCtas = document.querySelector('.nav-ctas')
-        if (navCtas) {
-          const dashboard = data.user.user_type === 'dj' ? 'dashboard-dj.html' : 'dashboard-venue.html'
-          navCtas.innerHTML = `<a href="${dashboard}" class="btn-yellow">My Dashboard</a>`
-        }
-      }
-    }
-  } catch(e) {}
-}
-checkAuth()
 
 // ── EXPLORE TABS ──
 let blogTabLoaded = false
