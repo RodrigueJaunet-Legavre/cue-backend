@@ -368,6 +368,51 @@
 
     <div style="display:flex; flex-direction:column; gap:16px; margin-top:32px;">
 
+      <!-- Fondateur -->
+      <div style="background:linear-gradient(135deg,#0d0d0d,#1a1200); border:1px solid rgba(255,195,0,.25);
+                  border-radius:16px; padding:20px 24px; position:relative; overflow:hidden;">
+        <div id="onb-founder-content" style="filter:blur(2px); pointer-events:none; transition:filter .3s;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                <span style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:18px; color:#fff;">FONDATEUR</span>
+                <span style="background:rgba(255,195,0,.15); color:#FFC300; font-size:9px; font-weight:700;
+                             padding:3px 8px; border-radius:20px; letter-spacing:1px;">EXCLUSIF</span>
+              </div>
+              <div style="color:#FFC300; font-size:13px; font-weight:600;">0% de commission — À vie</div>
+              <div style="color:var(--MUTED,#666); font-size:12px; margin-top:4px;">
+                Mêmes avantages que Starter + 0% de commission
+              </div>
+            </div>
+            <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:36px; color:#fff;">Gratuit</div>
+          </div>
+        </div>
+        <div id="onb-founder-lock" style="position:absolute; inset:0; background:rgba(8,8,8,.7);
+             backdrop-filter:blur(1px); display:flex; align-items:center; justify-content:center;
+             border-radius:16px;">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%; padding:16px 20px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:16px;">🔒</span>
+              <span style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:16px; color:#fff;">CODE FONDATEUR REQUIS</span>
+            </div>
+            <div style="display:flex; gap:8px; width:100%; max-width:360px; flex-wrap:wrap; justify-content:center;">
+              <input type="text" id="onb-founder-code" placeholder="FOUNDER-XXXXX-XXXX"
+                     style="flex:1; min-width:180px; background:#111; border:1px solid rgba(255,195,0,.3); color:#FFC300;
+                            padding:10px 14px; border-radius:10px; font-family:monospace; font-size:13px;
+                            outline:none; text-transform:uppercase;"
+                     oninput="this.value=this.value.toUpperCase()">
+              <button onclick="verifyFounderCode()"
+                      style="background:#FFC300; color:#000; border:none; border-radius:10px;
+                             padding:10px 16px; font-weight:700; cursor:pointer; font-family:Barlow,sans-serif;
+                             font-size:13px; white-space:nowrap;">
+                Vérifier
+              </button>
+            </div>
+            <div id="onb-founder-error" style="color:#ff4444; font-size:11px; display:none;"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Starter -->
       <div class="plan-card" id="plan-starter" onclick="selectPlan('starter', this)"
            style="border:2px solid var(--Y); background:rgba(255,195,0,.04); border-radius:16px; padding:20px 24px; cursor:pointer; transition:all .25s;">
@@ -947,6 +992,56 @@
   }
 
   let selectedPlan = 'starter';
+  let founderUnlocked = false;
+
+  async function verifyFounderCode() {
+    const code = document.getElementById('onb-founder-code')?.value?.trim();
+    const errorEl = document.getElementById('onb-founder-error');
+    if (!code) return;
+    errorEl.style.display = 'none';
+    try {
+      const { supabase } = await import('./js/supabase-client.js');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { errorEl.textContent = 'Connecte-toi d\'abord.'; errorEl.style.display = 'block'; return; }
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'check_founder_code', code, email: session.user.email })
+      });
+      const data = await res.json();
+      if (data.valid) {
+        founderUnlocked = true;
+        document.getElementById('onb-founder-lock').style.display = 'none';
+        document.getElementById('onb-founder-content').style.filter = 'none';
+        document.getElementById('onb-founder-content').style.pointerEvents = 'auto';
+        document.getElementById('onb-founder-content').innerHTML += `
+          <button onclick="selectFounderPlan()"
+                  style="width:100%; margin-top:14px; padding:12px; background:linear-gradient(135deg,#FFC300,#FFD740);
+                         color:#000; border:none; border-radius:10px; font-weight:900; font-size:15px;
+                         cursor:pointer; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;">
+            CHOISIR CE PLAN
+          </button>
+        `;
+      } else {
+        errorEl.textContent = data.error || 'Code invalide ou non autorisé pour ton email.';
+        errorEl.style.display = 'block';
+      }
+    } catch(err) {
+      errorEl.textContent = 'Erreur réseau.';
+      errorEl.style.display = 'block';
+    }
+  }
+
+  function selectFounderPlan() {
+    selectedPlan = 'founder';
+    document.querySelectorAll('.plan-card').forEach(c => {
+      c.style.borderColor = 'var(--BORDER)';
+      c.style.background = '#0a0a0a';
+    });
+    document.querySelectorAll('[id^="check-"]').forEach(c => c.style.display = 'none');
+    const btn = document.getElementById('plan-btn');
+    if (btn) btn.textContent = 'Activer le plan Fondateur →';
+  }
 
   function selectPlan(plan, el) {
     selectedPlan = plan;
@@ -983,6 +1078,23 @@
 
     if (selectedPlan === 'starter') {
       await completeProfile();
+      return;
+    }
+
+    if (selectedPlan === 'founder') {
+      const code = document.getElementById('onb-founder-code')?.value?.trim();
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'activate_founder_plan', userId, email, code })
+      });
+      const data = await res.json();
+      if (data.success) {
+        await completeProfile();
+      } else {
+        alert('Erreur activation plan fondateur : ' + data.error);
+        if (btn) { btn.disabled = false; btn.textContent = 'Activer le plan Fondateur →'; }
+      }
       return;
     }
 

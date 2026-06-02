@@ -434,6 +434,22 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'check_founder_code') {
+    const { code, email } = body;
+    try {
+      const [fc] = await sql`
+        SELECT * FROM founder_codes
+        WHERE code = ${code.toUpperCase()}
+        AND email = ${email.toLowerCase()}
+        AND used = false
+      `;
+      if (!fc) return res.status(200).json({ valid: false, error: 'Code invalide ou déjà utilisé.' });
+      return res.status(200).json({ valid: true });
+    } catch(err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   if (action === 'activate_founder_plan') {
     const { userId, code, email } = body;
     try {
