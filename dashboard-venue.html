@@ -3294,6 +3294,14 @@
     }).join('')
 
     checkAllFavorites(djs.map(d => d.id))
+
+    // Force la visibilité des cards
+    setTimeout(() => {
+      container.querySelectorAll('.dj-card').forEach(card => {
+        card.style.opacity = '1'
+        card.style.transform = 'translateY(0)'
+      })
+    }, 100)
   }
 
   async function toggleFavorite(djId, btn) {
