@@ -44,7 +44,7 @@ module.exports = async function handler(req, res) {
     else if (sort === 'bookings') djs.sort((a, b) => b.booking_count - a.booking_count);
     else if (sort === 'newest') djs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     else {
-      const planOrder = { business: 0, pro: 1, starter: 2 };
+      const planOrder = { business: 0, founder: 0, pro: 1, starter: 2 };
       djs.sort((a, b) => {
         const planDiff = (planOrder[a.plan] ?? 2) - (planOrder[b.plan] ?? 2);
         if (planDiff !== 0) return planDiff;

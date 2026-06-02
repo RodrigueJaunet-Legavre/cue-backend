@@ -257,6 +257,9 @@
     <span class="icon">🚨</span> Reports
     <span id="reports-badge" style="margin-left:auto; background:#ff4444; color:#fff; border-radius:20px; padding:2px 8px; font-size:11px;"></span>
   </div>
+  <div class="nav-item" onclick="showPage('founders', this)">
+    <span class="icon">⭐</span> Fondateurs
+  </div>
 </div>
 
 <!-- MAIN CONTENT -->
@@ -442,6 +445,40 @@
     </div>
   </div>
 
+  <!-- FOUNDERS -->
+  <div id="page-founders" class="page">
+    <h1 class="section-title">PLAN FONDATEUR</h1>
+    <p class="section-sub" style="margin-bottom:24px;">Génère et gère les codes d'accès fondateur</p>
+
+    <div style="background:#111; border:1px solid var(--BORDER); border-radius:16px; padding:24px; margin-bottom:24px;">
+      <div style="font-weight:700; color:#fff; margin-bottom:16px; font-size:16px;">Générer un code fondateur</div>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <input type="email" id="founder-email-input" placeholder="Email du DJ parrain"
+               style="flex:1; min-width:200px; background:#0a0a0a; border:1px solid var(--BORDER); color:#fff;
+                      padding:12px 16px; border-radius:10px; font-size:14px; font-family:Barlow,sans-serif; outline:none;">
+        <button onclick="generateFounderCode()"
+                style="background:#FFC300; color:#000; border:none; border-radius:10px;
+                       padding:12px 24px; font-weight:700; cursor:pointer; font-family:Barlow,sans-serif; white-space:nowrap;">
+          Générer et envoyer
+        </button>
+      </div>
+      <div id="founder-code-result" style="display:none; margin-top:16px; background:rgba(0,200,100,.08);
+           border:1px solid rgba(0,200,100,.2); border-radius:10px; padding:14px;">
+        <div style="color:#00c864; font-weight:700; margin-bottom:4px;">Code généré et envoyé !</div>
+        <div id="founder-code-display" style="font-family:monospace; font-size:18px; color:#FFC300; letter-spacing:3px;"></div>
+      </div>
+    </div>
+
+    <div style="background:#111; border:1px solid var(--BORDER); border-radius:16px; overflow:hidden;">
+      <div style="padding:16px 20px; border-bottom:1px solid var(--BORDER); font-weight:700; color:#fff;">
+        Codes générés
+      </div>
+      <div id="founder-codes-list" style="padding:8px;">
+        <div style="text-align:center; padding:24px; color:var(--MUTED);">Chargement...</div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- MODAL VÉRIFICATION -->
@@ -570,6 +607,61 @@
     if (page === 'reports') loadReports('all');
     if (page === 'bookings') loadBookings && loadBookings();
     if (page === 'payouts') loadPayouts();
+    if (page === 'founders') loadFounderCodes();
+  }
+
+  async function generateFounderCode() {
+    const email = document.getElementById('founder-email-input')?.value?.trim();
+    if (!email) { alert('Entre un email.'); return; }
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminAction: 'generate_founder_code', email, adminSecret: getSecret() })
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('founder-code-result').style.display = 'block';
+        document.getElementById('founder-code-display').textContent = data.code;
+        document.getElementById('founder-email-input').value = '';
+        loadFounderCodes();
+      } else {
+        alert('Erreur : ' + data.error);
+      }
+    } catch(err) {
+      alert('Erreur : ' + err.message);
+    }
+  }
+
+  async function loadFounderCodes() {
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminAction: 'list_founder_codes', adminSecret: getSecret() })
+      });
+      const data = await res.json();
+      const list = document.getElementById('founder-codes-list');
+      if (!list) return;
+      if (!data.codes?.length) {
+        list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--MUTED);">Aucun code généré</div>';
+        return;
+      }
+      list.innerHTML = data.codes.map(c => `
+        <div style="display:flex; align-items:center; gap:16px; padding:14px 16px;
+                    border-bottom:1px solid rgba(255,255,255,.04); flex-wrap:wrap;">
+          <div style="font-family:monospace; font-size:15px; color:#FFC300; font-weight:700; min-width:200px;">${c.code}</div>
+          <div style="flex:1; color:var(--MUTED); font-size:13px;">${c.email}</div>
+          <div style="font-size:12px; padding:4px 10px; border-radius:20px;
+                      ${c.used ? 'background:rgba(0,200,100,.1); color:#00c864;' : 'background:rgba(255,195,0,.1); color:#FFC300;'}">
+            ${c.used ? 'Activé' : 'En attente'}
+          </div>
+          <div style="font-size:11px; color:#444;">
+            ${c.used_at ? new Date(c.used_at).toLocaleDateString('fr-FR') : new Date(c.created_at).toLocaleDateString('fr-FR')}
+          </div>
+        </div>
+      `).join('');
+    } catch(err) {}
   }
 
   // LOAD DATA

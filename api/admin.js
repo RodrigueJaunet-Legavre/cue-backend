@@ -317,5 +317,42 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (adminAction === 'generate_founder_code') {
+    const { email } = body;
+    if (!email) return res.status(400).json({ error: 'Email requis' });
+    try {
+      const name = email.split('@')[0].toUpperCase().replace(/[^A-Z]/g, '').slice(0, 6);
+      const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const code = `FOUNDER-${name}-${random}`;
+      await sql`
+        INSERT INTO founder_codes (code, email, created_at)
+        VALUES (${code}, ${email.toLowerCase()}, NOW())
+        ON CONFLICT (email) DO UPDATE SET
+          code = ${code},
+          used = false,
+          used_at = null,
+          user_id = null,
+          created_at = NOW()
+      `;
+      await fetch('https://cuedj.eu/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'founder_code', email: email.toLowerCase(), code })
+      });
+      return res.status(200).json({ success: true, code });
+    } catch(err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  if (adminAction === 'list_founder_codes') {
+    try {
+      const codes = await sql`SELECT * FROM founder_codes ORDER BY created_at DESC`;
+      return res.status(200).json({ codes });
+    } catch(err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   return res.status(400).json({ error: 'adminAction inconnue' });
 }

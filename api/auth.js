@@ -434,6 +434,35 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'activate_founder_plan') {
+    const { userId, code, email } = body;
+    try {
+      const [founderCode] = await sql`
+        SELECT * FROM founder_codes
+        WHERE code = ${code.toUpperCase()}
+        AND email = ${email.toLowerCase()}
+        AND used = false
+      `;
+      if (!founderCode) {
+        return res.status(400).json({
+          error: 'Code invalide ou déjà utilisé. Ce code est réservé à votre adresse email.'
+        });
+      }
+      await sql`UPDATE users SET plan = 'founder', updated_at = NOW() WHERE id = ${userId}`;
+      await sql`
+        UPDATE founder_codes SET
+          used = true,
+          used_at = NOW(),
+          user_id = ${userId}
+        WHERE code = ${code.toUpperCase()}
+      `;
+      const [updatedUser] = await sql`SELECT * FROM users WHERE id = ${userId}`;
+      return res.status(200).json({ success: true, user: sanitizeUser(updatedUser) });
+    } catch(err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   if (action === 'add_review') {
     const { djId, venueId, venueName, djName, rating, comment } = body;
     try {
