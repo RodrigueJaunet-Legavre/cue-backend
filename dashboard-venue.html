@@ -2921,15 +2921,46 @@
     }, 16);
   }
 
-  function loadStats() {
-    const upcoming = bookings.filter(b => new Date(b.date && b.date.includes('T') ? b.date : (b.date || '') + 'T00:00:00') >= new Date()).length;
-    animateCounter(document.getElementById('stat-favs'), favoriteDJIds.size);
-    animateCounter(document.getElementById('stat-upcoming'), upcoming);
-    animateCounter(document.getElementById('stat-bookings-total'), bookings.length);
-    updateQuickActions();
-    loadRecentActivity();
-    checkPaymentReminders();
-    checkBadgeConditions();
+  async function loadStats() {
+    try {
+      const { supabase } = await import('./js/supabase-client.js')
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_bookings', userId: session.user.id, userType: 'venue' })
+      })
+      const data = await res.json()
+      const apiBookings = data.bookings || []
+
+      const now = new Date()
+      const upcoming = apiBookings.filter(b => {
+        const d = new Date(b.event_date || b.date || b.created_at)
+        return d >= now && (b.status === 'confirmed' || b.status === 'pending')
+      }).length
+
+      animateCounter(document.getElementById('stat-favs'), favoriteDJIds.size)
+      animateCounter(document.getElementById('stat-upcoming'), upcoming)
+      animateCounter(document.getElementById('stat-bookings-total'), apiBookings.length)
+
+      const msgCount = notifCounts.messages || 0
+      const msgEl = document.getElementById('stat-messages')
+      if (msgEl) msgEl.textContent = msgCount
+    } catch(err) {
+      console.log('Erreur loadStats venue:', err)
+      // Fallback sur les données locales
+      const upcoming = bookings.filter(b => new Date(b.date && b.date.includes('T') ? b.date : (b.date || '') + 'T00:00:00') >= new Date()).length
+      animateCounter(document.getElementById('stat-favs'), favoriteDJIds.size)
+      animateCounter(document.getElementById('stat-upcoming'), upcoming)
+      animateCounter(document.getElementById('stat-bookings-total'), bookings.length)
+    }
+
+    updateQuickActions()
+    loadRecentActivity()
+    checkPaymentReminders()
+    checkBadgeConditions()
   }
 
   function checkBadgeConditions() {

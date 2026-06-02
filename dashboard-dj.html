@@ -2798,34 +2798,61 @@
     }, 16);
   }
 
-  function loadStats() {
-    const toDate = d => new Date(d && d.includes('T') ? d : (d || '') + 'T00:00:00');
-    const confirmed = gigs.filter(g => g.status === 'confirmed' || toDate(g.date) < new Date());
-    const now = new Date();
-    const monthRevenue = confirmed.filter(g => toDate(g.date).getMonth() === now.getMonth()).reduce((s, g) => s + (g.fee || 0), 0);
-    const yearRevenue = confirmed.filter(g => toDate(g.date).getFullYear() === now.getFullYear()).reduce((s, g) => s + (g.fee || 0), 0);
+  async function loadStats() {
+    try {
+      const { supabase } = await import('./js/supabase-client.js')
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
 
-    animateCounter(document.getElementById('stat-bookings'), confirmed.length);
-    animateCounter(document.getElementById('stat-revenue-month'), monthRevenue, 1200, '€');
-    animateCounter(document.getElementById('stat-revenue-year'), yearRevenue, 1200, '€');
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_bookings', userId: session.user.id, userType: 'dj' })
+      })
+      const data = await res.json()
+      const bookings = data.bookings || []
 
-    const avg = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : '—';
-    document.getElementById('stat-rating').textContent = avg;
-    document.getElementById('stat-reviews-count').textContent = reviews.length ? reviews.length + ' avis' : 'Aucun avis';
+      const now = new Date()
+      const confirmed = bookings.filter(b => b.status === 'confirmed' || b.status === 'completed')
 
-    const pending = gigs.filter(g => g.status === 'pending').length;
-    const pendingBadge = document.getElementById('pending-gigs-badge');
-    if (pendingBadge) {
-      if (pending > 0) {
-        pendingBadge.textContent = pending;
-        pendingBadge.style.display = 'flex';
-        pendingBadge.style.animation = 'badgePop .3s cubic-bezier(.34,1.56,.64,1) both';
-      } else {
-        pendingBadge.style.display = 'none';
+      const monthRevenue = confirmed
+        .filter(b => {
+          const d = new Date(b.event_date || b.created_at)
+          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+        })
+        .reduce((s, b) => s + parseFloat(b.dj_amount || b.amount || 0), 0)
+
+      const yearRevenue = confirmed
+        .filter(b => new Date(b.event_date || b.created_at).getFullYear() === now.getFullYear())
+        .reduce((s, b) => s + parseFloat(b.dj_amount || b.amount || 0), 0)
+
+      animateCounter(document.getElementById('stat-bookings'), confirmed.length)
+      animateCounter(document.getElementById('stat-revenue-month'), Math.round(monthRevenue), 1200, '€')
+      animateCounter(document.getElementById('stat-revenue-year'), Math.round(yearRevenue), 1200, '€')
+
+      const avg = parseFloat(user.avg_rating) || 0
+      const reviewCount = parseInt(user.review_count) || 0
+      const ratingEl = document.getElementById('stat-rating')
+      if (ratingEl) ratingEl.textContent = avg > 0 ? avg.toFixed(1) : '—'
+      const reviewsEl = document.getElementById('stat-reviews-count')
+      if (reviewsEl) reviewsEl.textContent = reviewCount > 0 ? reviewCount + ' avis' : 'Aucun avis'
+
+      const pending = bookings.filter(b => b.status === 'pending').length
+      const pendingBadge = document.getElementById('pending-gigs-badge')
+      if (pendingBadge) {
+        if (pending > 0) {
+          pendingBadge.textContent = pending
+          pendingBadge.style.display = 'flex'
+          pendingBadge.style.animation = 'badgePop .3s cubic-bezier(.34,1.56,.64,1) both'
+        } else {
+          pendingBadge.style.display = 'none'
+        }
       }
+    } catch(err) {
+      console.log('Erreur loadStats:', err)
     }
 
-    checkBadgeConditions();
+    checkBadgeConditions()
   }
 
   function checkBadgeConditions() {
