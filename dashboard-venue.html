@@ -3183,6 +3183,7 @@
         body: JSON.stringify({ search: query, genre, genres: activeChips, verifiedOnly, sort })
       });
       const data = await res.json();
+      console.log('DJs reçus:', data.djs?.length, data);
       allDJs = data.djs?.length ? data.djs : demoDJs;
     } catch (err) {
       allDJs = demoDJs;
