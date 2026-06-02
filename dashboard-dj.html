@@ -2582,7 +2582,10 @@
 
       Object.assign(user, data.user)
 
-      if (user.user_type !== 'dj') { window.location.replace('index.html'); return }
+      if (user.user_type !== 'dj') {
+        window.location.replace('dashboard-venue.html');
+        return
+      }
 
       // Affiche les infos
       const plan = user.plan || 'starter'
