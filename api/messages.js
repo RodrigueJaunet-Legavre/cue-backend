@@ -229,5 +229,32 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'get_bookings') {
+    const { userId, userType } = body;
+    try {
+      let bookings;
+      if (userType === 'dj') {
+        bookings = await sql`
+          SELECT b.*, u.first_name as venue_name, u.org_name
+          FROM bookings b
+          LEFT JOIN users u ON u.id = b.venue_id
+          WHERE b.dj_id = ${userId}
+          ORDER BY b.created_at DESC
+        `;
+      } else {
+        bookings = await sql`
+          SELECT b.*, u.first_name as dj_first, u.last_name as dj_last, u.stage_name
+          FROM bookings b
+          LEFT JOIN users u ON u.id = b.dj_id
+          WHERE b.venue_id = ${userId}
+          ORDER BY b.created_at DESC
+        `;
+      }
+      return res.status(200).json({ bookings });
+    } catch(err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   return res.status(400).json({ error: 'Action inconnue' });
 }
