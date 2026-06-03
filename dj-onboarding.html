@@ -328,41 +328,11 @@
   </div>
 
   <!-- ÉTAPE 6 : RÉSEAUX SOCIAUX -->
-  <div class="step" id="step-6">
-    <div class="step-tag">✦ Étape 6</div>
-    <h1 class="step-title">TES RÉSEAUX<br>SOCIAUX.</h1>
-    <p class="step-sub">Optionnel mais recommandé — les venues vérifient souvent vos réseaux.</p>
-
-    <div class="social-input">
-      <span class="social-icon">📸</span>
-      <input type="text" id="instagram" placeholder="instagram.com/tonpseudo">
-    </div>
-    <div class="social-input">
-      <span class="social-icon">🎵</span>
-      <input type="text" id="soundcloud" placeholder="soundcloud.com/tonpseudo">
-    </div>
-    <div class="social-input">
-      <span class="social-icon">🎶</span>
-      <input type="text" id="spotify" placeholder="open.spotify.com/artist/...">
-    </div>
-    <div class="social-input">
-      <span class="social-icon">▶️</span>
-      <input type="text" id="youtube" placeholder="youtube.com/@tonpseudo">
-    </div>
-    <div class="social-input">
-      <span class="social-icon">🎵</span>
-      <input type="text" id="tiktok" placeholder="tiktok.com/@tonpseudo">
-    </div>
-
-    <div class="nav-buttons">
-      <button class="btn-back" onclick="prevStep()">← Retour</button>
-      <button class="btn-next" onclick="nextStep()">Continuer →</button>
-    </div>
-  </div>
+  <div class="step" id="step-6" style="display:none;"></div>
 
   <!-- ÉTAPE 7 : ABONNEMENT -->
   <div class="step" id="step-7">
-    <div class="step-tag">✦ Étape 7 sur 7</div>
+    <div class="step-tag">✦ Étape 6 sur 6</div>
     <h1 class="step-title">CHOISIS<br>TON PLAN.</h1>
     <p class="step-sub">Tu peux changer à tout moment depuis ton dashboard.</p>
 
@@ -551,7 +521,7 @@
 
 <script>
   let currentStep = 1;
-  const totalSteps = 7;
+  const totalSteps = 6;
   let selectedGenres = [];
   let profileData = {};
   let tracks = [];
@@ -613,12 +583,16 @@
       }
     }
     saveCurrentStep();
-    if (currentStep < totalSteps) showStep(currentStep + 1);
+    let nextN = currentStep + 1;
+    if (nextN === 6) nextN = 7;
+    if (nextN <= 7) showStep(nextN);
     else completeProfile();
   }
 
   function prevStep() {
-    if (currentStep > 1) showStep(currentStep - 1);
+    let prevN = currentStep - 1;
+    if (prevN === 6) prevN = 5;
+    if (prevN >= 1) showStep(prevN);
   }
 
   function skipStep() {
@@ -664,8 +638,9 @@
       return;
     }
     document.getElementById('step-' + currentStep).classList.add('active');
-    document.getElementById('step-indicator').textContent = `Étape ${n} sur ${totalSteps}`;
-    document.getElementById('progress-fill').style.width = ((n / totalSteps) * 100) + '%';
+    const displayN = n === 7 ? totalSteps : n;
+    document.getElementById('step-indicator').textContent = `Étape ${displayN} sur ${totalSteps}`;
+    document.getElementById('progress-fill').style.width = ((displayN / totalSteps) * 100) + '%';
 
     // Cache "Passer" pour les étapes obligatoires
     const skipBtn = document.querySelector('.skip-btn');
@@ -682,13 +657,6 @@
     }
     if (currentStep === 3) {
       profileData.genres = selectedGenres;
-    }
-    if (currentStep === 6) {
-      profileData.instagram = document.getElementById('instagram').value;
-      profileData.soundcloud = document.getElementById('soundcloud').value;
-      profileData.spotify = document.getElementById('spotify').value;
-      profileData.youtube = document.getElementById('youtube').value;
-      profileData.tiktok = document.getElementById('tiktok').value;
     }
   }
 
@@ -884,11 +852,6 @@
           userId,
           description: profileData.description || '',
           genres: selectedGenres,
-          instagram: profileData.instagram || '',
-          tiktok: profileData.tiktok || '',
-          soundcloud: profileData.soundcloud || '',
-          spotify: profileData.spotify || '',
-          youtube: profileData.youtube || '',
           mixUrl: mixUrl || '',
           tracks: uploadedTracks,
           photo: photoUrl

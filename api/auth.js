@@ -282,9 +282,8 @@ module.exports = async function handler(req, res) {
   }
 
   if (action === 'update_full_profile') {
-    const { userId, firstName, lastName, stageName, photo, description,
-            genres, instagram, tiktok, soundcloud, spotify, youtube,
-            iban, bic, bankName } = body
+    const { userId, firstName, lastName, stageName, photo, photo2, videoUrl,
+            description, genres, iban, bic, bankName } = body
     try {
       await sql`
         UPDATE users SET
@@ -292,13 +291,10 @@ module.exports = async function handler(req, res) {
           last_name = ${lastName || null},
           stage_name = ${stageName || null},
           picture = ${photo || null},
+          picture2 = ${photo2 || null},
+          video_url = ${videoUrl || null},
           description = ${description || null},
           genres = ${sql.array(Array.isArray(genres) ? genres : [])},
-          instagram = ${instagram || null},
-          tiktok = ${tiktok || null},
-          soundcloud = ${soundcloud || null},
-          spotify = ${spotify || null},
-          youtube = ${youtube || null},
           iban = ${iban || null},
           bic = ${bic || null},
           bank_name = ${bankName || null},
