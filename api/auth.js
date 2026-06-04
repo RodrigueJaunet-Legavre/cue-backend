@@ -283,7 +283,7 @@ module.exports = async function handler(req, res) {
 
   if (action === 'update_full_profile') {
     const { userId, firstName, lastName, stageName, photo, photo2, videoUrl,
-            description, genres, iban, bic, bankName } = body
+            description, genres, city, iban, bic, bankName } = body
     try {
       await sql`
         UPDATE users SET
@@ -295,6 +295,7 @@ module.exports = async function handler(req, res) {
           video_url = ${videoUrl || null},
           description = ${description || null},
           genres = ${sql.array(Array.isArray(genres) ? genres : (genres ? JSON.parse(genres) : []))},
+          city = ${city || null},
           iban = ${iban || null},
           bic = ${bic || null},
           bank_name = ${bankName || null},
@@ -311,7 +312,7 @@ module.exports = async function handler(req, res) {
 
   if (action === 'update_profile_by_id') {
     const { userId, description, genres, instagram, tiktok, soundcloud,
-            spotify, youtube, mixUrl, tracks, photo } = body;
+            spotify, youtube, mixUrl, tracks, photo, city } = body;
     try {
       // Parse genres — accepte string JSON ou array
       let genresArray = [];
@@ -337,6 +338,7 @@ module.exports = async function handler(req, res) {
           mix_url = ${mixUrl || null},
           tracks = ${sql.array(tracksArray)},
           picture = ${photo || null},
+          city = ${city || null},
           profile_complete = true,
           updated_at = NOW()
         WHERE id = ${userId}

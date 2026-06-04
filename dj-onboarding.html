@@ -268,6 +268,13 @@
               oninput="updateCharCount()"></textarea>
     <div class="char-count"><span id="char-count">0</span>/500</div>
 
+    <div class="form-group" style="margin-top:16px;">
+      <label class="form-label">Ville <span style="color:var(--MUTED); font-weight:400; text-transform:none; font-size:11px;">(optionnel)</span></label>
+      <input type="text" id="dj-city" class="form-input"
+             placeholder="Paris, Lyon, Marseille..."
+             style="width:100%;">
+    </div>
+
     <div class="nav-buttons">
       <button class="btn-back" onclick="prevStep()">← Retour</button>
       <button class="btn-next" onclick="nextStep()">Continuer →</button>
@@ -872,6 +879,7 @@
           userId,
           description: profileData.description || '',
           genres: selectedGenres,
+          city: document.getElementById('dj-city')?.value?.trim() || '',
           mixUrl: mixUrl || '',
           tracks: uploadedTracks,
           photo: photoUrl
