@@ -1071,7 +1071,13 @@
       });
       const data = await res.json();
       if (data.success) {
-        await completeProfile();
+        const ctaBtn = document.querySelector('#founder-content button')
+        if (ctaBtn) {
+          ctaBtn.style.background = 'linear-gradient(135deg,#00c864,#00a050)'
+          ctaBtn.textContent = '✓ Plan Fondateur activé !'
+        }
+        await new Promise(resolve => setTimeout(resolve, 1200))
+        await completeProfile()
       } else {
         alert('Erreur activation plan fondateur : ' + data.error);
         if (btn) { btn.disabled = false; btn.textContent = 'Activer le plan Fondateur →'; }
