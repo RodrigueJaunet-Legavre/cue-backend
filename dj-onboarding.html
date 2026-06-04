@@ -1008,12 +1008,19 @@
   }
 
   async function selectFounderPlan() {
-    selectedPlan = 'founder'
-    const btn = document.getElementById('plan-btn')
-    if (btn) {
-      btn.disabled = true
-      btn.textContent = '⏳ Activation...'
+    const code = document.getElementById('founder-code-input')?.value?.trim()
+    const errorEl = document.getElementById('founder-code-error')
+
+    if (!founderUnlocked || !code) {
+      if (errorEl) { errorEl.textContent = 'Vérifie ton code d\'abord.'; errorEl.style.display = 'block'; }
+      return
     }
+
+    selectedPlan = 'founder'
+
+    const btn = document.querySelector('#founder-content button[onclick="selectFounderPlan()"]')
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Activation...' }
+
     await handlePlanSelection()
   }
 
