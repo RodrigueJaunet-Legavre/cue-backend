@@ -355,41 +355,57 @@ module.exports = async function handler(req, res) {
       result = await resend.emails.send({
         from: 'CUE DJ <noreply@cuedj.eu>',
         to: email,
-        subject: 'Ton code Fondateur CUE — Accès exclusif',
-        html: `
-          <div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
-            <div style="font-family:'Arial Black'; font-weight:900; font-size:32px; color:#FFC300; letter-spacing:4px; margin-bottom:24px;">CUE</div>
-            <h2 style="color:#fff; font-size:24px; margin-bottom:16px;">Tu es Fondateur CUE</h2>
-            <p style="color:#ccc; line-height:1.7; margin-bottom:24px;">
-              On t'a sélectionné parmi les premiers DJs à rejoindre CUE.
-              En tant que Fondateur, tu bénéficies de <strong style="color:#FFC300;">0% de commission</strong>
-              sur tous tes bookings — pendant 6 mois.
-            </p>
-            <div style="background:#111; border:2px solid #FFC300; border-radius:16px; padding:28px; text-align:center; margin:28px 0;">
-              <div style="color:#888; font-size:12px; letter-spacing:2px; text-transform:uppercase; margin-bottom:12px;">Ton code exclusif</div>
-              <div style="font-family:monospace; font-size:28px; font-weight:900; color:#FFC300; letter-spacing:4px;">${code}</div>
-              <div style="color:#555; font-size:11px; margin-top:12px;">Ce code est personnel et lié à ton adresse email</div>
-            </div>
-            <p style="color:#ccc; line-height:1.7; margin-bottom:24px;">
-              Pour activer ton plan Fondateur :<br>
-              1. Connecte-toi sur <a href="https://cuedj.eu" style="color:#FFC300;">cuedj.eu</a><br>
-              2. Va dans <strong style="color:#fff;">Mon abonnement</strong><br>
-              3. Entre ton code dans le champ "Code Fondateur"
-            </p>
-            <div style="background:rgba(255,195,0,.08); border:1px solid rgba(255,195,0,.2); border-radius:12px; padding:16px; margin-top:24px;">
-              <div style="color:#FFC300; font-weight:700; margin-bottom:6px;">Plan Fondateur inclut :</div>
-              <ul style="color:#ccc; line-height:2; margin:0; padding-left:20px;">
-                <li>0% de commission sur tous les bookings</li>
-                <li>Profil public complet</li>
-                <li>Messagerie illimitée</li>
-                <li>Mix de présentation</li>
-                <li>Badge Fondateur exclusif</li>
-              </ul>
-            </div>
-            <hr style="border-color:#222; margin:32px 0;">
-            <p style="color:#555; font-size:12px;">© 2026 CUE DJ Platform — cuedj.eu</p>
-          </div>
-        `
+        subject: '🎯 Tu es dans le club — Ton accès Fondateur CUE',
+        html: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0; padding:0; background:#080808; font-family:Arial,sans-serif;">
+  <div style="max-width:600px; margin:0 auto; padding:40px 20px;">
+    <div style="text-align:center; margin-bottom:40px;">
+      <div style="font-family:Arial Black; font-weight:900; font-size:36px; color:#FFC300; letter-spacing:6px;">CUE</div>
+      <div style="height:2px; background:linear-gradient(90deg,transparent,#FFC300,transparent); margin:16px 0;"></div>
+      <div style="color:rgba(255,255,255,.4); font-size:12px; letter-spacing:3px; text-transform:uppercase;">DJ Booking Platform</div>
+    </div>
+    <div style="background:linear-gradient(135deg,#0a0800,#1a1200,#0a0800); border:1px solid rgba(255,195,0,.3); border-radius:20px; padding:40px 32px; text-align:center; margin-bottom:24px; position:relative; overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#FFC300,transparent);"></div>
+      <div style="display:inline-block; background:rgba(255,195,0,.1); border:1px solid rgba(255,195,0,.3); border-radius:100px; padding:6px 18px; font-size:11px; font-weight:700; color:#FFC300; letter-spacing:2px; text-transform:uppercase; margin-bottom:20px;">PLAN FONDATEUR</div>
+      <h1 style="color:#fff; font-size:28px; font-weight:900; margin:0 0 12px; line-height:1.2;">Tu fais partie<br>des premiers.</h1>
+      <p style="color:rgba(255,255,255,.5); font-size:15px; line-height:1.7; margin:0 0 28px;">On t'a sélectionné parmi les DJs qui font déjà bouger les foules.<br>Ton accès exclusif t'attend.</p>
+      <div style="background:#080808; border:2px solid #FFC300; border-radius:16px; padding:28px 24px; margin:0 auto; max-width:320px;">
+        <div style="color:rgba(255,255,255,.4); font-size:11px; letter-spacing:2px; text-transform:uppercase; margin-bottom:12px;">TON CODE EXCLUSIF</div>
+        <div style="font-family:monospace; font-size:26px; font-weight:900; color:#FFC300; letter-spacing:4px; word-break:break-all;">${code}</div>
+        <div style="color:rgba(255,255,255,.25); font-size:11px; margin-top:12px; line-height:1.5;">Code personnel — lié à ton adresse email<br>Usage unique</div>
+      </div>
+    </div>
+    <div style="background:#111; border:1px solid rgba(255,195,0,.15); border-radius:16px; padding:24px; margin-bottom:16px; display:flex; align-items:center; gap:20px;">
+      <div style="font-family:Arial Black; font-weight:900; font-size:42px; color:#FFC300; line-height:1; flex-shrink:0;">0%</div>
+      <div>
+        <div style="color:#fff; font-weight:700; font-size:16px; margin-bottom:4px;">Commission pendant 6 mois</div>
+        <div style="color:rgba(255,255,255,.45); font-size:13px; line-height:1.5;">Chaque euro de ton cachet reste dans ta poche.</div>
+      </div>
+    </div>
+    <div style="background:#0d0d0d; border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:24px; margin-bottom:32px;">
+      <div style="color:rgba(255,255,255,.4); font-size:11px; letter-spacing:2px; text-transform:uppercase; margin-bottom:16px;">CE QUI EST INCLUS</div>
+      ${['Profil public complet','Messagerie directe avec les venues','Mix de présentation','0% de commission pendant 6 mois','Badge Fondateur exclusif'].map(f => `
+      <div style="display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.04); color:rgba(255,255,255,.7); font-size:14px;">
+        <span style="color:#00c864; font-weight:900; font-size:16px;">+</span> ${f}
+      </div>`).join('')}
+    </div>
+    <div style="text-align:center; margin-bottom:40px;">
+      <div style="color:rgba(255,255,255,.5); font-size:14px; line-height:1.7; margin-bottom:20px;">Pour activer ton plan Fondateur :</div>
+      <a href="https://cuedj.eu/inscription.html" style="display:inline-block; background:linear-gradient(135deg,#FFC300,#FFD740); color:#000; text-decoration:none; padding:16px 40px; border-radius:12px; font-weight:900; font-size:16px; letter-spacing:.5px;">ACTIVER MON ACCÈS →</a>
+      <div style="color:rgba(255,255,255,.25); font-size:12px; margin-top:14px; line-height:1.6;">1. Crée ton compte sur cuedj.eu<br>2. Dans l'étape abonnement, entre ton code<br>3. Profite de 0% de commission dès maintenant</div>
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,.06); padding-top:24px; text-align:center;">
+      <div style="font-family:Arial Black; font-weight:900; font-size:18px; color:#FFC300; letter-spacing:4px; margin-bottom:8px;">CUE</div>
+      <div style="color:rgba(255,255,255,.25); font-size:11px; line-height:1.6;">cuedj.eu · La plateforme de booking DJ<br>Ce code est personnel et ne peut être utilisé qu'avec ton adresse email.</div>
+    </div>
+  </div>
+</body>
+</html>`
       });
     }
 

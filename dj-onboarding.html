@@ -338,82 +338,68 @@
 
     <div style="display:flex; flex-direction:column; gap:16px; margin-top:32px;">
 
-      <!-- Plan Fondateur -->
-      <div style="position:relative; margin-bottom:0;">
-        <div style="background:linear-gradient(135deg, #0a0800 0%, #1a1200 50%, #0a0800 100%);
-                    border:1px solid rgba(255,195,0,.35); border-radius:20px; padding:28px;
-                    position:relative; overflow:hidden;">
-          <div style="position:absolute; top:-60px; right:-60px; width:200px; height:200px;
-                      background:radial-gradient(circle, rgba(255,195,0,.12) 0%, transparent 70%); pointer-events:none;"></div>
-          <div style="position:absolute; bottom:-40px; left:-40px; width:160px; height:160px;
-                      background:radial-gradient(circle, rgba(255,195,0,.06) 0%, transparent 70%); pointer-events:none;"></div>
-          <div style="position:absolute; top:0; left:0; right:0; height:2px;
-                      background:linear-gradient(90deg, transparent, #FFC300, transparent);"></div>
-          <div id="founder-locked" style="position:absolute; inset:0; background:rgba(5,5,5,.82);
-               backdrop-filter:blur(3px); border-radius:20px; z-index:10;
-               display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:24px;">
-            <div style="width:52px; height:52px; background:rgba(255,195,0,.1); border:1px solid rgba(255,195,0,.3);
-                        border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px;">🔒</div>
-            <div style="text-align:center;">
-              <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:20px; color:#fff; letter-spacing:1px; margin-bottom:4px;">ACCÈS RÉSERVÉ</div>
-              <div style="color:rgba(255,255,255,.45); font-size:13px; line-height:1.5; max-width:280px;">
-                Ce plan est réservé aux DJs sélectionnés par CUE.<br>Entre ton code pour débloquer l'accès.
-              </div>
-            </div>
-            <div style="display:flex; gap:8px; width:100%; max-width:340px;">
-              <input type="text" id="founder-code-input" placeholder="FOUNDER-XXXXX-XXXX"
-                     style="flex:1; background:rgba(255,255,255,.06); border:1px solid rgba(255,195,0,.3);
-                            color:#FFC300; padding:12px 16px; border-radius:12px; font-family:monospace;
-                            font-size:13px; outline:none; text-transform:uppercase; letter-spacing:1px;"
-                     oninput="this.value=this.value.toUpperCase()">
-              <button onclick="verifyFounderCode()"
-                      style="background:linear-gradient(135deg,#FFC300,#FFD740); color:#000; border:none;
-                             border-radius:12px; padding:12px 20px; font-weight:900; cursor:pointer;
-                             font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:.5px; white-space:nowrap;">
-                ENTRER
-              </button>
-            </div>
-            <div id="founder-code-error" style="color:#ff4444; font-size:12px; display:none; margin-top:-6px;"></div>
+      <!-- Fondateur -->
+      <div id="plan-founder-wrap" style="border:2px solid rgba(255,195,0,.35);
+           background:linear-gradient(135deg,#0a0800,#1a1200); border-radius:16px;
+           padding:20px 24px; cursor:default; transition:all .25s; position:relative; overflow:hidden;">
+        <div style="position:absolute; top:0; left:0; right:0; height:2px;
+                    background:linear-gradient(90deg,transparent,#FFC300,transparent); pointer-events:none;"></div>
+        <div style="position:absolute; top:-40px; right:-40px; width:130px; height:130px;
+                    background:radial-gradient(circle,rgba(255,195,0,.1) 0%,transparent 70%); pointer-events:none;"></div>
+
+        <!-- Overlay cadenas -->
+        <div id="founder-locked" style="position:absolute; inset:0; background:rgba(5,5,5,.85);
+             backdrop-filter:blur(2px); border-radius:14px; z-index:10;
+             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:20px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
+            <span style="font-size:18px;">🔒</span>
+            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:17px; color:#fff; letter-spacing:1px;">CODE FONDATEUR REQUIS</span>
           </div>
-          <div id="founder-content" style="filter:blur(3px); pointer-events:none; transition:filter .4s;">
-            <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:20px;">
-              <div>
-                <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
-                  <span style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; color:#fff; letter-spacing:1px;">FONDATEUR</span>
-                  <span style="background:linear-gradient(135deg,rgba(255,195,0,.2),rgba(255,195,0,.1)); border:1px solid rgba(255,195,0,.4); color:#FFC300; font-size:9px; font-weight:700; padding:3px 10px; border-radius:100px; letter-spacing:2px;">EXCLUSIF</span>
-                </div>
-                <div style="color:rgba(255,255,255,.5); font-size:13px; line-height:1.5;">Pour les DJs qui font déjà bouger les foules</div>
-              </div>
-              <div style="text-align:right; flex-shrink:0;">
-                <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:48px; color:#FFC300; line-height:1;">Gratuit</div>
-                <div style="color:rgba(255,255,255,.35); font-size:11px; margin-top:2px;">pendant 6 mois</div>
-              </div>
-            </div>
-            <div style="background:rgba(255,195,0,.08); border:1px solid rgba(255,195,0,.2); border-radius:12px; padding:14px 18px; margin-bottom:20px; display:flex; align-items:center; gap:12px;">
-              <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px; color:#FFC300;">0%</div>
-              <div>
-                <div style="font-weight:700; color:#fff; font-size:14px;">Commission pendant 6 mois</div>
-                <div style="color:rgba(255,255,255,.45); font-size:12px; margin-top:2px;">Tu gardes 100% de tes cachets</div>
-              </div>
-            </div>
-            <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">
-              ${["Profil public complet","Messagerie avec les venues","Mix de présentation","Jusqu'à 3 tracks","Badge Fondateur exclusif","0% de commission — 6 mois"].map(f=>`
-                <div style="display:flex; align-items:center; gap:10px; font-size:14px; color:rgba(255,255,255,.75);">
-                  <span style="color:#00c864; font-weight:700; flex-shrink:0;">+</span> ${f}
-                </div>`).join('')}
-            </div>
-            <div style="color:rgba(255,255,255,.3); font-size:11px; line-height:1.5; margin-bottom:16px;">
-              Après 6 mois, passage automatique au plan Starter (15% de commission).
-            </div>
-            <button onclick="selectFounderPlan()"
-                    style="width:100%; padding:16px; background:linear-gradient(135deg,#FFC300,#FFD740);
-                           color:#000; border:none; border-radius:12px; font-weight:900; font-size:16px;
-                           cursor:pointer; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; transition:all .2s;"
-                    onmouseover="this.style.opacity='.9'; this.style.transform='translateY(-1px)'"
-                    onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'">
-              ACTIVER MON ACCÈS FONDATEUR
+          <div style="display:flex; gap:8px; width:100%; max-width:320px;">
+            <input type="text" id="founder-code-input" placeholder="FOUNDER-XXXXX-XXXX"
+                   style="flex:1; background:rgba(255,255,255,.06); border:1px solid rgba(255,195,0,.3);
+                          color:#FFC300; padding:10px 12px; border-radius:10px; font-family:monospace;
+                          font-size:12px; outline:none; text-transform:uppercase;"
+                   oninput="this.value=this.value.toUpperCase()">
+            <button onclick="verifyFounderCode()"
+                    style="background:#FFC300; color:#000; border:none; border-radius:10px;
+                           padding:10px 16px; font-weight:900; cursor:pointer;
+                           font-family:'Barlow Condensed',sans-serif; font-size:13px; white-space:nowrap;">
+              ENTRER
             </button>
           </div>
+          <div id="founder-code-error" style="color:#ff4444; font-size:11px; display:none;"></div>
+        </div>
+
+        <!-- Contenu (flouté jusqu'à déverrouillage) -->
+        <div id="founder-content" style="filter:blur(3px); pointer-events:none; transition:filter .35s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                <span style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; color:#fff;">FONDATEUR</span>
+                <span id="check-founder" style="color:var(--Y); font-size:18px; display:none;">✓</span>
+                <span style="background:rgba(255,195,0,.15); color:#FFC300; font-size:9px; font-weight:700; padding:2px 8px; border-radius:20px; letter-spacing:1px;">EXCLUSIF</span>
+              </div>
+              <div style="color:var(--MUTED); font-size:13px; line-height:1.8;">
+                ✅ Profil public<br>
+                ✅ Messagerie<br>
+                ✅ Mix + 3 tracks<br>
+                ✅ Badge Fondateur<br>
+                <span style="color:#00c864; font-weight:600;">0% de commission — 6 mois</span>
+              </div>
+            </div>
+            <div style="text-align:right; flex-shrink:0; margin-left:16px;">
+              <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:36px; color:#FFC300; line-height:1;">0€</div>
+              <div style="color:var(--MUTED); font-size:12px;">/6 mois</div>
+              <div style="color:rgba(255,255,255,.25); font-size:10px; margin-top:4px; line-height:1.4; text-align:right;">Puis Starter (15%)</div>
+            </div>
+          </div>
+          <button onclick="selectFounderPlan()"
+                  style="width:100%; margin-top:16px; padding:12px; background:linear-gradient(135deg,#FFC300,#FFD740);
+                         color:#000; border:none; border-radius:10px; font-weight:900; font-size:15px;
+                         cursor:pointer; font-family:'Barlow Condensed',sans-serif; letter-spacing:.5px;">
+            ACTIVER MON ACCÈS FONDATEUR
+          </button>
         </div>
       </div>
 
