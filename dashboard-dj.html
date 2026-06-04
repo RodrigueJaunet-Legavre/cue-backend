@@ -5493,14 +5493,9 @@
     }
   }
 
-  async function changePlan(newPlan) {
-    const currentPlan = user.plan || 'starter';
-    if (newPlan === currentPlan) return;
-    if (newPlan === 'starter') { cancelSubscription(); return; }
-
+  async function subscribeToPlan(newPlan) {
     const btn = document.getElementById('btn-' + newPlan);
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Redirection...'; }
-
     try {
       const priceIds = { pro: 'price_1TVEcMRwFuYQb4HD2nNHQvP2', business: 'price_1TVEdhRwFuYQb4HDvq7lrKfb' };
       const res = await fetch('/api/stripe', {
@@ -5522,6 +5517,22 @@
       alert('Erreur : ' + err.message);
       if (btn) { btn.disabled = false; btn.textContent = 'Passer au ' + newPlan; }
     }
+  }
+
+  async function changePlan(newPlan) {
+    const currentPlan = user.plan || 'starter';
+    if (newPlan === currentPlan) return;
+    if (newPlan === 'starter') { cancelSubscription(); return; }
+
+    // founder et starter n'ont pas d'abonnement Stripe actif — checkout direct
+    if (currentPlan === 'founder' || currentPlan === 'starter') {
+      await subscribeToPlan(newPlan);
+      return;
+    }
+
+    // Pro ou Business existant → annuler d'abord, puis checkout
+    await cancelSubscription();
+    await subscribeToPlan(newPlan);
   }
 
   async function cancelSubscription() {
