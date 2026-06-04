@@ -1007,15 +1007,14 @@
     }
   }
 
-  function selectFounderPlan() {
-    selectedPlan = 'founder';
-    document.querySelectorAll('.plan-card').forEach(c => {
-      c.style.borderColor = 'var(--BORDER)';
-      c.style.background = '#0a0a0a';
-    });
-    document.querySelectorAll('[id^="check-"]').forEach(c => c.style.display = 'none');
-    const btn = document.getElementById('plan-btn');
-    if (btn) btn.textContent = 'Activer le plan Fondateur →';
+  async function selectFounderPlan() {
+    selectedPlan = 'founder'
+    const btn = document.getElementById('plan-btn')
+    if (btn) {
+      btn.disabled = true
+      btn.textContent = '⏳ Activation...'
+    }
+    await handlePlanSelection()
   }
 
   function selectPlan(plan, el) {
