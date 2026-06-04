@@ -460,7 +460,13 @@ module.exports = async function handler(req, res) {
           error: 'Code invalide ou déjà utilisé. Ce code est réservé à votre adresse email.'
         });
       }
-      await sql`UPDATE users SET plan = 'founder', updated_at = NOW() WHERE id = ${userId}`;
+      await sql`
+        UPDATE users SET
+          plan = 'founder',
+          founder_expires_at = NOW() + INTERVAL '6 months',
+          updated_at = NOW()
+        WHERE id = ${userId}
+      `;
       await sql`
         UPDATE founder_codes SET
           used = true,

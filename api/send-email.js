@@ -363,7 +363,7 @@ module.exports = async function handler(req, res) {
             <p style="color:#ccc; line-height:1.7; margin-bottom:24px;">
               On t'a sélectionné parmi les premiers DJs à rejoindre CUE.
               En tant que Fondateur, tu bénéficies de <strong style="color:#FFC300;">0% de commission</strong>
-              sur tous tes bookings — à vie.
+              sur tous tes bookings — pendant 6 mois.
             </p>
             <div style="background:#111; border:2px solid #FFC300; border-radius:16px; padding:28px; text-align:center; margin:28px 0;">
               <div style="color:#888; font-size:12px; letter-spacing:2px; text-transform:uppercase; margin-bottom:12px;">Ton code exclusif</div>
