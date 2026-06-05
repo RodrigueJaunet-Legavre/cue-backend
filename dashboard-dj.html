@@ -5177,10 +5177,12 @@
     try {
       const { supabase } = await import('./js/supabase-client.js')
       await supabase.auth.signOut({ scope: 'global' })
-    } catch(e) {}
-    localStorage.clear();
-    sessionStorage.clear();
-    window.location.replace('login.html');
+    } catch(e) {
+      console.log('Erreur signOut:', e)
+    }
+    localStorage.clear()
+    sessionStorage.clear()
+    window.location.href = 'login.html'
   }
 
   // ─── PART 2: Noms cliquables ──────────────────────────────────────────────
