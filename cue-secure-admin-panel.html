@@ -260,6 +260,19 @@
   <div class="nav-item" onclick="showPage('founders', this)">
     <span class="icon">⭐</span> Fondateurs
   </div>
+
+  <div style="flex:1;"></div>
+
+  <div style="padding:16px; border-top:1px solid var(--BORDER);">
+    <button onclick="adminLogout()"
+            style="width:100%; padding:12px; background:transparent; border:1px solid rgba(255,68,68,.3);
+                   color:rgba(255,68,68,.7); border-radius:10px; cursor:pointer; font-weight:600;
+                   font-size:14px; font-family:Barlow,sans-serif; transition:all .2s;"
+            onmouseover="this.style.borderColor='#ff4444'; this.style.color='#ff4444'"
+            onmouseout="this.style.borderColor='rgba(255,68,68,.3)'; this.style.color='rgba(255,68,68,.7)'">
+      Déconnexion
+    </button>
+  </div>
 </div>
 
 <!-- MAIN CONTENT -->
@@ -594,6 +607,11 @@
   }
 
   function getSecret() { return sessionStorage.getItem('admin_secret'); }
+
+  function adminLogout() {
+    sessionStorage.removeItem('admin_secret')
+    location.reload()
+  }
 
   // NAVIGATION
   function showPage(page, el) {
