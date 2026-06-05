@@ -5493,7 +5493,7 @@
     }
   }
 
-  async function subscribeToPlan(newPlan) {
+  async function startCheckout(newPlan) {
     const btn = document.getElementById('btn-' + newPlan);
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Redirection...'; }
     try {
@@ -5520,19 +5520,29 @@
   }
 
   async function changePlan(newPlan) {
-    const currentPlan = user.plan || 'starter';
-    if (newPlan === currentPlan) return;
-    if (newPlan === 'starter') { cancelSubscription(); return; }
+    const currentPlan = user.plan || 'starter'
+    if (newPlan === currentPlan) return
 
-    // founder et starter n'ont pas d'abonnement Stripe actif — checkout direct
     if (currentPlan === 'founder' || currentPlan === 'starter') {
-      await subscribeToPlan(newPlan);
-      return;
+      if (newPlan === 'starter') {
+        const { supabase } = await import('./js/supabase-client.js')
+        const { data: { session } } = await supabase.auth.getSession()
+        const res = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'update_plan', userId: session.user.id, plan: 'starter' })
+        })
+        const data = await res.json()
+        if (data.success) { user.plan = 'starter'; alert('Plan mis à jour.'); location.reload(); }
+        return
+      }
+      await startCheckout(newPlan)
+      return
     }
 
-    // Pro ou Business existant → annuler d'abord, puis checkout
-    await cancelSubscription();
-    await subscribeToPlan(newPlan);
+    // Abonnement Stripe existant → annuler puis recheckout
+    await cancelSubscription()
+    if (newPlan !== 'starter') await startCheckout(newPlan)
   }
 
   async function cancelSubscription() {
