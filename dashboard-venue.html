@@ -157,11 +157,11 @@
     .dj-card {
       background:#111; border:1px solid rgba(255,255,255,.06); border-radius:20px;
       overflow:hidden; cursor:pointer; position:relative; display:flex; flex-direction:column;
-      opacity:0; transform:translateY(24px);
-      transition:opacity .4s ease, transform .4s ease, border-color .25s, box-shadow .25s;
+      opacity:0; translate:0 24px;
+      transition:opacity .4s, translate .4s, box-shadow .25s, border-color .25s;
     }
-    .dj-card.visible { opacity:1; transform:translateY(0); }
-    .dj-card:hover { transform:translateY(-6px) !important; border-color:rgba(255,195,0,.45) !important; box-shadow:0 20px 48px rgba(255,195,0,.07), 0 24px 48px rgba(0,0,0,.5) !important; }
+    .dj-card.visible { opacity:1; translate:0 0; }
+    .dj-card:hover { translate:0 -6px; border-color:rgba(255,195,0,.45) !important; box-shadow:0 20px 48px rgba(255,195,0,.07), 0 24px 48px rgba(0,0,0,.5) !important; }
     .dj-card-banner { height:120px; position:relative; overflow:hidden; flex-shrink:0; }
     .dj-card-banner.plan-business { background:linear-gradient(135deg,#1a1200 0%,#3d2800 50%,#1a1200 100%); }
     .dj-card-banner.plan-pro { background:linear-gradient(135deg,#140a2e 0%,#2d1560 50%,#140a2e 100%); }
