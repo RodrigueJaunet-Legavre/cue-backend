@@ -243,7 +243,14 @@ module.exports = async function handler(req, res) {
         SELECT * FROM conversations WHERE dj_id = ${djId} AND venue_id = ${venueId} LIMIT 1
       `
 
-      const offerText = `📅 Demande de booking\n\nDate : ${date}${start ? `\nHoraires : ${start} - ${end}` : ''}${type ? `\nType d'événement : ${type}` : ''}\nBudget : ${budget}€${message ? `\n\nMessage : ${message}` : ''}`
+      const offerText = JSON.stringify({
+        date: date || '',
+        start: start || '',
+        end: end || '',
+        budget: budget || '',
+        type: type || '',
+        message: message || ''
+      })
 
       // Crée la conversation si elle n'existe pas
       if (!conv) {
