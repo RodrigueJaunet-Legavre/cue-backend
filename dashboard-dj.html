@@ -4845,7 +4845,7 @@
       const isMe = msg.sender_id === user.id;
       if (msg.type === 'contract_proposal') return renderContractMessage(msg, isMe)
       if (msg.type === 'offer') {
-        let offer = msg.offer_data;
+        let offer = msg.offer_data || msg.content;
         if (typeof offer === 'string') {
           try { offer = JSON.parse(offer); } catch(e) { offer = {}; }
         }
