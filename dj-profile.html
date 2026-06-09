@@ -845,7 +845,7 @@
     const message = document.getElementById('offer-message').value;
     if (!date || !budget) { alert('Remplis la date et le budget.'); return; }
     try {
-      const res = await fetch('/api/auth', {
+      const res = await fetch('/api/messages', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ action:'send_offer', djId:djData.id, venueId:loggedUser.id, date, start, end, budget, type, message })
       });
