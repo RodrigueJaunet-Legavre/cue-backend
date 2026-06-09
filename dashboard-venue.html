@@ -4425,19 +4425,41 @@
             </button>
           </div>`;
       } else {
-        const daysLeft = daysUntil !== null ? daysUntil - 7 : null;
-        paymentBlock = `
-          <div style="background:rgba(255,170,0,.08); border:1px solid rgba(255,170,0,.2); border-radius:12px; padding:16px; margin-top:4px;">
-            <div style="color:#ffaa00; font-weight:700; margin-bottom:8px;">💳 Paiement à effectuer</div>
-            <div style="color:var(--MUTED); font-size:13px; margin-bottom:14px;">
-              ✅ Contrat signé — Payez avant le <strong style="color:#fff;">${payDeadlineStr}</strong>
-              ${daysLeft !== null && daysLeft <= 2 ? `<span style="color:#ff9500;"> — ${daysLeft}j restants</span>` : ''}
-            </div>
-            <button class="btn btn-primary btn-sm"
-                    onclick="openPaymentModal('${b.id}', '${b.djId || b.dj_id}', '${user.id}', ${b.budget || b.amount || 0}); closeModal('modal-event-detail');">
-              💳 Payer ${b.budget || b.amount || 0}€
-            </button>
-          </div>`;
+        if (daysUntil !== null && daysUntil <= 7) {
+          paymentBlock = `
+            <div style="background:rgba(0,200,100,.08); border:1px solid rgba(0,200,100,.25);
+                        border-radius:12px; padding:16px; margin-top:4px;">
+              <div style="color:#00c864; font-weight:700; margin-bottom:6px;">✅ Contrat signé — Paiement requis</div>
+              <div style="color:var(--MUTED); font-size:13px; margin-bottom:14px;">
+                Le booking est dans <strong style="color:#fff;">${daysUntil} jour${daysUntil > 1 ? 's' : ''}</strong>.
+                Procède au paiement pour confirmer la prestation.
+              </div>
+              <button class="btn btn-primary btn-sm"
+                      onclick="openPaymentModal('${b.id}', '${b.djId || b.dj_id}', '${user.id}', ${b.budget || b.amount || 0}); closeModal('modal-event-detail');">
+                💳 Payer maintenant — ${b.budget || b.amount || 0}€
+              </button>
+            </div>`;
+        } else {
+          const payDate = new Date(gigDate);
+          payDate.setDate(payDate.getDate() - 7);
+          const payDateStr = payDate.toLocaleDateString('fr-FR', { day:'numeric', month:'long' });
+          paymentBlock = `
+            <div style="background:rgba(255,195,0,.06); border:1px solid rgba(255,195,0,.15);
+                        border-radius:12px; padding:16px; margin-top:4px;">
+              <div style="color:var(--Y); font-weight:700; margin-bottom:6px;">✅ Contrat signé</div>
+              <div style="color:var(--MUTED); font-size:13px; line-height:1.6;">
+                Le paiement sera disponible à partir du <strong style="color:#fff;">${payDateStr}</strong>
+                (7 jours avant la prestation).
+              </div>
+              <div style="margin-top:12px; background:rgba(255,255,255,.04); border-radius:8px;
+                          padding:10px 14px; display:flex; align-items:center; gap:10px;">
+                <div style="width:8px; height:8px; border-radius:50%; background:var(--Y); flex-shrink:0;"></div>
+                <div style="color:rgba(255,255,255,.5); font-size:12px;">
+                  J-${daysUntil !== null ? daysUntil - 7 : '?'} avant l'ouverture du paiement
+                </div>
+              </div>
+            </div>`;
+        }
       }
     } else if (ps === 'paid' && !isPast) {
       paymentBlock = `
