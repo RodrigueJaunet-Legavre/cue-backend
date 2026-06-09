@@ -229,6 +229,49 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'send_offer') {
+    const { djId, venueId, date, start, end, budget, type, message } = body
+    try {
+      // Récupère les noms pour la conversation
+      const [dj] = await sql`SELECT stage_name, first_name, last_name FROM users WHERE id = ${djId}`
+      const [venue] = await sql`SELECT first_name, last_name, org_name FROM users WHERE id = ${venueId}`
+      const djName = dj?.stage_name || ((dj?.first_name || '') + ' ' + (dj?.last_name || '')).trim() || 'DJ'
+      const venueName = venue?.org_name || ((venue?.first_name || '') + ' ' + (venue?.last_name || '')).trim() || 'Venue'
+
+      // Vérifie si une conversation existe déjà
+      let [conv] = await sql`
+        SELECT * FROM conversations WHERE dj_id = ${djId} AND venue_id = ${venueId} LIMIT 1
+      `
+
+      const offerText = `📅 Demande de booking\n\nDate : ${date}${start ? `\nHoraires : ${start} - ${end}` : ''}${type ? `\nType d'événement : ${type}` : ''}\nBudget : ${budget}€${message ? `\n\nMessage : ${message}` : ''}`
+
+      // Crée la conversation si elle n'existe pas
+      if (!conv) {
+        const convId = Date.now().toString()
+        await sql`
+          INSERT INTO conversations (id, dj_id, venue_id, dj_name, venue_name, last_message, last_message_at)
+          VALUES (${convId}, ${djId}, ${venueId}, ${djName}, ${venueName}, ${offerText}, NOW())
+        `
+        conv = { id: convId }
+      } else {
+        await sql`
+          UPDATE conversations SET last_message = ${offerText}, last_message_at = NOW() WHERE id = ${conv.id}
+        `
+      }
+
+      // Insère le message d'offre
+      const msgId = Date.now().toString() + Math.random().toString(36).substr(2, 4)
+      await sql`
+        INSERT INTO messages (id, conversation_id, sender_id, content, type, created_at)
+        VALUES (${msgId}, ${conv.id}, ${venueId}, ${offerText}, 'offer', NOW())
+      `
+
+      return res.status(200).json({ success: true, conversationId: conv.id })
+    } catch(err) {
+      return res.status(500).json({ error: err.message })
+    }
+  }
+
   if (action === 'get_bookings') {
     const { userId, userType } = body;
     try {
