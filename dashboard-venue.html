@@ -2695,16 +2695,35 @@
   }
 
   async function saveVenueProfile() {
-    const btn = document.getElementById('save-profile-btn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Sauvegarde...'; }
+    const btn = document.getElementById('save-profile-btn')
+    if (btn) { btn.disabled = true; btn.textContent = 'Sauvegarde...' }
+
     try {
+      const { supabase } = await import('./js/supabase-client.js')
+      const { data: { session } } = await supabase.auth.getSession()
+      const userId = session?.user?.id
+
+      // Upload photo de profil si nouvelle
+      let photoUrl = user.picture || ''
+      if (venueProfilePhotoFile) {
+        const ext = venueProfilePhotoFile.name.split('.').pop()
+        const path = `${userId}/profile.${ext}`
+        const { error } = await supabase.storage
+          .from('avatars')
+          .upload(path, venueProfilePhotoFile, { upsert: true })
+        if (!error) {
+          const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path)
+          photoUrl = urlData.publicUrl + '?t=' + Date.now()
+        }
+      }
+
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'update_venue_profile',
-          userId: user.id,
-          picture: venueProfilePhotoNew || user.picture || '',
+          userId,
+          picture: photoUrl,
           description: document.getElementById('venue-description')?.value || '',
           city: document.getElementById('venue-city')?.value || '',
           website: document.getElementById('venue-website')?.value || '',
@@ -2712,19 +2731,26 @@
           orgSiret: document.getElementById('org-siret-profile')?.value || '',
           venuePhotos: venuePhotosNew.filter(Boolean)
         })
-      });
-      const data = await res.json();
-      if (data.user) {
-        Object.assign(user, data.user);
-        updateUI();
-        if (btn) { btn.textContent = '✅ Sauvegardé !'; setTimeout(() => { btn.disabled = false; btn.textContent = '💾 Sauvegarder'; }, 2000); }
+      })
+      const data = await res.json()
+      if (data.success || data.user) {
+        user.picture = photoUrl
+        venueProfilePhotoFile = null
+        if (data.user) Object.assign(user, data.user)
+        const avatarEl = document.getElementById('venue-profile-avatar')
+        if (avatarEl && photoUrl) {
+          avatarEl.innerHTML = `<img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+        }
+        updateUI()
+        if (btn) { btn.disabled = false; btn.textContent = '✅ Sauvegardé !' }
+        setTimeout(() => { if (btn) btn.textContent = '💾 Sauvegarder' }, 2000)
       } else {
-        alert('Erreur : ' + (data.error || 'Réessaie.'));
-        if (btn) { btn.disabled = false; btn.textContent = '💾 Sauvegarder'; }
+        alert('Erreur : ' + data.error)
+        if (btn) { btn.disabled = false; btn.textContent = '💾 Sauvegarder' }
       }
-    } catch (err) {
-      alert('Erreur. Réessaie.');
-      if (btn) { btn.disabled = false; btn.textContent = '💾 Sauvegarder'; }
+    } catch(err) {
+      console.log('Erreur saveVenueProfile:', err)
+      if (btn) { btn.disabled = false; btn.textContent = '💾 Sauvegarder' }
     }
   }
 
