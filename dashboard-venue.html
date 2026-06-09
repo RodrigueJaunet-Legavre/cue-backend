@@ -4656,6 +4656,9 @@
     document.getElementById('contract-loading').style.display = 'block';
     document.getElementById('contract-output').style.display = 'none';
 
+    const bookingId = currentContract?.booking_id || currentContract?.id_booking || ''
+    const conversationId = currentContract?.conversation_id || ''
+
     try {
       const res = await fetch('/api/generate-contract', {
         method: 'POST',
@@ -4663,7 +4666,9 @@
         body: JSON.stringify({
           djName, djAddress, djPhone, djEmail, djSiret,
           venueName, venueAddress, venuePhone, venueEmail, venueSiret,
-          date, fee, start, end, type, acompte, details
+          date, fee, start, end, type, acompte, details,
+          bookingId,
+          conversationId
         })
       });
 
