@@ -237,6 +237,22 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'get_contract_by_booking') {
+    const { bookingId } = body;
+    try {
+      const [contract] = await sql`
+        SELECT * FROM generated_contracts
+        WHERE booking_id = ${bookingId}
+        ORDER BY created_at DESC
+        LIMIT 1
+      `;
+      if (!contract) return res.status(200).json({ contract: null });
+      return res.status(200).json({ contract });
+    } catch(err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   if (action === 'get_generated_contract') {
     const { contractId } = body;
     try {
@@ -280,16 +296,16 @@ module.exports = async function handler(req, res) {
         if (contract.booking_id) {
           await sql`
             UPDATE bookings SET
-              contract_id     = ${contractId},
-              contract_status = 'signed',
-              event_date      = COALESCE(${contract.event_date || null}, event_date),
-              amount          = COALESCE(${contract.cachet ? parseFloat(contract.cachet) : null}, amount),
-              start_time      = COALESCE(${contract.start_time || null}, start_time),
-              end_time        = COALESCE(${contract.end_time || null}, end_time),
-              venue_location  = COALESCE(${contract.lieu || null}, venue_location),
-              updated_at      = NOW()
+              contract_id      = ${contractId},
+              contract_status  = 'signed',
+              event_date       = COALESCE(${contract.event_date || null}::date, event_date),
+              amount           = COALESCE(${contract.cachet ? parseFloat(contract.cachet) : null}, amount),
+              start_time       = COALESCE(${contract.start_time || null}, start_time),
+              end_time         = COALESCE(${contract.end_time || null}, end_time),
+              venue_location   = COALESCE(${contract.lieu || null}, venue_location),
+              updated_at       = NOW()
             WHERE id = ${contract.booking_id}
-          `.catch(() => {});
+          `.catch(e => console.log('UPDATE bookings error:', e.message));
         }
 
         const convId = conversationId || contract.conversation_id;

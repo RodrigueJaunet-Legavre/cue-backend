@@ -3210,8 +3210,10 @@
           city: b.city,
           notes: b.notes,
           status: b.status,
+          payment_status: b.payment_status,
           contract_status: b.contract_status,
-          contract_id: b.contract_id
+          contract_id: b.contract_id,
+          city: b.venue_location || b.city
         }));
         venueBookings = bookings;
       }
@@ -4395,82 +4397,13 @@
 
     const contractSigned = b.contract_status === 'signed';
 
-    let paymentBlock = '';
-    if (!ps || ps === 'unpaid' || ps === 'pending_payment') {
-      if (!contractSigned) {
-        paymentBlock = `
-          <div style="background:rgba(255,170,0,.08); border:1px solid rgba(255,170,0,.2);
-                      border-radius:12px; padding:16px; margin-top:4px;">
-            <div style="color:#ffaa00; font-weight:700; margin-bottom:8px;">📄 Contrat requis avant le paiement</div>
-            <div style="color:var(--MUTED); font-size:13px; line-height:1.6; margin-bottom:14px;">
-              Le contrat doit être complété et signé par les deux parties avant le
-              <strong style="color:#fff;">${contractDeadlineStr}</strong>
-              (10 jours avant la prestation).<br>
-              Le paiement pourra ensuite être effectué avant le
-              <strong style="color:#fff;">${payDeadlineStr}</strong>.
-            </div>
-            <button class="btn btn-primary btn-sm"
-                    onclick="openContractFromBooking('${b.id}')">
-              📄 Compléter le contrat
-            </button>
-          </div>`;
-      } else if (daysUntil !== null && daysUntil < 7) {
-        paymentBlock = `
-          <div style="background:rgba(255,68,68,.08); border:1px solid rgba(255,68,68,.2); border-radius:12px; padding:16px; margin-top:4px;">
-            <div style="color:#ff4444; font-weight:700; margin-bottom:8px;">🚨 Paiement en retard !</div>
-            <div style="color:var(--MUTED); font-size:13px; margin-bottom:14px;">
-              Le paiement devait être effectué avant le <strong>${payDeadlineStr}</strong>.
-            </div>
-            <button class="btn btn-primary btn-sm"
-                    onclick="openPaymentModal('${b.id}', '${b.djId || b.dj_id}', '${user.id}', ${b.budget || b.amount || 0}); closeModal('modal-event-detail');">
-              💳 Payer maintenant
-            </button>
-          </div>`;
-      } else {
-        if (daysUntil !== null && daysUntil <= 7) {
-          paymentBlock = `
-            <div style="background:rgba(0,200,100,.08); border:1px solid rgba(0,200,100,.25);
-                        border-radius:12px; padding:16px; margin-top:4px;">
-              <div style="color:#00c864; font-weight:700; margin-bottom:6px;">✅ Contrat signé — Paiement requis</div>
-              <div style="color:var(--MUTED); font-size:13px; margin-bottom:14px;">
-                Le booking est dans <strong style="color:#fff;">${daysUntil} jour${daysUntil > 1 ? 's' : ''}</strong>.
-                Procède au paiement pour confirmer la prestation.
-              </div>
-              <button class="btn btn-primary btn-sm"
-                      onclick="openPaymentModal('${b.id}', '${b.djId || b.dj_id}', '${user.id}', ${b.budget || b.amount || 0}); closeModal('modal-event-detail');">
-                💳 Payer maintenant — ${b.budget || b.amount || 0}€
-              </button>
-            </div>`;
-        } else {
-          const payDate = new Date(gigDate);
-          payDate.setDate(payDate.getDate() - 7);
-          const payDateStr = payDate.toLocaleDateString('fr-FR', { day:'numeric', month:'long' });
-          paymentBlock = `
-            <div style="background:rgba(255,195,0,.06); border:1px solid rgba(255,195,0,.15);
-                        border-radius:12px; padding:16px; margin-top:4px;">
-              <div style="color:var(--Y); font-weight:700; margin-bottom:6px;">✅ Contrat signé</div>
-              <div style="color:var(--MUTED); font-size:13px; line-height:1.6;">
-                Le paiement sera disponible à partir du <strong style="color:#fff;">${payDateStr}</strong>
-                (7 jours avant la prestation).
-              </div>
-              <div style="margin-top:12px; background:rgba(255,255,255,.04); border-radius:8px;
-                          padding:10px 14px; display:flex; align-items:center; gap:10px;">
-                <div style="width:8px; height:8px; border-radius:50%; background:var(--Y); flex-shrink:0;"></div>
-                <div style="color:rgba(255,255,255,.5); font-size:12px;">
-                  J-${daysUntil !== null ? daysUntil - 7 : '?'} avant l'ouverture du paiement
-                </div>
-              </div>
-            </div>`;
-        }
-      }
-    } else if (ps === 'paid' && !isPast) {
-      paymentBlock = `
-        <div style="border-top:1px solid var(--BORDER); padding-top:16px;">
-          <div style="color:var(--SUCCESS); font-size:13px; font-weight:700;">✅ Paiement sécurisé — prestation à venir</div>
-          <div style="color:var(--MUTED); font-size:12px; margin-top:6px;">Le DJ sera payé après validation de la prestation</div>
-        </div>`;
+    let actionBlock = '';
+    if (ps === 'released') {
+      actionBlock = `<div style="border-top:1px solid var(--BORDER); padding-top:16px;"><div style="color:var(--SUCCESS); font-size:13px; font-weight:700;">✅ Prestation validée — DJ payé</div></div>`;
+    } else if (ps === 'disputed') {
+      actionBlock = `<div style="border-top:1px solid var(--BORDER); padding-top:16px;"><div style="color:#ff4444; font-size:13px; font-weight:700;">⚠️ Litige en cours — CUE traite la demande</div></div>`;
     } else if (ps === 'paid' && isPast) {
-      paymentBlock = `
+      actionBlock = `
         <div style="border-top:1px solid var(--BORDER); padding-top:16px;">
           <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">ACTION REQUISE</div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -4479,11 +4412,60 @@
           </div>
           <div style="color:var(--MUTED); font-size:12px; margin-top:10px; line-height:1.5;">En validant, tu libères le paiement au DJ.</div>
         </div>`;
-    } else if (ps === 'released') {
-      paymentBlock = `<div style="border-top:1px solid var(--BORDER); padding-top:16px;"><div style="color:var(--SUCCESS); font-size:13px; font-weight:700;">✅ Prestation validée — DJ payé</div></div>`;
-    } else if (ps === 'disputed') {
-      paymentBlock = `<div style="border-top:1px solid var(--BORDER); padding-top:16px;"><div style="color:#ff4444; font-size:13px; font-weight:700;">⚠️ Litige en cours — CUE traite la demande</div></div>`;
+    } else if (ps === 'paid') {
+      actionBlock = `
+        <div style="background:rgba(0,200,100,.08); border:1px solid rgba(0,200,100,.25); border-radius:12px; padding:14px 16px; display:flex; align-items:center; gap:10px;">
+          <span style="color:#00c864; font-size:18px;">✅</span>
+          <div style="color:#00c864; font-weight:700;">Paiement effectué</div>
+        </div>`;
+    } else if (!contractSigned) {
+      actionBlock = `
+        <div style="background:rgba(255,170,0,.08); border:1px solid rgba(255,170,0,.2); border-radius:12px; padding:16px;">
+          <div style="color:#ffaa00; font-weight:700; margin-bottom:8px;">📄 Contrat requis</div>
+          <div style="color:var(--MUTED); font-size:13px; margin-bottom:14px;">
+            Complète et fais signer le contrat avant le paiement.
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openContractFromBooking('${b.id}')">
+            📄 Gérer le contrat
+          </button>
+        </div>`;
+    } else if (daysUntil !== null && daysUntil > 7) {
+      const payDate = new Date(gigDate);
+      payDate.setDate(payDate.getDate() - 7);
+      const payDateStr = payDate.toLocaleDateString('fr-FR', { day:'numeric', month:'long' });
+      actionBlock = `
+        <div style="background:rgba(255,195,0,.06); border:1px solid rgba(255,195,0,.15); border-radius:12px; padding:16px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+            <div style="color:var(--Y); font-weight:700;">✅ Contrat signé</div>
+            ${b.contract_id ? `<a href="https://cuedj.eu/contract-view.html?id=${b.contract_id}" target="_blank"
+               style="color:var(--MUTED); font-size:12px; text-decoration:none;">📄 Voir le contrat</a>` : ''}
+          </div>
+          <div style="color:var(--MUTED); font-size:13px; line-height:1.6;">
+            Paiement disponible à partir du <strong style="color:#fff;">${payDateStr}</strong>.
+          </div>
+          <div style="margin-top:10px; background:rgba(255,255,255,.04); border-radius:8px; padding:10px 14px; display:flex; align-items:center; gap:8px;">
+            <div style="width:6px; height:6px; border-radius:50%; background:var(--Y);"></div>
+            <div style="color:rgba(255,255,255,.4); font-size:12px;">J-${daysUntil - 7} avant l'ouverture du paiement</div>
+          </div>
+        </div>`;
+    } else {
+      actionBlock = `
+        <div style="background:rgba(0,200,100,.08); border:1px solid rgba(0,200,100,.25); border-radius:12px; padding:16px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+            <div style="color:#00c864; font-weight:700;">✅ Contrat signé — Paiement requis</div>
+            ${b.contract_id ? `<a href="https://cuedj.eu/contract-view.html?id=${b.contract_id}" target="_blank"
+               style="color:var(--MUTED); font-size:12px; text-decoration:none;">📄 Voir le contrat</a>` : ''}
+          </div>
+          <div style="color:var(--MUTED); font-size:13px; margin-bottom:14px;">
+            Le booking est dans <strong style="color:#fff;">${daysUntil !== null ? daysUntil : '?'} jour${daysUntil > 1 ? 's' : ''}</strong>.
+          </div>
+          <button class="btn btn-primary btn-sm" style="width:100%"
+                  onclick="openPaymentModal('${b.id}', '${b.djId}', '${user.id}', ${b.budget || 0}); closeModal('modal-event-detail');">
+            💳 Payer ${b.budget || 0}€
+          </button>
+        </div>`;
     }
+    const paymentBlock = actionBlock;
 
     let modal = document.getElementById('modal-event-detail');
     if (!modal) {
@@ -5105,20 +5087,30 @@
 
   async function openContractFromBooking(bookingId) {
     closeModal('modal-event-detail');
-
-    const res = await fetch('/api/contracts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'get_contract', bookingId })
-    });
-    const data = await res.json();
-
-    if (data.contract) {
-      currentContract = data.contract;
-      renderContractModalVenue(currentContract);
-      document.getElementById('modal-contract').classList.add('open');
-    } else {
-      alert('Contrat introuvable. Contactez le support.');
+    try {
+      const res = await fetch('/api/contracts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_contract_by_booking', bookingId })
+      });
+      const data = await res.json();
+      if (data.contract) {
+        currentContract = data.contract;
+        renderContractModalVenue(currentContract);
+        document.getElementById('modal-contract').classList.add('open');
+      } else {
+        // Aucun contrat généré — ouvre le générateur
+        const booking = bookings.find(b => b.id === bookingId);
+        openContractGenerator({
+          bookingId,
+          djId: booking?.djId || '',
+          venueId: user.id,
+          djName: booking?.djName || '',
+          venueName: user.org_name || user.first_name || ''
+        });
+      }
+    } catch(err) {
+      console.log('openContractFromBooking error:', err);
     }
   }
 

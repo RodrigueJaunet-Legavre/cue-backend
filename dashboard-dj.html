@@ -5004,7 +5004,8 @@
             type: booking.event_type || 'Soirée',
             notes: booking.notes || '',
             createdAt: booking.created_at,
-            contractId: booking.contract_id || null
+            contractId: booking.contract_id || null,
+            contractStatus: booking.contract_status || ''
           });
         }
       });
