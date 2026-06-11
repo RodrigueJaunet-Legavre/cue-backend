@@ -282,6 +282,11 @@ module.exports = async function handler(req, res) {
             UPDATE bookings SET
               contract_id     = ${contractId},
               contract_status = 'signed',
+              event_date      = COALESCE(${contract.event_date || null}, event_date),
+              amount          = COALESCE(${contract.cachet ? parseFloat(contract.cachet) : null}, amount),
+              start_time      = COALESCE(${contract.start_time || null}, start_time),
+              end_time        = COALESCE(${contract.end_time || null}, end_time),
+              venue_location  = COALESCE(${contract.lieu || null}, venue_location),
               updated_at      = NOW()
             WHERE id = ${contract.booking_id}
           `.catch(() => {});

@@ -5003,7 +5003,8 @@
             source: 'cue',
             type: booking.event_type || 'Soirée',
             notes: booking.notes || '',
-            createdAt: booking.created_at
+            createdAt: booking.created_at,
+            contractId: booking.contract_id || null
           });
         }
       });

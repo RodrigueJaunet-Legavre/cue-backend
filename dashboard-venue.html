@@ -3210,7 +3210,8 @@
           city: b.city,
           notes: b.notes,
           status: b.status,
-          contract_status: b.contract_status
+          contract_status: b.contract_status,
+          contract_id: b.contract_id
         }));
         venueBookings = bookings;
       }
@@ -5089,6 +5090,9 @@
         renderContractModalVenue(currentContract);
         if (currentContract.status === 'signed') {
           alert('🎉 Contrat finalisé ! Les deux parties ont reçu le contrat par email.');
+          // Rafraîchit les bookings pour mettre à jour contract_status
+          await loadVenueBookings();
+          loadStats();
         } else {
           alert('✅ Vous avez signé ! En attente de la signature du DJ.');
         }
