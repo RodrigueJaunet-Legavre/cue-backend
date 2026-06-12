@@ -240,14 +240,32 @@ module.exports = async function handler(req, res) {
   if (action === 'get_contract_by_booking') {
     const { bookingId } = body;
     try {
-      const [contract] = await sql`
+      let [contract] = await sql`
         SELECT * FROM generated_contracts
         WHERE booking_id = ${bookingId}
         ORDER BY created_at DESC
         LIMIT 1
       `;
-      if (!contract) return res.status(200).json({ contract: null });
-      return res.status(200).json({ contract });
+
+      if (!contract) {
+        const [booking] = await sql`SELECT dj_id, venue_id FROM bookings WHERE id = ${bookingId}`;
+        if (booking) {
+          const convId1 = `${booking.dj_id}_${booking.venue_id}`;
+          const convId2 = `${booking.venue_id}_${booking.dj_id}`;
+          [contract] = await sql`
+            SELECT * FROM generated_contracts
+            WHERE conversation_id IN (${convId1}, ${convId2})
+            ORDER BY created_at DESC
+            LIMIT 1
+          `;
+          if (contract) {
+            await sql`UPDATE generated_contracts SET booking_id = ${bookingId} WHERE id = ${contract.id}`;
+            contract.booking_id = bookingId;
+          }
+        }
+      }
+
+      return res.status(200).json({ contract: contract || null });
     } catch(err) {
       return res.status(500).json({ error: err.message });
     }

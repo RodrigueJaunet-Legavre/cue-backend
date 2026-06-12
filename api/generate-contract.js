@@ -84,6 +84,17 @@ Le contrat doit avoir ces 10 sections numérotées :
 
     const contractId = 'CGEN-' + Date.now();
 
+    let finalBookingId = bookingId || null;
+    if (!finalBookingId && conversationId) {
+      const [conv] = await sql`
+        SELECT b.id FROM bookings b
+        WHERE (b.dj_id || '_' || b.venue_id) = ${conversationId}
+           OR (b.venue_id || '_' || b.dj_id) = ${conversationId}
+        ORDER BY b.created_at DESC LIMIT 1
+      `.catch(() => []);
+      if (conv) finalBookingId = conv.id;
+    }
+
     await sql`
       INSERT INTO generated_contracts (
         id, dj_name, venue_name, event_date, content,
@@ -94,7 +105,7 @@ Le contrat doit avoir ces 10 sections numérotées :
         ${contractId}, ${djName || ''}, ${venueName || ''}, ${effectiveDate || null}, ${contractText},
         ${(effectiveFee)?.toString() || null}, ${lieu || venueAddress || null},
         ${start || null}, ${end || null},
-        ${bookingId || null}, ${conversationId || null},
+        ${finalBookingId || null}, ${conversationId || null},
         NOW()
       )
     `;
