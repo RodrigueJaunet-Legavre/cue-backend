@@ -4430,23 +4430,42 @@
           </button>
         </div>`;
     } else if (daysUntil !== null && daysUntil > 7) {
-      const payDate = new Date(gigDate);
-      payDate.setDate(payDate.getDate() - 7);
-      const payDateStr = payDate.toLocaleDateString('fr-FR', { day:'numeric', month:'long' });
+      // Paiement disponible maintenant mais doit être fait avant J-7
+      const deadlineDate = new Date(eventDate);
+      deadlineDate.setDate(deadlineDate.getDate() - 7);
+      const deadlineStr = deadlineDate.toLocaleDateString('fr-FR', { day:'numeric', month:'long' });
       actionBlock = `
-        <div style="background:rgba(255,195,0,.06); border:1px solid rgba(255,195,0,.15); border-radius:12px; padding:16px;">
+        <div style="background:rgba(0,200,100,.08); border:1px solid rgba(0,200,100,.25); border-radius:12px; padding:16px;">
           <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-            <div style="color:var(--Y); font-weight:700;">✅ Contrat signé</div>
+            <div style="color:#00c864; font-weight:700;">✅ Contrat signé — Paiement requis</div>
             ${b.contract_id ? `<a href="https://cuedj.eu/contract-view.html?id=${b.contract_id}" target="_blank"
                style="color:var(--MUTED); font-size:12px; text-decoration:none;">📄 Voir le contrat</a>` : ''}
           </div>
-          <div style="color:var(--MUTED); font-size:13px; line-height:1.6;">
-            Paiement disponible à partir du <strong style="color:#fff;">${payDateStr}</strong>.
+          <div style="color:var(--MUTED); font-size:13px; margin-bottom:14px; line-height:1.6;">
+            Le paiement doit être effectué avant le <strong style="color:#fff;">${deadlineStr}</strong>
+            (7 jours avant la prestation).
           </div>
-          <div style="margin-top:10px; background:rgba(255,255,255,.04); border-radius:8px; padding:10px 14px; display:flex; align-items:center; gap:8px;">
-            <div style="width:6px; height:6px; border-radius:50%; background:var(--Y);"></div>
-            <div style="color:rgba(255,255,255,.4); font-size:12px;">J-${daysUntil - 7} avant l'ouverture du paiement</div>
+          <button class="btn btn-primary btn-sm" style="width:100%"
+                  onclick="openPaymentModal('${b.id}', '${b.djId}', '${user.id}', ${b.budget || 0}); closeModal('modal-event-detail');">
+            💳 Payer ${b.budget || 0}€
+          </button>
+        </div>`;
+    } else if (daysUntil !== null && daysUntil <= 7) {
+      // Moins de 7 jours — paiement urgent
+      actionBlock = `
+        <div style="background:rgba(255,68,68,.08); border:1px solid rgba(255,68,68,.25); border-radius:12px; padding:16px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+            <div style="color:#ff4444; font-weight:700;">🚨 Paiement urgent</div>
+            ${b.contract_id ? `<a href="https://cuedj.eu/contract-view.html?id=${b.contract_id}" target="_blank"
+               style="color:var(--MUTED); font-size:12px; text-decoration:none;">📄 Voir le contrat</a>` : ''}
           </div>
+          <div style="color:var(--MUTED); font-size:13px; margin-bottom:14px;">
+            Le booking est dans <strong style="color:#ff4444;">${daysUntil} jour${daysUntil > 1 ? 's' : ''}</strong> — payez maintenant.
+          </div>
+          <button class="btn btn-primary btn-sm" style="width:100%; background:#ff4444;"
+                  onclick="openPaymentModal('${b.id}', '${b.djId}', '${user.id}', ${b.budget || 0}); closeModal('modal-event-detail');">
+            💳 Payer maintenant — ${b.budget || 0}€
+          </button>
         </div>`;
     } else {
       actionBlock = `

@@ -312,18 +312,23 @@ module.exports = async function handler(req, res) {
       if (allSigned) {
         // Met à jour le booking lié
         if (contract.booking_id) {
-          await sql`
-            UPDATE bookings SET
-              contract_id      = ${contractId},
-              contract_status  = 'signed',
-              event_date       = COALESCE(${contract.event_date || null}::date, event_date),
-              amount           = COALESCE(${contract.cachet ? parseFloat(contract.cachet) : null}, amount),
-              start_time       = COALESCE(${contract.start_time || null}, start_time),
-              end_time         = COALESCE(${contract.end_time || null}, end_time),
-              venue_location   = COALESCE(${contract.lieu || null}, venue_location),
-              updated_at       = NOW()
-            WHERE id = ${contract.booking_id}
-          `.catch(e => console.log('UPDATE bookings error:', e.message));
+          try {
+            await sql`
+              UPDATE bookings SET
+                contract_id      = ${contractId},
+                contract_status  = 'signed',
+                event_date       = COALESCE(${contract.event_date || null}::date, event_date),
+                amount           = COALESCE(${contract.cachet ? parseFloat(contract.cachet) : null}, amount),
+                start_time       = COALESCE(${contract.start_time || null}, start_time),
+                end_time         = COALESCE(${contract.end_time || null}, end_time),
+                venue_location   = COALESCE(${contract.lieu || null}, venue_location),
+                updated_at       = NOW()
+              WHERE id = ${contract.booking_id}
+            `;
+            console.log('✅ Booking mis à jour:', contract.booking_id);
+          } catch(e) {
+            console.log('❌ UPDATE bookings error:', e.message);
+          }
         }
 
         const convId = conversationId || contract.conversation_id;
