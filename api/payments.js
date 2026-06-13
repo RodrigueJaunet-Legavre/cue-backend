@@ -45,6 +45,7 @@ module.exports = async function handler(req, res) {
         commissionPct: Math.round(commission * 100)
       });
     } catch (err) {
+      console.log('❌ create_payment error:', err.message, { bookingId, djId, venueId, amount });
       return res.status(500).json({ error: err.message });
     }
   }

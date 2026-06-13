@@ -4107,15 +4107,18 @@
   let stripeInstance = null;
   let stripeElements = null;
 
-  async function openPaymentModal(bookingId, djId, amount) {
+  async function openPaymentModal(bookingId, djId, venueId, amount) {
+    console.log('openPaymentModal:', { bookingId, djId, venueId, amount });
     let clientSecret;
     try {
       const res = await fetch('/api/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create_payment', bookingId, djId, venueId: user.id || user.user_id, amount })
+        body: JSON.stringify({ action: 'create_payment', bookingId, djId, venueId: venueId || user.id || user.user_id, amount })
       });
       const data = await res.json();
+      console.log('Payment API response:', data);
+      console.log('clientSecret starts with:', data.clientSecret?.substring(0, 20));
       clientSecret = data.clientSecret;
       if (!clientSecret) throw new Error(data.error || 'Erreur création paiement');
     } catch(err) {
