@@ -4091,7 +4091,7 @@
         // Ouvrir le paiement Stripe
         const bookingAmount = b?.amount || savedOfferData?.amount || savedOfferData?.budget || 0;
         if (b?.id && djId && bookingAmount) {
-          setTimeout(() => openPaymentModal(b.id, djId, bookingAmount), 400);
+          setTimeout(() => openPaymentModal(b.id, djId, user.id, bookingAmount), 400);
         } else {
           alert('🎉 Booking confirmé ! Le gig est ajouté à votre calendrier.');
         }
