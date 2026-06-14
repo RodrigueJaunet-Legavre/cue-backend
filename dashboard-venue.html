@@ -4448,9 +4448,10 @@
         </div>`;
     } else if (daysUntil !== null && daysUntil > 7) {
       // Paiement disponible maintenant mais doit être fait avant J-7
-      const deadlineDate = new Date(eventDate);
+      const eventDateObj = new Date(b.date || b.event_date);
+      const deadlineDate = new Date(eventDateObj);
       deadlineDate.setDate(deadlineDate.getDate() - 7);
-      const deadlineStr = deadlineDate.toLocaleDateString('fr-FR', { day:'numeric', month:'long' });
+      const deadlineStr = isNaN(deadlineDate) ? '' : deadlineDate.toLocaleDateString('fr-FR', { day:'numeric', month:'long' });
       actionBlock = `
         <div style="background:rgba(0,200,100,.08); border:1px solid rgba(0,200,100,.25); border-radius:12px; padding:16px;">
           <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
