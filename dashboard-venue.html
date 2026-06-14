@@ -2661,8 +2661,10 @@
 
   function handleProfilePhoto(input) {
     const file = input.files[0];
+    console.log('handleProfilePhoto:', file?.name, file?.size);
     if (!file || file.size > 5 * 1024 * 1024) { alert('Max 5MB.'); return; }
     venueProfilePhotoFile = file;
+    console.log('venueProfilePhotoFile set:', venueProfilePhotoFile?.name);
     const reader = new FileReader();
     reader.onload = e => {
       venueProfilePhotoNew = e.target.result;
