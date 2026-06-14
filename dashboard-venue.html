@@ -4574,7 +4574,7 @@
     if (!confirm('Confirmer l\'annulation de ce booking ?')) return;
 
     try {
-      const res = await fetch('/api/payments', {
+      const res = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'cancel_booking', bookingId, userId: user.id || user.user_id, reason })

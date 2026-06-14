@@ -3281,7 +3281,7 @@
       const { supabase } = await import('./js/supabase-client.js');
       const { data: { session } } = await supabase.auth.getSession();
 
-      const res = await fetch('/api/payments', {
+      const res = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'cancel_booking', bookingId, userId: session.user.id, reason })
