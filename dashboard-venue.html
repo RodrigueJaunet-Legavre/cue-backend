@@ -2710,9 +2710,11 @@
         const { error } = await supabase.storage
           .from('avatars')
           .upload(path, venueProfilePhotoFile, { upsert: true })
+        console.log('Upload result:', { error, path })
         if (!error) {
           const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path)
           photoUrl = urlData.publicUrl + '?t=' + Date.now()
+          console.log('photoUrl:', photoUrl)
         }
       }
 
