@@ -2236,6 +2236,18 @@
     </div>
     <div style="max-width:720px;">
 
+      <!-- Compte bancaire -->
+      <div class="card" style="margin-bottom:20px;" id="stripe-connect-section">
+        <div class="card-header">
+          <span class="card-title">💳 Compte bancaire</span>
+        </div>
+        <div class="card-body">
+          <div id="stripe-connect-status">
+            <div style="color:var(--MUTED); font-size:14px;">Chargement...</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Plan actuel -->
       <div class="card" style="margin-bottom:24px; border-color:rgba(255,195,0,.3);">
         <div class="card-body" style="padding:28px;">
@@ -5413,8 +5425,81 @@
     alert('📥 Génération du PDF en cours...\n\nFonctionnalité disponible prochainement.');
   }
 
+  async function loadStripeConnectStatus() {
+    const section = document.getElementById('stripe-connect-status');
+    if (!section) return;
+
+    try {
+      const { supabase } = await import('./js/supabase-client.js');
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const res = await fetch('/api/stripe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_connect_status', userId: session.user.id })
+      });
+      const data = await res.json();
+
+      if (data.connected) {
+        section.innerHTML = `
+          <div style="display:flex; align-items:center; gap:12px; padding:16px;
+                      background:rgba(0,200,100,.08); border:1px solid rgba(0,200,100,.2);
+                      border-radius:12px;">
+            <span style="font-size:24px;">✅</span>
+            <div>
+              <div style="color:#00c864; font-weight:700; margin-bottom:2px;">Compte connecté</div>
+              <div style="color:var(--MUTED); font-size:13px;">Tu recevras tes paiements automatiquement après chaque prestation.</div>
+            </div>
+          </div>`;
+      } else {
+        section.innerHTML = `
+          <div style="margin-bottom:16px;">
+            <div style="color:#fff; font-weight:600; margin-bottom:6px;">Connecte ton compte bancaire</div>
+            <div style="color:var(--MUTED); font-size:13px; line-height:1.6; margin-bottom:16px;">
+              Pour recevoir tes paiements automatiquement après chaque prestation, connecte ton IBAN via Stripe.
+              Tes coordonnées bancaires sont sécurisées par Stripe — CUE n'y a pas accès.
+            </div>
+            <button onclick="connectStripeAccount()"
+                    style="background:linear-gradient(135deg,#FFC300,#FFD740); color:#000; border:none;
+                           border-radius:12px; padding:14px 24px; font-weight:900; cursor:pointer;
+                           font-family:'Barlow Condensed',sans-serif; font-size:15px; letter-spacing:.5px;">
+              🏦 Connecter mon compte bancaire
+            </button>
+          </div>
+          <div style="color:rgba(255,255,255,.25); font-size:11px; line-height:1.6;">
+            Processus sécurisé par Stripe · Prend moins de 2 minutes
+          </div>`;
+      }
+    } catch(err) {
+      section.innerHTML = `<div style="color:var(--MUTED); font-size:13px;">Erreur chargement.</div>`;
+    }
+  }
+
+  async function connectStripeAccount() {
+    try {
+      const { supabase } = await import('./js/supabase-client.js');
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const res = await fetch('/api/stripe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create_connect_account',
+          userId: session.user.id,
+          email: session.user.email
+        })
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else alert('Erreur : ' + data.error);
+    } catch(err) {
+      alert('Erreur : ' + err.message);
+    }
+  }
+
   function initSubscriptionPage() {
     const plan = user.plan || 'starter';
+    loadStripeConnectStatus();
     const plans = {
       starter: { name: 'STARTER',   price: 'Gratuit',    commission: '15% de commission par booking', badgeBg: 'rgba(255,255,255,.1)', badgeColor: '#ddd' },
       pro:     { name: 'PRO',       price: '24€/mois',   commission: '5% de commission par booking',  badgeBg: 'rgba(255,195,0,.2)',   badgeColor: '#FFC300' },

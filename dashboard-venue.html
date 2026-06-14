@@ -4190,7 +4190,9 @@
   }
 
   async function validatePrestation(bookingId) {
-    if (!confirm('Confirmer que la prestation s\'est bien déroulée ? Le DJ recevra son paiement.')) return;
+    const b = venueBookings?.find(b => b.id === bookingId);
+    if (!confirm('Confirmes-tu que la prestation s\'est bien déroulée ?')) return;
+
     try {
       const res = await fetch('/api/payments', {
         method: 'POST',
@@ -4198,11 +4200,23 @@
         body: JSON.stringify({ action: 'validate_prestation', bookingId, venueId: user.id || user.user_id })
       });
       const data = await res.json();
+
       if (data.success) {
-        const b = venueBookings?.find(b => b.id === bookingId);
+        await fetch('/api/stripe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'transfer_to_dj',
+            bookingId,
+            djId: b?.djId || b?.dj_id
+          })
+        });
+
         if (b) b.payment_status = 'released';
         closeModal('modal-event-detail');
-        alert('✅ Prestation validée ! Le DJ sera payé sous 1-3 jours ouvrés.');
+        alert('✅ Prestation validée ! Le paiement a été envoyé au DJ.');
+        await loadVenueBookings();
+        renderVenueBookings();
       } else {
         alert('Erreur : ' + data.error);
       }

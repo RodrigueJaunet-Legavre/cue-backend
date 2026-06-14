@@ -168,5 +168,80 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'create_connect_account') {
+    const { userId, email } = body;
+    try {
+      const account = await stripe.accounts.create({
+        type: 'express',
+        country: 'FR',
+        email,
+        capabilities: {
+          card_payments: { requested: true },
+          transfers: { requested: true }
+        }
+      });
+
+      await sql`UPDATE users SET stripe_account_id = ${account.id} WHERE id = ${userId}`;
+
+      const accountLink = await stripe.accountLinks.create({
+        account: account.id,
+        refresh_url: `https://cuedj.eu/dashboard-dj.html?page=subscription&stripe=refresh`,
+        return_url: `https://cuedj.eu/dashboard-dj.html?page=subscription&stripe=success`,
+        type: 'account_onboarding'
+      });
+
+      return res.status(200).json({ url: accountLink.url });
+    } catch(err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  if (action === 'get_connect_status') {
+    const { userId } = body;
+    try {
+      const [user] = await sql`SELECT stripe_account_id FROM users WHERE id = ${userId}`;
+      if (!user?.stripe_account_id) return res.status(200).json({ connected: false });
+
+      const account = await stripe.accounts.retrieve(user.stripe_account_id);
+      return res.status(200).json({
+        connected: account.charges_enabled && account.payouts_enabled,
+        accountId: user.stripe_account_id,
+        chargesEnabled: account.charges_enabled,
+        payoutsEnabled: account.payouts_enabled
+      });
+    } catch(err) {
+      return res.status(200).json({ connected: false });
+    }
+  }
+
+  if (action === 'transfer_to_dj') {
+    const { bookingId, djId } = body;
+    try {
+      const [booking] = await sql`SELECT * FROM bookings WHERE id = ${bookingId}`;
+      const [dj] = await sql`SELECT stripe_account_id FROM users WHERE id = ${djId}`;
+
+      if (!dj?.stripe_account_id) return res.status(400).json({ error: 'DJ sans compte Stripe Connect' });
+      if (!booking?.dj_amount) return res.status(400).json({ error: 'Montant DJ non défini' });
+
+      const transfer = await stripe.transfers.create({
+        amount: Math.round(booking.dj_amount * 100),
+        currency: 'eur',
+        destination: dj.stripe_account_id,
+        transfer_group: bookingId
+      });
+
+      await sql`
+        UPDATE bookings SET
+          payout_status = 'released',
+          released_at = NOW()
+        WHERE id = ${bookingId}
+      `;
+
+      return res.status(200).json({ success: true, transferId: transfer.id });
+    } catch(err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   return res.status(400).json({ error: 'action inconnue' });
 };

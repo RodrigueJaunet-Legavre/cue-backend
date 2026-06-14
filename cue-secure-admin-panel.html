@@ -923,11 +923,30 @@
           </div>
         </div>
         ${p.payout_status === 'to_pay'
-          ? `<div style="margin-top:12px;"><button class="btn btn-primary btn-sm" onclick="markPayoutDone('${p.id}', this)">✓ Marquer comme viré</button></div>`
+          ? `<div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+               <button class="btn btn-primary btn-sm" onclick="markPayoutDone('${p.id}', this)">✓ Marquer comme viré</button>
+               <button class="btn btn-outline btn-sm" onclick="manualTransfer('${p.id}', '${p.dj_id}')">⚡ Virement Stripe auto</button>
+             </div>`
           : `<div style="margin-top:10px; color:var(--SUCCESS); font-size:13px;">✅ Virement effectué</div>`
         }
       </div>
     `).join('');
+  }
+
+  async function manualTransfer(bookingId, djId) {
+    if (!confirm('Déclencher le virement manuellement ?')) return;
+    try {
+      const res = await fetch('/api/stripe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'transfer_to_dj', bookingId, djId, adminSecret: getSecret() })
+      });
+      const data = await res.json();
+      if (data.success) alert('✅ Virement déclenché !');
+      else alert('Erreur : ' + data.error);
+    } catch(err) {
+      alert('Erreur réseau.');
+    }
   }
 
   async function markPayoutDone(bookingId, btn) {
