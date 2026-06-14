@@ -409,6 +409,27 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    if (type === 'booking_cancelled') {
+      result = await resend.emails.send({
+        from: 'CUE DJ <noreply@cuedj.eu>',
+        to: email,
+        subject: 'Booking annulé — CUE',
+        html: `
+          <div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
+            <div style="font-family:Arial Black; font-weight:900; font-size:32px; color:#FFC300; letter-spacing:4px; margin-bottom:24px;">CUE</div>
+            <h2 style="color:#fff; margin-bottom:16px;">Booking annulé</h2>
+            <p style="color:#ccc; line-height:1.7; margin-bottom:16px;">
+              <strong style="color:#fff;">${body.cancellerName}</strong> a annulé le booking prévu le
+              <strong style="color:#fff;">${new Date(body.eventDate).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'})}</strong>.
+            </p>
+            ${body.reason ? `<p style="color:#ccc;">Motif : ${body.reason}</p>` : ''}
+            ${body.refunded ? `<p style="color:#00c864; font-weight:700;">✅ Remboursement en cours.</p>` : ''}
+            <p style="color:rgba(255,255,255,.4); font-size:12px; margin-top:32px;">CUE · cuedj.eu</p>
+          </div>
+        `
+      });
+    }
+
     console.log('Resend result:', JSON.stringify(result));
     return res.status(200).json({
       success: true,

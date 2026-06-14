@@ -3256,10 +3256,47 @@
         </div>
         <div class="modal-actions" style="margin-top:24px;">
           <button class="btn btn-outline" onclick="closeModal('modal-event-detail')">Fermer</button>
+          ${(() => { const gDays = g.date ? Math.ceil((new Date(g.date.split('T')[0]+'T00:00:00') - new Date()) / (1000*60*60*24)) : null; return gDays !== null && gDays >= 7 && g.status !== 'cancelled' && g.bookingId ? `
+            <button onclick="cancelBooking('${g.bookingId}')"
+                    style="background:transparent; border:1px solid rgba(255,68,68,.3); color:rgba(255,68,68,.7);
+                           border-radius:10px; padding:8px 16px; cursor:pointer; font-size:13px; font-weight:600;
+                           font-family:Barlow,sans-serif; transition:all .2s;"
+                    onmouseover="this.style.borderColor='#ff4444';this.style.color='#ff4444'"
+                    onmouseout="this.style.borderColor='rgba(255,68,68,.3)';this.style.color='rgba(255,68,68,.7)'">
+              Annuler le booking
+            </button>` : ''; })()}
         </div>
       </div>
     `;
     modal.classList.add('open');
+  }
+
+  async function cancelBooking(bookingId) {
+    if (!bookingId) return;
+    const reason = prompt('Motif d\'annulation (optionnel) :');
+    if (reason === null) return;
+    if (!confirm('Confirmer l\'annulation de ce booking ?')) return;
+
+    try {
+      const { supabase } = await import('./js/supabase-client.js');
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const res = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'cancel_booking', bookingId, userId: session.user.id, reason })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('✅ Booking annulé.');
+        closeModal('modal-event-detail');
+        renderGigs(currentGigFilter || 'all');
+      } else {
+        alert('Erreur : ' + data.error);
+      }
+    } catch(err) {
+      alert('Erreur : ' + err.message);
+    }
   }
 
   let currentGigFilter = 'all';

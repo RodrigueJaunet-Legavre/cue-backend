@@ -50,6 +50,20 @@ module.exports = async function handler(req, res) {
         await sql`UPDATE users SET plan = 'starter' WHERE stripe_customer_id = ${invoice.customer}`;
         break;
       }
+      case 'payment_intent.succeeded': {
+        const pi = event.data.object;
+        const bookingId = pi.metadata?.bookingId;
+        if (bookingId) {
+          await sql`
+            UPDATE bookings SET
+              payment_status = 'paid',
+              updated_at = NOW()
+            WHERE id = ${bookingId}
+          `;
+          console.log('✅ Booking payé:', bookingId);
+        }
+        break;
+      }
       default:
         console.log('Événement Stripe ignoré:', event.type);
     }

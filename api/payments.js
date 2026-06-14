@@ -187,5 +187,60 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'cancel_booking') {
+    const { bookingId, userId, reason } = body;
+    try {
+      const [booking] = await sql`SELECT * FROM bookings WHERE id = ${bookingId}`;
+      if (!booking) return res.status(404).json({ error: 'Booking non trouvé' });
+
+      if (booking.dj_id !== userId && booking.venue_id !== userId) {
+        return res.status(403).json({ error: 'Non autorisé' });
+      }
+
+      const eventDate = new Date(booking.event_date);
+      const daysUntil = Math.ceil((eventDate - new Date()) / (1000 * 60 * 60 * 24));
+      if (daysUntil < 7) {
+        return res.status(400).json({ error: 'Annulation impossible à moins de 7 jours de la prestation' });
+      }
+
+      await sql`
+        UPDATE bookings SET
+          status = 'cancelled',
+          notes = COALESCE(notes || ' | ', '') || ${'Annulé: ' + (reason || 'Sans motif')},
+          updated_at = NOW()
+        WHERE id = ${bookingId}
+      `;
+
+      if (booking.payment_intent_id && booking.payment_status === 'paid') {
+        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        await stripe.refunds.create({ payment_intent: booking.payment_intent_id });
+        await sql`UPDATE bookings SET payment_status = 'refunded' WHERE id = ${bookingId}`;
+      }
+
+      const otherPartyId = booking.dj_id === userId ? booking.venue_id : booking.dj_id;
+      const [otherParty] = await sql`SELECT email, first_name FROM users WHERE id = ${otherPartyId}`;
+      const [canceller] = await sql`SELECT first_name, stage_name FROM users WHERE id = ${userId}`;
+
+      if (otherParty) {
+        await fetch('https://cuedj.eu/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'booking_cancelled',
+            email: otherParty.email,
+            firstName: otherParty.first_name,
+            cancellerName: canceller.stage_name || canceller.first_name,
+            reason: reason || 'Sans motif',
+            eventDate: booking.event_date
+          })
+        }).catch(() => {});
+      }
+
+      return res.status(200).json({ success: true });
+    } catch(err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   return res.status(400).json({ error: 'Action invalide' });
 };
