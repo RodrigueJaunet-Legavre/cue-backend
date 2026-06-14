@@ -4190,6 +4190,8 @@
 
   async function validatePrestation(bookingId) {
     const b = venueBookings?.find(b => b.id === bookingId);
+    console.log('validatePrestation - booking:', b);
+    console.log('djId:', b?.djId, b?.dj_id);
     if (!confirm('Confirmes-tu que la prestation s\'est bien déroulée ?')) return;
 
     try {

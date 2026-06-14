@@ -234,11 +234,15 @@ module.exports = async function handler(req, res) {
       const [booking] = await sql`SELECT * FROM bookings WHERE id = ${bookingId}`;
       const [dj] = await sql`SELECT stripe_account_id FROM users WHERE id = ${djId}`;
 
+      console.log('transfer_to_dj:', { bookingId, djId, bookingAmount: booking?.dj_amount });
+
       if (!dj?.stripe_account_id) return res.status(400).json({ error: 'DJ sans compte Stripe Connect' });
-      if (!booking?.dj_amount) return res.status(400).json({ error: 'Montant DJ non défini' });
+
+      const djAmount = parseFloat(booking?.dj_amount || booking?.amount || 0);
+      if (!djAmount || djAmount <= 0) return res.status(400).json({ error: 'Montant invalide: ' + djAmount });
 
       const transfer = await stripe.transfers.create({
-        amount: Math.round(booking.dj_amount * 100),
+        amount: Math.round(djAmount * 100),
         currency: 'eur',
         destination: dj.stripe_account_id,
         transfer_group: bookingId
