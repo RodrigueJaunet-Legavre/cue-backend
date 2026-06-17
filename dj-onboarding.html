@@ -223,6 +223,8 @@
   <meta name="apple-mobile-web-app-title" content="CUE DJ">
   <meta name="theme-color" content="#FFC300">
   <link rel="apple-touch-icon" href="/logo-icon.png">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 </head>
 <body>
 
@@ -689,20 +691,7 @@
 
   // PHOTO
   function handlePhotoUpload(input) {
-    const file = input.files[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { alert('Max 5MB.'); return; }
-
-    profilePhotoFile = file;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      profilePhoto = e.target.result;
-      profileData.photo = e.target.result;
-      const zone = document.getElementById('photo-upload');
-      if (zone) zone.innerHTML = `<img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" loading="lazy">`;
-    };
-    reader.readAsDataURL(file);
+    handleProfilePhotoInput(input);
   }
 
   // DESCRIPTION
@@ -1196,6 +1185,91 @@
       user = data.user;
     }
   });
+</script>
+
+<div id="crop-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.85);
+     z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:#0d0d0d; border:1px solid rgba(255,195,0,.2); border-radius:20px;
+              padding:24px; max-width:480px; width:90%;">
+    <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:20px;
+                color:#fff; margin-bottom:16px;">Recadre ta photo</div>
+    <div style="width:100%; height:360px; background:#000; border-radius:12px; overflow:hidden;">
+      <img id="crop-image" style="max-width:100%; display:block;">
+    </div>
+    <div style="display:flex; gap:12px; margin-top:20px;">
+      <button onclick="cancelCrop()"
+              style="flex:1; padding:12px; background:transparent; border:1px solid rgba(255,255,255,.15);
+                     color:rgba(255,255,255,.5); border-radius:10px; cursor:pointer; font-weight:600;
+                     font-family:Barlow,sans-serif;">
+        Annuler
+      </button>
+      <button onclick="confirmCrop()"
+              style="flex:1; padding:12px; background:linear-gradient(135deg,#FFC300,#FFD740);
+                     color:#000; border:none; border-radius:10px; cursor:pointer; font-weight:900;
+                     font-family:'Barlow Condensed',sans-serif;">
+        Valider
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let cropper = null;
+let pendingCropCallback = null;
+
+function openCropModal(file, callback) {
+  pendingCropCallback = callback;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById('crop-image');
+    img.src = e.target.result;
+    document.getElementById('crop-modal').style.display = 'flex';
+    if (cropper) cropper.destroy();
+    cropper = new Cropper(img, {
+      aspectRatio: 1,
+      viewMode: 1,
+      dragMode: 'move',
+      background: false,
+      autoCropArea: 1
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+function cancelCrop() {
+  document.getElementById('crop-modal').style.display = 'none';
+  if (cropper) { cropper.destroy(); cropper = null; }
+  pendingCropCallback = null;
+}
+
+function confirmCrop() {
+  if (!cropper) return;
+  cropper.getCroppedCanvas({ width: 600, height: 600 }).toBlob(blob => {
+    const croppedFile = new File([blob], 'profile.jpg', { type: 'image/jpeg' });
+    document.getElementById('crop-modal').style.display = 'none';
+    cropper.destroy();
+    cropper = null;
+    if (pendingCropCallback) pendingCropCallback(croppedFile);
+    pendingCropCallback = null;
+  }, 'image/jpeg', 0.92);
+}
+
+function handleProfilePhotoInput(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 8 * 1024 * 1024) { alert('Max 8MB.'); return; }
+  openCropModal(file, (croppedFile) => {
+    profilePhotoFile = croppedFile;
+    const reader = new FileReader();
+    reader.onload = e => {
+      profilePhoto = e.target.result;
+      profileData.photo = e.target.result;
+      const zone = document.getElementById('photo-upload');
+      if (zone) zone.innerHTML = `<img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" loading="lazy">`;
+    };
+    reader.readAsDataURL(croppedFile);
+  });
+}
 </script>
 
 </body>
