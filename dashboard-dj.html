@@ -1877,7 +1877,7 @@
                        font-weight:700; font-size:14px; font-family:Barlow,sans-serif;">
           Annuler
         </button>
-        <button onclick="saveProfile()"
+        <button onclick="saveFullProfile()"
                 style="padding:12px 32px; border-radius:10px; border:none;
                        background:var(--Y); color:#000; cursor:pointer;
                        font-weight:700; font-size:16px; font-family:Barlow,sans-serif;
@@ -4529,6 +4529,7 @@
         profilePhotoChanged = false
         photo2File = null
         videoFile = null
+        hideSaveBar()
         document.querySelectorAll('.user-avatar, #user-avatar, #sidebar-avatar').forEach(el => { if (user.picture) el.src = user.picture })
         document.querySelectorAll('.user-name, #user-name, #sidebar-name').forEach(el => { el.textContent = user.stage_name || (user.first_name + ' ' + user.last_name) })
         if (typeof checkBadgeConditions === 'function') checkBadgeConditions()
