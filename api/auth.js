@@ -131,7 +131,7 @@ module.exports = async function handler(req, res) {
       await sql`
         UPDATE users SET
           description = ${body.description || null},
-          genres = ${body.genres || []},
+          genres = ${sql.array(Array.isArray(body.genres) ? body.genres : (body.genres ? JSON.parse(body.genres) : []))},
           instagram = ${body.instagram || null},
           tiktok = ${body.tiktok || null},
           soundcloud = ${body.soundcloud || null},
