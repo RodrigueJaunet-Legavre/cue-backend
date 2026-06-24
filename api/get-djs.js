@@ -4,7 +4,7 @@ const sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
-  const { genre, minRating, verifiedOnly, sort, search } = req.body;
+  const { genre, minRating, verifiedOnly, sort, search, plan } = req.body;
 
   try {
     let djs = await sql`
@@ -26,6 +26,7 @@ module.exports = async function handler(req, res) {
     `;
 
     if (genre) djs = djs.filter(dj => dj.genres?.includes(genre));
+    if (plan) djs = djs.filter(dj => dj.plan === plan);
     if (minRating) djs = djs.filter(dj => parseFloat(dj.avg_rating) >= parseFloat(minRating));
     if (verifiedOnly === true || verifiedOnly === 'true') {
       djs = djs.filter(dj => dj.identity_status === 'verified');

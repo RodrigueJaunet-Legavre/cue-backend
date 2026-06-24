@@ -152,16 +152,17 @@
     .sort-select-mini:focus { border-color:var(--Y); }
 
     /* DJ CARDS GRID */
-    #djs-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; padding:4px; }
+    #djs-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:24px; padding:4px; }
+    @media (max-width:768px) { #djs-grid { grid-template-columns:1fr; } }
     .dj-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
     .dj-card {
-      background:#111; border:1px solid rgba(255,255,255,.06); border-radius:20px;
-      overflow:hidden; cursor:pointer; position:relative; display:flex; flex-direction:column;
-      opacity:0; translate:0 24px;
-      transition:opacity .4s, translate .4s, box-shadow .25s, border-color .25s;
+      background:var(--CARD); border:1px solid var(--BORDER); border-radius:20px;
+      overflow:hidden; cursor:pointer; display:flex; flex-direction:column;
+      opacity:0; translate:0 20px;
+      transition:transform .25s, border-color .25s, box-shadow .25s;
     }
-    .dj-card.visible { opacity:1; translate:0 0; }
-    .dj-card:hover { translate:0 -6px; border-color:rgba(255,195,0,.45) !important; box-shadow:0 20px 48px rgba(255,195,0,.07), 0 24px 48px rgba(0,0,0,.5) !important; }
+    .dj-card.visible { opacity:1; translate:0 0; transition:opacity .4s, translate .4s, box-shadow .25s, border-color .25s; }
+    .dj-card:hover { translate:0 -6px; border-color:rgba(255,195,0,.4); box-shadow:0 24px 56px rgba(0,0,0,.5), 0 0 0 1px rgba(255,195,0,.1); }
     .dj-card-banner { height:120px; position:relative; overflow:hidden; flex-shrink:0; }
     .dj-card-banner.plan-business { background:linear-gradient(135deg,#1a1200 0%,#3d2800 50%,#1a1200 100%); }
     .dj-card-banner.plan-pro { background:linear-gradient(135deg,#140a2e 0%,#2d1560 50%,#140a2e 100%); }
@@ -1099,28 +1100,39 @@
       </div>
 
       <!-- Pills genres -->
-      <div class="genre-pills" id="genre-pills">
-        <span class="genre-chip" data-genre="House" onclick="toggleGenreChip(this)">House</span>
-        <span class="genre-chip" data-genre="Tech House" onclick="toggleGenreChip(this)">Tech House</span>
-        <span class="genre-chip" data-genre="Techno" onclick="toggleGenreChip(this)">Techno</span>
-        <span class="genre-chip" data-genre="Deep House" onclick="toggleGenreChip(this)">Deep House</span>
-        <span class="genre-chip" data-genre="Hip-Hop" onclick="toggleGenreChip(this)">Hip-Hop</span>
-        <span class="genre-chip" data-genre="R&B" onclick="toggleGenreChip(this)">R&amp;B</span>
-        <span class="genre-chip" data-genre="Commercial" onclick="toggleGenreChip(this)">Commercial</span>
-        <span class="genre-chip" data-genre="Open Format" onclick="toggleGenreChip(this)">Open Format</span>
-        <span class="genre-chip" data-genre="Afro House" onclick="toggleGenreChip(this)">Afro House</span>
-        <span class="genre-chip" data-genre="Reggaeton" onclick="toggleGenreChip(this)">Reggaeton</span>
-      </div>
+      <div id="genre-pills">
+        <div style="font-size:11px; font-weight:700; color:rgba(255,255,255,.3); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">Style</div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;">
+          <div class="genre-chip active" data-genre="" onclick="toggleGenreChip(this)">Tous</div>
+          <div class="genre-chip" data-genre="House" onclick="toggleGenreChip(this)">House</div>
+          <div class="genre-chip" data-genre="Tech House" onclick="toggleGenreChip(this)">Tech House</div>
+          <div class="genre-chip" data-genre="Techno" onclick="toggleGenreChip(this)">Techno</div>
+          <div class="genre-chip" data-genre="Deep House" onclick="toggleGenreChip(this)">Deep House</div>
+          <div class="genre-chip" data-genre="Hip-Hop" onclick="toggleGenreChip(this)">Hip-Hop</div>
+          <div class="genre-chip" data-genre="R&B" onclick="toggleGenreChip(this)">R&B</div>
+          <div class="genre-chip" data-genre="Commercial" onclick="toggleGenreChip(this)">Commercial</div>
+          <div class="genre-chip" data-genre="Afro House" onclick="toggleGenreChip(this)">Afro House</div>
+          <div class="genre-chip" data-genre="Drum & Bass" onclick="toggleGenreChip(this)">Drum & Bass</div>
+          <div class="genre-chip" data-genre="Reggaeton" onclick="toggleGenreChip(this)">Reggaeton</div>
+          <div class="genre-chip" data-genre="Amapiano" onclick="toggleGenreChip(this)">Amapiano</div>
+        </div>
 
-      <!-- Contrôles : toggle vérifié + tri -->
-      <div class="find-dj-controls">
-        <label class="toggle-wrap">
-          <span class="toggle-switch">
-            <input type="checkbox" id="filter-verified" onchange="filterDJs()">
-            <span class="toggle-track"></span>
-          </span>
-          Vérifiés uniquement
-        </label>
+        <div style="font-size:11px; font-weight:700; color:rgba(255,255,255,.3); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">Niveau</div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;">
+          <div class="genre-chip active" data-plan="" onclick="togglePlanChip(this)">Tous</div>
+          <div class="genre-chip" data-plan="business" onclick="togglePlanChip(this)">Business</div>
+          <div class="genre-chip" data-plan="pro" onclick="togglePlanChip(this)">Pro</div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px; padding:12px 16px; background:#0a0a0a;
+                    border:1px solid var(--BORDER); border-radius:10px; cursor:pointer; margin-bottom:16px;"
+             onclick="document.getElementById('filter-verified').click()">
+          <input type="checkbox" id="filter-verified" onchange="filterDJs()" style="width:18px; height:18px; accent-color:var(--Y);">
+          <label for="filter-verified" style="cursor:pointer; font-size:14px; font-weight:600; color:#fff;">
+            ✓ Vérifiés uniquement
+          </label>
+        </div>
+
         <select class="sort-select-mini" id="filter-sort" onchange="filterDJs()">
           <option value="rating">Mieux notés</option>
           <option value="newest">Plus récents</option>
@@ -3228,14 +3240,22 @@
   }
 
   function toggleGenreChip(el) {
-    el.classList.toggle('active');
+    document.querySelectorAll('[data-genre]').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    filterDJs();
+  }
+
+  function togglePlanChip(el) {
+    document.querySelectorAll('[data-plan]').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
     filterDJs();
   }
 
   async function filterDJs() {
     const query = (document.getElementById('search-query')?.value || '').trim();
-    const activeChips = [...document.querySelectorAll('.genre-chip.active')].map(c => c.dataset.genre);
+    const activeChips = [...document.querySelectorAll('[data-genre].active')].map(c => c.dataset.genre).filter(Boolean);
     const genre = activeChips[0] || '';
+    const activePlan = document.querySelector('[data-plan].active')?.dataset?.plan || '';
     const verifiedOnly = document.getElementById('filter-verified')?.checked || false;
     const sort = document.getElementById('filter-sort')?.value || 'rating';
 
@@ -3245,7 +3265,7 @@
       const res = await fetch('/api/get-djs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ search: query, genre, genres: activeChips, verifiedOnly, sort })
+        body: JSON.stringify({ search: query, genre, genres: activeChips, verifiedOnly, sort, plan: activePlan })
       });
       const data = await res.json();
       console.log('DJs reçus:', data.djs?.length, data);
@@ -3282,80 +3302,87 @@
       const isVerified = dj.identity_status === 'verified' && dj.picture && dj.mix_url
       const plan = (dj.plan || 'starter').toLowerCase()
 
+      const isFav = favoriteDJIds?.has(dj.id);
       return `
-        <div class="dj-card" onclick="window.open('dj-profile.html?id=${dj.id}', '_blank')"
-             style="background:var(--CARD); border:1px solid var(--BORDER); border-radius:18px;
-                    overflow:hidden; cursor:pointer; transition:all .25s; position:relative;"
-             onmouseover="this.style.borderColor='rgba(255,195,0,.4)'; this.style.transform='translateY(-4px)'"
-             onmouseout="this.style.borderColor='var(--BORDER)'; this.style.transform='translateY(0)'">
+  <div class="dj-card" onclick="window.open('dj-profile.html?id=${dj.id}', '_blank')">
 
-          <!-- Photo de profil -->
-          <div style="position:relative; height:180px; background:#111; overflow:hidden;">
-            ${dj.picture
-              ? `<img src="${dj.picture}" style="width:100%; height:100%; object-fit:cover; object-position:center 25%;"
-                      onerror="this.style.display='none'" loading="lazy">`
-              : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
-                   <span style="font-size:64px; opacity:.3;">🎧</span>
-                 </div>`
-            }
-            ${isVerified ? `
-              <div style="position:absolute; top:12px; right:12px; background:rgba(0,0,0,.8);
-                          backdrop-filter:blur(8px); border:1px solid rgba(255,195,0,.4);
-                          border-radius:20px; padding:4px 10px; font-size:11px; font-weight:700; color:var(--Y);">
-                ✓ Vérifié
-              </div>` : ''}
-            ${plan !== 'starter' ? `
-              <div style="position:absolute; top:12px; left:12px; background:var(--Y);
-                          border-radius:20px; padding:4px 10px; font-size:11px; font-weight:700; color:#000;">
-                ${plan.toUpperCase()}
-              </div>` : ''}
-            <div style="position:absolute; bottom:0; left:0; right:0; height:80px;
-                        background:linear-gradient(to top, rgba(0,0,0,.9), transparent);"></div>
-          </div>
+    <!-- Bannière photo -->
+    <div style="position:relative; height:220px; background:#111; overflow:hidden; flex-shrink:0;">
+      ${dj.picture
+        ? `<img src="${dj.picture}" style="width:100%; height:100%; object-fit:cover; object-position:center 25%;" loading="lazy">`
+        : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#111,#1a1a1a);">
+             <span style="font-size:72px; opacity:.2;">🎧</span>
+           </div>`
+      }
+      <!-- Gradient overlay -->
+      <div style="position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.85) 0%, rgba(0,0,0,.1) 50%, transparent 100%);"></div>
 
-          <!-- Infos -->
-          <div style="padding:16px 18px 18px;">
-            <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:8px;">
-              <div style="font-family:Barlow Condensed; font-weight:900; font-size:22px; color:#fff; line-height:1.1;">
-                ${name}
-              </div>
-              <div style="text-align:right; flex-shrink:0; margin-left:8px;">
-                <div style="color:var(--Y); font-size:14px;">${stars}</div>
-                <div style="color:var(--MUTED); font-size:11px; margin-top:2px;">
-                  ${reviews === 0 ? '0 avis' : reviews === 1 ? '1 avis' : reviews + ' avis'}
-                </div>
-              </div>
-            </div>
+      <!-- Badge plan -->
+      ${plan !== 'starter' ? `
+        <div style="position:absolute; top:14px; left:14px; z-index:2;
+                    background:${plan === 'business' || plan === 'founder' ? 'rgba(255,195,0,.15)' : 'rgba(150,80,255,.15)'};
+                    border:1px solid ${plan === 'business' || plan === 'founder' ? 'rgba(255,195,0,.4)' : 'rgba(150,80,255,.4)'};
+                    color:${plan === 'business' || plan === 'founder' ? '#FFC300' : '#c084fc'};
+                    font-size:10px; font-weight:700; padding:4px 10px; border-radius:20px; letter-spacing:1px;">
+          ${plan.toUpperCase()}
+        </div>` : ''}
 
-            ${genres.length ? `
-              <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;">
-                ${genres.slice(0, 3).map(g => `
-                  <span style="background:rgba(255,195,0,.1); border:1px solid rgba(255,195,0,.2);
-                               color:var(--Y); font-size:11px; font-weight:700; padding:3px 10px;
-                               border-radius:20px; white-space:nowrap;">
-                    ${g}
-                  </span>`).join('')}
-                ${genres.length > 3 ? `<span style="color:var(--MUTED); font-size:11px; padding:3px 0;">+${genres.length-3}</span>` : ''}
-              </div>` : ''}
+      <!-- Badge vérifié -->
+      ${isVerified ? `
+        <div style="position:absolute; top:14px; right:14px; z-index:2;
+                    background:rgba(0,0,0,.75); backdrop-filter:blur(8px);
+                    border:1px solid rgba(255,195,0,.4); border-radius:20px;
+                    padding:4px 10px; font-size:10px; font-weight:700; color:#FFC300;">
+          ✓ Vérifié
+        </div>` : ''}
 
-            <div style="display:flex; gap:8px; margin-top:4px;">
-              <button class="btn btn-primary btn-sm" style="flex:1; font-size:13px;"
-                      onclick="event.stopPropagation(); openContactModal('${dj.id}', '${name.replace(/'/g, "\\'")}')">
-                💬 Contacter
-              </button>
-              <button class="btn btn-outline btn-sm" style="font-size:13px;"
-                      onclick="event.stopPropagation(); window.open('dj-profile.html?id=${dj.id}', '_blank')">
-                Voir →
-              </button>
-              <button class="btn btn-outline btn-sm" style="font-size:13px; padding:8px 12px;"
-                      onclick="event.stopPropagation(); toggleFavorite('${dj.id}', this)"
-                      id="fav-${dj.id}">
-                ♡
-              </button>
-            </div>
-          </div>
+      <!-- Nom en bas de la bannière -->
+      <div style="position:absolute; bottom:0; left:0; right:0; padding:16px 18px; z-index:2;">
+        <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:26px;
+                    color:#fff; line-height:1; text-transform:uppercase; text-shadow:0 2px 8px rgba(0,0,0,.8);">
+          ${name}
         </div>
-      `
+        ${dj.city ? `<div style="color:rgba(255,255,255,.5); font-size:12px; margin-top:4px;">📍 ${dj.city}</div>` : ''}
+      </div>
+    </div>
+
+    <!-- Infos -->
+    <div style="padding:16px 18px 18px; display:flex; flex-direction:column; flex:1;">
+
+      <!-- Rating -->
+      ${rating > 0 ? `
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+          <div style="color:#FFC300; font-size:13px; letter-spacing:1px;">${stars}</div>
+          <div style="color:rgba(255,255,255,.4); font-size:12px;">${reviews} avis</div>
+        </div>` : ''}
+
+      <!-- Genres -->
+      ${genres.length ? `
+        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;">
+          ${genres.slice(0, 4).map(g => `
+            <span style="background:rgba(255,195,0,.08); border:1px solid rgba(255,195,0,.15);
+                         color:rgba(255,195,0,.8); font-size:11px; font-weight:700; padding:3px 10px;
+                         border-radius:20px; white-space:nowrap;">
+              ${g}
+            </span>`).join('')}
+          ${genres.length > 4 ? `<span style="color:rgba(255,255,255,.3); font-size:11px; padding:3px 0;">+${genres.length-4}</span>` : ''}
+        </div>` : ''}
+
+      <!-- Actions -->
+      <div style="display:flex; gap:8px; margin-top:auto;">
+        <button class="btn btn-primary btn-sm" style="flex:1;"
+                onclick="event.stopPropagation(); openContactModal('${dj.id}', '${name.replace(/'/g, "\\'")}')">
+          💬 Contacter
+        </button>
+        <button class="btn btn-outline btn-sm" id="fav-${dj.id}"
+                onclick="event.stopPropagation(); toggleFavorite('${dj.id}', this)"
+                style="padding:8px 12px;">
+          ${isFav ? '❤️' : '🤍'}
+        </button>
+      </div>
+    </div>
+  </div>
+`
     }).join('')
 
     checkAllFavorites(djs.map(d => d.id))
