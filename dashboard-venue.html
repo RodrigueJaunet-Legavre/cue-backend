@@ -1096,7 +1096,7 @@
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
         <input type="text" class="search-input-premium" id="search-query"
-               placeholder="Rechercher un DJ, un style musical..." oninput="filterDJs()">
+               placeholder="Rechercher un DJ, un style musical...">
       </div>
 
       <!-- Pills genres -->
@@ -1121,7 +1121,6 @@
         <div style="font-size:11px; font-weight:700; color:rgba(255,255,255,.3); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">Localisation</div>
         <div style="position:relative; margin-bottom:20px;">
           <input type="text" id="filter-city" placeholder="Paris, Lyon, Marseille..."
-                 oninput="filterDJs()"
                  style="width:100%; background:#0a0a0a; border:1px solid var(--BORDER); color:#fff;
                         padding:10px 16px 10px 36px; border-radius:10px; font-size:14px;
                         font-family:Barlow,sans-serif; outline:none; transition:border-color .2s; box-sizing:border-box;"
@@ -2444,9 +2443,8 @@
       await loadStats()
       loadVenueConversations() // pas de await — charge en arrière-plan
 
-      allDJs = []
       await loadVenueBookings()
-      filterDJs()
+      loadAllDJs()
       loadMyReviews()
       loadFavorites()
       reviewsLoaded = true
@@ -2928,9 +2926,12 @@
         loadMyReviews();
         break;
       case 'find-dj':
-        allDJs = [];
-        showSkeleton('djs-grid', 'dj', 6);
-        filterDJs();
+        if (!allDJsCache.length) {
+          showSkeleton('djs-grid', 'dj', 6);
+          loadAllDJs();
+        } else {
+          filterDJs();
+        }
         break;
       case 'bookings':
         showSkeleton('bookings-list', 'gig', 3);
@@ -3246,31 +3247,68 @@
     filterDJs();
   }
 
-  async function filterDJs() {
-    const query = (document.getElementById('search-query')?.value || '').trim();
-    const activeChips = [...document.querySelectorAll('[data-genre].active')].map(c => c.dataset.genre).filter(Boolean);
-    const genre = activeChips[0] || '';
-    const activeCity = document.getElementById('filter-city')?.value?.trim() || '';
+  let allDJsCache = []
+  let searchDebounce = null
 
-    showSkeleton('djs-grid', 'dj', 6);
-
+  async function loadAllDJs() {
     try {
       const res = await fetch('/api/get-djs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ search: query, genre, genres: activeChips, sort: 'rating', city: activeCity })
-      });
-      const data = await res.json();
-      console.log('DJs reçus:', data.djs?.length, data);
-      allDJs = data.djs || [];
-    } catch (err) {
-      allDJs = [];
+        body: JSON.stringify({ sort: 'rating' })
+      })
+      const data = await res.json()
+      allDJsCache = data.djs || []
+      filterDJs()
+    } catch(err) {
+      allDJsCache = []
+      renderDJs([])
+    }
+  }
+
+  function filterDJs() {
+    const query = (document.getElementById('search-query')?.value || '').toLowerCase().trim()
+    const activeGenre = document.querySelector('.genre-chip[data-genre].active')?.dataset?.genre || ''
+    const city = (document.getElementById('filter-city')?.value || '').toLowerCase().trim()
+    const verifiedOnly = document.getElementById('filter-verified')?.checked || false
+
+    let filtered = allDJsCache
+
+    if (query) {
+      filtered = filtered.filter(dj => {
+        const name = ((dj.stage_name || '') + ' ' + (dj.first_name || '') + ' ' + (dj.last_name || '')).toLowerCase()
+        const genres = (dj.genres || []).join(' ').toLowerCase()
+        return name.includes(query) || genres.includes(query)
+      })
     }
 
-    const n = allDJs.length;
-    document.getElementById('dj-count').textContent = n + ' DJ' + (n > 1 ? 's' : '') + ' trouvé' + (n > 1 ? 's' : '');
-    renderDJs(allDJs);
+    if (activeGenre) {
+      filtered = filtered.filter(dj => dj.genres?.includes(activeGenre))
+    }
+
+    if (city) {
+      filtered = filtered.filter(dj => dj.city?.toLowerCase().includes(city))
+    }
+
+    if (verifiedOnly) {
+      filtered = filtered.filter(dj => dj.identity_status === 'verified')
+    }
+
+    const n = filtered.length
+    const countEl = document.getElementById('dj-count')
+    if (countEl) countEl.textContent = n + ' DJ' + (n > 1 ? 's' : '') + ' trouvé' + (n > 1 ? 's' : '')
+
+    renderDJs(filtered)
   }
+
+  document.getElementById('search-query')?.addEventListener('input', () => {
+    clearTimeout(searchDebounce)
+    searchDebounce = setTimeout(filterDJs, 200)
+  })
+  document.getElementById('filter-city')?.addEventListener('input', () => {
+    clearTimeout(searchDebounce)
+    searchDebounce = setTimeout(filterDJs, 200)
+  })
 
   function renderDJs(djs, containerId = 'djs-grid') {
     const container = document.getElementById(containerId)
