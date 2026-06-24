@@ -12,7 +12,7 @@ module.exports = async function handler(req, res) {
         u.id, u.first_name, u.last_name, u.stage_name, u.email, u.user_type,
         u.plan, u.identity_status, u.description, u.genres,
         u.instagram, u.soundcloud, u.spotify, u.youtube,
-        u.mix_url, u.tracks, u.picture, u.profile_complete, u.created_at,
+        u.mix_url, u.tracks, u.picture, u.city, u.profile_complete, u.created_at,
         COALESCE(AVG(r.rating), 0) as avg_rating,
         COUNT(DISTINCT r.id) as total_reviews,
         COUNT(DISTINCT r.id) as review_count,
