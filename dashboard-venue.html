@@ -1119,17 +1119,18 @@
         </div>
 
         <div style="font-size:11px; font-weight:700; color:rgba(255,255,255,.3); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">Localisation</div>
-        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;">
-          <div class="genre-chip active" data-city="" onclick="toggleCityChip(this)">Toutes</div>
-          <div class="genre-chip" data-city="Paris" onclick="toggleCityChip(this)">Paris</div>
-          <div class="genre-chip" data-city="Lyon" onclick="toggleCityChip(this)">Lyon</div>
-          <div class="genre-chip" data-city="Marseille" onclick="toggleCityChip(this)">Marseille</div>
-          <div class="genre-chip" data-city="Bordeaux" onclick="toggleCityChip(this)">Bordeaux</div>
-          <div class="genre-chip" data-city="Toulouse" onclick="toggleCityChip(this)">Toulouse</div>
-          <div class="genre-chip" data-city="Lille" onclick="toggleCityChip(this)">Lille</div>
-          <div class="genre-chip" data-city="Nice" onclick="toggleCityChip(this)">Nice</div>
-          <div class="genre-chip" data-city="Nantes" onclick="toggleCityChip(this)">Nantes</div>
-          <div class="genre-chip" data-city="Strasbourg" onclick="toggleCityChip(this)">Strasbourg</div>
+        <div style="position:relative; margin-bottom:20px;">
+          <input type="text" id="filter-city" placeholder="Paris, Lyon, Marseille..."
+                 oninput="filterDJs()"
+                 style="width:100%; background:#0a0a0a; border:1px solid var(--BORDER); color:#fff;
+                        padding:10px 16px 10px 36px; border-radius:10px; font-size:14px;
+                        font-family:Barlow,sans-serif; outline:none; transition:border-color .2s; box-sizing:border-box;"
+                 onfocus="this.style.borderColor='rgba(255,195,0,.4)'"
+                 onblur="this.style.borderColor='var(--BORDER)'">
+          <svg style="position:absolute; left:12px; top:50%; transform:translateY(-50%); opacity:.4;"
+               width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M8 0C5.24 0 3 2.24 3 5c0 3.75 5 8 5 8s5-4.25 5-8c0-2.76-2.24-5-5-5zm0 7a2 2 0 110-4 2 2 0 010 4z" fill="white"/>
+          </svg>
         </div>
       </div>
     </div>
@@ -3248,7 +3249,7 @@
     const query = (document.getElementById('search-query')?.value || '').trim();
     const activeChips = [...document.querySelectorAll('[data-genre].active')].map(c => c.dataset.genre).filter(Boolean);
     const genre = activeChips[0] || '';
-    const activeCity = document.querySelector('[data-city].active')?.dataset?.city || '';
+    const activeCity = document.getElementById('filter-city')?.value?.trim() || '';
 
     showSkeleton('djs-grid', 'dj', 6);
 
