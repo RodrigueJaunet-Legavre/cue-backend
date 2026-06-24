@@ -2444,7 +2444,7 @@
       await loadStats()
       loadVenueConversations() // pas de await — charge en arrière-plan
 
-      allDJs = demoDJs
+      allDJs = []
       await loadVenueBookings()
       filterDJs()
       loadMyReviews()
@@ -2928,6 +2928,7 @@
         loadMyReviews();
         break;
       case 'find-dj':
+        allDJs = [];
         showSkeleton('djs-grid', 'dj', 6);
         filterDJs();
         break;
@@ -3261,9 +3262,9 @@
       });
       const data = await res.json();
       console.log('DJs reçus:', data.djs?.length, data);
-      allDJs = data.djs?.length ? data.djs : demoDJs;
+      allDJs = data.djs || [];
     } catch (err) {
-      allDJs = demoDJs;
+      allDJs = [];
     }
 
     const n = allDJs.length;
