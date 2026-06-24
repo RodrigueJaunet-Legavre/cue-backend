@@ -117,57 +117,57 @@
     .card-title { font-weight:700; font-size:16px; }
     .card-body { padding:24px; }
 
-    /* FIND DJ — Premium */
-    .find-dj-search { margin-bottom: 24px; }
-    .search-wrap { position: relative; margin-bottom: 14px; }
-    .search-wrap svg { position:absolute; left:18px; top:50%; transform:translateY(-50%); pointer-events:none; }
-    .search-input-premium {
-      width:100%; background:var(--CARD); border:1px solid var(--BORDER);
-      color:var(--TEXT); padding:15px 20px 15px 50px; border-radius:14px;
-      font-size:15px; font-family:Barlow,sans-serif; transition:border-color .2s; outline:none;
+    /* ── FIND DJ PREMIUM ─────────────────────────────────────────── */
+    .find-dj-wrapper { display:flex; gap:28px; align-items:flex-start; }
+    .find-dj-sidebar {
+      width:240px; flex-shrink:0; position:sticky; top:80px;
+      background:#0a0a0a; border:1px solid rgba(255,255,255,.06);
+      border-radius:18px; padding:20px; display:flex; flex-direction:column; gap:20px;
     }
-    .search-input-premium:focus { border-color:var(--Y); }
-    .search-input-premium::placeholder { color:var(--MUTED); }
-    .genre-pills { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+    .filter-label {
+      font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase;
+      color:rgba(255,255,255,.25); margin-bottom:10px;
+    }
+    .filter-search {
+      width:100%; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
+      color:#fff; padding:10px 14px; border-radius:12px; font-size:13px;
+      font-family:Barlow,sans-serif; outline:none; transition:border-color .2s; box-sizing:border-box;
+    }
+    .filter-search:focus { border-color:rgba(255,195,0,.4); }
+    .filter-search::placeholder { color:rgba(255,255,255,.2); }
     .genre-chip {
-      padding:7px 16px; border-radius:50px; font-size:12px; font-weight:700;
-      background:var(--CARD); border:1px solid var(--BORDER); color:var(--MUTED);
-      cursor:pointer; transition:all .2s; user-select:none;
+      display:inline-block; padding:6px 12px; border-radius:100px; font-size:12px; font-weight:700;
+      cursor:pointer; transition:all .2s; border:1px solid rgba(255,255,255,.08);
+      color:rgba(255,255,255,.4); background:transparent; white-space:nowrap;
     }
-    .genre-chip:hover { border-color:var(--Y); color:var(--Y); }
-    .genre-chip.active { background:var(--Y); color:#000; border-color:var(--Y); }
-    .find-dj-controls { display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:24px; }
-    .toggle-wrap { display:flex; align-items:center; gap:10px; font-size:13px; font-weight:700; color:var(--MUTED); cursor:pointer; }
-    .toggle-switch { position:relative; width:40px; height:22px; flex-shrink:0; display:inline-block; }
-    .toggle-switch input { opacity:0; width:0; height:0; position:absolute; }
-    .toggle-track { position:absolute; inset:0; background:var(--BORDER); border-radius:22px; transition:background .2s; cursor:pointer; }
-    .toggle-track::before { content:''; position:absolute; width:16px; height:16px; background:#fff; border-radius:50%; top:3px; left:3px; transition:transform .2s; }
-    .toggle-switch input:checked + .toggle-track { background:var(--Y); }
-    .toggle-switch input:checked + .toggle-track::before { transform:translateX(18px); }
-    .sort-select-mini {
-      background:var(--CARD); border:1px solid var(--BORDER); color:var(--TEXT);
-      padding:9px 14px; border-radius:10px; font-size:13px; font-weight:700;
-      cursor:pointer; font-family:Barlow,sans-serif; transition:border-color .2s; outline:none; margin-left:auto;
+    .genre-chip:hover { color:rgba(255,255,255,.8); border-color:rgba(255,255,255,.2); }
+    .genre-chip.active {
+      background:rgba(255,195,0,.12); border-color:rgba(255,195,0,.4);
+      color:#FFC300;
     }
-    .sort-select-mini:focus { border-color:var(--Y); }
-
-    /* DJ CARDS GRID */
-    #djs-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:20px; padding:4px; }
-    @media (max-width:768px) { #djs-grid { grid-template-columns:1fr; gap:16px; } }
+    .find-dj-main { flex:1; min-width:0; }
+    #djs-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:20px; }
     .dj-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+    @media(max-width:1100px) { .find-dj-wrapper { flex-direction:column; } .find-dj-sidebar { width:100%; position:static; } }
+    @media(max-width:700px) { #djs-grid { grid-template-columns:1fr; } }
+
+    /* Cards */
     .dj-card {
-      background:#0d0d0d; border:1px solid rgba(255,255,255,.06); border-radius:22px;
+      background:#0d0d0d; border:1px solid rgba(255,255,255,.06); border-radius:20px;
       overflow:hidden; cursor:pointer; display:flex; flex-direction:column;
-      opacity:0; translate:0 32px;
-      transition:opacity .5s cubic-bezier(.4,0,.2,1), translate .5s cubic-bezier(.4,0,.2,1), border-color .3s, box-shadow .3s;
+      opacity:0; translate:0 28px;
+      transition:opacity .5s cubic-bezier(.4,0,.2,1), translate .5s cubic-bezier(.4,0,.2,1),
+                  border-color .3s, box-shadow .3s;
     }
     .dj-card.visible { opacity:1; translate:0 0; }
-    .dj-card:hover { translate:0 -8px; border-color:rgba(255,195,0,.35); box-shadow:0 32px 64px rgba(0,0,0,.6), 0 0 0 1px rgba(255,195,0,.08), inset 0 1px 0 rgba(255,255,255,.04); }
+    .dj-card:hover {
+      border-color:rgba(255,195,0,.3);
+      box-shadow:0 24px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(255,195,0,.06);
+      translate:0 -6px;
+    }
+    .dj-card:hover .dj-card-img { transform:scale(1.06); }
+    .dj-card-img { width:100%; height:100%; object-fit:cover; object-position:center 20%; transition:transform .6s cubic-bezier(.4,0,.2,1); }
     .dj-card-banner { height:120px; position:relative; overflow:hidden; flex-shrink:0; }
-    .dj-card-banner.plan-business { background:linear-gradient(135deg,#1a1200 0%,#3d2800 50%,#1a1200 100%); }
-    .dj-card-banner.plan-pro { background:linear-gradient(135deg,#140a2e 0%,#2d1560 50%,#140a2e 100%); }
-    .dj-card-banner.plan-starter { background:linear-gradient(135deg,#111 0%,#1c1c1c 100%); }
-    .dj-card-banner::after { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 80% 50%,rgba(255,195,0,.1) 0%,transparent 65%); pointer-events:none; }
     .dj-card-plan-badge { position:absolute; top:12px; left:12px; z-index:2; font-size:10px; font-weight:700; letter-spacing:1px; padding:4px 10px; border-radius:20px; }
     .dj-card-plan-badge.plan-business { background:rgba(255,195,0,.15); color:var(--Y); border:1px solid rgba(255,195,0,.3); }
     .dj-card-plan-badge.plan-pro { background:rgba(150,80,255,.2); color:#c084fc; border:1px solid rgba(150,80,255,.35); }
@@ -308,8 +308,8 @@
     .dj-profile-header { position:relative; height:120px; background:linear-gradient(135deg, #1a1a1a 0%, #111 100%); border-radius:12px 12px 0 0; margin:-40px -40px 60px; }
     .dj-profile-avatar { position:absolute; bottom:-40px; left:32px; width:80px; height:80px; border-radius:50%; border:3px solid var(--Y); background:#0a0a0a; display:flex; align-items:center; justify-content:center; font-size:32px; overflow:hidden; }
 
-    @media (max-width:1200px) { .dj-grid { grid-template-columns:repeat(2,1fr); } #djs-grid { grid-template-columns:repeat(2,1fr); } }
-    @media (max-width:768px) { .dj-grid { grid-template-columns:1fr; } #djs-grid { grid-template-columns:1fr; } .stats-grid { grid-template-columns:repeat(2,1fr); } }
+    @media (max-width:1200px) { .dj-grid { grid-template-columns:repeat(2,1fr); } }
+    @media (max-width:768px) { .dj-grid { grid-template-columns:1fr; } .stats-grid { grid-template-columns:repeat(2,1fr); } }
 
     /* ============================================
        MOBILE RESPONSIVE — dashboard-venue.html
@@ -1089,53 +1089,73 @@
       </div>
     </div>
 
-    <div class="find-dj-search">
-      <!-- Recherche pleine largeur -->
-      <div class="search-wrap">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-        </svg>
-        <input type="text" class="search-input-premium" id="search-query"
-               placeholder="Rechercher un DJ, un style musical...">
-      </div>
+    <div class="find-dj-wrapper">
 
-      <!-- Pills genres -->
-      <div id="genre-pills">
-        <div style="font-size:11px; font-weight:700; color:rgba(255,255,255,.3); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">Style musical</div>
-        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;">
-          <div class="genre-chip active" data-genre="" onclick="toggleGenreChip(this)">Tous</div>
-          <div class="genre-chip" data-genre="House" onclick="toggleGenreChip(this)">House</div>
-          <div class="genre-chip" data-genre="Tech House" onclick="toggleGenreChip(this)">Tech House</div>
-          <div class="genre-chip" data-genre="Techno" onclick="toggleGenreChip(this)">Techno</div>
-          <div class="genre-chip" data-genre="Deep House" onclick="toggleGenreChip(this)">Deep House</div>
-          <div class="genre-chip" data-genre="Hip-Hop" onclick="toggleGenreChip(this)">Hip-Hop</div>
-          <div class="genre-chip" data-genre="R&B" onclick="toggleGenreChip(this)">R&B</div>
-          <div class="genre-chip" data-genre="Commercial" onclick="toggleGenreChip(this)">Commercial</div>
-          <div class="genre-chip" data-genre="Afro House" onclick="toggleGenreChip(this)">Afro House</div>
-          <div class="genre-chip" data-genre="Drum & Bass" onclick="toggleGenreChip(this)">Drum & Bass</div>
-          <div class="genre-chip" data-genre="Reggaeton" onclick="toggleGenreChip(this)">Reggaeton</div>
-          <div class="genre-chip" data-genre="Amapiano" onclick="toggleGenreChip(this)">Amapiano</div>
-          <div class="genre-chip" data-genre="Open Format" onclick="toggleGenreChip(this)">Open Format</div>
+      <!-- Sidebar filtres -->
+      <div class="find-dj-sidebar">
+
+        <!-- Search -->
+        <div>
+          <div class="filter-label">Rechercher</div>
+          <input type="text" class="filter-search" id="search-query"
+                 placeholder="Nom, style...">
         </div>
 
-        <div style="font-size:11px; font-weight:700; color:rgba(255,255,255,.3); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">Localisation</div>
-        <div style="position:relative; margin-bottom:20px;">
-          <input type="text" id="filter-city" placeholder="Paris, Lyon, Marseille..."
-                 style="width:100%; background:#0a0a0a; border:1px solid var(--BORDER); color:#fff;
-                        padding:10px 16px 10px 36px; border-radius:10px; font-size:14px;
-                        font-family:Barlow,sans-serif; outline:none; transition:border-color .2s; box-sizing:border-box;"
-                 onfocus="this.style.borderColor='rgba(255,195,0,.4)'"
-                 onblur="this.style.borderColor='var(--BORDER)'">
-          <svg style="position:absolute; left:12px; top:50%; transform:translateY(-50%); opacity:.4;"
-               width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path d="M8 0C5.24 0 3 2.24 3 5c0 3.75 5 8 5 8s5-4.25 5-8c0-2.76-2.24-5-5-5zm0 7a2 2 0 110-4 2 2 0 010 4z" fill="white"/>
-          </svg>
+        <!-- Localisation -->
+        <div>
+          <div class="filter-label">Ville</div>
+          <div style="position:relative;">
+            <input type="text" class="filter-search" id="filter-city"
+                   placeholder="Paris, Lyon..."
+                   style="padding-left:32px;">
+            <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.3;"
+                 width="13" height="13" viewBox="0 0 16 16" fill="white">
+              <path d="M8 0C5.24 0 3 2.24 3 5c0 3.75 5 8 5 8s5-4.25 5-8c0-2.76-2.24-5-5-5zm0 7a2 2 0 110-4 2 2 0 010 4z"/>
+            </svg>
+          </div>
         </div>
+
+        <!-- Style musical -->
+        <div>
+          <div class="filter-label">Style musical</div>
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <div class="genre-chip active" data-genre="" onclick="toggleGenreChip(this)" style="display:block;">Tous les styles</div>
+            <div class="genre-chip" data-genre="House" onclick="toggleGenreChip(this)" style="display:block;">House</div>
+            <div class="genre-chip" data-genre="Tech House" onclick="toggleGenreChip(this)" style="display:block;">Tech House</div>
+            <div class="genre-chip" data-genre="Techno" onclick="toggleGenreChip(this)" style="display:block;">Techno</div>
+            <div class="genre-chip" data-genre="Deep House" onclick="toggleGenreChip(this)" style="display:block;">Deep House</div>
+            <div class="genre-chip" data-genre="Hip-Hop" onclick="toggleGenreChip(this)" style="display:block;">Hip-Hop</div>
+            <div class="genre-chip" data-genre="R&B" onclick="toggleGenreChip(this)" style="display:block;">R&B</div>
+            <div class="genre-chip" data-genre="Commercial" onclick="toggleGenreChip(this)" style="display:block;">Commercial</div>
+            <div class="genre-chip" data-genre="Afro House" onclick="toggleGenreChip(this)" style="display:block;">Afro House</div>
+            <div class="genre-chip" data-genre="Drum & Bass" onclick="toggleGenreChip(this)" style="display:block;">Drum & Bass</div>
+            <div class="genre-chip" data-genre="Reggaeton" onclick="toggleGenreChip(this)" style="display:block;">Reggaeton</div>
+            <div class="genre-chip" data-genre="Amapiano" onclick="toggleGenreChip(this)" style="display:block;">Amapiano</div>
+            <div class="genre-chip" data-genre="Open Format" onclick="toggleGenreChip(this)" style="display:block;">Open Format</div>
+          </div>
+        </div>
+
+        <!-- Vérifié -->
+        <div style="padding:12px 14px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06);
+                    border-radius:12px; display:flex; align-items:center; gap:10px; cursor:pointer;"
+             onclick="document.getElementById('filter-verified').click()">
+          <input type="checkbox" id="filter-verified" onchange="filterDJs()"
+                 style="width:16px; height:16px; accent-color:#FFC300; cursor:pointer;">
+          <label for="filter-verified" style="cursor:pointer; font-size:13px; font-weight:600; color:rgba(255,255,255,.6);">
+            Vérifiés uniquement
+          </label>
+        </div>
+
       </div>
+
+      <!-- Contenu principal -->
+      <div class="find-dj-main">
+        <div id="dj-count" style="color:rgba(255,255,255,.3); font-size:12px; font-weight:700;
+                                   letter-spacing:1px; text-transform:uppercase; margin-bottom:16px;"></div>
+        <div id="djs-grid"></div>
+      </div>
+
     </div>
-
-    <div id="dj-count" style="color:var(--MUTED); font-size:13px; font-weight:700; margin-bottom:20px;"></div>
-    <div id="djs-grid"></div>
   </div>
 
   <!-- FAVORIS -->
