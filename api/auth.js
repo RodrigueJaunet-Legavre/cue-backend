@@ -283,7 +283,7 @@ module.exports = async function handler(req, res) {
 
   if (action === 'update_full_profile') {
     const { userId, firstName, lastName, stageName, photo, photo2, videoUrl,
-            description, genres, city, iban, bic, bankName } = body
+            description, genres, city, iban, bic, bankName, mixUrl, tracks } = body
     try {
       await sql`
         UPDATE users SET
@@ -299,6 +299,8 @@ module.exports = async function handler(req, res) {
           iban = ${iban || null},
           bic = ${bic || null},
           bank_name = ${bankName || null},
+          mix_url = ${mixUrl || null},
+          tracks = ${sql.array(Array.isArray(tracks) ? tracks : (tracks ? JSON.parse(tracks) : []))},
           updated_at = NOW()
         WHERE id = ${userId}
       `

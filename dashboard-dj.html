@@ -4518,7 +4518,9 @@
           genres: selectedGenres.length ? selectedGenres : (user.genres || []),
           iban: document.getElementById('iban-input')?.value?.replace(/\s/g, '') || user.iban,
           bic: document.getElementById('bic-input')?.value?.toUpperCase() || user.bic,
-          bankName: document.getElementById('bank-name-input')?.value || user.bank_name
+          bankName: document.getElementById('bank-name-input')?.value || user.bank_name,
+          mixUrl: profileMix || user.mix_url || '',
+          tracks: profileTracks.map(t => typeof t === 'object' ? JSON.stringify(t) : t)
         })
       })
 
