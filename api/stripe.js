@@ -5,8 +5,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
 
 const PRICES = {
-  pro:      'price_1TVEcMRwFuYQb4HD2nNHQvP2',
-  business: 'price_1TVEdhRwFuYQb4HDvq7lrKfb'
+  pro:      'price_1TdUIpCekR2MK0EXHsSEP6Pd',
+  business: 'price_1TdUJsCekR2MK0EXWF1D9S42'
 };
 
 const PRICE_TO_PLAN = Object.fromEntries(Object.entries(PRICES).map(([k, v]) => [v, k]));
