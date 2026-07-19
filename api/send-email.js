@@ -77,6 +77,40 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    if (type === 'booking_paid') {
+      const { amount, eventDate } = req.body;
+      result = await resend.emails.send({
+        from: 'CUE DJ <noreply@cuedj.eu>',
+        to: email,
+        subject: '💰 Paiement reçu pour ton booking — CUE',
+        html: `
+          <div style="background:#080808; color:#ddd; font-family:Arial; padding:40px; max-width:600px; margin:auto;">
+            <div style="font-family:Arial Black; font-weight:900; font-size:32px; color:#FFC300; letter-spacing:4px; margin-bottom:24px;">CUE</div>
+            <h2 style="color:#fff; margin-bottom:16px;">Paiement reçu !</h2>
+            <p style="color:#ccc; line-height:1.7; margin-bottom:24px;">
+              Bonjour <strong style="color:#fff;">${firstName}</strong>,<br>
+              Le venue a effectué le paiement pour ton booking du
+              <strong style="color:#fff;">${new Date(eventDate).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'})}</strong>.
+            </p>
+            <div style="background:rgba(0,200,100,.08); border:1px solid rgba(0,200,100,.2); border-radius:16px; padding:24px; text-align:center; margin-bottom:24px;">
+              <div style="color:rgba(255,255,255,.4); font-size:12px; letter-spacing:2px; text-transform:uppercase; margin-bottom:8px;">Ton cachet net</div>
+              <div style="font-family:Arial Black; font-weight:900; font-size:48px; color:#00c864;">${parseFloat(amount || 0).toFixed(2)}€</div>
+              <div style="color:rgba(255,255,255,.3); font-size:12px; margin-top:8px;">Sécurisé dans ton portefeuille CUE</div>
+            </div>
+            <p style="color:#ccc; line-height:1.7; margin-bottom:24px;">
+              L'argent sera transféré sur ton compte bancaire après validation de la prestation par le venue.
+            </p>
+            <a href="https://cuedj.eu/dashboard-dj.html?page=overview"
+               style="display:inline-block; background:linear-gradient(135deg,#FFC300,#FFD740); color:#000;
+                      text-decoration:none; padding:14px 32px; border-radius:12px; font-weight:900; font-size:15px;">
+              Voir mon portefeuille →
+            </a>
+            <p style="color:rgba(255,255,255,.25); font-size:12px; margin-top:32px;">CUE · cuedj.eu</p>
+          </div>
+        `
+      });
+    }
+
     if (type === 'admin_payout') {
       const { djName, amount, iban, bic, bankName, bookingId } = req.body;
       result = await resend.emails.send({

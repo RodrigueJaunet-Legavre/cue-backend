@@ -5097,6 +5097,15 @@
   }
 
   async function respondOffer(messageId, status, offerData) {
+    if (status === 'accepted') {
+      const hasIban = !!(user.iban && user.iban.length > 10);
+      if (!hasIban) {
+        alert('Ajoute ton IBAN avant d\'accepter un booking, pour pouvoir recevoir tes paiements.');
+        showPage('settings', document.querySelector('[data-page=settings]'));
+        return;
+      }
+    }
+
     await fetch('/api/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

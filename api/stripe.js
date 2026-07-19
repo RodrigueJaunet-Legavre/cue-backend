@@ -75,6 +75,26 @@ async function handler(req, res) {
             UPDATE wallet_transactions SET status = 'held' WHERE booking_id = ${bookingId}
           `.catch(() => {});
           console.log('✅ Booking payé:', bookingId);
+
+          // Notifie le DJ
+          const [booking] = await sql`SELECT * FROM bookings WHERE id = ${bookingId}`;
+          if (booking) {
+            const [dj] = await sql`SELECT email, first_name, stage_name FROM users WHERE id = ${booking.dj_id}`;
+            if (dj) {
+              await fetch('https://cuedj.eu/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  type: 'booking_paid',
+                  email: dj.email,
+                  firstName: dj.stage_name || dj.first_name,
+                  amount: booking.dj_amount,
+                  eventDate: booking.event_date,
+                  bookingId
+                })
+              }).catch(() => {});
+            }
+          }
         }
         break;
       }
