@@ -1,5 +1,6 @@
 const Stripe = require('stripe');
 const postgres = require('postgres');
+const getRawBody = require('raw-body');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
@@ -11,13 +12,23 @@ const PRICES = {
 
 const PRICE_TO_PLAN = Object.fromEntries(Object.entries(PRICES).map(([k, v]) => [v, k]));
 
-module.exports = async function handler(req, res) {
+async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+
+  // bodyParser désactivé (voir config plus bas) — on lit toujours le raw body nous-mêmes
+  let rawBody;
+  try {
+    rawBody = await getRawBody(req);
+  } catch (err) {
+    return res.status(400).json({ error: 'Cannot read raw body' });
+  }
+
   // Webhook Stripe — détecté via stripe-signature ou ?webhook=true
   if (req.query?.webhook === 'true' || req.headers['stripe-signature']) {
     const sig = req.headers['stripe-signature'];
     let event;
     try {
-      event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+      event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
     } catch (err) {
       return res.status(400).json({ error: err.message });
     }
@@ -60,7 +71,19 @@ module.exports = async function handler(req, res) {
               updated_at = NOW()
             WHERE id = ${bookingId}
           `;
+          await sql`
+            UPDATE wallet_transactions SET status = 'held' WHERE booking_id = ${bookingId}
+          `.catch(() => {});
           console.log('✅ Booking payé:', bookingId);
+        }
+        break;
+      }
+      case 'account.updated': {
+        const account = event.data.object;
+        if (account.charges_enabled && account.payouts_enabled) {
+          await sql`
+            UPDATE users SET stripe_payouts_enabled = true WHERE stripe_account_id = ${account.id}
+          `.catch(() => {});
         }
         break;
       }
@@ -71,9 +94,12 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ received: true });
   }
 
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
-
-  const body = req.body || {};
+  let body = {};
+  try {
+    body = JSON.parse(rawBody.toString('utf8') || '{}');
+  } catch (err) {
+    return res.status(400).json({ error: 'JSON invalide' });
+  }
   const action = body.action || body.stripeAction;
 
   // CREATE CHECKOUT SESSION
@@ -269,4 +295,11 @@ module.exports = async function handler(req, res) {
   }
 
   return res.status(400).json({ error: 'action inconnue' });
+}
+
+module.exports = handler;
+module.exports.config = {
+  api: {
+    bodyParser: false
+  }
 };

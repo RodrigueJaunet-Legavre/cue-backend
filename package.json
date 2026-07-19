@@ -6,6 +6,7 @@
     "@supabase/supabase-js": "^2.105.4",
     "formidable": "^3.5.4",
     "postgres": "^3.4.9",
+    "raw-body": "^4.0.0",
     "resend": "^3.5.0",
     "stripe": "^14.25.0"
   }
