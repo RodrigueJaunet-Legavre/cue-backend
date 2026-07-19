@@ -4652,6 +4652,21 @@
             <div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">CACHET</div>
             <div style="font-family:Barlow Condensed; font-weight:900; font-size:32px; color:var(--Y);">${b.budget || 0}€</div>
           </div>
+          ${ps === 'paid' ? `
+          <div style="background:rgba(255,195,0,.06); border:1px solid rgba(255,195,0,.15);
+                      border-radius:12px; padding:16px;">
+            <div style="color:rgba(255,255,255,.4); font-size:11px; font-weight:700; letter-spacing:1px;
+                        text-transform:uppercase; margin-bottom:12px;">🔒 Portefeuille CUE</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <div style="color:rgba(255,255,255,.6); font-size:13px;">Montant sécurisé</div>
+              <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:20px; color:#FFC300;">
+                ${b.budget || 0}€
+              </div>
+            </div>
+            <div style="color:rgba(255,255,255,.3); font-size:12px; line-height:1.6;">
+              Ton paiement est sécurisé chez CUE. Il sera versé au DJ après que tu auras validé la prestation.
+            </div>
+          </div>` : ''}
           ${b.notes ? `<div><div style="color:var(--MUTED); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">NOTES</div><div style="color:var(--MUTED); font-size:14px; line-height:1.6;">${b.notes}</div></div>` : ''}
           ${b.contract_id ? `
             <div style="background:rgba(0,200,100,.08); border:1px solid rgba(0,200,100,.3); border-radius:12px; padding:16px;">

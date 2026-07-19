@@ -1029,6 +1029,34 @@
       </div>
     </div>
 
+    <!-- Bloc portefeuille DJ -->
+    <div class="card" style="margin-bottom:20px; background:linear-gradient(135deg,#0a0800,#1a1200); border-color:rgba(255,195,0,.2);">
+      <div class="card-header">
+        <span class="card-title">💰 Mon Portefeuille CUE</span>
+      </div>
+      <div class="card-body">
+
+        <!-- Totaux -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+          <div style="background:rgba(255,170,0,.08); border:1px solid rgba(255,170,0,.2); border-radius:14px; padding:16px;">
+            <div style="color:rgba(255,255,255,.4); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">En attente</div>
+            <div id="wallet-held" style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:32px; color:#ffaa00;">—</div>
+            <div style="color:rgba(255,255,255,.3); font-size:11px; margin-top:4px;">Prestation à valider</div>
+          </div>
+          <div style="background:rgba(0,200,100,.08); border:1px solid rgba(0,200,100,.2); border-radius:14px; padding:16px;">
+            <div style="color:rgba(255,255,255,.4); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">Versé</div>
+            <div id="wallet-released" style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:32px; color:#00c864;">—</div>
+            <div style="color:rgba(255,255,255,.3); font-size:11px; margin-top:4px;">Transféré sur ton compte</div>
+          </div>
+        </div>
+
+        <!-- Transactions -->
+        <div id="wallet-transactions-list">
+          <div style="color:rgba(255,255,255,.3); font-size:13px; text-align:center; padding:16px;">Chargement...</div>
+        </div>
+      </div>
+    </div>
+
     <!-- BADGE VÉRIFIÉ -->
     <div class="card" id="badge-section-overview" style="margin-bottom:24px; background:linear-gradient(135deg, #111 0%, #1a1a1a 100%); border-color:rgba(255,195,0,.3);">
       <div class="card-header">
@@ -2663,6 +2691,7 @@
       await loadStats()
       loadConversations()     // pas de await — charge en arrière-plan
       syncConfirmedBookings() // pas de await
+      loadWallet()            // pas de await
 
       renderUpcomingGigs()
       renderCalendar()
@@ -2856,6 +2885,70 @@
       el.textContent = Math.round(eased * target) + suffix;
       if (progress >= 1) clearInterval(timer);
     }, 16);
+  }
+
+  async function loadWallet() {
+    try {
+      const { supabase } = await import('./js/supabase-client.js')
+      const { data: { session } } = await supabase.auth.getSession()
+
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_wallet', userId: session.user.id, userType: 'dj' })
+      })
+      const data = await res.json()
+
+      // Totaux
+      const heldEl = document.getElementById('wallet-held')
+      const releasedEl = document.getElementById('wallet-released')
+      if (heldEl) heldEl.textContent = (data.held || 0).toFixed(2) + '€'
+      if (releasedEl) releasedEl.textContent = (data.released || 0).toFixed(2) + '€'
+
+      // Liste transactions
+      const list = document.getElementById('wallet-transactions-list')
+      if (!list) return
+
+      if (!data.transactions?.length) {
+        list.innerHTML = '<div style="color:rgba(255,255,255,.3); font-size:13px; text-align:center; padding:16px;">Aucune transaction</div>'
+        return
+      }
+
+      list.innerHTML = `
+        <div style="border-top:1px solid rgba(255,255,255,.06); margin-bottom:12px;"></div>
+        ${data.transactions.map(t => {
+          const date = new Date(t.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'numeric' })
+          const venueName = t.venue_name || t.venue_first || 'Venue'
+          const statusColor = t.status === 'released' ? '#00c864' : t.status === 'refunded' ? '#ff4444' : '#ffaa00'
+          const statusLabel = t.status === 'released' ? 'Versé' : t.status === 'refunded' ? 'Remboursé' : 'En attente'
+          const statusIcon = t.status === 'released' ? '✅' : t.status === 'refunded' ? '↩️' : '⏳'
+
+          return `
+            <div style="display:flex; align-items:center; gap:12px; padding:12px 0;
+                        border-bottom:1px solid rgba(255,255,255,.04);">
+              <div style="width:36px; height:36px; border-radius:50%; background:rgba(255,195,0,.1);
+                          display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;">
+                ${statusIcon}
+              </div>
+              <div style="flex:1; min-width:0;">
+                <div style="color:#fff; font-weight:600; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                  ${venueName}
+                </div>
+                <div style="color:rgba(255,255,255,.3); font-size:12px; margin-top:2px;">${date}</div>
+              </div>
+              <div style="text-align:right; flex-shrink:0;">
+                <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:18px; color:#fff;">
+                  +${parseFloat(t.dj_amount || 0).toFixed(2)}€
+                </div>
+                <div style="font-size:11px; font-weight:700; color:${statusColor};">${statusLabel}</div>
+              </div>
+            </div>
+          `
+        }).join('')}
+      `
+    } catch(err) {
+      console.log('Erreur loadWallet:', err)
+    }
   }
 
   async function loadStats() {

@@ -38,6 +38,12 @@ module.exports = async function handler(req, res) {
         WHERE id = ${bookingId}
       `;
 
+      const walletId = Date.now().toString();
+      await sql`
+        INSERT INTO wallet_transactions (id, booking_id, dj_id, venue_id, amount, commission, dj_amount, status, type, created_at)
+        VALUES (${walletId}, ${bookingId}, ${djId}, ${venueId}, ${totalCents / 100}, ${commissionCents / 100}, ${djCents / 100}, 'held', 'payment', NOW())
+      `;
+
       return res.status(200).json({
         clientSecret: paymentIntent.client_secret,
         total: amount,

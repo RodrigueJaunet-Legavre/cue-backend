@@ -255,6 +255,13 @@ module.exports = async function handler(req, res) {
         WHERE id = ${bookingId}
       `;
 
+      await sql`
+        UPDATE wallet_transactions SET
+          status = 'released',
+          released_at = NOW()
+        WHERE booking_id = ${bookingId}
+      `;
+
       return res.status(200).json({ success: true, transferId: transfer.id });
     } catch(err) {
       return res.status(500).json({ error: err.message });

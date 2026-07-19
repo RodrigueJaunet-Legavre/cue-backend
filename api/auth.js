@@ -671,5 +671,41 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'get_wallet') {
+    const { userId, userType } = body;
+    try {
+      let transactions;
+      if (userType === 'dj') {
+        transactions = await sql`
+          SELECT wt.*, b.event_date, b.event_type,
+                 u.org_name as venue_name, u.first_name as venue_first
+          FROM wallet_transactions wt
+          LEFT JOIN bookings b ON b.id = wt.booking_id
+          LEFT JOIN users u ON u.id = wt.venue_id
+          WHERE wt.dj_id = ${userId}
+          ORDER BY wt.created_at DESC
+        `;
+      } else {
+        transactions = await sql`
+          SELECT wt.*, b.event_date, b.event_type,
+                 u.stage_name as dj_stage, u.first_name as dj_first
+          FROM wallet_transactions wt
+          LEFT JOIN bookings b ON b.id = wt.booking_id
+          LEFT JOIN users u ON u.id = wt.dj_id
+          WHERE wt.venue_id = ${userId}
+          ORDER BY wt.created_at DESC
+        `;
+      }
+
+      const held = transactions.filter(t => t.status === 'held').reduce((s, t) => s + parseFloat(t.dj_amount || 0), 0);
+      const released = transactions.filter(t => t.status === 'released').reduce((s, t) => s + parseFloat(t.dj_amount || 0), 0);
+      const total = transactions.reduce((s, t) => s + parseFloat(t.amount || 0), 0);
+
+      return res.status(200).json({ transactions, held, released, total });
+    } catch(err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   return res.status(400).json({ error: 'Action inconnue' });
 }
